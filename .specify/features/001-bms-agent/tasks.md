@@ -46,12 +46,12 @@
 
 ## Core Implementation
 - **T009  EnhancedDocumentProcessor Integration**
-  - Summary: Implement `api/processor_wrapper.py` configuring `EnhancedDocumentProcessor` with hierarchical parent/child chunking, late chunking, contextual retrieval, hybrid search preparation (dense + BM25), advanced entity extraction, RAGAS quality validation, railway-specific term preservation, version tracking, and optional distributed processing fallbacks while streaming 1 GB uploads into Qdrant with full metadata.
+  - Summary: Implement `api/processor_wrapper.py` configuring `EnhancedDocumentProcessor` with hierarchical parent/child chunking, late chunking, contextual retrieval, hybrid search preparation (dense + BM25), advanced entity extraction, RAGAS quality validation, railway-specific term preservation, version tracking, and optional distributed processing fallbacks while streaming 1 GB uploads from `~/persistent/bms_data/uploads/` into Qdrant with full metadata; add `scripts/test_processor.py` to execute ingestion smoke tests that log chunk counts and collection statistics.
   - Dependencies: T004, T005–T008
-  - Files/Paths: `api/processor_wrapper.py`
+  - Files/Paths: `api/processor_wrapper.py`, `scripts/test_processor.py`
   - Parallel: No
 - **T010  Upload Endpoint**
-  - Summary: Implement `POST /api/v1/documents/upload` in `api/main.py`, wiring streaming pipeline, MIME/type validation, checksum logging, and versioning.
+  - Summary: Implement `POST /api/v1/documents/upload` in `api/main.py`, wiring streaming pipeline from `~/persistent/bms_data/uploads/`, ensuring MIME/type validation, checksum logging, and versioning.
   - Dependencies: T009, T005
   - Files/Paths: `api/main.py`
   - Parallel: No
