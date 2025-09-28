@@ -123,13 +123,11 @@ bms-agent/
    - Validate Qdrant schema sizing for hybrid vectors and retention requirements.
    - Document Ollama model resource footprint and fallback models.
    - Capture data ingestion safeguards (streaming, file validation, rate limits).
-   - Investigate Nomad router integration constraints (network resiliency).
 2. **Research Tasks**
    - R0.1: Gather RunPod encryption + key rotation operational playbook.
    - R0.2: Benchmark Qdrant multi-vector collection at target corpus scale.
    - R0.3: Profile `snowflake-arctic-embed2` + `mistral-nemo:12b-instruct` on target hardware; document resource thresholds and fallback triggers.
    - R0.4: Review EnhancedDocumentProcessor configuration for 1 GB streaming ingestion and memory backpressure.
-   - R0.5: Map network topology requirements from constitution §1 (Nomad routers, 10 Gbps) to deployment notes.
 3. **Consolidation**
    - Summaries recorded in `research.md` with decision/rationale/alternatives.
    - Mark unresolved risks for follow-up during Phase 1.
@@ -190,15 +188,15 @@ bms-agent/
 ## Progress Tracking
 *Updated as phases complete*
 
-**Phase Status**:
-- [ ] Phase 0: Research complete (/plan command)
-- [ ] Phase 1: Design complete (/plan command)
+- **Phase Status**:
+- [X] Phase 0: Research complete (/plan command)
+- [X] Phase 1: Design complete (/plan command)
 - [X] Phase 2: Task planning complete (/plan command - describe approach only)
 - [ ] Phase 3: Tasks generated (/tasks command)
 - [ ] Phase 4: Implementation complete
 - [ ] Phase 5: Validation passed
 
-**Gate Status**:
+- **Gate Status**:
 - [X] Initial Constitution Check: PASS
 - [ ] Post-Design Constitution Check: PASS
 - [ ] All NEEDS CLARIFICATION resolved

@@ -86,22 +86,21 @@ Single-pod deployment on RunPod.io with direct binary installations (no Docker) 
 ### Phase 5 – Documentation, Tooling & CI/CD (`T015`, `T016`, `T023`, `T024` – post-MVP optional)
 - Maintain `README.md`, `TESTING.md`, `DEPLOYMENT_CHECKLIST.md`, and `reports/performance-baseline.md` with instructions reflecting current architecture.
 - Configure GitHub Actions (`.github/workflows/ci-cd.yml`) to run tests, coverage, security scans (Bandit, Safety), pre-commit hooks (Black, Ruff, mypy), and provide deployment placeholders for RunPod automation.
-- Introduce repository tooling (`pre-commit`, formatting, linting, typing) and fail builds on formatting/type regressions (`T023`, planned post-MVP).
-- Define container build pipeline (OCI image for FastAPI service), semantic versioning policy, and automated migration scripts invoked during deploy (`T024`, planned post-MVP).
 - Document required secrets (`BMS_API_KEY`, `DEPLOY_KEY`, optional `CODECOV_TOKEN`, `SAFETY_API_KEY`, future `RUNPOD_USER/HOST`, `REGISTRY_USERNAME/PASSWORD`).
 
 ### Phase 6 – Testing & Evaluation (`T010`, `T017`, `T019`, `T020`)
 1. Use `scripts/run_tests.sh` to orchestrate integration tests (processor, API smoke checks).
-2. Expand `tests/test_basic.py`, `tests/integration/test_hybrid_search.py`, and the Locust scenario in `tests/performance/load/test_locust.py` to verify ≤100 ms p95 latency with 1,000 concurrent requests.
+2. Expand `tests/test_basic.py` and the Locust suite in `tests/performance/load/test_locust.py` to verify ≤100 ms p95 latency with 1,000 concurrent requests and capture JSON stats for analysis.
 3. Create evaluation dataset (`data/evaluation/ground_truth.jsonl`) and `scripts/evaluate_retrieval.py` to compute top-5 accuracy ≥95 %.
 4. Add hybrid retrieval regression tests validating keyword enrichment and dense/sparse fusion logic (leveraging `/api/v1/search/hybrid`).
 5. Integrate evaluation into CI (report accuracy figure and fail if below threshold) and surface performance/hybrid results in pipeline artifacts.
+6. Update `DEPLOYMENT_CHECKLIST.md` to include manual alert runbooks for latency, ingestion, and dependency degradation.
 
 ### Phase 7 – Observability & Operations (`T012`, `T013`, `T018`, `T021` – post-MVP optional)
-1. Manage lifecycle via `scripts/manage_services.sh` (start/stop/status) and `scripts/health_check.sh`.
+{{ ... }}
 2. Implement `/metrics/uplink` endpoint exposing latency histogram, request counts, and error totals for scraping.
-3. Expose Prometheus metrics (FastAPI + Qdrant exporters) and provision Grafana dashboards/alert rules aligned to 99.99 % availability (`T021`, scheduled post-MVP).
-4. Document monitoring routine, log rotation, and incident response in `DEPLOYMENT_CHECKLIST.md`.
+3. Expose Prometheus metrics (FastAPI + Qdrant exporters) and provision Grafana dashboards aligned to 99.99 % availability (`T021`, scheduled post-MVP) with documented manual alert runbooks for latency, ingestion, and dependency degradation.
+4. Note automated paging/notification delivery as post-MVP follow-up; document monitoring routine, log rotation, manual escalation steps, and incident response in `DEPLOYMENT_CHECKLIST.md`.
 
 ## File Structure
 ```
@@ -194,7 +193,7 @@ N8N_WEBHOOK_JWT=...
 ## Performance & Reliability Targets
 
 - Document processing throughput: ≥10 documents/minute (using EnhancedDocumentProcessor).
-- Semantic query latency: ≤100 ms p95 with 1,000 concurrent users (validated via `tests/performance/test_performance.py` and load scenarios in `tests/performance/load/`).
+- Semantic query latency: ≤100 ms p95 with 1,000 concurrent users (validated via `tests/performance/load/test_locust.py`).
 - Availability: 99.99 % (documented monitoring + incident response, failover guidance TBD).
 - Storage efficiency: ≤100 GB for 10 k documents using on-disk vectors/payloads.
 

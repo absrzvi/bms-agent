@@ -70,38 +70,31 @@
   - Summary: Keep README.md, TESTING.md, DEPLOYMENT_CHECKLIST.md, and reports/performance-baseline.md aligned with current architecture and tasks.
   - Dependencies: Ongoing
   - Output: Accurate operator/developer documentation.
-- **T016  CI/CD Pipeline Configuration**
   - Summary: Maintain .github/workflows/ci-cd.yml for tests, coverage, security scans, and deployment placeholders with documented secrets.
   - Dependencies: T010, T014, T015
   - Output: Automated quality gates.
 
 ## Testing & Quality
 - **T017  Performance Validation**
-  - Summary: Expand tests/performance/test_performance.py and load scenarios to verify 100ms p95 latency @ 1,000 concurrent users; publish artifacts.
+  - Summary: Use tests/performance/load/test_locust.py to verify ≤100 ms p95 latency @ 1,000 concurrent users; publish JSON statistics and update reports/performance-baseline.md.
   - Dependencies: T010, T016
   - Output: Performance baselines and reports.
 - **T018  Operational Metrics**
   - Summary: Implement /metrics/uplink, extend health scripts, and document monitoring routines for the 99.99% availability target.
   - Dependencies: T011, T012, T013
-  - Output: JSON metrics endpoint and supporting docs.
-- **T019  Retrieval Accuracy Evaluation**
-  - Summary: Produce data/evaluation/ground_truth.jsonl, scripts/evaluate_retrieval.py, and CI hooks enforcing 95% top-5 accuracy.
-  - Dependencies: T006, T010, T017
-  - Output: Automated retrieval quality checks.
-- **T020  Hybrid Search Enablement**
+{{ ... }}
   - Summary: Introduce sparse vector support, hybrid fusion helpers, /api/v1/search/hybrid, and integration tests (placeholders exist; implement real assertions).
   - Dependencies: T006, T011, T017, T019
   - Output: Full hybrid retrieval pipeline and documentation updates.
 
 ## Post-MVP Backlog
-- **T021  Prometheus & Grafana Integration**
-  - Summary: Deploy exporters, dashboards, and alert rules to satisfy observability mandates once MVP stabilizes.
+- **T021  Prometheus &Grafana Integration**
+  - Summary: Deploy exporters and Grafana dashboards with documented manual alert runbooks (latency, ingestion, dependency); schedule automated paging as post-MVP follow-up.
   - Dependencies: T017, T018
   - Output: Prometheus scrape targets, Grafana dashboards, alerting playbook.
 - **T023  Pre-commit Tooling & CI Gates**
   - Summary: Configure .pre-commit-config.yaml, Black, Ruff, mypy, and enforce hooks locally/CI.
   - Dependencies: T015, T016
-  - Output: Automated formatting and typing guardrails.
 - **T024  Containerization & Release Automation**
   - Summary: Build OCI images, define semantic versioning workflow, and automate migrations during deployments.
   - Dependencies: T015, T016, T021

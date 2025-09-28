@@ -11,10 +11,9 @@ This constitution establishes the governing principles and technical standards f
   - ÖBB (Austrian Federal Railways) technical requirements
 - **Availability**: Systems MUST maintain 99.99% uptime
 - **Network Architecture**:
-  - Support for high-availability configurations
-  - Integration with Nomad Connect Routers
-  - 10Gbps network infrastructure
-  - Enterprise-grade WiFi access points
+  - Support for high-availability configurations suitable for railway operations
+  - Resilient connectivity patterns that sustain 99.99% uptime targets
+  - Enterprise-grade wireless access where applicable
 - **Performance**:
   - Real-time data processing with <100ms latency for moving train data
   - Resilience patterns for tunnel connectivity and high-speed handovers
