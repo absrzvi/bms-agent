@@ -104,7 +104,7 @@ uvicorn api.main:app --host 0.0.0.0 --port 8000 --reload
 1. Place source files under `~/persistent/bms_data/uploads/` or upload via API (streaming up to 1 GB).
 2. `DocumentProcessorWrapper.process_document()` handles chunking, embedding, keyword extraction, and storage in Qdrant (`nomad_bms_documents`).
 3. Verify ingestion using `python scripts/test_processor.py` (created in `tasks.md` `T007`).
-4. After completing `tasks.md` `T020`, inspect hybrid payloads with `qdrant_client` or the `/api/v1/search/hybrid` endpoint to confirm sparse keyword fields are present and indexed.
+4. Inspect hybrid payloads with `qdrant_client` or the `/api/v1/search/hybrid` endpoint to confirm sparse keyword fields are present and indexed.
 
 ## API Usage
 
@@ -122,16 +122,14 @@ curl -X POST http://localhost:8000/api/v1/search/semantic \
 
 ### Hybrid Search (Semantic + Keyword)
 
-> **Note**: `/api/v1/search/hybrid` becomes available once `tasks.md` `T020` is delivered. Prior to that, only semantic search is exposed.
-
 ```bash
 curl -X POST http://localhost:8000/api/v1/search/hybrid \
      -H "Content-Type: application/json" \
      -H "X-API-Key: ${BMS_API_KEY}" \
-     -d '{"query": "emergency brake vlan", "limit": 5, "keyword_weight": 0.4}'
+     -d '{"query": "emergency brake vlan", "limit": 5, "candidate_multiplier": 3, "vector_weight": 0.6, "keyword_weight": 0.4}'
 ```
 
-Returns combined dense/sparse scores along with keyword highlights embedded in each chunk payload.
+Returns combined dense/sparse scores alongside keyword frequencies (`term_frequencies`) in each chunk payload so you can tune fusion weights.
 
 ### Document Upload
 
@@ -173,10 +171,9 @@ Core testing guidance lives in `TESTING.md`. Common commands:
 ```bash
 pytest -v --cov=./ --cov-report=term-missing
 pytest tests/test_basic.py::test_search_endpoint
-pytest tests/performance/test_performance.py -m performance
-# Following suites land with T017/T020
-# pytest tests/performance/load/test_locust.py -m load   # ≤100 ms p95 @ 1,000 users
-# pytest tests/integration/test_hybrid_search.py -m hybrid
+pytest tests/integration/test_hybrid_search.py -m hybrid
+locust -f tests/performance/load/test_locust.py --headless -u 1000 -r 50 -t 7m --host http://localhost:8000
+# Optional: pipe Locust JSON stats to `reports/performance-baseline.md` for archival
 ```
 
 ## Deployment Automation
@@ -203,7 +200,7 @@ ssh <user>@<runpod-ip> '~/bms-agent/scripts/health_check.sh'
 - **Branching**: Follow Git flow (`feature/<name>`, `release/<version>`, `hotfix/<issue>`). Keep commits semantic (e.g., `feat(api): ...`).
 - **Migrations Log**: Record schema/data adjustments in `docs/migrations.md` with date, summary, and related task/PR references.
 - **Pull Requests**: Prefer small, reviewable PRs mapped to the tasks in `tasks.md`.
-- **Pre-commit Hooks**: Once `tasks.md` `T023` is complete, run `pre-commit install` locally and execute `pre-commit run --all-files` plus `mypy` before opening PRs; CI will mirror these checks.
+- **Pre-commit Hooks**: With `tasks.md` `T023` mandated, install hooks via `pre-commit install`, run `pre-commit run --all-files` and `mypy` locally, and note that CI will block merges on formatting or typing regressions.
 
 ## Operations Playbook
 

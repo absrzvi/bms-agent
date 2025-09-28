@@ -20,9 +20,8 @@
 
 - **Search & Retrieval**
   - R2.1: Provide semantic search via `/api/v1/search/semantic` returning responses ≤100 ms p95 latency under 1,000 concurrent requests.
-    - *Acceptance*: `tests/performance/test_performance.py` (and load tests) record ≤100 ms p95 latency with 1,000 simulated clients.
+    - *Acceptance*: `tests/performance/load/test_locust.py` records ≤100 ms p95 latency with 1,000 simulated clients and publishes latency reports.
   - R2.2: Achieve ≥95 % top-5 retrieval accuracy on curated validation set (`data/evaluation/ground_truth.jsonl`).
-    - *Acceptance*: `scripts/evaluate_retrieval.py` reports accuracy ≥95 %.
   - R2.3: Support hybrid retrieval (semantic + keyword/BM25) with query-time fusion.
     - *Acceptance*: Hybrid search endpoint returns both dense and sparse scores; integration tests verify BM25 keywords stored in Qdrant payload and exposed via API.
 
@@ -30,28 +29,29 @@
   - R3.1: Protect all API and webhook endpoints with JWT (RS256) plus internal API key as per constitution §3; tokens validated against the public key provided in `BMS_JWT_PUBLIC_KEY` (signing key managed by upstream identity service).
   - R3.2: Enforce rate limiting (default 60 requests/min per JWT subject) without external dependencies.
   - R3.3: Expose OpenAPI 3.0 documentation at `/openapi.json` with correct security schemes.
+  - R3.4: Ensure encryption at rest for stored documents, embeddings, and secrets (RunPod volume + Qdrant payloads) with documented key rotation process.
+  - R3.5: Implement role-based access control (RBAC) for administrative, operator, and service identities across API and n8n workflows.
+  - R3.6: Provide immutable audit logging for authentication events, document ingestion, search queries, and administrative actions with retention ≥90 days.
 
-  - R4.1: Provide `/health` and `/health/detailed` endpoints including Qdrant, Ollama, n8n, OpenWebUI status checks.
+{{ ... }}
   - R4.2: Provide `/metrics/uplink` endpoint publishing latency, throughput, and recent errors for monitoring.
   - R4.3: Maintain 99.99 % availability target via documented monitoring + incident response playbook (`DEPLOYMENT_CHECKLIST.md`).
 
-- **Testing & Quality**
-  - R5.1: Maintain ≥80% coverage for core logic; integrate CI (GitHub Actions) with security scans (Bandit, Safety) and performance benchmarks.
-  - R5.2: Include regression, performance, and security tests invoked by `pytest` markers.
-  - R5.3: Enforce pre-commit tooling (Black, Ruff, mypy) and NumPy-style docstrings on all public interfaces; CI must fail if formatting, linting, or typing checks regress.
-
-- **Workflow & Change Management**
-  - R6.1: Adopt Git flow branching for feature development (e.g., `feature/<name>`, `release/<version>`) with semantic commit messages.
-  - R6.2: Document database/data store changes through a migration log (`docs/migrations.md`) even when applying manual steps during the MVP.
-  - R6.3: Produce container images for the API service, follow semantic versioning, and automate database migrations as part of the release workflow.
-  
 - **Observability & Operations**
-  - R7.1: Expose Prometheus-compatible metrics and ship Grafana dashboards with 99.99 % availability visualizations per constitution §8 as part of the MVP.
-  - R7.2: Document manual alert runbooks for latency, ingestion, and dependency degradation; automated notification delivery is deferred to a post-MVP roadmap item.
-successfully; invalid files rejected with specific errors.
-- Semantic/hybrid search responds ≤100 ms p95 under 1,000 concurrent users.
+  - R7.1: Expose Prometheus-compatible metrics and ship Grafana dashboards with 99.99 % availability alerts (latency/error budgets) per constitution §8 as part of the MVP.
+  - R7.2: Automate alerting for latency threshold breaches, ingestion failures, and degraded dependencies with documented on-call response steps.
+## Acceptance Criteria Summary
+- Supported file types (≤1 GB) ingest successfully; invalid files rejected with specific errors.
+- Semantic/hybrid search responds ≤100 ms p95 under 1,000 concurrent users, validated via `tests/performance/load/test_locust.py`.
 - Retrieval evaluation script reports ≥95 % accuracy.
 - JWT + API key enforcement validated by automated tests; unauthorized access denied.
-- Monitoring endpoints return status objects and metrics; Prometheus scrape targets and Grafana dashboards are operational with documented manual alert runbooks.
-- Manual alert runbooks cover latency threshold breaches, ingestion failures, and dependency degradation; automated delivery is tracked as follow-up work.
-passes tests, coverage, and security scans on main branch.
+- Monitoring endpoints return status objects and metrics; Prometheus scrape targets and Grafana dashboards are operational with alert policies defined.
+- Encryption at rest, RBAC policies, and audit logging verified by configuration inspection and automated security tests.
+- CI pipeline passes tests, coverage, and security scans on main branch.
+
+## Clarifications
+
+### Session 1 (2025-09-28)
+- **Q:** Which encryption approach should we adopt for RunPod persistent storage and Qdrant payloads?
+- **A:** Option C – rely on RunPod-managed encryption services.
+- **Notes:** Use RunPod platform-managed volume encryption for stored documents, embeddings, and secrets; document rotation procedures provided by RunPod operations.
