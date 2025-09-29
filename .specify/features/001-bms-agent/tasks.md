@@ -1,15 +1,17 @@
 # BMS Agent MVP Task List
 
 **Status**: 🎉 PRODUCTION READY (Core MVP Complete)  
-**Progress**: 15/28 tasks (54%) | Core: 15/15 (100%)  
-**Last Updated**: 2025-09-29 20:09 UTC
+**Progress**: 16/28 tasks (57%) | Core: 15/15 (100%) | Integrations: 1/2 (50%)  
+**Last Updated**: 2025-09-29 21:03 UTC
 
 ## Current Status
 - ✅ **Core MVP**: 100% Complete (T000-T014)
+- ✅ **OpenWebUI Tool**: Complete (T018) - 7/7 tests passing
 - ✅ **448 chunks** indexed in Qdrant
 - ✅ **0.714 quality score** (exceeds target)
 - ✅ **Semantic search** operational and verified
-- 📋 **Next Phase**: Integrations & Observability (T017-T021)
+- ✅ **Persistent storage**: All data in /workspace
+- 📋 **Next Phase**: Slack Integration (T017) & Observability (T019-T021)
 
 ## Setup
 - **T000  Git Flow Branching Setup** ✅
@@ -116,11 +118,12 @@
   - Dependencies: T011, T016
   - Files/Paths: `n8n/workflows/slack_bot.json`
   - Parallel: No
-- **T018  OpenWebUI Tool Script**
-  - Summary: Implement `~/.openwebui/tools/bms_search.py` (and repo copy) that queries semantic/hybrid endpoints with configurable weights.
+- **T018  OpenWebUI Tool Script** ✅
+  - Summary: **COMPLETED**: Implemented `tools/bms_search.py` with 5 search functions (semantic, hybrid, filtered, document type, health check), 7 configurable Valves, complete error handling, and comprehensive documentation. Test suite: 7/7 tests passing (100%). Tool ready for OpenWebUI deployment.
   - Dependencies: T011, T012
-  - Files/Paths: `~/.openwebui/tools/bms_search.py`, `tools/bms_search.py`
+  - Files/Paths: `tools/bms_search.py`, `tools/README.md`, `tools/TESTING.md`, `tools/test_bms_search.py`
   - Parallel: No
+  - Status: ✅ COMPLETED - Tool implemented, tested, and documented. OpenWebUI installation in progress.
 
 ## Observability & Operations
 - **T019  Manage Services Script**

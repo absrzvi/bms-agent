@@ -1,0 +1,23 @@
+{
+  "timestamp": "1759150190.2178438",
+  "overall_status": "FAIL",
+  "component_status": {
+    "processor_initialization": true,
+    "qdrant_storage": true,
+    "search_functionality": false
+  },
+  "processing_results": {
+    "railway_manual": {
+      "status": "error",
+      "chunks_created": 0,
+      "quality_score": 0.0,
+      "features_extracted": []
+    },
+    "equipment_specs": {
+      "status": "error",
+      "chunks_created": 0,
+      "quality_score": 0.0,
+      "features_extracted": []
+    }
+  }
+}

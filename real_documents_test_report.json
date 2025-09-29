@@ -1,0 +1,153 @@
+{
+  "timestamp": "2025-09-29 13:24:13",
+  "summary": {
+    "total_processed": 14,
+    "total_successful": 0,
+    "success_rate": 0.0,
+    "total_chunks": 0
+  },
+  "format_results": {
+    "pdf": [
+      {
+        "file": "BMS-QHSE-PRO-001 Risk Management.pdf",
+        "status": "error",
+        "chunks": 0,
+        "quality": 0.0,
+        "time": 4.145785570144653,
+        "features": [],
+        "error": "Unknown processing error"
+      },
+      {
+        "file": "BMS-BDEV-PRO-001 Bid Development.pdf",
+        "status": "error",
+        "chunks": 0,
+        "quality": 0.0,
+        "time": 4.0613484382629395,
+        "features": [],
+        "error": "Unknown processing error"
+      },
+      {
+        "file": "BMS-ISEC-POL-001 Information Security Policy Statement.pdf",
+        "status": "error",
+        "chunks": 0,
+        "quality": 0.0,
+        "time": 1.7262439727783203,
+        "features": [],
+        "error": "Unknown processing error"
+      },
+      {
+        "file": "Asset Registration Process.pdf",
+        "status": "error",
+        "chunks": 0,
+        "quality": 0.0,
+        "time": 0.1442699432373047,
+        "features": [],
+        "error": "Unknown processing error"
+      },
+      {
+        "file": "Employee Expenses Process.pdf",
+        "status": "error",
+        "chunks": 0,
+        "quality": 0.0,
+        "time": 1.2415153980255127,
+        "features": [],
+        "error": "Unknown processing error"
+      }
+    ],
+    "docx": [
+      {
+        "file": "BMS-BCON-FOR-001-Business Continuity Response Template.docx",
+        "status": "error",
+        "chunks": 0,
+        "quality": 0.0,
+        "time": 0.006243228912353516,
+        "features": [],
+        "error": "Unknown processing error"
+      },
+      {
+        "file": "BMS-BCON-FOR-002 QHSE - Fatality or serious incident response.docx",
+        "status": "error",
+        "chunks": 0,
+        "quality": 0.0,
+        "time": 0.00464320182800293,
+        "features": [],
+        "error": "Unknown processing error"
+      },
+      {
+        "file": "BMS-BCON-FOR-003-Business Continuity Response Template - CyberIncidents.docx",
+        "status": "error",
+        "chunks": 0,
+        "quality": 0.0,
+        "time": 0.004691362380981445,
+        "features": [],
+        "error": "Unknown processing error"
+      }
+    ],
+    "xlsx": [
+      {
+        "file": "BMS-BDEV-FOR-005 Bid Action Log Check List.xlsx",
+        "status": "error",
+        "chunks": 0,
+        "quality": 0.0,
+        "time": 0.2575361728668213,
+        "features": [],
+        "error": "Unknown processing error"
+      },
+      {
+        "file": "BMS-BDEV-FOR-019 System MTBF Calculation.xlsx",
+        "status": "error",
+        "chunks": 0,
+        "quality": 0.0,
+        "time": 0.2678501605987549,
+        "features": [],
+        "error": "Unknown processing error"
+      },
+      {
+        "file": "BMS-BDEV-FOR-020 Maintenance Plan.xlsx",
+        "status": "error",
+        "chunks": 0,
+        "quality": 0.0,
+        "time": 0.24813532829284668,
+        "features": [],
+        "error": "Unknown processing error"
+      }
+    ],
+    "pptx": [
+      {
+        "file": "BMS-BDEV-FOR-008 Bid Kick Off Template.pptx",
+        "status": "error",
+        "chunks": 0,
+        "quality": 0.0,
+        "time": 0.03060436248779297,
+        "features": [],
+        "error": "Unknown processing error"
+      },
+      {
+        "file": "BMS-BDEV-FOR-014 Win-Loss Analysis Template.pptx",
+        "status": "error",
+        "chunks": 0,
+        "quality": 0.0,
+        "time": 0.01625800132751465,
+        "features": [],
+        "error": "Unknown processing error"
+      },
+      {
+        "file": "BMS-PROJ-FOR-031 Financial Project Review Template.pptx",
+        "status": "error",
+        "chunks": 0,
+        "quality": 0.0,
+        "time": 0.01472330093383789,
+        "features": [],
+        "error": "Unknown processing error"
+      }
+    ]
+  },
+  "feature_usage": {},
+  "document_types": {
+    "QHSE": 1,
+    "BDEV": 6,
+    "ISEC": 1,
+    "BCON": 3,
+    "PROJ": 1
+  }
+}

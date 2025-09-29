@@ -1,0 +1,77 @@
+{
+  "timestamp": "2025-09-29 13:56:07",
+  "test_document": "/workspace/windsurf-project/bms-doc-upload/pdf/BMS-QHSE-PRO-001 Risk Management.pdf",
+  "total_tests": 10,
+  "successful_tests": 9,
+  "success_rate": 90.0,
+  "results": {
+    "1. Basic Sliding Window Chunking": {
+      "success": true,
+      "chunks_created": 32,
+      "avg_chunk_size": 383.9375,
+      "document_length": 6243,
+      "processing_success": true
+    },
+    "2. Hierarchical Chunking Engine": {
+      "success": true,
+      "chunks_created": 35,
+      "avg_chunk_size": 386.4,
+      "document_length": 6243,
+      "processing_success": true
+    },
+    "3. Contextual Retrieval Engine": {
+      "success": true,
+      "chunks_created": 32,
+      "avg_chunk_size": 572.1875,
+      "document_length": 6243,
+      "processing_success": true
+    },
+    "4. Late Chunking Engine": {
+      "success": false,
+      "chunks_created": 0,
+      "error": "Processing failed"
+    },
+    "5. Quality Validation Engine": {
+      "success": true,
+      "chunks_created": 0,
+      "avg_chunk_size": 0,
+      "document_length": 6243,
+      "processing_success": true
+    },
+    "6. Hybrid Search Preparation": {
+      "success": true,
+      "chunks_created": 32,
+      "avg_chunk_size": 383.9375,
+      "document_length": 6243,
+      "processing_success": true
+    },
+    "7. Semantic Chunking Strategy": {
+      "success": true,
+      "chunks_created": 32,
+      "avg_chunk_size": 383.9375,
+      "document_length": 6243,
+      "processing_success": true
+    },
+    "8. Sentence Window Strategy": {
+      "success": true,
+      "chunks_created": 32,
+      "avg_chunk_size": 383.9375,
+      "document_length": 6243,
+      "processing_success": true
+    },
+    "9. Structural Chunking Strategy": {
+      "success": true,
+      "chunks_created": 32,
+      "avg_chunk_size": 383.9375,
+      "document_length": 6243,
+      "processing_success": true
+    },
+    "10. ALL FEATURES COMBINED (v4.0 Full Power)": {
+      "success": true,
+      "chunks_created": 0,
+      "avg_chunk_size": 0,
+      "document_length": 6243,
+      "processing_success": true
+    }
+  }
+}
