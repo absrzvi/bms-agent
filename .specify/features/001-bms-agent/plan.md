@@ -13,21 +13,19 @@ Single-pod deployment on RunPod.io with direct binary installations (no Docker) 
 - **Platform**: Runpod.io single pod (no Docker/Kubernetes)
 - **Hardware**: 8-16 vCPUs, 32-64GB RAM, 200-500GB NVMe SSD
 - **Existing Services**: Ollama, n8n, OpenWebUI (already installed)
-- **To Install**: Qdrant vector database
 - **Persistent Storage**: ~/persistent/ for all data
 
 ## Tech Stack & Models
 
 ### Core Services
-- **Qdrant v1.7.4**: Direct binary installation (no Docker)
-  - Multi-vector schema: `chunk_embedding`, `parent_embedding` (1024 d for snowflake-arctic)
-  - Sparse vectors for BM25 keyword search (optional, post-MVP)
+- **Qdrant v1.7.4** (application) with **v4.0 schema** (document processor): Direct binary installation (no Docker)
+  - Multi-vector schema: `chunk_embedding`, `parent_embedding`, `child_embedding`, `full_doc_embedding` (1024-d for snowflake-arctic-embed2)
+  - Sparse vectors for BM25 keyword search with complete hybrid search support
   - On-disk storage for memory efficiency and persistence under `~/persistent/qdrant_storage`
   - Collection: `nomad_bms_documents`
 
 - **Ollama Models**:
   - Embeddings: snowflake-arctic-embed2 (1024 dimensions)
-  - Generation: mistral-nemo:12b-instruct (7GB RAM, optimal performance)
   - Alternative: qwen2.5:14b or llama3.1:8b if needed
 
 - **Python 3.11+**: Direct installation with venv
@@ -37,7 +35,7 @@ Single-pod deployment on RunPod.io with direct binary installations (no Docker) 
 
 - **n8n Workflows**:
   - Slack bot integration (Priority 1)
-  - Webhook endpoints protected with JWT per constitution §3
+  - Webhook endpoints (POC: no authentication required)
 
 - **OpenWebUI**:
   - Custom Qdrant tool integration (Priority 2)
@@ -47,7 +45,7 @@ Single-pod deployment on RunPod.io with direct binary installations (no Docker) 
 
 ### Phase 0 – Specification & Planning (`T000`)
 - Author the MVP specification (`.specify/specs/001-bms-agent/spec.md`) to capture user stories, functional/non-functional requirements, and constitution mapping.
-- Review constitution (§1–§4) to ensure acceptance criteria include standards compliance, JWT/webhook security, monitoring, and testing thresholds.
+- Review constitution (§1–§4) to ensure acceptance criteria include standards compliance, basic monitoring, and testing thresholds (POC: simplified security and performance requirements).
 - Establish Git flow branching strategy (feature/release branches) and document workflow expectations in `README.md`.
 - Create `docs/migrations.md` to track any manual data/schema changes executed during the MVP.
 
@@ -74,29 +72,27 @@ Single-pod deployment on RunPod.io with direct binary installations (no Docker) 
 - Build n8n Slack workflow (`n8n/workflows/slack_bot.json`) to call the FastAPI search endpoint and format responses.
 - Create OpenWebUI tool (`~/.openwebui/tools/bms_search.py`) to query the same Qdrant collection via HTTP.
 
-### Phase 4 – Security & Compliance (`T014`)
-1. Implement `api/security.py` (or equivalent module) providing:
-   - JWT validation using RS256 (`BMS_JWT_PUBLIC_KEY` / `BMS_JWT_ALGORITHM`).
-   - API key fallback for internal services (`BMS_API_KEY`).
-   - Request-scoped rate limiting (60 req/min per JWT subject) using lightweight in-memory token bucket (no external dependencies).
-   - Security headers middleware (CSP, HSTS optional, X-Frame-Options, X-Content-Type-Options).
-2. Wire security dependencies into FastAPI routes and ensure 403/429 handling is covered by tests.
-3. Update `docs/security-notes.md` to track remaining items and confirmation checks.
+### Phase 4 – Security & Compliance (`T014` - POC Simplified)
+1. **POC DECISION**: Skip authentication implementation for development phase:
+   - No JWT validation required
+   - No API key authentication 
+   - Basic rate limiting (60 req/min per IP) using lightweight in-memory token bucket
+   - Basic security headers middleware (X-Frame-Options, X-Content-Type-Options)
+2. Ensure basic error handling (400/413/429) is covered by tests.
+3. Document security roadmap in `docs/security-notes.md` for production implementation.
 
 ### Phase 5 – Documentation, Tooling & CI/CD (`T015`, `T016`, `T023`, `T024` – post-MVP optional)
-- Maintain `README.md`, `TESTING.md`, `DEPLOYMENT_CHECKLIST.md`, and `reports/performance-baseline.md` with instructions reflecting current architecture.
 - Configure GitHub Actions (`.github/workflows/ci-cd.yml`) to run tests, coverage, security scans (Bandit, Safety), pre-commit hooks (Black, Ruff, mypy), and provide deployment placeholders for RunPod automation.
 - Document required secrets (`BMS_API_KEY`, `DEPLOY_KEY`, optional `CODECOV_TOKEN`, `SAFETY_API_KEY`, future `RUNPOD_USER/HOST`, `REGISTRY_USERNAME/PASSWORD`).
 
 ### Phase 6 – Testing & Evaluation (`T010`, `T017`, `T019`, `T020`)
 1. Use `scripts/run_tests.sh` to orchestrate integration tests (processor, API smoke checks).
-2. Expand `tests/test_basic.py` and the Locust suite in `tests/performance/load/test_locust.py` to verify ≤100 ms p95 latency with 1,000 concurrent requests and capture JSON stats for analysis.
+2. Expand `tests/test_basic.py` and the Locust suite in `tests/performance/load/test_locust.py` to validate best effort performance (no specific latency targets) and capture baseline JSON stats for analysis.
 3. Create evaluation dataset (`data/evaluation/ground_truth.jsonl`) and `scripts/evaluate_retrieval.py` to compute top-5 accuracy ≥95 %.
 4. Add hybrid retrieval regression tests validating keyword enrichment and dense/sparse fusion logic (leveraging `/api/v1/search/hybrid`).
 5. Integrate evaluation into CI (report accuracy figure and fail if below threshold) and surface performance/hybrid results in pipeline artifacts.
 6. Update `DEPLOYMENT_CHECKLIST.md` to include manual alert runbooks for latency, ingestion, and dependency degradation.
 
-### Phase 7 – Observability & Operations (`T012`, `T013`, `T018`, `T021` – post-MVP optional)
 {{ ... }}
 2. Implement `/metrics/uplink` endpoint exposing latency histogram, request counts, and error totals for scraping.
 3. Expose Prometheus metrics (FastAPI + Qdrant exporters) and provision Grafana dashboards aligned to 99.99 % availability (`T021`, scheduled post-MVP) with documented manual alert runbooks for latency, ingestion, and dependency degradation.

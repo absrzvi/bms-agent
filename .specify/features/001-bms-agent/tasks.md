@@ -39,20 +39,18 @@
   - Files/Paths: `tests/test_basic.py`
   - Parallel: Yes ([P])
 - **T008  Locust Performance Suite**
-  - Summary: Expand `tests/performance/load/test_locust.py` to emit JSON stats (latency p95/p99, throughput) and parameterize host/credentials.
-  - Dependencies: T002
+  - Summary: **POC DECISION**: Expand `tests/performance/load/test_locust.py` to emit baseline performance JSON stats (latency p95/p99, throughput) for establishing performance baselines only - no target thresholds or pass/fail criteria for POC phase.
   - Files/Paths: `tests/performance/load/test_locust.py`
   - Parallel: No
 
 ## Core Implementation
 - **T009  EnhancedDocumentProcessor Integration**
-  - Summary: Implement `api/processor_wrapper.py` configuring `EnhancedDocumentProcessor` with hierarchical parent/child chunking, late chunking, contextual retrieval, hybrid search preparation (dense + BM25), advanced entity extraction, RAGAS quality validation, railway-specific term preservation, version tracking, and optional distributed processing fallbacks while streaming 1 GB uploads from `~/persistent/bms_data/uploads/` into Qdrant with full metadata; add `scripts/test_processor.py` to execute ingestion smoke tests that log chunk counts and collection statistics.
+  - Summary: Implement `api/processor_wrapper.py` configuring `EnhancedDocumentProcessor` with ALL v4.0 engines: `ContextualRetrievalEngine` (store contextual descriptions), `HierarchicalChunkingEngine` (parent/child relationships), `LateChunkingEngine` (full document embeddings), `QualityValidationEngine` (RAGAS metrics), `RailwayDocumentProcessor` (ÖBB-specific extraction), hybrid search preparation (dense + sparse BM25), advanced entity extraction, version tracking, and distributed processing fallbacks. Ensure ALL processor features are stored in Qdrant schema with complete metadata mapping. Add `scripts/test_processor.py` to validate all engines work and verify complete feature coverage in Qdrant collection.
   - Dependencies: T004, T005–T008
   - Files/Paths: `api/processor_wrapper.py`, `scripts/test_processor.py`
   - Parallel: No
 - **T010  Upload Endpoint**
   - Summary: Implement `POST /api/v1/documents/upload` in `api/main.py`, wiring streaming pipeline from `~/persistent/bms_data/uploads/`, ensuring MIME/type validation, checksum logging, and versioning.
-  - Dependencies: T009, T005
   - Files/Paths: `api/main.py`
   - Parallel: No
 - **T011  Semantic Search Endpoint**
@@ -76,21 +74,21 @@
   - Files/Paths: `api/main.py`
   - Parallel: No
 
-## Security & Compliance
-- **T015  Security Module Implementation**
-  - Summary: Build `api/security.py` with JWT (RS256) validation, API key fallback, RBAC roles, and 60 req/min rate limiting.
+## Security & Compliance (POC Simplified)
+- **T015  Basic Security Module Implementation**
+  - Summary: **POC DECISION**: Build basic `api/security.py` with simple rate limiting (60 req/min per IP) and basic security headers only. No JWT or API key authentication required.
   - Dependencies: T011
   - Files/Paths: `api/security.py`
   - Parallel: No
 - **T016  Security Wiring & Tests**
-  - Summary: Integrate security middleware into FastAPI app, update tests for 401/403/429, and document configuration in `docs/security-notes.md`.
+  - Summary: **POC DECISION**: Integrate basic security middleware into FastAPI app, update tests for 400/413/429 error handling, and document production security roadmap in `docs/security-notes.md`.
   - Dependencies: T015, T005–T007
-  - Files/Paths: `api/main.py`, `docs/security-notes.md`, `tests/security/`
+  - Files/Paths: `api/main.py`, `docs/security-notes.md`, `tests/basic/`
   - Parallel: No
 
 ## Integrations
 - **T017  n8n Slack Workflow**
-  - Summary: Author `n8n/workflows/slack_bot.json` to call search endpoints, handle auth headers, and format responses with top snippets.
+  - Summary: **POC DECISION**: Author `n8n/workflows/slack_bot.json` to call search endpoints (no authentication required) and format responses with top snippets.
   - Dependencies: T011, T016
   - Files/Paths: `n8n/workflows/slack_bot.json`
   - Parallel: No

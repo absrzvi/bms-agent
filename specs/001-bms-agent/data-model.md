@@ -20,9 +20,10 @@ description: "Phase 1 data model for BMS Agent MVP"
 - **Relationships**: One-to-one with `ChunkEmbedding`; many-to-one to `DocumentVersion`.
 
 ## ChunkEmbedding
-- **Fields**: `chunk_id`, `dense_vector` (1024-d float32 array), `sparse_tokens` (map<string,float>), `metadata` (JSON), `embedding_model`, `embedding_version`, `created_at`
-- **Constraints**: `embedding_model` = `snowflake-arctic-embed2`; `embedding_version` hashed per model build.
-- **Relationships**: One-to-one with `Chunk`; stored in Qdrant `nomad_bms_documents` collection.
+- **Fields**: `chunk_id`, `chunk_embedding` (1024-d), `parent_embedding` (1024-d), `child_embedding` (1024-d), `full_doc_embedding` (1024-d), `keyword_sparse` (sparse vector), `metadata` (JSON), `embedding_model`, `embedding_version`, `created_at`
+- **Enhanced Fields**: `contextual_description`, `surrounding_context`, `quality_score`, `faithfulness`, `relevancy`, `precision`, `recall`, `has_context`, `context_type`, `late_chunking_applied`, `processing_version`, `technical_terms`, `entity_types`
+- **Constraints**: `embedding_model` = `snowflake-arctic-embed2` (1024-d); all enhanced processor v4.0 features stored.
+- **Relationships**: One-to-one with `Chunk`; stored in Qdrant `nomad_bms_documents` collection with complete feature coverage.
 
 ## RetrievalQuery
 - **Fields**: `query_id` (UUID), `user_id`, `query_text`, `filter_params` (JSON), `created_at`, `response_time_ms`, `result_ids` (array of `chunk_id`), `relevance_scores` (array<float>)

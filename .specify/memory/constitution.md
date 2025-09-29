@@ -3,6 +3,8 @@
 ## Preamble
 This constitution establishes the governing principles and technical standards for the BMS (Building Management System) Agent project, a Proof of Concept (POC) for RAG (Retrieval-Augmented Generation) implementation focused on railway connectivity infrastructure. This document ensures consistency, quality, and maintainability across all aspects of the project.
 
+**POC/MVP Exception Framework**: Requirements marked as MUST may be relaxed or deferred for POC and MVP phases when explicitly documented with "POC DECISION" or "MVP DECISION" markers in specifications. Production deployment must satisfy all MUST requirements.
+
 ## 1. Railway IT Infrastructure Standards (MUST)
 - **Compliance with Standards**: All implementations MUST adhere to:
   - EN50155 (Railway applications - Electronic equipment used in rolling stock)
@@ -15,7 +17,7 @@ This constitution establishes the governing principles and technical standards f
   - Resilient connectivity patterns that sustain 99.99% uptime targets
   - Enterprise-grade wireless access where applicable
 - **Performance**:
-  - Real-time data processing with <100ms latency for moving train data
+  - Real-time data processing with <100ms latency for moving train data (POC: best effort performance acceptable)
   - Resilience patterns for tunnel connectivity and high-speed handovers
 
 ## 2. Data Processing & RAG Architecture (MUST)
@@ -43,13 +45,13 @@ This constitution establishes the governing principles and technical standards f
 
 ## 4. Code Quality & Testing (MUST)
 - **Test Coverage**:
-  - Minimum 80% test coverage for core logic
+  - Minimum 80% test coverage for core logic (POC: basic functionality tests acceptable)
   - Unit tests for data transformations
   - Integration tests for DB and API
 - **Code Quality**:
-  - Pre-commit hooks (Black, Ruff, mypy)
+  - Pre-commit hooks (Black, Ruff, mypy) (POC: manual code quality checks acceptable)
   - NumPy style docstrings
-  - Performance benchmarking
+  - Performance benchmarking (POC: basic performance validation acceptable)
 
 ## 5. Security & Compliance (MUST)
 - **Data Protection**:
@@ -57,9 +59,9 @@ This constitution establishes the governing principles and technical standards f
   - Encryption at rest
   - Input validation
 - **Access Control**:
-  - JWT/API key authentication
-  - RBAC implementation
-  - Audit logging
+  - JWT/API key authentication (POC: no authentication acceptable for development)
+  - RBAC implementation (POC: deferred to production)
+  - Audit logging (POC: basic logging acceptable)
 - **Security Scanning**:
   - Regular Bandit scans
   - Dependency vulnerability checks
@@ -86,8 +88,8 @@ This constitution establishes the governing principles and technical standards f
   - Async operations
   - Memory profiling
 - **Targets**:
-  - 1000+ concurrent requests
-  - Sub-100ms response times
+  - 1000+ concurrent requests (POC: best effort performance, no specific targets)
+  - Sub-100ms response times (POC: best effort performance, no specific targets)
 
 ## 8. Monitoring & Observability (MUST)
 - **Logging**:
