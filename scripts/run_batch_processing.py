@@ -62,25 +62,52 @@ def main():
         print("❌ No documents found in upload directory")
         return
     
-    # Process all documents with distributed processing
+    # Process all documents individually (simpler approach)
     try:
         print("🔄 Starting batch processing...")
-        results = process_directory_distributed(
-            directory=input_dir,
-            config=config,
-            patterns=all_patterns,
-            num_workers=4  # Parallel processing
-        )
+        print(f"📝 Processing {len(all_files)} files...")
+        print()
         
+        # Initialize processor
+        processor = EnhancedDocumentProcessor(config)
+        
+        results = []
+        successful = 0
+        failed = 0
+        total_chunks = 0
+        
+        for i, file_path in enumerate(all_files, 1):
+            try:
+                print(f"[{i}/{len(all_files)}] Processing: {file_path.name}...", end=" ")
+                
+                # Process document
+                result = processor.process_document(str(file_path))
+                
+                if result.get('status') == 'success':
+                    successful += 1
+                    chunks = result.get('chunks_created', 0)
+                    total_chunks += chunks
+                    quality = result.get('quality_score', 0)
+                    print(f"✅ ({chunks} chunks, quality: {quality:.3f})")
+                else:
+                    failed += 1
+                    print(f"❌ {result.get('error', 'Unknown error')}")
+                
+                results.append(result)
+                
+            except Exception as e:
+                failed += 1
+                print(f"❌ Error: {e}")
+                results.append({'status': 'error', 'file_path': str(file_path), 'error': str(e)})
+        
+        print()
         print(f"✅ Batch processing completed!")
         print(f"📊 Processed {len(results)} documents")
         print()
         
-        # Summary statistics
-        successful = sum(1 for r in results if r.get('status') == 'success')
-        failed = len(results) - successful
-        total_chunks = sum(r.get('chunks_created', 0) for r in results)
-        avg_quality = sum(r.get('quality_score', 0) for r in results) / len(results) if results else 0
+        # Calculate average quality
+        quality_scores = [r.get('quality_score', 0) for r in results if r.get('status') == 'success' and r.get('quality_score')]
+        avg_quality = sum(quality_scores) / len(quality_scores) if quality_scores else 0
         
         print("📈 Processing Summary:")
         print(f"   ✅ Successful: {successful}")
@@ -94,12 +121,16 @@ def main():
             print("❌ Failed Documents:")
             for result in results:
                 if result.get('status') != 'success':
-                    print(f"   - {result.get('file_path', 'Unknown')}: {result.get('error', 'Unknown error')}")
+                    file_path = result.get('file_path', 'Unknown')
+                    error = result.get('error', 'Unknown error')
+                    print(f"   - {Path(file_path).name}: {error}")
         
         print("🎉 All documents processed and ready for search!")
         
     except Exception as e:
         print(f"❌ Batch processing failed: {e}")
+        import traceback
+        traceback.print_exc()
         return 1
     
     return 0
