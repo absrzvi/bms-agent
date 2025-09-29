@@ -1982,7 +1982,7 @@ class EnhancedDocumentProcessor:
                     "processing_version": "v4.0_enhanced"
                 }
                 
-                # Create point with multi-vector support
+                # Create point with multi-vector support (no sparse for now)
                 point = PointStruct(
                     id=chunk_id,
                     vector={
@@ -2000,17 +2000,26 @@ class EnhancedDocumentProcessor:
                 logger.error(f"Error creating point for chunk {i}: {e}")
                 continue
         
-        # Store points in Qdrant
+        # Store points in Qdrant (one at a time for compatibility)
         if points:
-            try:
-                self.qdrant_client.upsert(
-                    collection_name=self.collection_name,
-                    points=points
-                )
-                stored_count = len(points)
+            stored_count = 0
+            for point in points:
+                try:
+                    # Use client library directly - one point at a time
+                    self.qdrant_client.upsert(
+                        collection_name=self.collection_name,
+                        points=[point]
+                    )
+                    stored_count += 1
+                    
+                except Exception as e:
+                    logger.error(f"❌ Failed to store point {point.id}: {e}")
+                    continue
+            
+            if stored_count > 0:
                 logger.info(f"💾 Stored {stored_count} points in Qdrant collection '{self.collection_name}'")
-            except Exception as e:
-                logger.error(f"❌ Failed to store points in Qdrant: {e}")
+            else:
+                logger.error(f"❌ Failed to store any points in Qdrant")
                 return 0
         
         return stored_count
