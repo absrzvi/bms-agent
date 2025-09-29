@@ -7,9 +7,9 @@
   - Files/Paths: `.gitflow`, `README.md`, `.gitmessage`
   - Parallel: No
 - **T001  Provision Persistent Storage**
-  - Summary: Create `~/persistent/qdrant_storage`, `~/persistent/bms_data/{uploads,processed,evaluations}`, and `~/persistent/logs` with correct permissions.
+  - Summary: Create `/workspace/qdrant_storage`, `/workspace/bms_data/{uploads,processed,evaluations}`, and `/workspace/logs` with correct permissions per operational requirements.
   - Dependencies: None
-  - Files/Paths: `~/persistent/`
+  - Files/Paths: `/workspace/`
   - Parallel: No
 - **T002  Python Environment Bootstrap**
   - Summary: Create `.venv`, install `requirements.txt` and `requirements-test.txt`, pin versions in `requirements.txt` as needed.
@@ -17,7 +17,7 @@
   - Files/Paths: `requirements.txt`, `requirements-test.txt`
   - Parallel: No
 - **T003  Qdrant Binary Install & Service Script**
-  - Summary: Install Qdrant 1.7.4 (non-Docker) and finalize `scripts/start_qdrant.sh` with start/stop/status commands logging to `~/persistent/logs/qdrant.log`.
+  - Summary: Install Qdrant 1.7.4 (non-Docker) and finalize `scripts/start_qdrant.sh` with start/stop/status commands logging to `/workspace/logs/qdrant.log`.
   - Dependencies: T002
   - Files/Paths: `scripts/start_qdrant.sh`
   - Parallel: No
@@ -55,8 +55,14 @@
   - Files/Paths: `api/processor_wrapper.py`, `bms-agent/scr/enhanced_document_processor.py`, `scripts/test_*.py` (25+ test files)
   - Parallel: No
   - Status: ✅ COMPLETED - All features implemented and tested
+- **T009A  API Data Models [P]**
+  - Summary: Implement Pydantic models in `api/models/` based on data-model.md entities: Document, DocumentVersion, Chunk, ChunkEmbedding, RetrievalQuery, UserIdentity, AuditLog with proper validation and relationships.
+  - Dependencies: T002
+  - Files/Paths: `api/models/documents.py`, `api/models/search.py`, `api/models/health.py`
+  - Parallel: Yes ([P])
 - **T010  Upload Endpoint**
-  - Summary: Implement `POST /api/v1/documents/upload` in `api/main.py`, wiring streaming pipeline from `~/persistent/bms_data/uploads/`, ensuring MIME/type validation, checksum logging, and versioning.
+  - Summary: Implement `POST /api/v1/documents/upload` in `api/main.py`, wiring streaming pipeline from `/workspace/bms_data/uploads/`, ensuring MIME/type validation for all supported formats (PDF, DOCX, PPTX, CSV, XLSX, TXT), checksum logging, and versioning per data model.
+  - Dependencies: T009
   - Files/Paths: `api/main.py`
   - Parallel: No
 - **T011  Semantic Search Endpoint**
@@ -106,7 +112,7 @@
 
 ## Observability & Operations
 - **T019  Manage Services Script**
-  - Summary: Complete `scripts/manage_services.sh` with start/stop/status/restart flows for Qdrant and API, logging to `~/persistent/logs/`.
+  - Summary: Complete `scripts/manage_services.sh` with start/stop/status/restart flows for Qdrant and API, logging to `/workspace/logs/`.
   - Dependencies: T003, T010
   - Files/Paths: `scripts/manage_services.sh`
   - Parallel: No
