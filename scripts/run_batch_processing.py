@@ -13,6 +13,7 @@ sys.path.insert(0, str(project_root / "bms-agent" / "scr"))
 from enhanced_document_processor import (
     EnhancedDocumentProcessor, 
     ProcessingConfig,
+    ProcessingProfile,
     process_directory_distributed
 )
 
@@ -23,11 +24,11 @@ def main():
     config = ProcessingConfig(
         chunk_size=2000,
         chunk_overlap=400,
-        quality_threshold=0.70,
-        enable_quality_filter=True,
-        enable_context_preservation=True,
+        quality_threshold=70.0,
+        enable_quality_validation=True,
+        enable_contextual_retrieval=True,
         enable_late_chunking=True,
-        processing_profile="railway"  # BMS railway documents
+        processing_profile=ProcessingProfile.TECHNICAL  # BMS technical documents
     )
     
     # Input and output directories
@@ -45,11 +46,14 @@ def main():
     # Ensure output directory exists
     output_dir.mkdir(parents=True, exist_ok=True)
     
-    # Count total files
+    # Count total files (recursive search)
     all_patterns = ["*.pdf", "*.csv", "*.xlsx", "*.xls", "*.txt", "*.md", "*.docx", "*.pptx"]
     total_files = 0
+    all_files = []
     for pattern in all_patterns:
-        total_files += len(list(input_dir.rglob(pattern)))
+        files = list(input_dir.rglob(pattern))
+        all_files.extend(files)
+        total_files += len(files)
     
     print(f"📋 Found {total_files} documents to process")
     print()
