@@ -1,10 +1,14 @@
 #!/usr/bin/env python3
 """
-Batch process all documents in /workspace/bms_data/uploads/ using Enhanced Document Processor v4.0
+Batch Processing Script for BMS Agent
+Process all documents in the uploads directory with optional parallel processing
 """
 
 import sys
+import argparse
 from pathlib import Path
+from concurrent.futures import ProcessPoolExecutor, as_completed
+from multiprocessing import cpu_count
 
 # Add the project root to Python path
 project_root = Path(__file__).parent.parent
@@ -17,8 +21,28 @@ from enhanced_document_processor import (
     process_directory_distributed
 )
 
+def process_single_file(file_path_str, config_dict):
+    """Process a single file - used for parallel processing"""
+    try:
+        # Recreate config from dict
+        config = ProcessingConfig(**config_dict)
+        processor = EnhancedDocumentProcessor(config)
+        result = processor.process_document(file_path_str)
+        result['file_path'] = file_path_str
+        return result
+    except Exception as e:
+        return {
+            'processing_success': False,
+            'file_path': file_path_str,
+            'errors': [str(e)]
+        }
+
 def main():
     """Run batch processing on all documents"""
+    
+    parser = argparse.ArgumentParser(description="Batch Processing Script for BMS Agent")
+    parser.add_argument("-p", "--parallel", action="store_true", help="Enable parallel processing")
+    args = parser.parse_args()
     
     # Configuration for BMS documents
     config = ProcessingConfig(
@@ -62,45 +86,94 @@ def main():
         print("❌ No documents found in upload directory")
         return
     
-    # Process all documents individually (simpler approach)
+    # Process all documents
     try:
         print("🔄 Starting batch processing...")
         print(f"📝 Processing {len(all_files)} files...")
+        if args.parallel:
+            num_workers = min(cpu_count(), 4)  # Max 4 workers
+            print(f"⚡ Parallel mode: {num_workers} workers")
         print()
-        
-        # Initialize processor
-        processor = EnhancedDocumentProcessor(config)
         
         results = []
         successful = 0
         failed = 0
         total_chunks = 0
         
-        for i, file_path in enumerate(all_files, 1):
-            try:
-                print(f"[{i}/{len(all_files)}] Processing: {file_path.name}...", end=" ")
+        if args.parallel:
+            # Parallel processing with ProcessPoolExecutor
+            config_dict = {
+                'chunk_size': config.chunk_size,
+                'chunk_overlap': config.chunk_overlap,
+                'quality_threshold': config.quality_threshold,
+                'enable_quality_validation': config.enable_quality_validation,
+                'enable_contextual_retrieval': config.enable_contextual_retrieval,
+                'enable_late_chunking': config.enable_late_chunking,
+                'processing_profile': config.processing_profile
+            }
+            
+            with ProcessPoolExecutor(max_workers=num_workers) as executor:
+                # Submit all tasks
+                future_to_file = {
+                    executor.submit(process_single_file, str(file_path), config_dict): file_path 
+                    for file_path in all_files
+                }
                 
-                # Process document
-                result = processor.process_document(str(file_path))
-                
-                # Check if processing was successful
-                if result.get('processing_success', False):
-                    successful += 1
-                    chunks = len(result.get('chunks', []))
-                    total_chunks += chunks
-                    quality = result.get('average_quality_score', 0)
-                    print(f"✅ ({chunks} chunks, quality: {quality:.3f})")
-                else:
+                # Process completed tasks
+                for i, future in enumerate(as_completed(future_to_file), 1):
+                    file_path = future_to_file[future]
+                    try:
+                        result = future.result()
+                        print(f"[{i}/{len(all_files)}] {file_path.name}...", end=" ")
+                        
+                        if result.get('processing_success', False):
+                            successful += 1
+                            chunks = len(result.get('chunks', []))
+                            total_chunks += chunks
+                            quality_report = result.get('quality_report', {})
+                            quality = quality_report.get('average_quality', 0)
+                            print(f"✅ ({chunks} chunks, quality: {quality:.3f})")
+                        else:
+                            failed += 1
+                            errors = result.get('errors', ['Unknown error'])
+                            print(f"❌ {errors[0] if errors else 'Unknown error'}")
+                        
+                        results.append(result)
+                    except Exception as e:
+                        failed += 1
+                        print(f"[{i}/{len(all_files)}] {file_path.name}... ❌ Error: {e}")
+                        results.append({'processing_success': False, 'file_path': str(file_path), 'errors': [str(e)]})
+        else:
+            # Sequential processing
+            processor = EnhancedDocumentProcessor(config)
+            
+            for i, file_path in enumerate(all_files, 1):
+                try:
+                    print(f"[{i}/{len(all_files)}] Processing: {file_path.name}...", end=" ")
+                    
+                    # Process document
+                    result = processor.process_document(str(file_path))
+                    
+                    # Check if processing was successful
+                    if result.get('processing_success', False):
+                        successful += 1
+                        chunks = len(result.get('chunks', []))
+                        total_chunks += chunks
+                        # Get quality from quality_report
+                        quality_report = result.get('quality_report', {})
+                        quality = quality_report.get('average_quality', 0)
+                        print(f"✅ ({chunks} chunks, quality: {quality:.3f})")
+                    else:
+                        failed += 1
+                        errors = result.get('errors', ['Unknown error'])
+                        print(f"❌ {errors[0] if errors else 'Unknown error'}")
+                    
+                    results.append(result)
+                    
+                except Exception as e:
                     failed += 1
-                    errors = result.get('errors', ['Unknown error'])
-                    print(f"❌ {errors[0] if errors else 'Unknown error'}")
-                
-                results.append(result)
-                
-            except Exception as e:
-                failed += 1
-                print(f"❌ Error: {e}")
-                results.append({'status': 'error', 'file_path': str(file_path), 'error': str(e)})
+                    print(f"❌ Error: {e}")
+                    results.append({'processing_success': False, 'file_path': str(file_path), 'errors': [str(e)]})
         
         print()
         print(f"✅ Batch processing completed!")
@@ -108,7 +181,12 @@ def main():
         print()
         
         # Calculate average quality
-        quality_scores = [r.get('average_quality_score', 0) for r in results if r.get('processing_success', False) and r.get('average_quality_score')]
+        quality_scores = []
+        for r in results:
+            if r.get('processing_success', False):
+                qr = r.get('quality_report', {})
+                if qr and qr.get('average_quality'):
+                    quality_scores.append(qr.get('average_quality'))
         avg_quality = sum(quality_scores) / len(quality_scores) if quality_scores else 0
         
         print("📈 Processing Summary:")
