@@ -83,15 +83,17 @@ def main():
                 # Process document
                 result = processor.process_document(str(file_path))
                 
-                if result.get('status') == 'success':
+                # Check if processing was successful
+                if result.get('processing_success', False):
                     successful += 1
-                    chunks = result.get('chunks_created', 0)
+                    chunks = len(result.get('chunks', []))
                     total_chunks += chunks
-                    quality = result.get('quality_score', 0)
+                    quality = result.get('average_quality_score', 0)
                     print(f"✅ ({chunks} chunks, quality: {quality:.3f})")
                 else:
                     failed += 1
-                    print(f"❌ {result.get('error', 'Unknown error')}")
+                    errors = result.get('errors', ['Unknown error'])
+                    print(f"❌ {errors[0] if errors else 'Unknown error'}")
                 
                 results.append(result)
                 
@@ -106,7 +108,7 @@ def main():
         print()
         
         # Calculate average quality
-        quality_scores = [r.get('quality_score', 0) for r in results if r.get('status') == 'success' and r.get('quality_score')]
+        quality_scores = [r.get('average_quality_score', 0) for r in results if r.get('processing_success', False) and r.get('average_quality_score')]
         avg_quality = sum(quality_scores) / len(quality_scores) if quality_scores else 0
         
         print("📈 Processing Summary:")
@@ -120,10 +122,11 @@ def main():
         if failed > 0:
             print("❌ Failed Documents:")
             for result in results:
-                if result.get('status') != 'success':
-                    file_path = result.get('file_path', 'Unknown')
-                    error = result.get('error', 'Unknown error')
-                    print(f"   - {Path(file_path).name}: {error}")
+                if not result.get('processing_success', False):
+                    file_path = result.get('file_path', result.get('document_id', 'Unknown'))
+                    errors = result.get('errors', ['Unknown error'])
+                    error = errors[0] if errors else 'Unknown error'
+                    print(f"   - {Path(file_path).name if file_path != 'Unknown' else 'Unknown'}: {error}")
         
         print("🎉 All documents processed and ready for search!")
         
