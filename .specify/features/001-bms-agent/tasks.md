@@ -1,6 +1,11 @@
 # BMS Agent MVP Task List
 
 ## Setup
+- **T000  Git Flow Branching Setup**
+  - Summary: Establish Git flow branching strategy per R6.1 - configure feature/<name> and release/<version> branch patterns, set up semantic commit message templates, and document workflow in README.md.
+  - Dependencies: None
+  - Files/Paths: `.gitflow`, `README.md`, `.gitmessage`
+  - Parallel: No
 - **T001  Provision Persistent Storage**
   - Summary: Create `~/persistent/qdrant_storage`, `~/persistent/bms_data/{uploads,processed,evaluations}`, and `~/persistent/logs` with correct permissions.
   - Dependencies: None
@@ -111,7 +116,7 @@
   - Files/Paths: `scripts/health_check.sh`
   - Parallel: No
 - **T021  Manual Alert Runbooks & Grafana Dashboards**
-  - Summary: Configure Prometheus scrape targets, create Grafana panels, and document manual alert escalation (latency, ingestion, dependency) in `DEPLOYMENT_CHECKLIST.md`.
+  - Summary: Configure Prometheus scrape targets, create Grafana panels per constitution §8, and document comprehensive manual alert runbooks in `DEPLOYMENT_CHECKLIST.md` covering: (1) API latency >100ms p95 procedures, (2) Document ingestion failure escalation, (3) Qdrant/Ollama/n8n dependency recovery, (4) Contact matrix with timelines, (5) Manual monitoring and log analysis procedures.
   - Dependencies: T014, T020
   - Files/Paths: `grafana/`, `DEPLOYMENT_CHECKLIST.md`
   - Parallel: No

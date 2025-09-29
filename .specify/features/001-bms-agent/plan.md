@@ -87,21 +87,18 @@ Single-pod deployment on RunPod.io with direct binary installations (no Docker) 
 
 ### Phase 6 – Testing & Evaluation (`T010`, `T017`, `T019`, `T020`)
 1. Use `scripts/run_tests.sh` to orchestrate integration tests (processor, API smoke checks).
-2. Expand `tests/test_basic.py` and the Locust suite in `tests/performance/load/test_locust.py` to validate best effort performance (no specific latency targets) and capture baseline JSON stats for analysis.
 3. Create evaluation dataset (`data/evaluation/ground_truth.jsonl`) and `scripts/evaluate_retrieval.py` to compute top-5 accuracy ≥95 %.
 4. Add hybrid retrieval regression tests validating keyword enrichment and dense/sparse fusion logic (leveraging `/api/v1/search/hybrid`).
 5. Integrate evaluation into CI (report accuracy figure and fail if below threshold) and surface performance/hybrid results in pipeline artifacts.
 6. Update `DEPLOYMENT_CHECKLIST.md` to include manual alert runbooks for latency, ingestion, and dependency degradation.
 
-{{ ... }}
+## Logging & Monitoring
+1. Configure structured logging with correlation IDs and appropriate log levels for all components (API, Qdrant, processing pipeline).
 2. Implement `/metrics/uplink` endpoint exposing latency histogram, request counts, and error totals for scraping.
-3. Expose Prometheus metrics (FastAPI + Qdrant exporters) and provision Grafana dashboards aligned to 99.99 % availability (`T021`, scheduled post-MVP) with documented manual alert runbooks for latency, ingestion, and dependency degradation.
+3. Expose Prometheus metrics (FastAPI + Qdrant exporters) and provision Grafana dashboards aligned to 99.99 % availability (`T021`, included in MVP) with documented manual alert runbooks for latency, ingestion, and dependency degradation.
 4. Note automated paging/notification delivery as post-MVP follow-up; document monitoring routine, log rotation, manual escalation steps, and incident response in `DEPLOYMENT_CHECKLIST.md`.
 
 ## File Structure
-```
-~
-├── persistent/
 │   ├── qdrant_storage/            # Qdrant data files
 │   ├── bms_data/
 │   │   ├── uploads/               # Source documents
@@ -198,7 +195,7 @@ N8N_WEBHOOK_JWT=...
 - Health script scheduled via cron/systemd on RunPod to log status snapshots.
 - Log rotation for `~/persistent/logs/*.log` using `logrotate` or custom cron.
 - Daily backups: `tar -czf ~/persistent/backups/bms_$(date +%Y%m%d).tar.gz ~/persistent/qdrant_storage ~/persistent/bms_data` (automate in cron after initial validation).
-- Consider Prometheus/Grafana integration post-MVP; maintain placeholders in `/metrics/uplink` response for future scrape format.
+- **MVP REQUIREMENT**: Implement Prometheus/Grafana integration as part of MVP per constitution §8; configure basic dashboards and metrics scraping via `/metrics/uplink` endpoint.
 
 ## Success Criteria & Priority Order
 

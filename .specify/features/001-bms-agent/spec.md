@@ -44,7 +44,8 @@
   
 - **Observability & Operations**
   - R7.1: Expose Prometheus-compatible metrics and ship Grafana dashboards with 99.99 % availability visualizations per constitution §8 as part of the MVP.
-  - R7.2: Document manual alert runbooks for latency, ingestion, and dependency degradation; automated notification delivery is deferred to a post-MVP roadmap item.
+  - R7.2: Document comprehensive manual alert runbooks for latency, ingestion, and dependency degradation; automated notification delivery is deferred to a post-MVP roadmap item.
+    - *Acceptance*: `DEPLOYMENT_CHECKLIST.md` contains specific runbooks for: (1) API latency >100ms p95 response procedures, (2) Document ingestion failure escalation steps, (3) Qdrant/Ollama/n8n dependency degradation recovery actions, (4) Contact matrix with escalation timelines, (5) Manual monitoring procedures and log analysis steps.
   - R7.3: Maintain `DEPLOYMENT_CHECKLIST.md` with escalation steps and contact matrix.
 
 - **Success Criteria**
