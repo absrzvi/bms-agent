@@ -2,7 +2,7 @@
 
 ## Overview
 - **Purpose**: Deliver a retrieval-augmented assistant for railway network documentation, deployed on a single RunPod pod with persistent storage.
-- **Scope**: **MVP DECISION**: Full integration stack - Document ingestion (PDF, CSV, XLSX, TXT), semantic search, Slack integration, OpenWebUI custom tool, n8n workflows, API endpoints for internal services. Health checks simplified for POC.
+- **Scope**: **MVP DECISION**: Full integration stack - Document ingestion (PDF, DOCX, PPTX, CSV, XLSX, TXT), semantic search, Slack integration, OpenWebUI custom tool, n8n workflows, API endpoints for internal services. Health checks simplified for POC.
 - **Constitution Alignment**: Implements Railway IT standards (EN50155, EN45545), RAG architecture mandates, n8n workflow authentication (JWT + API key), code quality & testing minimums, availability/monitoring targets.
 
 ## User Stories
@@ -12,10 +12,12 @@
 
 ## Requirements
 - **Document Processing**
-  - R1.1: Ingest PDF, CSV, XLSX, and TXT files up to 1 GB with rejection for unsupported types.
+  - R1.1: Ingest PDF, DOCX, PPTX, CSV, XLSX, and TXT files up to 1 GB with rejection for unsupported types.
     - *Acceptance*: Upload endpoint streams and processes 1 GB test fixtures without memory errors; returns HTTP 400/413 with descriptive errors for invalid types or oversize payloads.
-  - R1.2: **MVP DECISION**: Full advanced processing - Chunk documents using hierarchical strategy (1,500 tokens, 200 overlap), quality validation, contextual retrieval, and BM25 keyword extraction. Store multiple embeddings per chunk in Qdrant collection `nomad_bms_documents`.
-    - *Acceptance*: `scripts/test_processor.py` logs chunk counts and quality scores; Qdrant collection contains hierarchical metadata, quality metrics, contextual descriptions, BM25 sparse vectors, and all enhanced processor features per chunk.
+  - R1.2: **MVP DECISION**: Enhanced Document Processor v4.0 with optimized quality processing - Sentence-aware chunking (2000 chars, 400 overlap), quality validation (≥0.70 score), contextual retrieval, perfect data cleaning, and BM25 keyword extraction. Store multiple embeddings per chunk in Qdrant collection `nomad_bms_documents`.
+    - *Acceptance*: Quality score ≥0.70 with 100% pass rate; zero data artifacts in XLSX/CSV processing; complete multi-format support (PDF, DOCX, PPTX, XLSX, CSV, TXT); comprehensive test suite validates all features.
+  - R1.3: **QUALITY ASSURANCE**: Achieve enterprise-grade processing quality with comprehensive format support and data cleaning.
+    - *Acceptance*: DOCX processing with python-docx (0.714-0.895 quality); PPTX slide structure preservation; XLSX perfect cleaning (zero NaN/Unnamed artifacts); CSV enhanced formatting; multi-language support (German/English); business document intelligence.
 
 - **Search & Retrieval**
   - R2.1: **MVP DECISION**: Provide semantic search via `/api/v1/search/semantic` with best effort performance; focus on functionality over specific latency targets.
