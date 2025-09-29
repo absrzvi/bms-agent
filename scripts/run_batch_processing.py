@@ -7,8 +7,15 @@ Process all documents in the uploads directory with optional parallel processing
 import sys
 import argparse
 from pathlib import Path
-from concurrent.futures import ProcessPoolExecutor, as_completed
-from multiprocessing import cpu_count
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from multiprocessing import cpu_count, set_start_method
+import multiprocessing
+
+# Set spawn method for CUDA compatibility
+try:
+    set_start_method('spawn', force=True)
+except RuntimeError:
+    pass  # Already set
 
 # Add the project root to Python path
 project_root = Path(__file__).parent.parent
@@ -21,12 +28,10 @@ from enhanced_document_processor import (
     process_directory_distributed
 )
 
-def process_single_file(file_path_str, config_dict):
-    """Process a single file - used for parallel processing"""
+def process_single_file(args_tuple):
+    """Process a single file - used for thread-based parallel processing"""
+    file_path_str, processor = args_tuple
     try:
-        # Recreate config from dict
-        config = ProcessingConfig(**config_dict)
-        processor = EnhancedDocumentProcessor(config)
         result = processor.process_document(file_path_str)
         result['file_path'] = file_path_str
         return result
@@ -42,6 +47,7 @@ def main():
     
     parser = argparse.ArgumentParser(description="Batch Processing Script for BMS Agent")
     parser.add_argument("-p", "--parallel", action="store_true", help="Enable parallel processing")
+    parser.add_argument("-w", "--workers", type=int, default=4, help="Number of parallel workers (default: 4)")
     args = parser.parse_args()
     
     # Configuration for BMS documents
@@ -91,8 +97,8 @@ def main():
         print("🔄 Starting batch processing...")
         print(f"📝 Processing {len(all_files)} files...")
         if args.parallel:
-            num_workers = min(cpu_count(), 4)  # Max 4 workers
-            print(f"⚡ Parallel mode: {num_workers} workers")
+            num_workers = min(args.workers, cpu_count())
+            print(f"⚡ Parallel mode: {num_workers} workers (max available: {cpu_count()})")
         print()
         
         results = []
@@ -101,21 +107,13 @@ def main():
         total_chunks = 0
         
         if args.parallel:
-            # Parallel processing with ProcessPoolExecutor
-            config_dict = {
-                'chunk_size': config.chunk_size,
-                'chunk_overlap': config.chunk_overlap,
-                'quality_threshold': config.quality_threshold,
-                'enable_quality_validation': config.enable_quality_validation,
-                'enable_contextual_retrieval': config.enable_contextual_retrieval,
-                'enable_late_chunking': config.enable_late_chunking,
-                'processing_profile': config.processing_profile
-            }
+            # Parallel processing with ThreadPoolExecutor (avoids CUDA forking issues)
+            processor = EnhancedDocumentProcessor(config)
             
-            with ProcessPoolExecutor(max_workers=num_workers) as executor:
-                # Submit all tasks
+            with ThreadPoolExecutor(max_workers=num_workers) as executor:
+                # Submit all tasks with processor instance
                 future_to_file = {
-                    executor.submit(process_single_file, str(file_path), config_dict): file_path 
+                    executor.submit(process_single_file, (str(file_path), processor)): file_path 
                     for file_path in all_files
                 }
                 
