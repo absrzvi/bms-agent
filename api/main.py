@@ -23,6 +23,14 @@ from pathlib import Path
 sys.path.append(str(Path(__file__).parent))
 from processor_wrapper import get_processor, ProcessingResult
 
+# Import Slack integration
+try:
+    from slack_integration import router as slack_router
+    SLACK_AVAILABLE = True
+except ImportError:
+    SLACK_AVAILABLE = False
+    logger.warning("Slack integration not available")
+
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -44,6 +52,11 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Include Slack router if available
+if SLACK_AVAILABLE:
+    app.include_router(slack_router)
+    logger.info("✅ Slack integration enabled")
 
 # Configuration
 UPLOAD_DIR = Path("/workspace/bms_data/uploads")

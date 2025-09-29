@@ -1,17 +1,19 @@
 # BMS Agent MVP Task List
 
 **Status**: 🎉 PRODUCTION READY (Core MVP Complete)  
-**Progress**: 16/28 tasks (57%) | Core: 15/15 (100%) | Integrations: 1/2 (50%)  
-**Last Updated**: 2025-09-29 21:03 UTC
+**Progress**: 17/28 tasks (61%) | Core: 15/15 (100%) | Integrations: 2/2 (100%)  
+**Last Updated**: 2025-09-29 21:07 UTC
 
 ## Current Status
 - ✅ **Core MVP**: 100% Complete (T000-T014)
-- ✅ **OpenWebUI Tool**: Complete (T018) - 7/7 tests passing
+- ✅ **Integrations**: 100% Complete (T017-T018)
+- ✅ **Slack Integration**: Complete - FastAPI endpoints ready
+- ✅ **OpenWebUI Tool**: Complete - 7/7 tests passing
 - ✅ **448 chunks** indexed in Qdrant
 - ✅ **0.714 quality score** (exceeds target)
 - ✅ **Semantic search** operational and verified
 - ✅ **Persistent storage**: All data in /workspace
-- 📋 **Next Phase**: Slack Integration (T017) & Observability (T019-T021)
+- 📋 **Next Phase**: Observability (T019-T021) & Documentation (T022-T025)
 
 ## Setup
 - **T000  Git Flow Branching Setup** ✅
@@ -113,11 +115,12 @@
   - Parallel: No
 
 ## Integrations
-- **T017  n8n Slack Workflow**
-  - Summary: **POC DECISION**: Author `n8n/workflows/slack_bot.json` to call search endpoints (no authentication required) and format responses with top snippets.
+- **T017  Slack Integration** ✅
+  - Summary: **COMPLETED**: Implemented direct FastAPI Slack integration (n8n not available). Created `api/slack_integration.py` with slash command handlers (`/bms-search`, `/bms-search-hybrid`, `/bms-help`), Slack Block Kit formatting, signature verification, and event handling. Complete setup guide in `docs/SLACK_SETUP.md`. POC mode: optional authentication.
   - Dependencies: T011, T016
-  - Files/Paths: `n8n/workflows/slack_bot.json`
+  - Files/Paths: `api/slack_integration.py`, `docs/SLACK_SETUP.md`, `api/main.py` (router integration)
   - Parallel: No
+  - Status: ✅ COMPLETED - Endpoints ready, integrated into API, documented
 - **T018  OpenWebUI Tool Script** ✅
   - Summary: **COMPLETED**: Implemented `tools/bms_search.py` with 5 search functions (semantic, hybrid, filtered, document type, health check), 7 configurable Valves, complete error handling, and comprehensive documentation. Test suite: 7/7 tests passing (100%). Tool ready for OpenWebUI deployment.
   - Dependencies: T011, T012
