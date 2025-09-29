@@ -1590,28 +1590,53 @@ class DistributedDocumentProcessor:
 def process_directory_distributed(
     directory: Path,
     config: ProcessingConfig,
-    pattern: str = "*.pdf",
+    patterns: List[str] = None,
     num_workers: int = 4
 ) -> List[Dict[str, Any]]:
     """Process directory using distributed processing"""
+    
+    # Default patterns for all supported file types
+    if patterns is None:
+        patterns = ["*.pdf", "*.csv", "*.xlsx", "*.xls", "*.txt", "*.md", "*.docx", "*.pptx"]
     
     if not setup_distributed_processing():
         logger.warning("Falling back to sequential processing")
         processor = EnhancedDocumentProcessor(config)
         results = []
-        for file_path in directory.glob(pattern):
-            results.append(processor.process_document(file_path))
+        
+        # Process all matching files
+        all_files = []
+        for pattern in patterns:
+            all_files.extend(directory.glob(pattern))
+        
+        logger.info(f"Found {len(all_files)} files to process")
+        for file_path in all_files:
+            try:
+                result = processor.process_document(file_path)
+                results.append(result)
+                logger.info(f"✅ Processed: {file_path.name}")
+            except Exception as e:
+                logger.error(f"❌ Failed to process {file_path.name}: {e}")
+                results.append({
+                    "file_path": str(file_path),
+                    "processing_success": False,
+                    "error": str(e)
+                })
         return results
     
     # Create Ray actors
     actors = [DistributedDocumentProcessor.remote(config) for _ in range(num_workers)]
     
-    # Get files to process
-    files = list(directory.glob(pattern))
+    # Get all files to process
+    all_files = []
+    for pattern in patterns:
+        all_files.extend(directory.glob(pattern))
+    
+    logger.info(f"Found {len(all_files)} files to process with {num_workers} workers")
     
     # Distribute work
     futures = []
-    for i, file_path in enumerate(files):
+    for i, file_path in enumerate(all_files):
         actor = actors[i % num_workers]
         futures.append(actor.process.remote(str(file_path)))
     
@@ -1653,6 +1678,9 @@ def main():
                        help="Disable late chunking")
     parser.add_argument("--no-hybrid", action="store_true",
                        help="Disable hybrid search preparation")
+    parser.add_argument("--patterns", nargs="+", 
+                       default=["*.pdf", "*.csv", "*.xlsx", "*.xls", "*.txt", "*.md", "*.docx", "*.pptx"],
+                       help="File patterns to process (default: all supported types)")
     
     args = parser.parse_args()
     
@@ -1685,16 +1713,34 @@ def main():
         print(f"✅ Processed {input_path.name} -> {output_path}")
         
     elif input_path.is_dir():
-        # Process directory
+        # Process directory with specified file patterns
         if config.enable_distributed:
             results = process_directory_distributed(
-                input_path, config, "*.pdf", config.num_workers
+                input_path, config, args.patterns, config.num_workers
             )
         else:
             processor = EnhancedDocumentProcessor(config)
             results = []
-            for file_path in input_path.glob("*.pdf"):
-                results.append(processor.process_document(file_path))
+            
+            # Get all matching files
+            all_files = []
+            for pattern in args.patterns:
+                all_files.extend(input_path.glob(pattern))
+            
+            print(f"Found {len(all_files)} files to process...")
+            
+            for file_path in all_files:
+                try:
+                    result = processor.process_document(file_path)
+                    results.append(result)
+                    print(f"✅ Processed: {file_path.name}")
+                except Exception as e:
+                    print(f"❌ Failed to process {file_path.name}: {e}")
+                    results.append({
+                        "file_path": str(file_path),
+                        "processing_success": False,
+                        "error": str(e)
+                    })
         
         # Save results
         output_path = Path(args.output)
