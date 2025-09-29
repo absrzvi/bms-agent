@@ -1845,7 +1845,7 @@ class EnhancedDocumentProcessor:
                     "model": self.embedding_model,
                     "input": text
                 },
-                timeout=30
+                timeout=120  # Increased for parallel processing
             )
             
             if response.status_code == 200:
