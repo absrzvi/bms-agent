@@ -1718,12 +1718,29 @@ class EnhancedDocumentProcessor:
         """Read document content based on file type"""
         
         extension = file_path.suffix.lower()
-        
         if extension in ['.txt', '.md']:
             return file_path.read_text(encoding='utf-8')
         
         elif extension == '.pdf':
-            # Try pdfplumber first for better text extraction
+            # Try PyMuPDF first for better text quality (fewer duplicate characters)
+            if PYMUPDF_AVAILABLE:
+                try:
+                    import fitz
+                    doc = fitz.open(file_path)
+                    text = ""
+                    for page in doc:
+                        page_text = page.get_text()
+                        if page_text:
+                            text += page_text + "\n"
+                    doc.close()
+                    
+                    if text.strip():
+                        logger.info(f"✅ Extracted text using PyMuPDF: {len(text)} chars")
+                        return text
+                except Exception as e:
+                    logger.warning(f"PyMuPDF extraction failed: {e}, falling back to pdfplumber")
+            
+            # Fallback to pdfplumber
             if PDFPLUMBER_AVAILABLE:
                 try:
                     import pdfplumber
@@ -1738,20 +1755,9 @@ class EnhancedDocumentProcessor:
                         logger.info(f"✅ Extracted text using pdfplumber: {len(text)} chars")
                         return text
                 except Exception as e:
-                    logger.warning(f"pdfplumber extraction failed: {e}, falling back to PyMuPDF")
+                    logger.warning(f"pdfplumber extraction failed: {e}")
             
-            # Fallback to PyMuPDF
-            if PYMUPDF_AVAILABLE:
-                import fitz
-                doc = fitz.open(file_path)
-                text = ""
-                for page in doc:
-                    text += page.get_text()
-                doc.close()
-                logger.info(f"✅ Extracted text using PyMuPDF: {len(text)} chars")
-                return text
-            else:
-                raise ImportError("PDF processing libraries (pdfplumber or PyMuPDF) required")
+            raise ImportError("PDF processing libraries (PyMuPDF or pdfplumber) required")
         
         elif extension in ['.csv']:
             if PANDAS_AVAILABLE:

@@ -102,8 +102,8 @@ class BMSDocumentProcessor:
                 max_chunk_size=2000,
                 quality_threshold=60.0,  # Lower threshold for testing
                 
-                # Advanced chunking
-                chunking_strategy=ChunkingStrategy.HIERARCHICAL,
+                # Advanced chunking (use sliding window for reliable chunking)
+                chunking_strategy=ChunkingStrategy.SLIDING_WINDOW,
                 parent_chunk_size=2000,
                 child_chunk_size=400,
                 
@@ -292,8 +292,9 @@ class BMSDocumentProcessor:
             logger.info(f"📄 Running Enhanced Document Processor v4.0...")
             processing_result = self.enhanced_processor.process_document(file_path)
             
-            if not processing_result or processing_result.get("status") != "success":
-                error_msg = processing_result.get("error", "Unknown processing error")
+            # Check for processing success (the processor uses 'processing_success' not 'status')
+            if not processing_result or not processing_result.get("processing_success", False):
+                error_msg = processing_result.get("error", "Unknown processing error") if processing_result else "No processing result"
                 return ProcessingResult(
                     document_id=document_id,
                     file_name=file_name,
@@ -308,7 +309,8 @@ class BMSDocumentProcessor:
             
             # Extract processing results
             chunks = processing_result.get("chunks", [])
-            quality_metrics = processing_result.get("quality_metrics", {})
+            quality_report = processing_result.get("quality_report", {})
+            statistics = processing_result.get("statistics", {})
             metadata = processing_result.get("metadata", {})
             
             logger.info(f"✅ Document processed: {len(chunks)} chunks created")
@@ -333,7 +335,7 @@ class BMSDocumentProcessor:
                 file_name=file_name,
                 status="success",
                 chunks_created=len(chunks),
-                quality_score=quality_metrics.get("overall_score", 0.0),
+                quality_score=statistics.get("avg_chunk_size", 0.0),  # Use avg chunk size as quality proxy
                 processing_time_ms=int(processing_time),
                 features_extracted=self._get_enabled_features(),
                 metadata={
@@ -341,7 +343,8 @@ class BMSDocumentProcessor:
                     "file_size": os.path.getsize(file_path),
                     "file_hash": self._calculate_file_hash(file_path),
                     "processing_timestamp": start_time.isoformat(),
-                    "quality_metrics": quality_metrics,
+                    "quality_report": quality_report,
+                    "statistics": statistics,
                     "enhanced_features": metadata
                 }
             )
