@@ -61,26 +61,26 @@ class QdrantInitializer:
                 vectors_config={
                     # Main chunk embedding (for standard retrieval)
                     "chunk_embedding": VectorParams(
-                        size=1024,  # snowflake-arctic-embed2 dimensions
+                        size=768,  # sentence-transformers/all-mpnet-base-v2 dimensions
                         distance=Distance.COSINE
                     ),
                     
                     # Parent embedding (for hierarchical retrieval)
                     "parent_embedding": VectorParams(
-                        size=1024,
+                        size=768,
                         distance=Distance.COSINE,
                         on_disk=False  # Keep in memory for fast access
                     ),
                     
                     # Child embedding (for precise matching)
                     "child_embedding": VectorParams(
-                        size=1024,
+                        size=768,
                         distance=Distance.COSINE
                     ),
                     
                     # Full document embedding (from late chunking)
                     "full_doc_embedding": VectorParams(
-                        size=1024,
+                        size=768,
                         distance=Distance.COSINE,
                         on_disk=True  # Can be on disk as accessed less frequently
                     )

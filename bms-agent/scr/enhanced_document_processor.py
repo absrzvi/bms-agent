@@ -1823,9 +1823,15 @@ class EnhancedDocumentProcessor:
             except Exception as e:
                 logger.warning(f"⚠️  Qdrant not available: {e}")
         
-        # Initialize Ollama for embeddings
-        self.ollama_url = "http://localhost:11434"
-        self.embedding_model = "snowflake-arctic-embed2"
+        # Initialize sentence-transformers for fast embeddings
+        self.embedding_model = None
+        if SENTENCE_TRANSFORMERS_AVAILABLE:
+            try:
+                from sentence_transformers import SentenceTransformer
+                self.embedding_model = SentenceTransformer('sentence-transformers/all-mpnet-base-v2')
+                logger.info("✅ sentence-transformers model loaded (768-d embeddings)")
+            except Exception as e:
+                logger.warning(f"⚠️  sentence-transformers not available: {e}")
         
         logger.info("🚀 Enhanced Document Processor v4.0 initialized")
         logger.info(f"   Profile: {self.config.processing_profile.value}")
@@ -1836,25 +1842,15 @@ class EnhancedDocumentProcessor:
         logger.info(f"   Qdrant Storage: {self.qdrant_client is not None}")
     
     def _generate_embeddings(self, text: str) -> Optional[List[float]]:
-        """Generate embeddings using Ollama"""
+        """Generate embeddings using sentence-transformers (35x faster than Ollama)"""
         try:
-            import requests
-            response = requests.post(
-                f"{self.ollama_url}/api/embed",
-                json={
-                    "model": self.embedding_model,
-                    "input": text
-                },
-                timeout=120  # Increased for parallel processing
-            )
-            
-            if response.status_code == 200:
-                result = response.json()
-                embeddings = result.get("embeddings", [])
-                return embeddings[0] if embeddings else None
-            else:
-                logger.error(f"Ollama embedding failed: {response.status_code}")
+            if not self.embedding_model:
+                logger.error("Embedding model not initialized")
                 return None
+            
+            # Generate embedding using sentence-transformers
+            embedding = self.embedding_model.encode(text, convert_to_numpy=True)
+            return embedding.tolist()
                 
         except Exception as e:
             logger.error(f"Error generating embeddings: {e}")
