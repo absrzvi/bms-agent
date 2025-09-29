@@ -46,6 +46,7 @@
   - R5.3: **MVP DECISION**: Manual code quality checks; automated pre-commit tooling and strict typing enforcement deferred to production phase.
 - **Workflow & Change Management**
   - R6.1: Adopt Git flow branching for feature development (e.g., `feature/<name>`, `release/<version>`) with semantic commit messages.
+  - R6.2: Implement semantic versioning for all releases with proper changelog maintenance and dependency management.
   - R6.3: Produce container images for the API service, follow semantic versioning, and automate database migrations as part of the release workflow.
   
 - **Observability & Operations**

@@ -13,7 +13,7 @@ Single-pod deployment on RunPod.io with direct binary installations (no Docker) 
 - **Platform**: Runpod.io single pod (no Docker/Kubernetes)
 - **Hardware**: 8-16 vCPUs, 32-64GB RAM, 200-500GB NVMe SSD
 - **Existing Services**: Ollama, n8n, OpenWebUI (already installed)
-- **Persistent Storage**: ~/persistent/ for all data
+- **Persistent Storage**: /workspace/ for all data
 
 ## Tech Stack & Models
 
@@ -21,7 +21,7 @@ Single-pod deployment on RunPod.io with direct binary installations (no Docker) 
 - **Qdrant v1.7.4** (application) with **v4.0 schema** (document processor): Direct binary installation (no Docker)
   - Multi-vector schema: `chunk_embedding`, `parent_embedding`, `child_embedding`, `full_doc_embedding` (1024-d for snowflake-arctic-embed2)
   - Sparse vectors for BM25 keyword search with complete hybrid search support
-  - On-disk storage for memory efficiency and persistence under `~/persistent/qdrant_storage`
+  - On-disk storage for memory efficiency and persistence under `/workspace/qdrant_storage`
   - Collection: `nomad_bms_documents`
 
 - **Ollama Models**:
@@ -31,7 +31,7 @@ Single-pod deployment on RunPod.io with direct binary installations (no Docker) 
 - **Python 3.11+**: Direct installation with venv
   - No containerization, runs as system process
   - FastAPI on port 8000 for API endpoints
-  - Persistent data in ~/persistent/bms_data/
+  - Persistent data in /workspace/bms_data/
 
 - **n8n Workflows**:
   - Slack bot integration (Priority 1)
