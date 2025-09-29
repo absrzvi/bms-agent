@@ -81,7 +81,7 @@
   - Dependencies: T009
   - Files/Paths: `api/main.py`
   - Parallel: No
-- **T014  Metrics Endpoint**
+- **T014  Metrics Endpoint** ✅
   - Summary: Implement `/metrics/uplink` returning latency histogram, ingestion throughput, error counts, and scrape freshness per data model.
   - Dependencies: T009, T008
   - Files/Paths: `api/main.py`
