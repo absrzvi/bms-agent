@@ -1813,12 +1813,207 @@ class EnhancedDocumentProcessor:
         else:
             self.railway_processor = None
         
+        # Initialize Qdrant client
+        self.qdrant_client = None
+        self.collection_name = "nomad_bms_documents"
+        if QDRANT_AVAILABLE:
+            try:
+                self.qdrant_client = QdrantClient(host="localhost", port=6333)
+                logger.info("✅ Qdrant client initialized")
+            except Exception as e:
+                logger.warning(f"⚠️  Qdrant not available: {e}")
+        
+        # Initialize Ollama for embeddings
+        self.ollama_url = "http://localhost:11434"
+        self.embedding_model = "snowflake-arctic-embed2"
+        
         logger.info("🚀 Enhanced Document Processor v4.0 initialized")
         logger.info(f"   Profile: {self.config.processing_profile.value}")
         logger.info(f"   Chunking: {self.config.chunking_strategy.value}")
         logger.info(f"   Contextual Retrieval: {self.config.enable_contextual_retrieval}")
         logger.info(f"   Late Chunking: {self.config.enable_late_chunking}")
         logger.info(f"   Hybrid Search: {self.config.enable_hybrid_search}")
+        logger.info(f"   Qdrant Storage: {self.qdrant_client is not None}")
+    
+    def _generate_embeddings(self, text: str) -> Optional[List[float]]:
+        """Generate embeddings using Ollama"""
+        try:
+            import requests
+            response = requests.post(
+                f"{self.ollama_url}/api/embed",
+                json={
+                    "model": self.embedding_model,
+                    "input": text
+                },
+                timeout=30
+            )
+            
+            if response.status_code == 200:
+                result = response.json()
+                embeddings = result.get("embeddings", [])
+                return embeddings[0] if embeddings else None
+            else:
+                logger.error(f"Ollama embedding failed: {response.status_code}")
+                return None
+                
+        except Exception as e:
+            logger.error(f"Error generating embeddings: {e}")
+            return None
+    
+    def _create_sparse_vector(self, text: str, keywords: List[str]) -> Optional[Dict]:
+        """Create sparse vector for BM25/keyword search"""
+        try:
+            from qdrant_client.models import SparseVector
+            
+            # Simple keyword-based sparse vector
+            word_counts = {}
+            words = text.lower().split()
+            
+            # Count word frequencies
+            for word in words:
+                if len(word) > 2:  # Skip very short words
+                    word_counts[word] = word_counts.get(word, 0) + 1
+            
+            # Add extracted keywords with higher weights
+            for keyword in keywords:
+                word_counts[keyword.lower()] = word_counts.get(keyword.lower(), 0) + 5
+            
+            # Convert to sparse vector format
+            if word_counts:
+                # Sort by frequency and take top 100
+                sorted_words = sorted(word_counts.items(), key=lambda x: x[1], reverse=True)[:100]
+                indices = list(range(len(sorted_words)))
+                values = [float(count) for _, count in sorted_words]
+                
+                return SparseVector(indices=indices, values=values)
+            
+        except Exception as e:
+            logger.error(f"Error creating sparse vector: {e}")
+        
+        return None
+    
+    def _store_in_qdrant(self, document_id: str, file_name: str, chunks: List[Dict[str, Any]]) -> int:
+        """Store processed chunks in Qdrant with embeddings"""
+        
+        if not self.qdrant_client:
+            logger.warning("Qdrant client not available - skipping storage")
+            return 0
+        
+        if not chunks:
+            logger.warning("No chunks to store")
+            return 0
+        
+        points = []
+        stored_count = 0
+        
+        for i, chunk in enumerate(chunks):
+            try:
+                import uuid
+                chunk_id = f"{document_id}_chunk_{i}_{uuid.uuid4().hex[:8]}"
+                content = chunk.get("content", "")
+                
+                if not content or len(content) < 10:
+                    continue
+                
+                # Generate embeddings for all vector types
+                chunk_embedding = self._generate_embeddings(content)
+                if not chunk_embedding:
+                    logger.warning(f"Failed to generate embedding for chunk {i}")
+                    continue
+                
+                # Create different embedding types for multi-vector support
+                parent_embedding = chunk_embedding  # Same for now
+                child_embedding = chunk_embedding
+                full_doc_embedding = chunk_embedding
+                
+                # Create sparse vector for hybrid search
+                keywords = chunk.get("keywords", [])
+                sparse_vector = self._create_sparse_vector(content, keywords)
+                
+                # Build comprehensive payload
+                payload = {
+                    # Document-level metadata
+                    "document_id": document_id,
+                    "document_name": file_name,
+                    "document_type": Path(file_name).suffix.lower().replace(".", ""),
+                    "document_version": 1.0,
+                    "processing_profile": self.config.processing_profile.value,
+                    "processing_timestamp": datetime.now().isoformat(),
+                    
+                    # Chunk-level metadata
+                    "chunk_id": chunk_id,
+                    "chunk_type": chunk.get("chunk_type", "single"),
+                    "chunk_index": i,
+                    "chunk_size": len(content),
+                    "content": content,
+                    
+                    # Hierarchical chunking metadata
+                    "hierarchy_level": chunk.get("hierarchy_level", "single"),
+                    "parent_chunk_id": chunk.get("parent_chunk_id"),
+                    "is_parent": chunk.get("is_parent", False),
+                    "is_child": chunk.get("is_child", False),
+                    
+                    # Quality validation metadata
+                    "quality_score": float(chunk.get("quality_score", 0.0)),
+                    
+                    # Contextual retrieval metadata
+                    "has_context": bool(chunk.get("contextual_description")),
+                    "contextual_description": chunk.get("contextual_description", ""),
+                    "surrounding_context": chunk.get("surrounding_context", ""),
+                    "context_type": chunk.get("context_type", "none"),
+                    
+                    # Late chunking metadata
+                    "late_chunking_applied": chunk.get("late_chunking_applied", False),
+                    
+                    # Entity extraction metadata
+                    "entities": json.dumps(chunk.get("entities", [])),
+                    "keywords": json.dumps(keywords),
+                    "technical_terms": json.dumps(chunk.get("technical_terms", [])),
+                    
+                    # Railway-specific metadata
+                    "fleet_type": chunk.get("fleet_type", ""),
+                    "train_id": chunk.get("train_id", ""),
+                    "standard_compliance": chunk.get("standard_compliance", ""),
+                    "network_component": chunk.get("network_component", ""),
+                    "configuration_type": chunk.get("configuration_type", ""),
+                    
+                    # Search optimization metadata
+                    "search_type": "hybrid",
+                    "processing_version": "v4.0_enhanced"
+                }
+                
+                # Create point with multi-vector support
+                point = PointStruct(
+                    id=chunk_id,
+                    vector={
+                        "chunk_embedding": chunk_embedding,
+                        "parent_embedding": parent_embedding,
+                        "child_embedding": child_embedding,
+                        "full_doc_embedding": full_doc_embedding
+                    },
+                    payload=payload
+                )
+                
+                points.append(point)
+                
+            except Exception as e:
+                logger.error(f"Error creating point for chunk {i}: {e}")
+                continue
+        
+        # Store points in Qdrant
+        if points:
+            try:
+                self.qdrant_client.upsert(
+                    collection_name=self.collection_name,
+                    points=points
+                )
+                stored_count = len(points)
+                logger.info(f"💾 Stored {stored_count} points in Qdrant collection '{self.collection_name}'")
+            except Exception as e:
+                logger.error(f"❌ Failed to store points in Qdrant: {e}")
+                return 0
+        
+        return stored_count
     
     def process_document(self, 
                         file_path: Union[str, Path],
@@ -1945,6 +2140,12 @@ class EnhancedDocumentProcessor:
             }
             
             logger.info(f"✅ Successfully processed: {len(chunks)} chunks generated")
+            
+            # Store in Qdrant if available
+            if self.qdrant_client and chunks:
+                stored_count = self._store_in_qdrant(document_id, file_path.name, chunks)
+                result['qdrant_stored'] = stored_count
+                logger.info(f"💾 Qdrant storage: {stored_count} chunks stored")
             
         except Exception as e:
             result['errors'].append(str(e))
