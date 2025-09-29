@@ -36,7 +36,14 @@ try:
 except ImportError:
     QDRANT_AVAILABLE = False
 
-# Ollama integration for embeddings
+# sentence-transformers for embeddings
+try:
+    from sentence_transformers import SentenceTransformer
+    SENTENCE_TRANSFORMERS_AVAILABLE = True
+except ImportError:
+    SENTENCE_TRANSFORMERS_AVAILABLE = False
+
+# Ollama integration for embeddings (fallback)
 try:
     import requests
     REQUESTS_AVAILABLE = True
