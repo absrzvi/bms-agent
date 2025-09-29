@@ -1,10 +1,11 @@
 #!/bin/bash
 # Qdrant Service Management Script for BMS Agent
 
-QDRANT_BINARY="$HOME/persistent/qdrant"
-QDRANT_STORAGE="$HOME/persistent/qdrant_storage"
-QDRANT_LOG="$HOME/persistent/logs/qdrant.log"
-QDRANT_PID="$HOME/persistent/logs/qdrant.pid"
+QDRANT_BINARY="/workspace/qdrant"
+QDRANT_STORAGE="/workspace/qdrant_storage"
+QDRANT_LOG="/workspace/logs/qdrant.log"
+QDRANT_PID="/workspace/logs/qdrant.pid"
+QDRANT_CONFIG="/workspace/config/config.yaml"
 
 # Configuration
 QDRANT_HOST="0.0.0.0"
@@ -20,10 +21,9 @@ start_qdrant() {
     echo "Starting Qdrant..."
     mkdir -p "$(dirname "$QDRANT_LOG")"
     
-    # Start Qdrant with configuration file
-    cd "$(dirname "$0")/.."
+    # Start Qdrant with configuration file from /workspace
     nohup "$QDRANT_BINARY" \
-        --config-path "./config/config.yaml" \
+        --config-path "$QDRANT_CONFIG" \
         > "$QDRANT_LOG" 2>&1 &
     
     echo $! > "$QDRANT_PID"

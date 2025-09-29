@@ -5,10 +5,10 @@ scripts:
   ps: scripts/powershell/update-agent-context.ps1 -AgentType __AGENT__
 ---
 
-# Implementation Plan: BMS Agent
+# Implementation Plan: [FEATURE]
 
-**Branch**: `001-bms-agent` | **Date**: 2025-09-29 | **Spec**: [spec.md](spec.md)
-**Input**: Feature specification from `/specs/001-bms-agent/spec.md`
+**Branch**: `[###-feature-name]` | **Date**: [DATE] | **Spec**: [link]
+**Input**: Feature specification from `/specs/[###-feature-name]/spec.md`
 
 ## Execution Flow (/plan command scope)
 ```
@@ -37,35 +37,23 @@ scripts:
 - Phase 3-4: Implementation execution (manual or via tools)
 
 ## Summary
-Railway network documentation retrieval-augmented assistant with Enhanced Document Processor v4.0, deployed on RunPod with complete integration stack including Slack bot, OpenWebUI tool, and n8n workflows. Supports multi-format document processing (PDF, DOCX, PPTX, CSV, XLSX, TXT) with enterprise-grade quality (0.718 score, 100% pass rate), semantic/hybrid search via Qdrant vector database, and department-level scalability (20-100 concurrent users).
+[Extract from feature spec: primary requirement + technical approach from research]
 
 ## Technical Context
-**Language/Version**: Python 3.11+ (constitution requirement)  
-**Primary Dependencies**: FastAPI, Qdrant, Enhanced Document Processor v4.0, Ollama, python-docx, python-pptx, PyMuPDF, pandas  
-**Storage**: Qdrant vector database (v1.7.4), /workspace folder for persistent data, Ollama for embeddings  
-**Testing**: pytest, comprehensive test suite (25+ validation scripts), Locust for performance testing  
-**Target Platform**: RunPod Linux server, single pod deployment  
-**Project Type**: single - API service with integrations  
-**Performance Goals**: ≤100ms p95 search latency, 1,135 chars/sec processing, ≥95% retrieval accuracy  
-**Constraints**: 20-100 concurrent users, 1GB max file size, 99.99% availability target, /workspace storage  
-**Scale/Scope**: Department-level deployment, multi-format documents, complete integration stack
+**Language/Version**: [e.g., Python 3.11, Swift 5.9, Rust 1.75 or NEEDS CLARIFICATION]  
+**Primary Dependencies**: [e.g., FastAPI, UIKit, LLVM or NEEDS CLARIFICATION]  
+**Storage**: [if applicable, e.g., PostgreSQL, CoreData, files or N/A]  
+**Testing**: [e.g., pytest, XCTest, cargo test or NEEDS CLARIFICATION]  
+**Target Platform**: [e.g., Linux server, iOS 15+, WASM or NEEDS CLARIFICATION]
+**Project Type**: [single/web/mobile - determines source structure]  
+**Performance Goals**: [domain-specific, e.g., 1000 req/s, 10k lines/sec, 60 fps or NEEDS CLARIFICATION]  
+**Constraints**: [domain-specific, e.g., <200ms p95, <100MB memory, offline-capable or NEEDS CLARIFICATION]  
+**Scale/Scope**: [domain-specific, e.g., 10k users, 1M LOC, 50 screens or NEEDS CLARIFICATION]
 
 ## Constitution Check
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-**Railway IT Standards (§1)**: ✅ PASS - EN50155/EN45545 compliance documented, 99.99% availability target set  
-**RAG Architecture (§2)**: ✅ PASS - Python 3.11+, Enhanced Document Processor v4.0, Qdrant v4+ schema, hybrid search  
-**n8n Integration (§3)**: ✅ PASS - RESTful API with OpenAPI 3.0, webhook endpoints, structured error handling  
-**Code Quality (§4)**: ✅ PASS (MVP) - Basic testing scope acceptable for POC, comprehensive test suite available  
-**Security (§5)**: ✅ PASS (POC) - API key authentication, basic rate limiting, POC security acceptable  
-**Documentation (§6)**: ✅ PASS - Comprehensive specs, API documentation, setup guides planned  
-**Performance (§7)**: ✅ PASS (POC) - Best effort performance acceptable, specific targets documented  
-**Monitoring (§8)**: ✅ PASS - Prometheus/Grafana dashboards, structured logging, health checks  
-**Development Workflow (§9)**: ✅ PASS - Git flow, semantic versioning, container builds planned  
-**Architecture (§10)**: ✅ PASS - Modular design, service layer, clear separation of concerns  
-**AI/LLM Architecture (§11)**: ✅ PASS - Local Ollama deployment, no external API calls, data sovereignty  
-**Vector Database (§12)**: ✅ PASS - Self-hosted Qdrant, hybrid retrieval, optimized chunking  
-**n8n Integration (§13)**: ✅ PASS - Webhook-driven workflows, stateless processing, error recovery
+[Gates determined based on constitution file]
 
 ## Project Structure
 
@@ -81,52 +69,50 @@ specs/[###-feature]/
 ```
 
 ### Source Code (repository root)
+<!--
+  ACTION REQUIRED: Replace the placeholder tree below with the concrete layout
+  for this feature. Delete unused options and expand the chosen structure with
+  real paths (e.g., apps/admin, packages/something). The delivered plan must
+  not include Option labels.
+-->
 ```
-api/
-├── main.py                  # FastAPI application entry point
-├── processor_wrapper.py     # Enhanced Document Processor v4.0 integration
-├── security.py             # Authentication, rate limiting, headers
-└── models/
-    ├── documents.py         # Document processing models
-    ├── search.py           # Search request/response models
-    └── health.py           # Health check models
-
-bms-agent/
-└── scr/
-    ├── enhanced_document_processor.py  # Core processor (existing)
-    └── qdrant_schema_v4.py            # Vector database schema
-
-scripts/
-├── init_qdrant.py          # Qdrant collection initialization
-├── start_qdrant.sh         # Service management
-├── manage_services.sh      # Orchestration
-├── health_check.sh         # System health validation
-├── evaluate_retrieval.py   # Accuracy evaluation
-└── test_*.py              # Comprehensive test suite (25+ files)
-
-n8n/workflows/
-└── slack_bot.json          # Slack integration workflow
-
-tools/
-└── bms_search.py           # OpenWebUI custom tool
+# [REMOVE IF UNUSED] Option 1: Single project (DEFAULT)
+src/
+├── models/
+├── services/
+├── cli/
+└── lib/
 
 tests/
-├── contract/               # API contract tests
-├── integration/            # End-to-end tests
-├── performance/load/       # Locust performance tests
-└── unit/                  # Component tests
+├── contract/
+├── integration/
+└── unit/
 
-config/
-├── requirements.txt        # Python dependencies
-├── requirements-test.txt   # Test dependencies
-└── .env.example           # Configuration template
+# [REMOVE IF UNUSED] Option 2: Web application (when "frontend" + "backend" detected)
+backend/
+├── src/
+│   ├── models/
+│   ├── services/
+│   └── api/
+└── tests/
 
-docs/
-├── enhanced-document-processor-v4.md  # Technical documentation
-└── DEPLOYMENT_CHECKLIST.md           # Operations runbook
+frontend/
+├── src/
+│   ├── components/
+│   ├── pages/
+│   └── services/
+└── tests/
+
+# [REMOVE IF UNUSED] Option 3: Mobile + API (when "iOS/Android" detected)
+api/
+└── [same as backend above]
+
+ios/ or android/
+└── [platform-specific structure: feature modules, UI flows, platform tests]
 ```
 
-**Structure Decision**: Single project structure selected for API service with integrations. Core Enhanced Document Processor v4.0 maintained in existing bms-agent/scr/ location, with FastAPI wrapper in api/ directory and comprehensive tooling in scripts/.
+**Structure Decision**: [Document the selected structure and reference the real
+directories captured above]
 
 ## Phase 0: Outline & Research
 1. **Extract unknowns from Technical Context** above:
@@ -188,30 +174,17 @@ docs/
 **Task Generation Strategy**:
 - Load `.specify/templates/tasks-template.md` as base
 - Generate tasks from Phase 1 design docs (contracts, data model, quickstart)
-- Enhanced Document Processor v4.0 integration (already completed - mark as COMPLETED)
 - Each contract → contract test task [P]
 - Each entity → model creation task [P] 
 - Each user story → integration test task
 - Implementation tasks to make tests pass
-- Integration tasks for Slack, OpenWebUI, n8n workflows
-- Monitoring and observability setup tasks
 
 **Ordering Strategy**:
 - TDD order: Tests before implementation 
-- Dependency order: Environment setup → Qdrant → Enhanced Processor → API → Integrations → Monitoring
+- Dependency order: Models before services before UI
 - Mark [P] for parallel execution (independent files)
-- Account for existing Enhanced Document Processor v4.0 (T009 COMPLETED status)
 
-**BMS Agent Specific Tasks**:
-- Environment setup (Qdrant, Ollama, Python venv)
-- Enhanced Document Processor v4.0 wrapper (leverage existing implementation)
-- FastAPI endpoints (upload, search, health, metrics)
-- Security middleware (rate limiting, API key auth)
-- Integration implementations (Slack bot, OpenWebUI tool, n8n workflows)
-- Monitoring setup (Prometheus, Grafana dashboards, alert runbooks)
-- Testing suite (contract, integration, performance, accuracy evaluation)
-
-**Estimated Output**: 25-30 numbered, ordered tasks in tasks.md with proper dependencies
+**Estimated Output**: 25-30 numbered, ordered tasks in tasks.md
 
 **IMPORTANT**: This phase is executed by the /tasks command, NOT by /plan
 
@@ -235,18 +208,18 @@ docs/
 *This checklist is updated during execution flow*
 
 **Phase Status**:
-- [x] Phase 0: Research complete (/plan command) - research.md with all decisions documented
-- [x] Phase 1: Design complete (/plan command) - data-model.md, contracts/, quickstart.md updated
-- [x] Phase 2: Task planning complete (/plan command - describe approach only) - Strategy documented
+- [ ] Phase 0: Research complete (/plan command)
+- [ ] Phase 1: Design complete (/plan command)
+- [ ] Phase 2: Task planning complete (/plan command - describe approach only)
 - [ ] Phase 3: Tasks generated (/tasks command)
 - [ ] Phase 4: Implementation complete
 - [ ] Phase 5: Validation passed
 
 **Gate Status**:
-- [x] Initial Constitution Check: PASS - All 13 sections compliant
-- [x] Post-Design Constitution Check: PASS - Design maintains compliance
-- [x] All NEEDS CLARIFICATION resolved - Technical context complete
-- [x] Complexity deviations documented - None required
+- [ ] Initial Constitution Check: PASS
+- [ ] Post-Design Constitution Check: PASS
+- [ ] All NEEDS CLARIFICATION resolved
+- [ ] Complexity deviations documented
 
 ---
 *Based on Constitution v2.1.1 - See `/memory/constitution.md`*

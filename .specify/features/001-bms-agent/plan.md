@@ -44,7 +44,7 @@ Single-pod deployment on RunPod.io with direct binary installations (no Docker) 
 ## Implementation Plan
 
 ### Phase 0 – Specification & Planning (`T000`)
-- Author the MVP specification (`.specify/specs/001-bms-agent/spec.md`) to capture user stories, functional/non-functional requirements, and constitution mapping.
+- Author the MVP specification (`.specify/features/001-bms-agent/spec.md`) to capture user stories, functional/non-functional requirements, and constitution mapping.
 - Review constitution (§1–§4) to ensure acceptance criteria include standards compliance, basic monitoring, and testing thresholds (POC: simplified security and performance requirements).
 - Establish Git flow branching strategy (feature/release branches) and document workflow expectations in `README.md`.
 - Create `docs/migrations.md` to track any manual data/schema changes executed during the MVP.
@@ -62,6 +62,7 @@ Single-pod deployment on RunPod.io with direct binary installations (no Docker) 
 3. Create `api/main.py` (FastAPI) exposing:
    - `POST /api/v1/documents/upload`
    - `POST /api/v1/search/semantic`
+   - `POST /api/v1/search/hybrid`
    - `GET /health` and `GET /health/detailed`
    - Root endpoint summarising capabilities
 4. Ensure all endpoints load configuration from environment variables with reasonable defaults for local development.

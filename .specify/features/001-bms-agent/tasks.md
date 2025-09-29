@@ -1,27 +1,27 @@
 # BMS Agent MVP Task List
 
 ## Setup
-- **T000  Git Flow Branching Setup**
+- **T000  Git Flow Branching Setup** ✅
   - Summary: Establish Git flow branching strategy per R6.1 - configure feature/<name> and release/<version> branch patterns, set up semantic commit message templates, and document workflow in README.md.
   - Dependencies: None
   - Files/Paths: `.gitflow`, `README.md`, `.gitmessage`
   - Parallel: No
-- **T001  Provision Persistent Storage**
+- **T001  Provision Persistent Storage** ✅
   - Summary: Create `/workspace/qdrant_storage`, `/workspace/bms_data/{uploads,processed,evaluations}`, and `/workspace/logs` with correct permissions per operational requirements.
   - Dependencies: None
   - Files/Paths: `/workspace/`
   - Parallel: No
-- **T002  Python Environment Bootstrap**
+- **T002  Python Environment Bootstrap** ✅
   - Summary: Create `.venv`, install `requirements.txt` and `requirements-test.txt`, pin versions in `requirements.txt` as needed.
   - Dependencies: T001
   - Files/Paths: `requirements.txt`, `requirements-test.txt`
   - Parallel: No
-- **T003  Qdrant Binary Install & Service Script**
+- **T003  Qdrant Binary Install & Service Script** ✅
   - Summary: Install Qdrant 1.7.4 (non-Docker) and finalize `scripts/start_qdrant.sh` with start/stop/status commands logging to `/workspace/logs/qdrant.log`.
   - Dependencies: T002
   - Files/Paths: `scripts/start_qdrant.sh`
   - Parallel: No
-- **T004  Qdrant Collection Initializer**
+- **T004  Qdrant Collection Initializer** ✅
   - Summary: Implement `scripts/init_qdrant.py` to create the `nomad_bms_documents` multi-vector collection with named vectors (`chunk_embedding`, `parent_embedding`, both 1024-d cosine), payload indexes for `document_id`, `version_id`, hierarchical metadata, and sparse keyword/BM25 fields plus default HNSW params.
   - Dependencies: T003
   - Files/Paths: `scripts/init_qdrant.py`
@@ -45,6 +45,7 @@
   - Parallel: Yes ([P])
 - **T008  Locust Performance Suite**
   - Summary: **POC DECISION**: Expand `tests/performance/load/test_locust.py` to emit baseline performance JSON stats (latency p95/p99, throughput) for establishing performance baselines only - no target thresholds or pass/fail criteria for POC phase.
+  - Dependencies: T002
   - Files/Paths: `tests/performance/load/test_locust.py`
   - Parallel: No
 
