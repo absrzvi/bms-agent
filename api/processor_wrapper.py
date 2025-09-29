@@ -81,8 +81,7 @@ class BMSDocumentProcessor:
             try:
                 self.qdrant_client = QdrantClient(
                     host=qdrant_host, 
-                    port=qdrant_port,
-                    check_compatibility=False
+                    port=qdrant_port
                 )
                 logger.info(f"✅ Connected to Qdrant at {qdrant_host}:{qdrant_port}")
             except Exception as e:
