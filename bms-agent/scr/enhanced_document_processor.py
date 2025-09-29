@@ -61,6 +61,24 @@ try:
 except ImportError:
     PYMUPDF_AVAILABLE = False
 
+# Advanced text processing
+try:
+    from bs4 import BeautifulSoup
+    import pdfplumber
+    BEAUTIFULSOUP_AVAILABLE = True
+    PDFPLUMBER_AVAILABLE = True
+except ImportError:
+    BEAUTIFULSOUP_AVAILABLE = False
+    PDFPLUMBER_AVAILABLE = False
+
+# OCR capabilities
+try:
+    import pytesseract
+    import easyocr
+    OCR_AVAILABLE = True
+except ImportError:
+    OCR_AVAILABLE = False
+
 # Distributed processing
 try:
     import ray
@@ -165,6 +183,224 @@ class ProcessingConfig:
     # Railway-specific settings (for ÖBB)
     preserve_technical_terms: bool = True
     railway_terminology_path: Optional[str] = None
+    
+    # Advanced text preprocessing settings
+    enable_advanced_preprocessing: bool = True
+    enable_html_cleaning: bool = True
+    enable_unicode_normalization: bool = True
+    enable_ocr_cleanup: bool = True
+    enable_structure_cleanup: bool = True
+
+# =============================
+# Advanced Text Preprocessor
+# =============================
+
+class AdvancedTextPreprocessor:
+    """Advanced text cleaning and normalization using available libraries"""
+    
+    def __init__(self, config: ProcessingConfig):
+        self.config = config
+        self.ocr_reader = None
+        
+        # Initialize OCR if available
+        if OCR_AVAILABLE:
+            try:
+                self.ocr_reader = easyocr.Reader(['en'])
+                logger.info("✅ EasyOCR initialized for text extraction")
+            except Exception as e:
+                logger.warning(f"OCR initialization failed: {e}")
+    
+    def preprocess_document(self, text: str, document_type: str = "general") -> str:
+        """
+        Comprehensive text preprocessing pipeline
+        """
+        if not self.config.enable_advanced_preprocessing:
+            return text
+            
+        logger.info(f"🧹 Starting advanced text preprocessing for {document_type} document")
+        original_length = len(text)
+        
+        # Step 1: Unicode normalization
+        if self.config.enable_unicode_normalization:
+            text = self._normalize_unicode(text)
+        
+        # Step 2: HTML/XML cleanup
+        if self.config.enable_html_cleaning:
+            text = self._clean_html_content(text)
+        
+        # Step 3: Whitespace normalization (always enabled)
+        text = self._normalize_whitespace(text)
+        
+        # Step 4: Document structure cleanup
+        if self.config.enable_structure_cleanup:
+            text = self._clean_document_structure(text)
+        
+        # Step 5: Railway-specific cleanup
+        if document_type.lower() == "railway":
+            text = self._clean_railway_formatting(text)
+        
+        # Step 6: OCR artifact cleanup
+        if self.config.enable_ocr_cleanup:
+            text = self._clean_ocr_artifacts(text)
+        
+        reduction = original_length - len(text)
+        logger.info(f"✅ Advanced text preprocessing completed - removed {reduction} chars ({reduction/original_length*100:.1f}%)")
+        return text
+    
+    def _normalize_unicode(self, text: str) -> str:
+        """Normalize Unicode characters and encoding issues"""
+        try:
+            # NFKD normalization - canonical decomposition + compatibility decomposition
+            text = unicodedata.normalize('NFKD', text)
+            
+            # Remove or replace problematic Unicode characters
+            text = text.encode('ascii', 'ignore').decode('ascii')
+            
+            # Fix common encoding issues
+            replacements = {
+                'â€™': "'",  # Smart apostrophe
+                'â€œ': '"',  # Smart quote left
+                'â€': '"',   # Smart quote right
+                'â€"': '—',  # Em dash
+                'â€"': '–',  # En dash
+                'Â': '',     # Non-breaking space artifacts
+                'â€¦': '...', # Ellipsis
+            }
+            
+            for old, new in replacements.items():
+                text = text.replace(old, new)
+            
+            return text
+            
+        except Exception as e:
+            logger.warning(f"Unicode normalization failed: {e}")
+            return text
+    
+    def _clean_html_content(self, text: str) -> str:
+        """Remove HTML/XML tags and clean web content"""
+        if not BEAUTIFULSOUP_AVAILABLE:
+            # Fallback regex-based HTML removal
+            text = re.sub(r'<[^>]+>', '', text)
+            return text
+        
+        try:
+            # Use BeautifulSoup for robust HTML cleaning
+            soup = BeautifulSoup(text, 'html.parser')
+            
+            # Remove script and style elements
+            for script in soup(["script", "style"]):
+                script.decompose()
+            
+            # Get text and clean up
+            text = soup.get_text()
+            
+            # Clean up HTML entities
+            import html
+            text = html.unescape(text)
+            
+            return text
+            
+        except Exception as e:
+            logger.warning(f"HTML cleaning failed: {e}")
+            # Fallback to regex
+            return re.sub(r'<[^>]+>', '', text)
+    
+    def _normalize_whitespace(self, text: str) -> str:
+        """Normalize whitespace and line breaks"""
+        # Replace multiple whitespace with single space
+        text = re.sub(r'\s+', ' ', text)
+        
+        # Fix line breaks
+        text = re.sub(r'\n\s*\n', '\n\n', text)  # Multiple newlines to double
+        text = re.sub(r'\r\n', '\n', text)       # Windows line endings
+        text = re.sub(r'\r', '\n', text)         # Mac line endings
+        
+        # Remove trailing/leading whitespace
+        text = text.strip()
+        
+        return text
+    
+    def _clean_document_structure(self, text: str) -> str:
+        """Clean document structure artifacts"""
+        # Remove page numbers (common patterns)
+        text = re.sub(r'^\s*Page\s+\d+\s*$', '', text, flags=re.MULTILINE)
+        text = re.sub(r'^\s*\d+\s*$', '', text, flags=re.MULTILINE)
+        
+        # Remove headers/footers (repeated text patterns)
+        lines = text.split('\n')
+        if len(lines) > 10:
+            # Remove first/last few lines if they look like headers/footers
+            first_line = lines[0].strip()
+            last_line = lines[-1].strip()
+            
+            # Check if first/last lines are repeated
+            if len(first_line) < 100 and lines.count(lines[0]) > 1:
+                lines = lines[1:]
+            if len(last_line) < 100 and lines.count(lines[-1]) > 1:
+                lines = lines[:-1]
+        
+        text = '\n'.join(lines)
+        
+        # Remove table of contents patterns
+        text = re.sub(r'\.{3,}\s*\d+', '', text)  # Dotted lines with page numbers
+        
+        return text
+    
+    def _clean_railway_formatting(self, text: str) -> str:
+        """Railway-specific document cleaning"""
+        # Preserve important railway patterns while cleaning
+        preserved_patterns = []
+        
+        # Temporarily replace railway-specific patterns
+        railway_patterns = [
+            r'R\d{4}[A-Z]?-\d[A-Z]+',  # Product codes
+            r'EN\s?\d{5}',              # Standards
+            r'\d+\s?Gbps',              # Network speeds
+            r'VLAN\s?\d+',              # VLAN IDs
+            r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}',  # IP addresses
+        ]
+        
+        for i, pattern in enumerate(railway_patterns):
+            matches = re.findall(pattern, text)
+            for j, match in enumerate(matches):
+                placeholder = f"__RAILWAY_TERM_{i}_{j}__"
+                preserved_patterns.append((placeholder, match))
+                text = text.replace(match, placeholder, 1)
+        
+        # Clean formatting around preserved terms
+        text = re.sub(r'([A-Z]{2,})\s*[-–]\s*([A-Z]{2,})', r'\1-\2', text)
+        
+        # Restore preserved patterns
+        for placeholder, original in preserved_patterns:
+            text = text.replace(placeholder, original)
+        
+        return text
+    
+    def _clean_ocr_artifacts(self, text: str) -> str:
+        """Clean common OCR artifacts and errors"""
+        # Fix common OCR character substitutions
+        ocr_fixes = {
+            'rn': 'm',      # Common OCR error
+            'cl': 'd',      # Common OCR error
+            '|': 'l',       # Vertical bar to lowercase L
+            '0': 'O',       # Zero to O in words (context-dependent)
+            '5': 'S',       # Five to S in words (context-dependent)
+        }
+        
+        # Apply fixes carefully (only in word contexts)
+        for old, new in ocr_fixes.items():
+            # Only replace in word boundaries to avoid breaking numbers
+            text = re.sub(rf'\b{re.escape(old)}\b', new, text)
+        
+        # Remove artifacts like excessive punctuation
+        text = re.sub(r'[.]{4,}', '...', text)  # Multiple dots
+        text = re.sub(r'[-]{3,}', '---', text)  # Multiple dashes
+        
+        # Fix spacing around punctuation
+        text = re.sub(r'\s+([,.!?;:])', r'\1', text)  # Remove space before punctuation
+        text = re.sub(r'([,.!?;:])\s*([a-zA-Z])', r'\1 \2', text)  # Add space after punctuation
+        
+        return text
 
 # =============================
 # Contextual Retrieval Engine
@@ -1327,6 +1563,7 @@ class EnhancedDocumentProcessor:
         self.config = config or ProcessingConfig()
         
         # Initialize all engines
+        self.text_preprocessor = AdvancedTextPreprocessor(self.config)
         self.contextual_engine = ContextualRetrievalEngine(self.config)
         self.late_chunking_engine = LateChunkingEngine(self.config)
         self.hierarchical_engine = HierarchicalChunkingEngine(self.config)
@@ -1376,7 +1613,17 @@ class EnhancedDocumentProcessor:
         
         try:
             # Read document content
-            content = self._read_document(file_path)
+            raw_content = self._read_document(file_path)
+            
+            # Step 1: Advanced text preprocessing
+            logger.info("🧹 Applying advanced text preprocessing...")
+            document_type = self.config.processing_profile.value
+            content = self.text_preprocessor.preprocess_document(raw_content, document_type)
+            
+            # Log preprocessing results
+            char_reduction = len(raw_content) - len(content)
+            if char_reduction > 0:
+                logger.info(f"✅ Text preprocessing removed {char_reduction} characters ({char_reduction/len(raw_content)*100:.1f}% reduction)")
             
             # Apply railway-specific processing if configured
             if self.railway_processor and self.config.processing_profile == ProcessingProfile.RAILWAY:
@@ -1469,6 +1716,24 @@ class EnhancedDocumentProcessor:
             return file_path.read_text(encoding='utf-8')
         
         elif extension == '.pdf':
+            # Try pdfplumber first for better text extraction
+            if PDFPLUMBER_AVAILABLE:
+                try:
+                    import pdfplumber
+                    text = ""
+                    with pdfplumber.open(file_path) as pdf:
+                        for page in pdf.pages:
+                            page_text = page.extract_text()
+                            if page_text:
+                                text += page_text + "\n"
+                    
+                    if text.strip():
+                        logger.info(f"✅ Extracted text using pdfplumber: {len(text)} chars")
+                        return text
+                except Exception as e:
+                    logger.warning(f"pdfplumber extraction failed: {e}, falling back to PyMuPDF")
+            
+            # Fallback to PyMuPDF
             if PYMUPDF_AVAILABLE:
                 import fitz
                 doc = fitz.open(file_path)
@@ -1476,9 +1741,10 @@ class EnhancedDocumentProcessor:
                 for page in doc:
                     text += page.get_text()
                 doc.close()
+                logger.info(f"✅ Extracted text using PyMuPDF: {len(text)} chars")
                 return text
             else:
-                raise ImportError("PyMuPDF required for PDF processing")
+                raise ImportError("PDF processing libraries (pdfplumber or PyMuPDF) required")
         
         elif extension in ['.csv']:
             if PANDAS_AVAILABLE:
@@ -1681,6 +1947,14 @@ def main():
     parser.add_argument("--patterns", nargs="+", 
                        default=["*.pdf", "*.csv", "*.xlsx", "*.xls", "*.txt", "*.md", "*.docx", "*.pptx"],
                        help="File patterns to process (default: all supported types)")
+    parser.add_argument("--no-preprocessing", action="store_true",
+                       help="Disable advanced text preprocessing")
+    parser.add_argument("--no-html-cleaning", action="store_true",
+                       help="Disable HTML/XML tag removal")
+    parser.add_argument("--no-unicode-normalization", action="store_true",
+                       help="Disable Unicode normalization")
+    parser.add_argument("--no-ocr-cleanup", action="store_true",
+                       help="Disable OCR artifact cleanup")
     
     args = parser.parse_args()
     
@@ -1694,7 +1968,11 @@ def main():
         enable_late_chunking=not args.no_late_chunking,
         enable_hybrid_search=not args.no_hybrid,
         enable_distributed=args.enable_distributed,
-        num_workers=args.num_workers
+        num_workers=args.num_workers,
+        enable_advanced_preprocessing=not args.no_preprocessing,
+        enable_html_cleaning=not args.no_html_cleaning,
+        enable_unicode_normalization=not args.no_unicode_normalization,
+        enable_ocr_cleanup=not args.no_ocr_cleanup
     )
     
     # Process input
