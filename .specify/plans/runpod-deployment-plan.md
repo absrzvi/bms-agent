@@ -11,7 +11,7 @@ Single-pod deployment on RunPod.io with direct binary installations (no Docker) 
 
 ## Deployment Environment
 - **Platform**: Runpod.io single pod (no Docker/Kubernetes)
-- **Hardware**: 8-16 vCPUs, 32-64GB RAM, 200-500GB NVMe SSD
+- **Hardware**: 16 vCPUs, 64 GB RAM, 500 GB NVMe SSD (baseline sizing for 1,000 concurrent users and 1 GB ingestion)
 - **Existing Services**: Ollama, n8n, OpenWebUI (already installed)
 - **To Install**: Qdrant vector database
 - **Persistent Storage**: ~/persistent/ for all data
@@ -50,6 +50,11 @@ Single-pod deployment on RunPod.io with direct binary installations (no Docker) 
 - Review constitution (§1–§4) to ensure acceptance criteria include standards compliance, JWT/webhook security, monitoring, and testing thresholds.
 - Establish Git flow branching strategy (feature/release branches) and document workflow expectations in `README.md`.
 - Create `docs/migrations.md` to track any manual data/schema changes executed during the MVP.
+- Prepare runpod environment prerequisites before executing T001:
+  - Download Qdrant v1.7.4 binary (`wget https://github.com/qdrant/qdrant/releases/download/v1.7.4/qdrant-x86_64-unknown-linux-gnu.tar.gz && tar -xzf qdrant-x86_64-unknown-linux-gnu.tar.gz`).
+  - Verify Python 3.11+ availability (`python3 --version`).
+  - Generate RSA key pair for JWT validation (`openssl genrsa -out private_key.pem 2048 && openssl rsa -in private_key.pem -pubout -out public_key.pem`).
+  - Capture pod resource allocation confirmation (16 vCPU / 64 GB RAM) in `DEPLOYMENT_CHECKLIST.md`.
 
 ### Phase 1 – Environment & Qdrant (`T001–T005`)
 1. Provision project directories and persistent storage (`tasks.md` `T001`) sized for ≥1 TB to support multi-GB uploads and indexes.
@@ -97,10 +102,11 @@ Single-pod deployment on RunPod.io with direct binary installations (no Docker) 
 6. Update `DEPLOYMENT_CHECKLIST.md` to include manual alert runbooks for latency, ingestion, and dependency degradation.
 
 ### Phase 7 – Observability & Operations (`T012`, `T013`, `T018`, `T021` – post-MVP optional)
-{{ ... }}
-2. Implement `/metrics/uplink` endpoint exposing latency histogram, request counts, and error totals for scraping.
-3. Expose Prometheus metrics (FastAPI + Qdrant exporters) and provision Grafana dashboards aligned to 99.99 % availability (`T021`, scheduled post-MVP) with documented manual alert runbooks for latency, ingestion, and dependency degradation.
-4. Note automated paging/notification delivery as post-MVP follow-up; document monitoring routine, log rotation, manual escalation steps, and incident response in `DEPLOYMENT_CHECKLIST.md`.
+1. Extend `/metrics/uplink` to expose latency histogram, request counts, error totals, embedding generation latency, and resource utilization (CPU %, memory, disk I/O, GPU load).
+2. Instrument Qdrant and Ollama with Prometheus exporters, wiring dashboards that track ingestion throughput, chunk backlog, and RAGAS quality drift alongside latency SLAs (`T021`).
+3. Document manual and automated alert thresholds (latency ≥100 ms p95, ingestion failure spikes, CPU ≥85 %, disk usage ≥80 %, embedding latency >1 s) in `DEPLOYMENT_CHECKLIST.md`.
+4. Define secret rotation and audit logging validation routines (JWT key rotation, API key refresh cadence, audit trail completeness) and include escalation contacts in operations docs.
+5. Outline future automation for paging/notification delivery and log archival to object storage; mark as post-MVP follow-up.
 
 ## File Structure
 ```
@@ -155,22 +161,28 @@ BMS_API_KEY=change-me
 BMS_JWT_PUBLIC_KEY="-----BEGIN PUBLIC KEY-----..."
 BMS_JWT_ALGORITHM=RS256
 RATE_LIMIT_PER_MIN=60
+JWT_KEY_ROTATION_DAYS=30
 
 # Qdrant
 QDRANT_HOST=localhost
 QDRANT_PORT=6333
 QDRANT_COLLECTION=nomad_bms_documents
+QDRANT_GRPC_PORT=6334
+QDRANT_MAX_PAYLOAD_SIZE=1073741824
 
 # Ollama
 OLLAMA_URL=http://localhost:11434
 EMBEDDING_MODEL=snowflake-arctic-embed2
 GENERATION_MODEL=mistral-nemo:12b-instruct
+EMBEDDING_BATCH_SIZE=32
 
 # Integrations
 SLACK_BOT_TOKEN=your-token
 SLACK_SIGNING_SECRET=your-secret
 OPENWEBUI_URL=http://localhost:8080
 N8N_WEBHOOK_JWT=...
+PROMETHEUS_PORT=9090
+GRAFANA_PORT=3000
 ```
 
 ## API Endpoints (MVP)
