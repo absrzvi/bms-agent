@@ -1909,7 +1909,8 @@ class EnhancedDocumentProcessor:
         for i, chunk in enumerate(chunks):
             try:
                 import uuid
-                chunk_id = f"{document_id}_chunk_{i}_{uuid.uuid4().hex[:8]}"
+                # Use UUID for Qdrant compatibility (v1.12+ requires UUID or integer)
+                chunk_id = str(uuid.uuid4())
                 content = chunk.get("content", "")
                 
                 if not content or len(content) < 10:

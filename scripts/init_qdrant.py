@@ -30,7 +30,10 @@ class QdrantInitializer:
     """Initialize Qdrant collection for BMS Agent"""
     
     def __init__(self, host: str = "localhost", port: int = 6333):
-        self.client = QdrantClient(host=host, port=port, check_compatibility=False)
+        self.client = QdrantClient(
+            host="localhost",
+            port=6333
+        )
         self.collection_name = "nomad_bms_documents"
         
     def create_collection(self, force_recreate: bool = False) -> bool:
