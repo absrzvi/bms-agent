@@ -6,13 +6,12 @@ description: "Phase 1 data model for BMS Agent MVP"
 
 ## Document
 - **Fields**: `document_id` (UUID), `filename`, `source_path`, `content_type`, `ingested_at`, `checksum`, `size_bytes`, `version`
-- **Constraints**: `content_type` must be in {pdf, csv, xlsx, txt}; `size_bytes` ≤ 1 GB; `version` increments per upload.
+- **Constraints**: `content_type` must be in {pdf, docx, pptx, csv, xlsx, txt}; `size_bytes` ≤ 1 GB; `version` increments per upload.
 - **Relationships**: One-to-many with `DocumentVersion`; one-to-many with `AuditLog`.
 
 ## DocumentVersion
 - **Fields**: `version_id` (UUID), `document_id`, `version_number`, `status` (ingested|processing|indexed|failed), `created_at`, `processed_at`, `notes`
 - **Constraints**: `version_number` sequential per `document_id`; `status` transitions follow ingestion pipeline.
-- **Relationships**: One-to-many with `Chunk`; many-to-one to `Document`.
 
 ## Chunk
 - **Fields**: `chunk_id` (UUID), `version_id`, `chunk_index`, `text`, `token_count`, `hierarchy` (parent|child), `created_at`

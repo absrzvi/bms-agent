@@ -23,7 +23,7 @@ paths:
                 file:
                   type: string
                   format: binary
-                  description: PDF, CSV, XLSX, or TXT file
+                  description: PDF, DOCX, PPTX, CSV, XLSX, or TXT file
             encoding:
               file:
                 contentType: application/octet-stream
