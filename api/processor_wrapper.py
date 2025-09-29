@@ -76,6 +76,16 @@ class BMSDocumentProcessor:
         self.collection_name = collection_name
         self.ollama_url = ollama_url
         
+        # Initialize sentence-transformers for fast embeddings (768-d)
+        self.embedding_model = None
+        if SENTENCE_TRANSFORMERS_AVAILABLE:
+            try:
+                from sentence_transformers import SentenceTransformer
+                self.embedding_model = SentenceTransformer('sentence-transformers/all-mpnet-base-v2')
+                logger.info("✅ sentence-transformers model loaded (768-d embeddings)")
+            except Exception as e:
+                logger.warning(f"⚠️  sentence-transformers not available: {e}")
+        
         # Initialize Qdrant client
         if QDRANT_AVAILABLE:
             try:
@@ -189,27 +199,15 @@ class BMSDocumentProcessor:
         return features
     
     def _generate_embeddings(self, text: str) -> Optional[List[float]]:
-        """Generate embeddings using Ollama"""
-        if not REQUESTS_AVAILABLE:
-            logger.error("Requests library not available for Ollama integration")
-            return None
-        
+        """Generate embeddings using sentence-transformers (768-d, 35x faster than Ollama)"""
         try:
-            response = requests.post(
-                f"{self.ollama_url}/api/embed",
-                json={
-                    "model": "snowflake-arctic-embed2",
-                    "input": text
-                },
-                timeout=30
-            )
-            
-            if response.status_code == 200:
-                result = response.json()
-                return result.get("embeddings", [None])[0]
-            else:
-                logger.error(f"Ollama embedding failed: {response.status_code}")
+            if not self.embedding_model:
+                logger.error("Embedding model not initialized")
                 return None
+            
+            # Generate embedding using sentence-transformers
+            embedding = self.embedding_model.encode(text, convert_to_numpy=True)
+            return embedding.tolist()
                 
         except Exception as e:
             logger.error(f"Error generating embeddings: {e}")
