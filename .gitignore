@@ -93,7 +93,11 @@ real_documents_test_report.json
 # Large model files
 *.model
 *.bin
-models/
+# Block large model directories but allow API models
+/models/
+ollama/models/
+*.safetensors
+*.gguf
 
 # Temporary upload files
 uploads/

@@ -18,6 +18,9 @@ from pydantic import BaseModel, Field
 import uvicorn
 
 # Import our processor wrapper
+import sys
+from pathlib import Path
+sys.path.append(str(Path(__file__).parent))
 from processor_wrapper import get_processor, ProcessingResult
 
 # Configure logging
@@ -43,7 +46,7 @@ app.add_middleware(
 )
 
 # Configuration
-UPLOAD_DIR = Path("~/persistent/bms_data/uploads").expanduser()
+UPLOAD_DIR = Path("/workspace/bms_data/uploads")
 UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 
 MAX_FILE_SIZE = 1024 * 1024 * 1024  # 1GB

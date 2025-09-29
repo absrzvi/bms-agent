@@ -28,22 +28,22 @@
   - Parallel: No
 
 ## Tests First (TDD)
-- **T005  Contract Test – Document Upload [P]**
+- **T005  Contract Test – Document Upload [P]** ✅
   - Summary: Add failing contract tests in `tests/contract/test_upload_document.py` covering success, 400 (invalid type), and 413 responses based on `contracts/api-documents.yaml`.
   - Dependencies: T002
   - Files/Paths: `tests/contract/test_upload_document.py`
   - Parallel: Yes ([P])
-- **T006  Contract Test – Search Endpoints [P]**
+- **T006  Contract Test – Search Endpoints [P]** ✅
   - Summary: Add failing contract tests in `tests/contract/test_search_endpoints.py` for semantic and hybrid routes per `contracts/api-search.yaml`.
   - Dependencies: T002
   - Files/Paths: `tests/contract/test_search_endpoints.py`
   - Parallel: Yes ([P])
-- **T007  Integration Smoke Tests [P]**
+- **T007  Integration Smoke Tests [P]** ✅
   - Summary: Extend `tests/test_basic.py` with ingestion+search smoke flows using fixtures; include 413 scenario.
   - Dependencies: T002
   - Files/Paths: `tests/test_basic.py`
   - Parallel: Yes ([P])
-- **T008  Locust Performance Suite**
+- **T008  Locust Performance Suite** ✅
   - Summary: **POC DECISION**: Expand `tests/performance/load/test_locust.py` to emit baseline performance JSON stats (latency p95/p99, throughput) for establishing performance baselines only - no target thresholds or pass/fail criteria for POC phase.
   - Dependencies: T002
   - Files/Paths: `tests/performance/load/test_locust.py`
@@ -56,27 +56,27 @@
   - Files/Paths: `api/processor_wrapper.py`, `bms-agent/scr/enhanced_document_processor.py`, `scripts/test_*.py` (25+ test files)
   - Parallel: No
   - Status: ✅ COMPLETED - All features implemented and tested
-- **T009A  API Data Models [P]**
+- **T009A  API Data Models [P]** ✅
   - Summary: Implement Pydantic models in `api/models/` based on data-model.md entities: Document, DocumentVersion, Chunk, ChunkEmbedding, RetrievalQuery, UserIdentity, AuditLog with proper validation and relationships.
   - Dependencies: T002
   - Files/Paths: `api/models/documents.py`, `api/models/search.py`, `api/models/health.py`
   - Parallel: Yes ([P])
-- **T010  Upload Endpoint**
+- **T010  Upload Endpoint** ✅
   - Summary: Implement `POST /api/v1/documents/upload` in `api/main.py`, wiring streaming pipeline from `/workspace/bms_data/uploads/`, ensuring MIME/type validation for all supported formats (PDF, DOCX, PPTX, CSV, XLSX, TXT), checksum logging, and versioning per data model.
   - Dependencies: T009
   - Files/Paths: `api/main.py`
   - Parallel: No
-- **T011  Semantic Search Endpoint**
+- **T011  Semantic Search Endpoint** ✅
   - Summary: Implement `POST /api/v1/search/semantic` returning top chunks with dense scores and latency metadata.
   - Dependencies: T009, T006
   - Files/Paths: `api/main.py`
   - Parallel: No
-- **T012  Hybrid Search Endpoint**
+- **T012  Hybrid Search Endpoint** ✅
   - Summary: Implement `POST /api/v1/search/hybrid` with fusion weights, sparse tokens, and response schema from contract.
   - Dependencies: T011
   - Files/Paths: `api/main.py`
   - Parallel: No
-- **T013  Health Endpoints**
+- **T013  Health Endpoints** ✅
   - Summary: Implement `/health` and `/health/detailed` including checks for Qdrant, Ollama, n8n webhook, OpenWebUI, and storage space.
   - Dependencies: T009
   - Files/Paths: `api/main.py`
