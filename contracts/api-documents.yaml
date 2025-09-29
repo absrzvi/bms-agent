@@ -1,0 +1,164 @@
+openapi: 3.0.3
+info:
+  title: BMS Agent Document API
+  description: Document upload and management endpoints for BMS Agent
+  version: 1.0.0
+
+paths:
+  /api/v1/documents/upload:
+    post:
+      summary: Upload document for processing
+      description: Upload a document file for processing by the Enhanced Document Processor v4.0
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: Document file to upload
+                profile:
+                  type: string
+                  enum: [general, technical, legal, medical, financial, railway]
+                  default: general
+                  description: Processing profile for document
+              required:
+                - file
+      responses:
+        '200':
+          description: Document uploaded and processed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  document_id:
+                    type: string
+                    format: uuid
+                    example: 550e8400-e29b-41d4-a716-446655440000
+                  file_name:
+                    type: string
+                    example: railway_manual.pdf
+                  processing_result:
+                    type: object
+                    properties:
+                      chunks_created:
+                        type: integer
+                        example: 42
+                      quality_score:
+                        type: number
+                        format: float
+                        example: 87.5
+                      processing_time_ms:
+                        type: integer
+                        example: 1250
+                      features_extracted:
+                        type: array
+                        items:
+                          type: string
+                        example: ["hierarchical_chunking", "contextual_retrieval", "quality_validation"]
+        '400':
+          description: Bad request - invalid file type or parameters
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: error
+                  error:
+                    type: string
+                    example: Invalid file type. Supported types: PDF, CSV, XLSX, TXT, DOCX, PPTX
+                  supported_types:
+                    type: array
+                    items:
+                      type: string
+                    example: ["pdf", "csv", "xlsx", "txt", "docx", "pptx"]
+        '413':
+          description: Payload too large - file exceeds size limit
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: error
+                  error:
+                    type: string
+                    example: File size exceeds maximum limit of 1GB
+                  max_size_bytes:
+                    type: integer
+                    example: 1073741824
+        '500':
+          description: Internal server error during processing
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: error
+                  error:
+                    type: string
+                    example: Document processing failed
+                  details:
+                    type: string
+                    example: Enhanced Document Processor encountered an error
+
+  /api/v1/documents/{document_id}:
+    get:
+      summary: Get document processing status
+      description: Retrieve the processing status and metadata for a document
+      parameters:
+        - name: document_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Document information retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  document_id:
+                    type: string
+                    format: uuid
+                  file_name:
+                    type: string
+                  status:
+                    type: string
+                    enum: [processing, completed, failed]
+                  chunks_count:
+                    type: integer
+                  quality_score:
+                    type: number
+                    format: float
+                  created_at:
+                    type: string
+                    format: date-time
+        '404':
+          description: Document not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: error
+                  error:
+                    type: string
+                    example: Document not found

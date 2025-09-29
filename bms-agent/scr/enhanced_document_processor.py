@@ -426,8 +426,15 @@ class ContextualRetrievalEngine:
         doc_summary = document.get('summary', '')
         
         # Get surrounding chunks for context
-        prev_chunk = document.get('chunks', [])[chunk_index - 1]['content'] if chunk_index > 0 else ""
-        next_chunk = document.get('chunks', [])[chunk_index + 1]['content'] if chunk_index < total_chunks - 1 else ""
+        chunks_list = document.get('chunks', [])
+        prev_chunk = ""
+        next_chunk = ""
+        
+        if chunks_list and len(chunks_list) > chunk_index:
+            if chunk_index > 0 and chunk_index - 1 < len(chunks_list):
+                prev_chunk = chunks_list[chunk_index - 1].get('content', '')
+            if chunk_index < len(chunks_list) - 1:
+                next_chunk = chunks_list[chunk_index + 1].get('content', '')
         
         # Generate contextual description
         context_parts = []
