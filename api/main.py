@@ -324,12 +324,13 @@ async def semantic_search(request: SearchRequest):
                 "chunk_id": payload.get("chunk_id"),
                 "document_id": payload.get("document_id"),
                 "document_name": payload.get("document_name"),
+                "document_type": payload.get("document_type", "unknown"),  # FIX 1: Add document_type
                 "content": payload.get("content", "")[:500],  # Truncate for response
                 "score": float(result.score),
                 "metadata": {
                     "chunk_index": payload.get("chunk_index"),
                     "hierarchy_level": payload.get("hierarchy_level"),
-                    "quality_score": payload.get("quality_score"),
+                    "quality_score": payload.get("quality_score", 0.0),
                     "has_context": payload.get("has_context"),
                     "processing_version": payload.get("processing_version")
                 }
@@ -441,14 +442,16 @@ async def hybrid_search(request: HybridSearchRequest):
                 "chunk_id": payload.get("chunk_id"),
                 "document_id": payload.get("document_id"),
                 "document_name": payload.get("document_name"),
+                "document_type": payload.get("document_type", "unknown"),  # FIX 1: Add document_type
                 "content": payload.get("content", "")[:500],
+                "score": hybrid_score,  # Use hybrid_score as main score
                 "hybrid_score": hybrid_score,
                 "semantic_score": semantic_score,
                 "keyword_score": keyword_score,
                 "metadata": {
                     "chunk_index": payload.get("chunk_index"),
                     "hierarchy_level": payload.get("hierarchy_level"),
-                    "quality_score": payload.get("quality_score"),
+                    "quality_score": payload.get("quality_score", 0.0),
                     "keywords": payload.get("keywords"),
                     "technical_terms": payload.get("technical_terms")
                 }
