@@ -1,0 +1,50 @@
+{"query": "How do I request approval from an ERP supplier?", "expected_documents": ["ERP Supplier Request & Approval Process.pdf"], "context": "ERP supplier request"}
+{"query": "What is the process for requesting SharePoint permissions?", "expected_documents": ["467ad14e-d383-45a4-92ca-e3d7b8abb75c_SharePoint Permission Request.pdf"], "context": "SharePoint access"}
+{"query": "What is the material management process?", "expected_documents": ["Material Management Process.pdf"], "context": "Material management"}
+{"query": "What is the employee onboarding process?", "expected_documents": ["Onboarding & Probation.pdf"], "context": "Employee onboarding"}
+{"query": "How does sales get legal support?", "expected_documents": ["Sales Led Legal Support Process.pdf"], "context": "Legal support"}
+{"query": "What is the IT service management process?", "expected_documents": ["IT Service Management Process.pdf"], "context": "IT service management"}
+{"query": "How do we handle RIPA requests?", "expected_documents": ["RIPA Request Management Process.pdf"], "context": "RIPA requests"}
+{"query": "What is the development and QA process?", "expected_documents": ["Dev & QA Process.pdf"], "context": "Dev and QA"}
+{"query": "What is the employee lifecycle in HR?", "expected_documents": ["HR Employee Lifecycle Process Overview.pdf"], "context": "HR lifecycle"}
+{"query": "How do we manage marketing opt-in and opt-out?", "expected_documents": ["Marketing Opt-In and Opt-Out Process.pdf"], "context": "Marketing consent"}
+{"query": "I need to add a new vendor to our ERP system, what approvals do I need?", "expected_documents": ["ERP Supplier Request & Approval Process.pdf"], "context": "Vendor approval"}
+{"query": "A new employee is starting next week, what paperwork is required?", "expected_documents": ["Onboarding & Probation.pdf"], "context": "New hire paperwork"}
+{"query": "Our sales team needs help reviewing a contract, who do we contact?", "expected_documents": ["Sales Led Legal Support Process.pdf"], "context": "Contract review"}
+{"query": "How do I get access to a SharePoint site?", "expected_documents": ["467ad14e-d383-45a4-92ca-e3d7b8abb75c_SharePoint Permission Request.pdf"], "context": "SharePoint access request"}
+{"query": "What's the workflow for managing inventory and procurement?", "expected_documents": ["Material Management Process.pdf"], "context": "Inventory workflow"}
+{"query": "We need to report an IT issue, what's the procedure?", "expected_documents": ["IT Service Management Process.pdf"], "context": "IT issue reporting"}
+{"query": "What are the steps for software testing and quality assurance?", "expected_documents": ["Dev & QA Process.pdf"], "context": "QA testing"}
+{"query": "How do customers unsubscribe from marketing emails?", "expected_documents": ["Marketing Opt-In and Opt-Out Process.pdf"], "context": "Email unsubscribe"}
+{"query": "What happens during an employee's probation period?", "expected_documents": ["Onboarding & Probation.pdf"], "context": "Probation period"}
+{"query": "I need to submit a RIPA request, what information is required?", "expected_documents": ["RIPA Request Management Process.pdf"], "context": "RIPA submission"}
+{"query": "What is the business continuity response template?", "expected_documents": ["0680dc2b-359d-4767-b63f-40a3e35398f8_BMS-BCON-FOR-001-Business Continuity Response Template.docx"], "context": "Business continuity"}
+{"query": "How do I submit a bid approval?", "expected_documents": ["Bid Approval Process.pdf"], "context": "Bid approval"}
+{"query": "What is the CSR charity day request process?", "expected_documents": ["CSR Charity Day Request and Approval.pdf"], "context": "CSR charity"}
+{"query": "How do I get approval for a case study?", "expected_documents": ["Case Study Approval Process.pdf"], "context": "Case study approval"}
+{"query": "I need to change my personal information, what's the process?", "expected_documents": ["Change of Personal Information.pdf"], "context": "Personal info change"}
+{"query": "What is the crisis communications press release template?", "expected_documents": ["Crisis Comms External Press Release Template 2 (Non-Fatality).pdf"], "context": "Crisis comms"}
+{"query": "How do we assess customer solution vulnerabilities?", "expected_documents": ["Customer Solution Vulnerability Assessment.pdf"], "context": "Vulnerability assessment"}
+{"query": "What is the DevOps lifecycle process?", "expected_documents": ["DevOps Lifecycle Process.pdf"], "context": "DevOps lifecycle"}
+{"query": "What is the driver declaration process?", "expected_documents": ["Driver Declaration Process.pdf"], "context": "Driver declaration"}
+{"query": "How do I transfer stock globally in ERP?", "expected_documents": ["ERP Stock Transfer (Global).pdf"], "context": "Stock transfer"}
+{"query": "What happens when an employee leaves the company?", "expected_documents": ["Employee Leaving Process.pdf"], "context": "Employee exit"}
+{"query": "How do I get approval for an event?", "expected_documents": ["Event Approval Process.pdf"], "context": "Event approval"}
+{"query": "What is the event risk assessment process?", "expected_documents": ["Event Risk Assessment Process.pdf"], "context": "Event risk"}
+{"query": "What is the goods inspection process?", "expected_documents": ["Goods In Inspection.pdf"], "context": "Goods inspection"}
+{"query": "What is the IT joiner and leaver process?", "expected_documents": ["IT Joiner and Leaver Process.pdf"], "context": "IT access management"}
+{"query": "My device was lost or stolen, what should I do?", "expected_documents": ["IT Lost or Stolen Device.pdf"], "context": "Lost device"}
+{"query": "What is the information security lifecycle?", "expected_documents": ["InfoSec Lifecycle Process.pdf"], "context": "InfoSec lifecycle"}
+{"query": "What is the lean deployment process?", "expected_documents": ["Lean Deployment Process.pdf"], "context": "Lean deployment"}
+{"query": "How do we manage obsolescence?", "expected_documents": ["Obsolescence Management Overview.pdf"], "context": "Obsolescence management"}
+{"query": "What is the project manager checklist?", "expected_documents": ["PM - NCP Form- External Use.pdf"], "context": "PM checklist"}
+{"query": "What is the PR process?", "expected_documents": ["PR Process.pdf"], "context": "PR process"}
+{"query": "How do we handle product changes?", "expected_documents": ["Product Change Process.pdf"], "context": "Product change"}
+{"query": "What is the recruitment and selection process?", "expected_documents": ["Recruitment & Selection.pdf"], "context": "Recruitment"}
+{"query": "What is the reference library process for Alstom tenders?", "expected_documents": ["RefLib Process - Alstom Platform Tenders.pdf"], "context": "RefLib Alstom"}
+{"query": "What are the special processes?", "expected_documents": ["Special Processes.pdf"], "context": "Special processes"}
+{"query": "What is the RMA process?", "expected_documents": ["BMS-SERV-PRO-001 RMA Process.pdf"], "context": "RMA returns"}
+{"query": "Where is the company credit card expense form?", "expected_documents": ["BMS-FINA-FOR-006 Company Credit Card Expense Form.xlsx"], "context": "Credit card expenses"}
+{"query": "What is the train survey report template for bids?", "expected_documents": ["BMS-BDEV-FOR-009 Train Survey Report Template at Bid Stage (1).pptx"], "context": "Train survey"}
+{"query": "Where is the PE commissioning report template?", "expected_documents": ["BMS-ENGI-FOR-003 PE Commissioning Report Template.xlsx"], "context": "PE commissioning"}
+{"query": "What is the bid kick off template?", "expected_documents": ["BMS-BDEV-FOR-008 Bid Kick Off Template.pptx"], "context": "Bid kickoff"}
