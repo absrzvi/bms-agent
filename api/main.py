@@ -430,9 +430,18 @@ async def hybrid_search(request: HybridSearchRequest):
         for result in search_results:
             payload = result.payload
             
-            # Simulate keyword scoring (in production, would use actual BM25)
+            # Improved keyword scoring with document name matching
             content = payload.get("content", "").lower()
-            keyword_score = sum(1 for word in query_words if word in content) / max(len(query_words), 1)
+            doc_name = payload.get("document_name", "").lower()
+            
+            # Check matches in both content and document name
+            content_matches = sum(1 for word in query_words if word in content)
+            name_matches = sum(1 for word in query_words if word in doc_name)
+            
+            # Weight document name matches higher (3x) as they're more significant
+            total_matches = content_matches + (name_matches * 3)
+            max_possible = len(query_words) * 4  # 1 for content + 3 for name
+            keyword_score = min(total_matches / max_possible, 1.0) if max_possible > 0 else 0.0
             
             # Calculate hybrid score
             semantic_score = float(result.score)
