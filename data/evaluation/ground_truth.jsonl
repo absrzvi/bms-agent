@@ -8,3 +8,13 @@
 {"query": "What is the development and QA process?", "expected_documents": ["Dev & QA Process.pdf"], "context": "Software development and quality assurance procedures"}
 {"query": "What is the employee lifecycle in HR?", "expected_documents": ["HR Employee Lifecycle Process Overview.pdf"], "context": "HR employee lifecycle management"}
 {"query": "How do we manage marketing opt-in and opt-out?", "expected_documents": ["Marketing Opt-In and Opt-Out Process.pdf"], "context": "Marketing consent and preference management"}
+{"query": "I need to add a new vendor to our ERP system, what approvals do I need?", "expected_documents": ["ERP Supplier Request & Approval Process.pdf"], "context": "Complex multi-step approval query"}
+{"query": "A new employee is starting next week, what paperwork and steps are required?", "expected_documents": ["Onboarding & Probation.pdf"], "context": "Natural language onboarding query"}
+{"query": "Our sales team needs help reviewing a contract before signing, who do we contact?", "expected_documents": ["Sales Led Legal Support Process.pdf"], "context": "Scenario-based legal support query"}
+{"query": "How do I get access to a SharePoint site I don't currently have permissions for?", "expected_documents": ["467ad14e-d383-45a4-92ca-e3d7b8abb75c_SharePoint Permission Request.pdf"], "context": "User-centric permission request"}
+{"query": "What's the workflow for managing our inventory and procurement of materials?", "expected_documents": ["Material Management Process.pdf"], "context": "Synonym variation - inventory/materials"}
+{"query": "We need to report an IT issue, what's the procedure?", "expected_documents": ["IT Service Management Process.pdf"], "context": "Incident reporting variation"}
+{"query": "What are the steps for software testing and quality assurance in development?", "expected_documents": ["Dev & QA Process.pdf"], "context": "Expanded QA query"}
+{"query": "How do customers unsubscribe from our marketing emails?", "expected_documents": ["Marketing Opt-In and Opt-Out Process.pdf"], "context": "Customer-facing opt-out query"}
+{"query": "What happens during an employee's probation period?", "expected_documents": ["Onboarding & Probation.pdf"], "context": "Specific probation query"}
+{"query": "I need to submit a RIPA request, what information is required?", "expected_documents": ["RIPA Request Management Process.pdf"], "context": "Information requirements query"}
