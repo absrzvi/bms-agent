@@ -1,23 +1,23 @@
 # BMS Agent MVP Task List
 
-**Status**: 🎉 PRODUCTION READY (Core MVP + Operations Complete)  
-**Progress**: 21/28 tasks (75%) | Core: 15/15 (100%) | Integrations: 2/2 (100%) | Operations: 4/4 (100%)  
-**Last Updated**: 2025-09-30 10:17 UTC
+**Status**: 🔄 DATA REFRESH IN PROGRESS (Core MVP Complete, Dataset Update Required)  
+**Progress**: 21/32 tasks (66%) | Core: 15/15 (100%) | Integrations: 2/2 (100%) | Operations: 4/4 (100%) | Data: 0/4 (0%)  
+**Last Updated**: 2025-09-30 11:13 UTC
 
 ## Current Status
 - ✅ **Core MVP**: 100% Complete (T000-T014)
 - ✅ **Integrations**: 100% Complete (T017-T018)
-- ✅ **Operations**: 100% Complete (T019-T020 + NEW: T028-T029)
+- ✅ **Operations**: 100% Complete (T019-T020 + T028-T031)
 - ✅ **Slack Integration**: Complete - FastAPI endpoints ready
 - ✅ **OpenWebUI Tool**: Complete - 7/7 tests passing, metadata fixes applied
 - ✅ **Ollama GPU**: Optimized - 73.7 tokens/sec (123x improvement)
-- ✅ **448 documents** indexed in Qdrant with quality scores (0.72-0.85)
+- ⚠️ **Dataset Status**: 13 documents indexed (768-dim) - Full refresh required
+- ✅ **API Configuration**: 768-dim embeddings (sentence-transformers/all-mpnet-base-v2)
 - ✅ **Metadata Quality**: Type, quality, relevance all displaying correctly
-- ✅ **Semantic search**: Operational with 96% accuracy (informal testing)
 - ✅ **Workspace Persistence**: 100% - All apps and data in /workspace
 - ✅ **Auto-Start**: Multiple methods configured (.bashrc, RunPod, systemd, cron)
 - ✅ **Service Management**: Complete startup, health check, and monitoring scripts
-- 📋 **Next Phase**: T025 (Retrieval Evaluation) → T021 (Alert Runbooks) → Prometheus/Grafana
+- 📋 **Current Phase**: T032 (Test Download) → T033 (Full Download) → T034 (Batch Process) → T035 (Validate & T025)
 
 ## Setup
 - **T000  Git Flow Branching Setup** ✅
@@ -209,14 +209,64 @@
   - Parallel: No
   - Status: ✅ COMPLETED - All 4 services manageable, health monitoring active
 
+## SharePoint Integration & Data Refresh (NEW)
+- **T032  SharePoint Download Script Testing**
+  - Summary: Test SharePoint document download automation with cookie-based authentication. Validate download script with small sample (5-10 documents), verify file organization by type, test error handling, and confirm metadata extraction.
+  - Dependencies: None (standalone testing)
+  - Files/Paths: `scripts/download_sharepoint_server.py`, `sharepoint_cookies.txt`, `docs/COOKIE_EXTRACTION_GUIDE.md`
+  - Parallel: No
+  - Acceptance Criteria:
+    - Export cookies from SharePoint successfully
+    - Test download with `--limit 5` completes without errors
+    - Files organized into correct type directories (pdf/, docx/, xlsx/, etc.)
+    - Error handling works (invalid cookies, network issues)
+    - Metadata (filename, size, modification date) captured correctly
+- **T033  Full SharePoint Document Download (Post-2023)**
+  - Summary: Download all SharePoint documents modified after 2023-12-31 using validated download script. Execute full sync with `--cutoff-date 2023-12-31`, organize files by type into `/workspace/bms_data/incoming/`, validate download completeness, and prepare for batch processing.
+  - Dependencies: T032
+  - Files/Paths: `scripts/download_sharepoint_server.py`, `/workspace/bms_data/incoming/`, `docs/bms-docs-urls.md` (1,004 URLs)
+  - Parallel: No
+  - Acceptance Criteria:
+    - All documents modified after 2023-12-31 downloaded successfully
+    - Files organized by type (pdf/, docx/, xlsx/, pptx/, csv/, txt/)
+    - Download statistics logged (total checked, downloaded, skipped, failed)
+    - No duplicate files (timestamp handling for duplicates)
+    - Ready for T034 batch processing
+- **T034  Batch Process Downloaded Documents**
+  - Summary: Process all downloaded SharePoint documents with Enhanced Document Processor v4.0. Use automated sync manager or batch processing script to process files from `/workspace/bms_data/incoming/`, generate 768-dim embeddings, ingest to Qdrant, move to processed/ or failed/ directories, and track processing statistics.
+  - Dependencies: T033, T009
+  - Files/Paths: `scripts/sharepoint_sync_manager.py`, `/workspace/bms_data/incoming/`, `/workspace/bms_data/processed/`, `/workspace/bms_data/failed/`
+  - Parallel: No
+  - Acceptance Criteria:
+    - All files from incoming/ processed successfully or moved to failed/
+    - 768-dim embeddings generated for all documents
+    - Documents ingested to Qdrant collection `nomad_bms_documents`
+    - Processing statistics: success rate ≥95%, quality scores ≥0.70
+    - Failed documents logged with error details
+    - Qdrant collection updated with new document count
+- **T035  Post-Download Validation & T025 Completion**
+  - Summary: Validate complete dataset in Qdrant and complete T025 retrieval evaluation. Verify document count, check embedding dimensions (768-dim), validate quality scores, run evaluation script, and confirm ≥95% accuracy threshold.
+  - Dependencies: T034, T025
+  - Files/Paths: `scripts/evaluate_retrieval.py`, `data/evaluation/ground_truth.jsonl`, Qdrant collection
+  - Parallel: No
+  - Acceptance Criteria:
+    - Qdrant collection contains expected document count (400-500+ documents)
+    - All embeddings are 768-dimensional
+    - Quality scores ≥0.70 for all processed documents
+    - Evaluation script reports ≥95% top-5 accuracy
+    - T025 marked as complete
+    - Retrieval system validated for production readiness
+
 ## T025 Status Update (2025-09-30)
 - **Implementation**: 80% Complete
 - **Ground Truth Dataset**: ✅ Created (25 queries, 15 categories)
-- **Evaluation Script Implemented (top-k accuracy, MRR, quality metrics)**: 
-- **Execution**: ⚠️ BLOCKED by API embedding model mismatch (768-dim vs 1024-dim)
-- **Fix Required**: Configure API to use snowflake-arctic-embed2 (1024 dimensions)
+- **Evaluation Script**: ✅ Implemented (top-k accuracy, MRR, quality metrics)
+- **Execution**: ⚠️ BLOCKED - Requires full dataset re-indexing with 768-dim embeddings
+- **Fix Applied**: ✅ API configured for 768-dim (sentence-transformers/all-mpnet-base-v2)
+- **Next Steps**: T032 → T033 → T034 → T035 (complete T025)
 - **Expected Result**: 96% accuracy (based on informal testing) - will pass ≥95% threshold
 - **Files Created**: 
   - `data/evaluation/ground_truth.jsonl`
   - `scripts/evaluate_retrieval.py`
   - `data/evaluation/EVALUATION_STATUS.md`
+  - `data/evaluation/EMBEDDING_FIX_REPORT.md`
