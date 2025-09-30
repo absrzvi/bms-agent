@@ -45,8 +45,12 @@ def extract_document_names(results: List[Dict[str, Any]]) -> List[str]:
     """Extract document names from search results"""
     doc_names = []
     for result in results:
-        payload = result.get("payload", {})
-        doc_name = payload.get("document_name", "")
+        # Try direct field first (current API format)
+        doc_name = result.get("document_name", "")
+        # Fallback to payload if nested (alternative format)
+        if not doc_name:
+            payload = result.get("payload", {})
+            doc_name = payload.get("document_name", "")
         if doc_name:
             doc_names.append(doc_name)
     return doc_names

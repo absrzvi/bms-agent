@@ -1,10 +1,10 @@
-{"query": "What are the business continuity procedures for railway operations?", "expected_documents": ["BMS-BCON-FOR-001-Business Continuity Response Template.docx"], "context": "Business continuity planning and disaster recovery procedures"}
-{"query": "How do we handle IT disaster notifications?", "expected_documents": ["IT Disaster Notification & Recovery Process.pdf"], "context": "IT disaster recovery and notification procedures"}
-{"query": "What is the HR performance review process?", "expected_documents": ["HR Performance Process.pdf"], "context": "Human resources performance management procedures"}
-{"query": "What are the safety procedures for railway operations?", "expected_documents": ["Safety Management System.pdf", "Railway Safety Procedures.pdf"], "context": "Railway safety protocols and management"}
-{"query": "How do we manage maintenance schedules?", "expected_documents": ["Maintenance Schedule Template.xlsx", "Maintenance Procedures.docx"], "context": "Railway maintenance planning and scheduling"}
-{"query": "What are the emergency response procedures?", "expected_documents": ["Emergency Response Plan.pdf", "BMS-BCON-FOR-001-Business Continuity Response Template.docx"], "context": "Emergency and crisis management procedures"}
-{"query": "How do we handle document version control?", "expected_documents": ["Document Management Policy.docx"], "context": "Document management and version control"}
-{"query": "What are the compliance requirements for railway operations?", "expected_documents": ["Compliance Requirements.pdf", "Railway Standards.pdf"], "context": "Regulatory compliance and standards"}
-{"query": "How do we conduct risk assessments?", "expected_documents": ["Risk Assessment Template.xlsx", "Risk Management Process.pdf"], "context": "Risk assessment and management procedures"}
-{"query": "What is the incident reporting process?", "expected_documents": ["Incident Report Form.docx", "Incident Management Procedure.pdf"], "context": "Incident reporting and management"}
+{"query": "How do I request approval from an ERP supplier?", "expected_documents": ["ERP Supplier Request & Approval Process.pdf"], "context": "ERP supplier request and approval workflow"}
+{"query": "What is the process for requesting SharePoint permissions?", "expected_documents": ["467ad14e-d383-45a4-92ca-e3d7b8abb75c_SharePoint Permission Request.pdf"], "context": "SharePoint access and permission management"}
+{"query": "How do we manage materials and inventory?", "expected_documents": ["Material Management Process.pdf"], "context": "Material management and inventory control"}
+{"query": "What is the employee onboarding process?", "expected_documents": ["Onboarding & Probation.pdf"], "context": "New employee onboarding and probation procedures"}
+{"query": "How does sales get legal support?", "expected_documents": ["Sales Led Legal Support Process.pdf"], "context": "Legal support process for sales team"}
+{"query": "What is the PE commissioning report template?", "expected_documents": ["BMS-ENGI-FOR-003 PE Commissioning Report Template.xlsx"], "context": "Engineering commissioning report template"}
+{"query": "How do we handle RIPA requests?", "expected_documents": ["RIPA Request Management Process.pdf"], "context": "RIPA request management workflow"}
+{"query": "What is the development and QA process?", "expected_documents": ["Dev & QA Process.pdf"], "context": "Software development and quality assurance procedures"}
+{"query": "What is the employee lifecycle in HR?", "expected_documents": ["HR Employee Lifecycle Process Overview.pdf"], "context": "HR employee lifecycle management"}
+{"query": "How do we manage marketing opt-in and opt-out?", "expected_documents": ["Marketing Opt-In and Opt-Out Process.pdf"], "context": "Marketing consent and preference management"}
