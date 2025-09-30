@@ -157,8 +157,8 @@ class Tools:
                 quality = result.get("metadata", {}).get("quality_score", 0.0) or result.get("quality_score", 0.0)
                 content = result.get("content", "")
                 
-                # Truncate content for display
-                content_preview = content[:300] + "..." if len(content) > 300 else content
+                # Truncate content for display (increased to 800 chars for better context)
+                content_preview = content[:800] + "..." if len(content) > 800 else content
                 
                 output.append(f"\n**{i}. {doc_name}**")
                 output.append(f"   📄 Type: {doc_type} | Quality: {quality:.2f} | Relevance: {score:.3f}")

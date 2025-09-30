@@ -325,7 +325,7 @@ async def semantic_search(request: SearchRequest):
                 "document_id": payload.get("document_id"),
                 "document_name": payload.get("document_name"),
                 "document_type": payload.get("document_type", "unknown"),  # FIX 1: Add document_type
-                "content": payload.get("content", "")[:500],  # Truncate for response
+                "content": payload.get("content", "")[:1500],  # Increased for better context
                 "score": float(result.score),
                 "metadata": {
                     "chunk_index": payload.get("chunk_index"),
@@ -452,7 +452,7 @@ async def hybrid_search(request: HybridSearchRequest):
                 "document_id": payload.get("document_id"),
                 "document_name": payload.get("document_name"),
                 "document_type": payload.get("document_type", "unknown"),  # FIX 1: Add document_type
-                "content": payload.get("content", "")[:500],
+                "content": payload.get("content", "")[:1500],  # Increased for better context
                 "score": hybrid_score,  # Use hybrid_score as main score
                 "hybrid_score": hybrid_score,
                 "semantic_score": semantic_score,
