@@ -1,0 +1,10 @@
+{"query": "What are the business continuity procedures for railway operations?", "expected_documents": ["BMS-BCON-FOR-001-Business Continuity Response Template.docx"], "context": "Business continuity planning and disaster recovery procedures"}
+{"query": "How do we handle IT disaster notifications?", "expected_documents": ["IT Disaster Notification & Recovery Process.pdf"], "context": "IT disaster recovery and notification procedures"}
+{"query": "What is the HR performance review process?", "expected_documents": ["HR Performance Process.pdf"], "context": "Human resources performance management procedures"}
+{"query": "What are the safety procedures for railway operations?", "expected_documents": ["Safety Management System.pdf", "Railway Safety Procedures.pdf"], "context": "Railway safety protocols and management"}
+{"query": "How do we manage maintenance schedules?", "expected_documents": ["Maintenance Schedule Template.xlsx", "Maintenance Procedures.docx"], "context": "Railway maintenance planning and scheduling"}
+{"query": "What are the emergency response procedures?", "expected_documents": ["Emergency Response Plan.pdf", "BMS-BCON-FOR-001-Business Continuity Response Template.docx"], "context": "Emergency and crisis management procedures"}
+{"query": "How do we handle document version control?", "expected_documents": ["Document Management Policy.docx"], "context": "Document management and version control"}
+{"query": "What are the compliance requirements for railway operations?", "expected_documents": ["Compliance Requirements.pdf", "Railway Standards.pdf"], "context": "Regulatory compliance and standards"}
+{"query": "How do we conduct risk assessments?", "expected_documents": ["Risk Assessment Template.xlsx", "Risk Management Process.pdf"], "context": "Risk assessment and management procedures"}
+{"query": "What is the incident reporting process?", "expected_documents": ["Incident Report Form.docx", "Incident Management Procedure.pdf"], "context": "Incident reporting and management"}
