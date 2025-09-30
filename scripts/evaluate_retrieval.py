@@ -13,7 +13,7 @@ from collections import defaultdict
 
 # Configuration
 API_URL = "http://localhost:8000"
-GROUND_TRUTH_FILE = "data/evaluation/ground_truth.jsonl"
+GROUND_TRUTH_FILE = "data/evaluation/ground_truth_50.jsonl"  # Use 50-query dataset
 MIN_ACCURACY_THRESHOLD = 0.95
 TOP_K = 5
 
