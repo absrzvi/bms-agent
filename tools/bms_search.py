@@ -153,7 +153,8 @@ class Tools:
                 # Extract metadata (try direct fields first, fallback to payload)
                 doc_name = result.get("document_name") or result.get("payload", {}).get("document_name", "Unknown")
                 doc_type = result.get("document_type") or result.get("payload", {}).get("document_type", "unknown")
-                quality = result.get("metadata", {}).get("quality_score", 0.0)
+                # Quality score is in payload, not metadata
+                quality = result.get("quality_score", 0.0) or result.get("payload", {}).get("quality_score", 0.0)
                 content = result.get("content", "")
                 
                 # Truncate content for display
