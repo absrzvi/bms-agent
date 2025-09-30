@@ -1,0 +1,183 @@
+{
+  "timestamp": "2025-09-30 08:16:50",
+  "suites": [
+    {
+      "suite_name": "\ud83d\udd0d Semantic Search",
+      "total": 4,
+      "passed": 4,
+      "failed": 0,
+      "tests": [
+        {
+          "prompt": "What is business continuity?",
+          "search_type": "semantic",
+          "has_results": true,
+          "elapsed_time": 0.03130626678466797,
+          "result_preview": "\ud83d\udd0d **Found 3 results for:** 'What is business continuity?'\n\n\n**1. BMS-BCON-FOR-005-Business Continuity Response PR Scenario.docx**\n   \ud83d\udcc4 Type: unknown | Quality: 0.00 | Relevance: 0.554\n   \ud83d\udcdd <context>\nD"
+        },
+        {
+          "prompt": "How do we handle emergencies?",
+          "search_type": "semantic",
+          "has_results": true,
+          "elapsed_time": 0.020023584365844727,
+          "result_preview": "\ud83d\udd0d **Found 3 results for:** 'How do we handle emergencies?'\n\n\n**1. IT Disaster Notification & Recovery Process.pdf**\n   \ud83d\udcc4 Type: unknown | Quality: 0.00 | Relevance: 0.457\n   \ud83d\udcdd <context>\nDocument: IT Di"
+        },
+        {
+          "prompt": "What are our safety procedures?",
+          "search_type": "semantic",
+          "has_results": true,
+          "elapsed_time": 0.030125856399536133,
+          "result_preview": "\ud83d\udd0d **Found 3 results for:** 'What are our safety procedures?'\n\n\n**1. BMS-QHSE-PRO-001 Risk Management.pdf**\n   \ud83d\udcc4 Type: unknown | Quality: 0.00 | Relevance: 0.515\n   \ud83d\udcdd <context>\nDocument: BMS QHSE PRO 0"
+        },
+        {
+          "prompt": "Explain the onboarding process",
+          "search_type": "semantic",
+          "has_results": true,
+          "elapsed_time": 0.023636579513549805,
+          "result_preview": "\ud83d\udd0d **Found 3 results for:** 'Explain the onboarding process'\n\n\n**1. Onboarding & Probation.pdf**\n   \ud83d\udcc4 Type: unknown | Quality: 0.00 | Relevance: 0.646\n   \ud83d\udcdd <context>\nDocument: Onboarding & Probation (p"
+        }
+      ]
+    },
+    {
+      "suite_name": "\u26a1 Hybrid Search",
+      "total": 4,
+      "passed": 4,
+      "failed": 0,
+      "tests": [
+        {
+          "prompt": "Find BMS-BCON-FOR-001",
+          "search_type": "hybrid",
+          "has_results": true,
+          "elapsed_time": 0.02122950553894043,
+          "result_preview": "\ud83d\udd0d **Found 3 results for:** 'Find BMS-BCON-FOR-001'\n\n\n**1. BMS-BCON-FOR-001-Business Continuity Response Template.docx**\n   \ud83d\udcc4 Type: unknown | Quality: 0.00 | Relevance: 0.000\n   \ud83d\udcdd <context>\nDocument: B"
+        },
+        {
+          "prompt": "Show me documents with 'material management' in them",
+          "search_type": "hybrid",
+          "has_results": true,
+          "elapsed_time": 0.026226520538330078,
+          "result_preview": "\ud83d\udd0d **Found 3 results for:** 'Show me documents with 'material management' in them'\n\n\n**1. Material Management Process.pdf**\n   \ud83d\udcc4 Type: unknown | Quality: 0.00 | Relevance: 0.000\n   \ud83d\udcdd <context>\nDocument"
+        },
+        {
+          "prompt": "Search for 'SharePoint permission' documents",
+          "search_type": "semantic",
+          "has_results": true,
+          "elapsed_time": 0.03380775451660156,
+          "result_preview": "\ud83d\udd0d **Found 3 results for:** 'Search for 'SharePoint permission' documents'\n\n\n**1. SharePoint Permission Request.pdf**\n   \ud83d\udcc4 Type: unknown | Quality: 0.00 | Relevance: 0.424\n   \ud83d\udcdd <context>\nDocument: Shar"
+        },
+        {
+          "prompt": "Locate 'commissioning report' templates",
+          "search_type": "hybrid",
+          "has_results": true,
+          "elapsed_time": 0.02351689338684082,
+          "result_preview": "\ud83d\udd0d **Found 3 results for:** 'Locate 'commissioning report' templates'\n\n\n**1. Goods In Inspection.pdf**\n   \ud83d\udcc4 Type: unknown | Quality: 0.00 | Relevance: 0.000\n   \ud83d\udcdd <context>\nDocument: Goods In Inspection"
+        }
+      ]
+    },
+    {
+      "suite_name": "\ud83d\udcca Multi-Format",
+      "total": 3,
+      "passed": 3,
+      "failed": 0,
+      "tests": [
+        {
+          "prompt": "Find all PDF documents about safety",
+          "search_type": "semantic",
+          "has_results": true,
+          "elapsed_time": 0.021384716033935547,
+          "result_preview": "\ud83d\udd0d **Found 3 results for:** 'Find all PDF documents about safety'\n\n\n**1. Customer Solution Vulnerability Assessment.pdf**\n   \ud83d\udcc4 Type: unknown | Quality: 0.00 | Relevance: 0.336\n   \ud83d\udcdd <context>\nDocument: "
+        },
+        {
+          "prompt": "Show me Excel templates",
+          "search_type": "semantic",
+          "has_results": true,
+          "elapsed_time": 0.02272772789001465,
+          "result_preview": "\ud83d\udd0d **Found 3 results for:** 'Show me Excel templates'\n\n\n**1. Product Data Sheet Generation.pdf**\n   \ud83d\udcc4 Type: unknown | Quality: 0.00 | Relevance: 0.311\n   \ud83d\udcdd <context>\nDocument: Product Data Sheet Genera"
+        },
+        {
+          "prompt": "What PowerPoint presentations do we have?",
+          "search_type": "semantic",
+          "has_results": true,
+          "elapsed_time": 0.0212099552154541,
+          "result_preview": "\ud83d\udd0d **Found 3 results for:** 'What PowerPoint presentations do we have?'\n\n\n**1. Event Risk Assessment Process.pdf**\n   \ud83d\udcc4 Type: unknown | Quality: 0.00 | Relevance: 0.212\n   \ud83d\udcdd <context>\nDocument: Event R"
+        }
+      ]
+    },
+    {
+      "suite_name": "\ud83c\udfaf Scenario-Based",
+      "total": 3,
+      "passed": 3,
+      "failed": 0,
+      "tests": [
+        {
+          "prompt": "A new employee is starting Monday, what documents do they need?",
+          "search_type": "semantic",
+          "has_results": true,
+          "elapsed_time": 0.026659488677978516,
+          "result_preview": "\ud83d\udd0d **Found 3 results for:** 'A new employee is starting Monday, what documents do they need?'\n\n\n**1. Onboarding Checklist.pdf**\n   \ud83d\udcc4 Type: unknown | Quality: 0.00 | Relevance: 0.428\n   \ud83d\udcdd <context>\nDocu"
+        },
+        {
+          "prompt": "We have an IT incident, what procedures should we follow?",
+          "search_type": "semantic",
+          "has_results": true,
+          "elapsed_time": 0.022643566131591797,
+          "result_preview": "\ud83d\udd0d **Found 3 results for:** 'We have an IT incident, what procedures should we follow?'\n\n\n**1. Data Breach Reporting Process.pdf**\n   \ud83d\udcc4 Type: unknown | Quality: 0.00 | Relevance: 0.531\n   \ud83d\udcdd <context>\nD"
+        },
+        {
+          "prompt": "How do we handle a business continuity event?",
+          "search_type": "semantic",
+          "has_results": true,
+          "elapsed_time": 0.017921924591064453,
+          "result_preview": "\ud83d\udd0d **Found 3 results for:** 'How do we handle a business continuity event?'\n\n\n**1. BMS-BCON-FOR-005-Business Continuity Response PR Scenario.docx**\n   \ud83d\udcc4 Type: unknown | Quality: 0.00 | Relevance: 0.579"
+        }
+      ]
+    },
+    {
+      "suite_name": "\ud83d\udccb Domain-Specific",
+      "total": 5,
+      "passed": 5,
+      "failed": 0,
+      "tests": [
+        {
+          "prompt": "What is the employee onboarding process?",
+          "search_type": "semantic",
+          "has_results": true,
+          "elapsed_time": 0.03079676628112793,
+          "result_preview": "\ud83d\udd0d **Found 3 results for:** 'What is the employee onboarding process?'\n\n\n**1. Onboarding & Probation.pdf**\n   \ud83d\udcc4 Type: unknown | Quality: 0.00 | Relevance: 0.658\n   \ud83d\udcdd <context>\nDocument: Onboarding & Pr"
+        },
+        {
+          "prompt": "Show me IT service management procedures",
+          "search_type": "semantic",
+          "has_results": true,
+          "elapsed_time": 0.02679157257080078,
+          "result_preview": "\ud83d\udd0d **Found 3 results for:** 'Show me IT service management procedures'\n\n\n**1. IT Service Management Process.pdf**\n   \ud83d\udcc4 Type: unknown | Quality: 0.00 | Relevance: 0.577\n   \ud83d\udcdd <context>\nDocument: IT Servi"
+        },
+        {
+          "prompt": "Find engineering commissioning templates",
+          "search_type": "semantic",
+          "has_results": true,
+          "elapsed_time": 0.02162790298461914,
+          "result_preview": "\ud83d\udd0d **Found 3 results for:** 'Find engineering commissioning templates'\n\n\n**1. BMS-BDEV-FOR-008 Bid Kick Off Template.pptx**\n   \ud83d\udcc4 Type: unknown | Quality: 0.00 | Relevance: 0.515\n   \ud83d\udcdd <context>\nDocument"
+        },
+        {
+          "prompt": "What's the ERP supplier approval process?",
+          "search_type": "semantic",
+          "has_results": true,
+          "elapsed_time": 0.03247714042663574,
+          "result_preview": "\ud83d\udd0d **Found 3 results for:** 'What's the ERP supplier approval process?'\n\n\n**1. ERP Supplier Request & Approval Process.pdf**\n   \ud83d\udcc4 Type: unknown | Quality: 0.00 | Relevance: 0.703\n   \ud83d\udcdd <context>\nDocumen"
+        },
+        {
+          "prompt": "Show me risk assessment templates",
+          "search_type": "semantic",
+          "has_results": true,
+          "elapsed_time": 0.03165006637573242,
+          "result_preview": "\ud83d\udd0d **Found 3 results for:** 'Show me risk assessment templates'\n\n\n**1. Event Risk Assessment Process.pdf**\n   \ud83d\udcc4 Type: unknown | Quality: 0.00 | Relevance: 0.604\n   \ud83d\udcdd <context>\nDocument: Event Risk Asse"
+        }
+      ]
+    }
+  ],
+  "summary": {
+    "total_tests": 19,
+    "total_passed": 19,
+    "total_failed": 0
+  }
+}
