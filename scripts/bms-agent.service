@@ -1,0 +1,15 @@
+[Unit]
+Description=BMS Agent Services
+After=network.target
+
+[Service]
+Type=forking
+User=root
+WorkingDirectory=/workspace
+ExecStart=/workspace/scripts/start_all_services.sh
+RemainAfterExit=yes
+StandardOutput=append:/workspace/logs/startup.log
+StandardError=append:/workspace/logs/startup.log
+
+[Install]
+WantedBy=multi-user.target
