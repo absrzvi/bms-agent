@@ -2,8 +2,8 @@
 
 ## Overview
 - **Purpose**: Deliver a retrieval-augmented assistant for railway network documentation, deployed on a single RunPod pod with persistent storage.
-- **Scope**: **MVP DECISION**: Full integration stack - Document ingestion (PDF, DOCX, PPTX, CSV, XLSX, TXT), semantic search, Slack integration, OpenWebUI custom tool, n8n workflows, API endpoints for internal services. Health checks simplified for POC.
-- **Constitution Alignment**: Implements Railway IT standards (EN50155, EN45545), RAG architecture mandates, n8n workflow authentication (JWT + API key), code quality & testing minimums, availability/monitoring targets.
+- **Scope**: **MVP DECISION**: Full integration stack - Document ingestion (PDF, DOCX, PPTX, CSV, XLSX, TXT), semantic search, **Direct FastAPI Slack integration** (n8n unavailable on deployment environment), OpenWebUI custom tool, API endpoints for internal services. Health checks simplified for POC.
+- **Constitution Alignment**: Implements Railway IT standards (EN50155, EN45545), RAG architecture mandates, API authentication (JWT + API key deferred to production), code quality & testing minimums, availability/monitoring targets.
 
 ## User Stories
 - As a network engineer, I need to search railway documentation via Slack
