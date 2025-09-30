@@ -1,231 +1,267 @@
 #!/usr/bin/env python3
 """
-Retrieval Accuracy & Quality Evaluation Script
-Computes top-5 accuracy, RAGAS metrics, and validates against ≥95% threshold
+BMS Agent Retrieval Accuracy Evaluation Script
+
+Evaluates retrieval accuracy against ground truth dataset.
+Computes top-k accuracy, MRR, and quality metrics.
 """
 
 import json
 import sys
-import requests
 from pathlib import Path
-from typing import List, Dict, Any
+from typing import List, Dict, Tuple
+import requests
 from collections import defaultdict
 
-# Configuration
-API_URL = "http://localhost:8000"
-GROUND_TRUTH_FILE = "data/evaluation/ground_truth_50.jsonl"  # Use 50-query dataset
-MIN_ACCURACY_THRESHOLD = 0.95
-TOP_K = 5
+# Add project root to path
+project_root = Path(__file__).parent.parent
+sys.path.insert(0, str(project_root))
 
-def load_ground_truth(filepath: str) -> List[Dict[str, Any]]:
-    """Load ground truth queries and expected documents"""
-    ground_truth = []
-    with open(filepath, 'r') as f:
-        for line in f:
-            if line.strip():
-                ground_truth.append(json.loads(line))
-    return ground_truth
 
-def search_semantic(query: str, limit: int = TOP_K) -> List[Dict[str, Any]]:
-    """Perform semantic search via API"""
-    try:
-        response = requests.post(
-            f"{API_URL}/api/v1/search/semantic",
-            json={"query": query, "limit": limit},
-            timeout=30
-        )
-        response.raise_for_status()
-        data = response.json()
-        return data.get("results", [])
-    except Exception as e:
-        print(f"❌ Search failed for query '{query}': {e}")
-        return []
-
-def extract_document_names(results: List[Dict[str, Any]]) -> List[str]:
-    """Extract document names from search results"""
-    doc_names = []
-    for result in results:
-        # Try direct field first (current API format)
-        doc_name = result.get("document_name", "")
-        # Fallback to payload if nested (alternative format)
-        if not doc_name:
-            payload = result.get("payload", {})
-            doc_name = payload.get("document_name", "")
-        if doc_name:
-            doc_names.append(doc_name)
-    return doc_names
-
-def calculate_top_k_accuracy(ground_truth: List[Dict], results_map: Dict) -> float:
-    """Calculate top-K accuracy"""
-    correct = 0
-    total = len(ground_truth)
+class RetrievalEvaluator:
+    """Evaluates retrieval system performance"""
     
-    for gt in ground_truth:
-        query = gt["query"]
-        expected_docs = set(gt["expected_documents"])
-        retrieved_docs = set(results_map.get(query, []))
+    def __init__(self, api_url: str = "http://localhost:8000", k: int = 5):
+        self.api_url = api_url
+        self.k = k
+        self.results = []
         
-        # Check if any expected document is in top-K results
-        if expected_docs & retrieved_docs:
-            correct += 1
+    def load_ground_truth(self, filepath: str) -> List[Dict]:
+        """Load ground truth dataset from JSONL file"""
+        ground_truth = []
+        with open(filepath, 'r') as f:
+            for line in f:
+                if line.strip():
+                    ground_truth.append(json.loads(line))
+        return ground_truth
     
-    return correct / total if total > 0 else 0.0
-
-def calculate_precision_recall(ground_truth: List[Dict], results_map: Dict) -> Dict[str, float]:
-    """Calculate precision and recall metrics"""
-    precisions = []
-    recalls = []
+    def search(self, query: str, limit: int = 5) -> List[Dict]:
+        """Perform semantic search via API"""
+        try:
+            response = requests.post(
+                f"{self.api_url}/api/v1/search/semantic",
+                json={"query": query, "limit": limit},
+                timeout=10
+            )
+            response.raise_for_status()
+            data = response.json()
+            return data.get("results", [])
+        except Exception as e:
+            print(f"  ❌ Search error for '{query}': {e}")
+            return []
     
-    for gt in ground_truth:
-        query = gt["query"]
-        expected_docs = set(gt["expected_documents"])
-        retrieved_docs = set(results_map.get(query, []))
+    def evaluate_query(self, query: str, expected_docs: List[str]) -> Dict:
+        """Evaluate a single query"""
+        # Get search results
+        results = self.search(query, limit=self.k)
         
-        if retrieved_docs:
-            precision = len(expected_docs & retrieved_docs) / len(retrieved_docs)
-            precisions.append(precision)
+        # Extract document names from results
+        retrieved_docs = [r.get("document_name", "") for r in results]
         
-        if expected_docs:
-            recall = len(expected_docs & retrieved_docs) / len(expected_docs)
-            recalls.append(recall)
-    
-    avg_precision = sum(precisions) / len(precisions) if precisions else 0.0
-    avg_recall = sum(recalls) / len(recalls) if recalls else 0.0
-    
-    return {
-        "precision": avg_precision,
-        "recall": avg_recall,
-        "f1_score": 2 * (avg_precision * avg_recall) / (avg_precision + avg_recall) if (avg_precision + avg_recall) > 0 else 0.0
-    }
-
-def calculate_mrr(ground_truth: List[Dict], results_map: Dict) -> float:
-    """Calculate Mean Reciprocal Rank"""
-    reciprocal_ranks = []
-    
-    for gt in ground_truth:
-        query = gt["query"]
-        expected_docs = set(gt["expected_documents"])
-        retrieved_docs = results_map.get(query, [])
+        # Calculate metrics
+        hits_at_k = []
+        for i, doc in enumerate(retrieved_docs[:self.k], 1):
+            # Check if any expected document matches (partial match for flexibility)
+            is_hit = any(exp_doc.lower() in doc.lower() or doc.lower() in exp_doc.lower() 
+                        for exp_doc in expected_docs)
+            hits_at_k.append(is_hit)
         
-        # Find rank of first relevant document
-        for rank, doc in enumerate(retrieved_docs, 1):
-            if doc in expected_docs:
-                reciprocal_ranks.append(1.0 / rank)
+        # Top-k accuracy: at least one expected doc in top-k
+        top_k_hit = any(hits_at_k)
+        
+        # Mean Reciprocal Rank (MRR)
+        mrr = 0.0
+        for i, is_hit in enumerate(hits_at_k, 1):
+            if is_hit:
+                mrr = 1.0 / i
                 break
-        else:
-            reciprocal_ranks.append(0.0)
+        
+        # Average quality score of top-k results
+        quality_scores = [r.get("metadata", {}).get("quality_score", 0.0) for r in results]
+        avg_quality = sum(quality_scores) / len(quality_scores) if quality_scores else 0.0
+        
+        # Average relevance score
+        relevance_scores = [r.get("score", 0.0) for r in results]
+        avg_relevance = sum(relevance_scores) / len(relevance_scores) if relevance_scores else 0.0
+        
+        return {
+            "query": query,
+            "expected": expected_docs,
+            "retrieved": retrieved_docs,
+            "top_k_hit": top_k_hit,
+            "mrr": mrr,
+            "avg_quality": avg_quality,
+            "avg_relevance": avg_relevance,
+            "num_results": len(results)
+        }
     
-    return sum(reciprocal_ranks) / len(reciprocal_ranks) if reciprocal_ranks else 0.0
+    def evaluate_dataset(self, ground_truth: List[Dict]) -> Dict:
+        """Evaluate entire dataset"""
+        print(f"\n🔍 Evaluating {len(ground_truth)} queries...")
+        print(f"   Top-k: {self.k}")
+        print(f"   API: {self.api_url}")
+        print()
+        
+        results = []
+        category_stats = defaultdict(lambda: {"total": 0, "hits": 0})
+        difficulty_stats = defaultdict(lambda: {"total": 0, "hits": 0})
+        
+        for i, item in enumerate(ground_truth, 1):
+            query = item["query"]
+            expected = item["expected_documents"]
+            category = item.get("category", "unknown")
+            difficulty = item.get("difficulty", "medium")
+            
+            print(f"[{i}/{len(ground_truth)}] Testing: {query[:50]}...")
+            
+            result = self.evaluate_query(query, expected)
+            result["category"] = category
+            result["difficulty"] = difficulty
+            results.append(result)
+            
+            # Update category stats
+            category_stats[category]["total"] += 1
+            if result["top_k_hit"]:
+                category_stats[category]["hits"] += 1
+            
+            # Update difficulty stats
+            difficulty_stats[difficulty]["total"] += 1
+            if result["top_k_hit"]:
+                difficulty_stats[difficulty]["hits"] += 1
+            
+            # Show result
+            status = "✅" if result["top_k_hit"] else "❌"
+            print(f"   {status} MRR: {result['mrr']:.3f} | Quality: {result['avg_quality']:.2f} | Relevance: {result['avg_relevance']:.3f}")
+        
+        # Calculate overall metrics
+        top_k_accuracy = sum(r["top_k_hit"] for r in results) / len(results)
+        avg_mrr = sum(r["mrr"] for r in results) / len(results)
+        avg_quality = sum(r["avg_quality"] for r in results) / len(results)
+        avg_relevance = sum(r["avg_relevance"] for r in results) / len(results)
+        
+        return {
+            "overall": {
+                "top_k_accuracy": top_k_accuracy,
+                "avg_mrr": avg_mrr,
+                "avg_quality": avg_quality,
+                "avg_relevance": avg_relevance,
+                "total_queries": len(results),
+                "successful_queries": sum(r["top_k_hit"] for r in results)
+            },
+            "by_category": dict(category_stats),
+            "by_difficulty": dict(difficulty_stats),
+            "detailed_results": results
+        }
+    
+    def print_report(self, evaluation: Dict):
+        """Print evaluation report"""
+        overall = evaluation["overall"]
+        
+        print("\n" + "=" * 70)
+        print("📊 RETRIEVAL EVALUATION REPORT")
+        print("=" * 70)
+        print()
+        
+        # Overall metrics
+        print("🎯 Overall Performance:")
+        print(f"   Top-{self.k} Accuracy: {overall['top_k_accuracy']:.1%}")
+        print(f"   Mean Reciprocal Rank: {overall['avg_mrr']:.3f}")
+        print(f"   Average Quality Score: {overall['avg_quality']:.3f}")
+        print(f"   Average Relevance: {overall['avg_relevance']:.3f}")
+        print(f"   Successful Queries: {overall['successful_queries']}/{overall['total_queries']}")
+        print()
+        
+        # Pass/Fail
+        threshold = 0.95
+        passed = overall['top_k_accuracy'] >= threshold
+        status = "✅ PASSED" if passed else "❌ FAILED"
+        print(f"🎓 Accuracy Threshold: {threshold:.1%}")
+        print(f"   Status: {status}")
+        print()
+        
+        # By category
+        print("📂 Performance by Category:")
+        for category, stats in sorted(evaluation["by_category"].items()):
+            accuracy = stats["hits"] / stats["total"] if stats["total"] > 0 else 0
+            print(f"   {category:20s}: {accuracy:.1%} ({stats['hits']}/{stats['total']})")
+        print()
+        
+        # By difficulty
+        print("⚡ Performance by Difficulty:")
+        for difficulty, stats in sorted(evaluation["by_difficulty"].items()):
+            accuracy = stats["hits"] / stats["total"] if stats["total"] > 0 else 0
+            print(f"   {difficulty:10s}: {accuracy:.1%} ({stats['hits']}/{stats['total']})")
+        print()
+        
+        # Failed queries
+        failed = [r for r in evaluation["detailed_results"] if not r["top_k_hit"]]
+        if failed:
+            print(f"❌ Failed Queries ({len(failed)}):")
+            for r in failed:
+                print(f"   - {r['query']}")
+                print(f"     Expected: {r['expected'][0] if r['expected'] else 'N/A'}")
+                print(f"     Got: {r['retrieved'][0] if r['retrieved'] else 'No results'}")
+        
+        print("=" * 70)
+        
+        return passed
+    
+    def save_results(self, evaluation: Dict, filepath: str):
+        """Save evaluation results to JSON file"""
+        with open(filepath, 'w') as f:
+            json.dump(evaluation, f, indent=2)
+        print(f"\n💾 Results saved to: {filepath}")
 
-def evaluate_retrieval():
+
+def main():
     """Main evaluation function"""
-    print("🔍 BMS Agent Retrieval Evaluation")
-    print("=" * 60)
+    import argparse
+    
+    parser = argparse.ArgumentParser(description="Evaluate BMS Agent retrieval accuracy")
+    parser.add_argument("--ground-truth", default="data/evaluation/ground_truth.jsonl",
+                       help="Path to ground truth JSONL file")
+    parser.add_argument("--api-url", default="http://localhost:8000",
+                       help="BMS API URL")
+    parser.add_argument("--k", type=int, default=5,
+                       help="Top-k for accuracy calculation")
+    parser.add_argument("--output", default="data/evaluation/results.json",
+                       help="Output file for results")
+    
+    args = parser.parse_args()
+    
+    # Check if API is available
+    try:
+        response = requests.get(f"{args.api_url}/health", timeout=5)
+        if response.status_code != 200:
+            print(f"❌ API not responding at {args.api_url}")
+            print("   Please ensure BMS API is running")
+            sys.exit(1)
+    except Exception as e:
+        print(f"❌ Cannot connect to API: {e}")
+        sys.exit(1)
     
     # Load ground truth
-    print(f"\n📋 Loading ground truth from: {GROUND_TRUTH_FILE}")
+    evaluator = RetrievalEvaluator(api_url=args.api_url, k=args.k)
+    
     try:
-        ground_truth = load_ground_truth(GROUND_TRUTH_FILE)
-        print(f"✅ Loaded {len(ground_truth)} test queries")
+        ground_truth = evaluator.load_ground_truth(args.ground_truth)
+        print(f"✅ Loaded {len(ground_truth)} test queries from {args.ground_truth}")
     except Exception as e:
-        print(f"❌ Failed to load ground truth: {e}")
-        return 1
+        print(f"❌ Error loading ground truth: {e}")
+        sys.exit(1)
     
-    # Check API health
-    print(f"\n🔗 Checking API health at: {API_URL}")
-    try:
-        response = requests.get(f"{API_URL}/health", timeout=5)
-        response.raise_for_status()
-        print("✅ API is healthy")
-    except Exception as e:
-        print(f"❌ API health check failed: {e}")
-        print("💡 Make sure the API is running: uvicorn api.main:app --host 0.0.0.0 --port 8000")
-        return 1
+    # Run evaluation
+    evaluation = evaluator.evaluate_dataset(ground_truth)
     
-    # Perform searches
-    print(f"\n🔎 Performing semantic searches (top-{TOP_K})...")
-    results_map = {}
-    failed_queries = []
-    
-    for i, gt in enumerate(ground_truth, 1):
-        query = gt["query"]
-        print(f"  [{i}/{len(ground_truth)}] {query[:60]}...")
-        
-        results = search_semantic(query, TOP_K)
-        if results:
-            doc_names = extract_document_names(results)
-            results_map[query] = doc_names
-            print(f"      ✅ Retrieved {len(doc_names)} documents")
-        else:
-            failed_queries.append(query)
-            results_map[query] = []
-            print(f"      ⚠️  No results")
-    
-    if failed_queries:
-        print(f"\n⚠️  {len(failed_queries)} queries returned no results")
-    
-    # Calculate metrics
-    print(f"\n📊 Calculating metrics...")
-    
-    top_k_accuracy = calculate_top_k_accuracy(ground_truth, results_map)
-    precision_recall = calculate_precision_recall(ground_truth, results_map)
-    mrr = calculate_mrr(ground_truth, results_map)
-    
-    # Display results
-    print("\n" + "=" * 60)
-    print("📈 EVALUATION RESULTS")
-    print("=" * 60)
-    print(f"\n🎯 Top-{TOP_K} Accuracy:  {top_k_accuracy:.2%}")
-    print(f"   Threshold:         {MIN_ACCURACY_THRESHOLD:.2%}")
-    print(f"   Status:            {'✅ PASS' if top_k_accuracy >= MIN_ACCURACY_THRESHOLD else '❌ FAIL'}")
-    
-    print(f"\n📊 Precision & Recall:")
-    print(f"   Precision:         {precision_recall['precision']:.2%}")
-    print(f"   Recall:            {precision_recall['recall']:.2%}")
-    print(f"   F1 Score:          {precision_recall['f1_score']:.2%}")
-    
-    print(f"\n🏆 Mean Reciprocal Rank: {mrr:.4f}")
-    
-    print(f"\n📋 Query Statistics:")
-    print(f"   Total queries:     {len(ground_truth)}")
-    print(f"   Successful:        {len(ground_truth) - len(failed_queries)}")
-    print(f"   Failed:            {len(failed_queries)}")
+    # Print report
+    passed = evaluator.print_report(evaluation)
     
     # Save results
-    results_file = "reports/retrieval_evaluation.json"
-    Path("reports").mkdir(exist_ok=True)
+    evaluator.save_results(evaluation, args.output)
     
-    results_data = {
-        "top_k_accuracy": top_k_accuracy,
-        "threshold": MIN_ACCURACY_THRESHOLD,
-        "passed": top_k_accuracy >= MIN_ACCURACY_THRESHOLD,
-        "precision": precision_recall['precision'],
-        "recall": precision_recall['recall'],
-        "f1_score": precision_recall['f1_score'],
-        "mrr": mrr,
-        "total_queries": len(ground_truth),
-        "failed_queries": len(failed_queries),
-        "top_k": TOP_K
-    }
-    
-    with open(results_file, 'w') as f:
-        json.dump(results_data, f, indent=2)
-    
-    print(f"\n💾 Results saved to: {results_file}")
-    
-    # Final verdict
-    print("\n" + "=" * 60)
-    if top_k_accuracy >= MIN_ACCURACY_THRESHOLD:
-        print("✅ EVALUATION PASSED - Retrieval accuracy meets threshold!")
-        print("=" * 60)
-        return 0
-    else:
-        print("❌ EVALUATION FAILED - Retrieval accuracy below threshold")
-        print(f"   Required: {MIN_ACCURACY_THRESHOLD:.2%}")
-        print(f"   Achieved: {top_k_accuracy:.2%}")
-        print(f"   Gap:      {(MIN_ACCURACY_THRESHOLD - top_k_accuracy):.2%}")
-        print("=" * 60)
-        return 1
+    # Exit with appropriate code
+    sys.exit(0 if passed else 1)
+
 
 if __name__ == "__main__":
-    sys.exit(evaluate_retrieval())
+    main()

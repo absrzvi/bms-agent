@@ -1,20 +1,25 @@
-{"query": "How do I request approval from an ERP supplier?", "expected_documents": ["ERP Supplier Request & Approval Process.pdf"], "context": "ERP supplier request and approval workflow"}
-{"query": "What is the process for requesting SharePoint permissions?", "expected_documents": ["467ad14e-d383-45a4-92ca-e3d7b8abb75c_SharePoint Permission Request.pdf"], "context": "SharePoint access and permission management"}
-{"query": "What is the material management process?", "expected_documents": ["Material Management Process.pdf"], "context": "Material management and inventory control"}
-{"query": "What is the employee onboarding process?", "expected_documents": ["Onboarding & Probation.pdf"], "context": "New employee onboarding and probation procedures"}
-{"query": "How does sales get legal support?", "expected_documents": ["Sales Led Legal Support Process.pdf"], "context": "Legal support process for sales team"}
-{"query": "What is the IT service management process?", "expected_documents": ["IT Service Management Process.pdf"], "context": "IT service management procedures"}
-{"query": "How do we handle RIPA requests?", "expected_documents": ["RIPA Request Management Process.pdf"], "context": "RIPA request management workflow"}
-{"query": "What is the development and QA process?", "expected_documents": ["Dev & QA Process.pdf"], "context": "Software development and quality assurance procedures"}
-{"query": "What is the employee lifecycle in HR?", "expected_documents": ["HR Employee Lifecycle Process Overview.pdf"], "context": "HR employee lifecycle management"}
-{"query": "How do we manage marketing opt-in and opt-out?", "expected_documents": ["Marketing Opt-In and Opt-Out Process.pdf"], "context": "Marketing consent and preference management"}
-{"query": "I need to add a new vendor to our ERP system, what approvals do I need?", "expected_documents": ["ERP Supplier Request & Approval Process.pdf"], "context": "Complex multi-step approval query"}
-{"query": "A new employee is starting next week, what paperwork and steps are required?", "expected_documents": ["Onboarding & Probation.pdf"], "context": "Natural language onboarding query"}
-{"query": "Our sales team needs help reviewing a contract before signing, who do we contact?", "expected_documents": ["Sales Led Legal Support Process.pdf"], "context": "Scenario-based legal support query"}
-{"query": "How do I get access to a SharePoint site I don't currently have permissions for?", "expected_documents": ["467ad14e-d383-45a4-92ca-e3d7b8abb75c_SharePoint Permission Request.pdf"], "context": "User-centric permission request"}
-{"query": "What's the workflow for managing our inventory and procurement of materials?", "expected_documents": ["Material Management Process.pdf"], "context": "Synonym variation - inventory/materials"}
-{"query": "We need to report an IT issue, what's the procedure?", "expected_documents": ["IT Service Management Process.pdf"], "context": "Incident reporting variation"}
-{"query": "What are the steps for software testing and quality assurance in development?", "expected_documents": ["Dev & QA Process.pdf"], "context": "Expanded QA query"}
-{"query": "How do customers unsubscribe from our marketing emails?", "expected_documents": ["Marketing Opt-In and Opt-Out Process.pdf"], "context": "Customer-facing opt-out query"}
-{"query": "What happens during an employee's probation period?", "expected_documents": ["Onboarding & Probation.pdf"], "context": "Specific probation query"}
-{"query": "I need to submit a RIPA request, what information is required?", "expected_documents": ["RIPA Request Management Process.pdf"], "context": "Information requirements query"}
+{"query": "What is business continuity?", "expected_documents": ["BMS-BCON-FOR-001-Business Continuity Response Template.docx", "BMS-BCON-FOR-005-Business Continuity Response PR Scenario.docx"], "category": "business_continuity", "difficulty": "easy"}
+{"query": "How do I submit overtime?", "expected_documents": ["BMS-HUMR-FOR-028 Overtime Form Template.xlsx"], "category": "human_resources", "difficulty": "easy"}
+{"query": "Find the credit card expense form", "expected_documents": ["BMS-FINA-FOR-006 Company Credit Card Expense Form.xlsx"], "category": "finance", "difficulty": "easy"}
+{"query": "What is the ERP supplier approval process?", "expected_documents": ["ERP Supplier Request & Approval Process.pdf"], "category": "procurement", "difficulty": "medium"}
+{"query": "How do I request SharePoint permissions?", "expected_documents": ["SharePoint Permission Request.pdf"], "category": "it_systems", "difficulty": "medium"}
+{"query": "Find the PE commissioning report template", "expected_documents": ["BMS-ENGI-FOR-003 PE Commissioning Report Template.xlsx"], "category": "engineering", "difficulty": "easy"}
+{"query": "What is the material management process?", "expected_documents": ["Material Management Process.pdf"], "category": "operations", "difficulty": "medium"}
+{"query": "Find the onboarding and probation process", "expected_documents": ["Onboarding & Probation.pdf"], "category": "human_resources", "difficulty": "easy"}
+{"query": "What is the tender risk assessment form?", "expected_documents": ["TEN-FRM-016 E AMS Ethics & Compliance Tender Risk Assessment form.xlsx"], "category": "compliance", "difficulty": "medium"}
+{"query": "How do I handle non-conforming products?", "expected_documents": ["Non Conforming Product - NCP Process.pdf", "PM - NCP Form- External Use.pdf"], "category": "quality", "difficulty": "hard"}
+{"query": "Find the project technical documentation template", "expected_documents": ["BMS-PROJ-FOR-010 Project Technical Documentation.xlsx"], "category": "project_management", "difficulty": "medium"}
+{"query": "What is the commissioning test report format?", "expected_documents": ["BMS-PROJ-FOR-016 Commissioning Test Report.xlsx"], "category": "engineering", "difficulty": "medium"}
+{"query": "How do I create a bid project task sheet?", "expected_documents": ["BMS-BDEV-FOR-027 Bid Project Task Sheet.xlsx"], "category": "business_development", "difficulty": "medium"}
+{"query": "Find the cable schedule template", "expected_documents": ["BMS-ENGI-FOR-002 PE Cable Schedule Template.xlsx"], "category": "engineering", "difficulty": "easy"}
+{"query": "What is the bench BOM template?", "expected_documents": ["BMS-ENGI-FOR-001 Bench BOM Template.xlsx"], "category": "engineering", "difficulty": "easy"}
+{"query": "How do I handle a cyber incident?", "expected_documents": ["BMS-BCON-FOR-003-Business Continuity Response Template - CyberIncidents.docx"], "category": "security", "difficulty": "medium"}
+{"query": "What is the IT business continuity template?", "expected_documents": ["BMS-BCON-FOR-004-Business Continuity Response Template - IT.docx"], "category": "it_systems", "difficulty": "medium"}
+{"query": "Find the sales led legal support process", "expected_documents": ["Sales Led Legal Support Process.pdf"], "category": "legal", "difficulty": "medium"}
+{"query": "What is the RIPA request management process?", "expected_documents": ["RIPA Request Management Process.pdf"], "category": "legal", "difficulty": "hard"}
+{"query": "How do I manage marketing opt-in and opt-out?", "expected_documents": ["Marketing Opt-In and Opt-Out Process.pdf"], "category": "marketing", "difficulty": "medium"}
+{"query": "Find the HR employee lifecycle process", "expected_documents": ["HR Employee Lifecycle Process Overview.pdf"], "category": "human_resources", "difficulty": "medium"}
+{"query": "What is the development and QA process?", "expected_documents": ["Dev & QA Process.pdf"], "category": "it_systems", "difficulty": "medium"}
+{"query": "Find the project manager checklist", "expected_documents": ["BMS-PROJ-FOR-033 Project Manager Checklist.pdf"], "category": "project_management", "difficulty": "easy"}
+{"query": "How do I change my personal information?", "expected_documents": ["Change of Personal Information.pdf"], "category": "human_resources", "difficulty": "easy"}
+{"query": "What is the crisis communications template for non-fatality incidents?", "expected_documents": ["Crisis Comms External Press Release Template 2 (Non-Fatality).pdf"], "category": "communications", "difficulty": "hard"}

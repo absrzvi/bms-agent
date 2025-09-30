@@ -1,0 +1,440 @@
+{
+  "overall": {
+    "top_k_accuracy": 0.0,
+    "avg_mrr": 0.0,
+    "avg_quality": 0.0,
+    "avg_relevance": 0.0,
+    "total_queries": 25,
+    "successful_queries": 0
+  },
+  "by_category": {
+    "business_continuity": {
+      "total": 1,
+      "hits": 0
+    },
+    "human_resources": {
+      "total": 4,
+      "hits": 0
+    },
+    "finance": {
+      "total": 1,
+      "hits": 0
+    },
+    "procurement": {
+      "total": 1,
+      "hits": 0
+    },
+    "it_systems": {
+      "total": 3,
+      "hits": 0
+    },
+    "engineering": {
+      "total": 4,
+      "hits": 0
+    },
+    "operations": {
+      "total": 1,
+      "hits": 0
+    },
+    "compliance": {
+      "total": 1,
+      "hits": 0
+    },
+    "quality": {
+      "total": 1,
+      "hits": 0
+    },
+    "project_management": {
+      "total": 2,
+      "hits": 0
+    },
+    "business_development": {
+      "total": 1,
+      "hits": 0
+    },
+    "security": {
+      "total": 1,
+      "hits": 0
+    },
+    "legal": {
+      "total": 2,
+      "hits": 0
+    },
+    "marketing": {
+      "total": 1,
+      "hits": 0
+    },
+    "communications": {
+      "total": 1,
+      "hits": 0
+    }
+  },
+  "by_difficulty": {
+    "easy": {
+      "total": 9,
+      "hits": 0
+    },
+    "medium": {
+      "total": 13,
+      "hits": 0
+    },
+    "hard": {
+      "total": 3,
+      "hits": 0
+    }
+  },
+  "detailed_results": [
+    {
+      "query": "What is business continuity?",
+      "expected": [
+        "BMS-BCON-FOR-001-Business Continuity Response Template.docx",
+        "BMS-BCON-FOR-005-Business Continuity Response PR Scenario.docx"
+      ],
+      "retrieved": [],
+      "top_k_hit": false,
+      "mrr": 0.0,
+      "avg_quality": 0.0,
+      "avg_relevance": 0.0,
+      "num_results": 0,
+      "category": "business_continuity",
+      "difficulty": "easy"
+    },
+    {
+      "query": "How do I submit overtime?",
+      "expected": [
+        "BMS-HUMR-FOR-028 Overtime Form Template.xlsx"
+      ],
+      "retrieved": [],
+      "top_k_hit": false,
+      "mrr": 0.0,
+      "avg_quality": 0.0,
+      "avg_relevance": 0.0,
+      "num_results": 0,
+      "category": "human_resources",
+      "difficulty": "easy"
+    },
+    {
+      "query": "Find the credit card expense form",
+      "expected": [
+        "BMS-FINA-FOR-006 Company Credit Card Expense Form.xlsx"
+      ],
+      "retrieved": [],
+      "top_k_hit": false,
+      "mrr": 0.0,
+      "avg_quality": 0.0,
+      "avg_relevance": 0.0,
+      "num_results": 0,
+      "category": "finance",
+      "difficulty": "easy"
+    },
+    {
+      "query": "What is the ERP supplier approval process?",
+      "expected": [
+        "ERP Supplier Request & Approval Process.pdf"
+      ],
+      "retrieved": [],
+      "top_k_hit": false,
+      "mrr": 0.0,
+      "avg_quality": 0.0,
+      "avg_relevance": 0.0,
+      "num_results": 0,
+      "category": "procurement",
+      "difficulty": "medium"
+    },
+    {
+      "query": "How do I request SharePoint permissions?",
+      "expected": [
+        "SharePoint Permission Request.pdf"
+      ],
+      "retrieved": [],
+      "top_k_hit": false,
+      "mrr": 0.0,
+      "avg_quality": 0.0,
+      "avg_relevance": 0.0,
+      "num_results": 0,
+      "category": "it_systems",
+      "difficulty": "medium"
+    },
+    {
+      "query": "Find the PE commissioning report template",
+      "expected": [
+        "BMS-ENGI-FOR-003 PE Commissioning Report Template.xlsx"
+      ],
+      "retrieved": [],
+      "top_k_hit": false,
+      "mrr": 0.0,
+      "avg_quality": 0.0,
+      "avg_relevance": 0.0,
+      "num_results": 0,
+      "category": "engineering",
+      "difficulty": "easy"
+    },
+    {
+      "query": "What is the material management process?",
+      "expected": [
+        "Material Management Process.pdf"
+      ],
+      "retrieved": [],
+      "top_k_hit": false,
+      "mrr": 0.0,
+      "avg_quality": 0.0,
+      "avg_relevance": 0.0,
+      "num_results": 0,
+      "category": "operations",
+      "difficulty": "medium"
+    },
+    {
+      "query": "Find the onboarding and probation process",
+      "expected": [
+        "Onboarding & Probation.pdf"
+      ],
+      "retrieved": [],
+      "top_k_hit": false,
+      "mrr": 0.0,
+      "avg_quality": 0.0,
+      "avg_relevance": 0.0,
+      "num_results": 0,
+      "category": "human_resources",
+      "difficulty": "easy"
+    },
+    {
+      "query": "What is the tender risk assessment form?",
+      "expected": [
+        "TEN-FRM-016 E AMS Ethics & Compliance Tender Risk Assessment form.xlsx"
+      ],
+      "retrieved": [],
+      "top_k_hit": false,
+      "mrr": 0.0,
+      "avg_quality": 0.0,
+      "avg_relevance": 0.0,
+      "num_results": 0,
+      "category": "compliance",
+      "difficulty": "medium"
+    },
+    {
+      "query": "How do I handle non-conforming products?",
+      "expected": [
+        "Non Conforming Product - NCP Process.pdf",
+        "PM - NCP Form- External Use.pdf"
+      ],
+      "retrieved": [],
+      "top_k_hit": false,
+      "mrr": 0.0,
+      "avg_quality": 0.0,
+      "avg_relevance": 0.0,
+      "num_results": 0,
+      "category": "quality",
+      "difficulty": "hard"
+    },
+    {
+      "query": "Find the project technical documentation template",
+      "expected": [
+        "BMS-PROJ-FOR-010 Project Technical Documentation.xlsx"
+      ],
+      "retrieved": [],
+      "top_k_hit": false,
+      "mrr": 0.0,
+      "avg_quality": 0.0,
+      "avg_relevance": 0.0,
+      "num_results": 0,
+      "category": "project_management",
+      "difficulty": "medium"
+    },
+    {
+      "query": "What is the commissioning test report format?",
+      "expected": [
+        "BMS-PROJ-FOR-016 Commissioning Test Report.xlsx"
+      ],
+      "retrieved": [],
+      "top_k_hit": false,
+      "mrr": 0.0,
+      "avg_quality": 0.0,
+      "avg_relevance": 0.0,
+      "num_results": 0,
+      "category": "engineering",
+      "difficulty": "medium"
+    },
+    {
+      "query": "How do I create a bid project task sheet?",
+      "expected": [
+        "BMS-BDEV-FOR-027 Bid Project Task Sheet.xlsx"
+      ],
+      "retrieved": [],
+      "top_k_hit": false,
+      "mrr": 0.0,
+      "avg_quality": 0.0,
+      "avg_relevance": 0.0,
+      "num_results": 0,
+      "category": "business_development",
+      "difficulty": "medium"
+    },
+    {
+      "query": "Find the cable schedule template",
+      "expected": [
+        "BMS-ENGI-FOR-002 PE Cable Schedule Template.xlsx"
+      ],
+      "retrieved": [],
+      "top_k_hit": false,
+      "mrr": 0.0,
+      "avg_quality": 0.0,
+      "avg_relevance": 0.0,
+      "num_results": 0,
+      "category": "engineering",
+      "difficulty": "easy"
+    },
+    {
+      "query": "What is the bench BOM template?",
+      "expected": [
+        "BMS-ENGI-FOR-001 Bench BOM Template.xlsx"
+      ],
+      "retrieved": [],
+      "top_k_hit": false,
+      "mrr": 0.0,
+      "avg_quality": 0.0,
+      "avg_relevance": 0.0,
+      "num_results": 0,
+      "category": "engineering",
+      "difficulty": "easy"
+    },
+    {
+      "query": "How do I handle a cyber incident?",
+      "expected": [
+        "BMS-BCON-FOR-003-Business Continuity Response Template - CyberIncidents.docx"
+      ],
+      "retrieved": [],
+      "top_k_hit": false,
+      "mrr": 0.0,
+      "avg_quality": 0.0,
+      "avg_relevance": 0.0,
+      "num_results": 0,
+      "category": "security",
+      "difficulty": "medium"
+    },
+    {
+      "query": "What is the IT business continuity template?",
+      "expected": [
+        "BMS-BCON-FOR-004-Business Continuity Response Template - IT.docx"
+      ],
+      "retrieved": [],
+      "top_k_hit": false,
+      "mrr": 0.0,
+      "avg_quality": 0.0,
+      "avg_relevance": 0.0,
+      "num_results": 0,
+      "category": "it_systems",
+      "difficulty": "medium"
+    },
+    {
+      "query": "Find the sales led legal support process",
+      "expected": [
+        "Sales Led Legal Support Process.pdf"
+      ],
+      "retrieved": [],
+      "top_k_hit": false,
+      "mrr": 0.0,
+      "avg_quality": 0.0,
+      "avg_relevance": 0.0,
+      "num_results": 0,
+      "category": "legal",
+      "difficulty": "medium"
+    },
+    {
+      "query": "What is the RIPA request management process?",
+      "expected": [
+        "RIPA Request Management Process.pdf"
+      ],
+      "retrieved": [],
+      "top_k_hit": false,
+      "mrr": 0.0,
+      "avg_quality": 0.0,
+      "avg_relevance": 0.0,
+      "num_results": 0,
+      "category": "legal",
+      "difficulty": "hard"
+    },
+    {
+      "query": "How do I manage marketing opt-in and opt-out?",
+      "expected": [
+        "Marketing Opt-In and Opt-Out Process.pdf"
+      ],
+      "retrieved": [],
+      "top_k_hit": false,
+      "mrr": 0.0,
+      "avg_quality": 0.0,
+      "avg_relevance": 0.0,
+      "num_results": 0,
+      "category": "marketing",
+      "difficulty": "medium"
+    },
+    {
+      "query": "Find the HR employee lifecycle process",
+      "expected": [
+        "HR Employee Lifecycle Process Overview.pdf"
+      ],
+      "retrieved": [],
+      "top_k_hit": false,
+      "mrr": 0.0,
+      "avg_quality": 0.0,
+      "avg_relevance": 0.0,
+      "num_results": 0,
+      "category": "human_resources",
+      "difficulty": "medium"
+    },
+    {
+      "query": "What is the development and QA process?",
+      "expected": [
+        "Dev & QA Process.pdf"
+      ],
+      "retrieved": [],
+      "top_k_hit": false,
+      "mrr": 0.0,
+      "avg_quality": 0.0,
+      "avg_relevance": 0.0,
+      "num_results": 0,
+      "category": "it_systems",
+      "difficulty": "medium"
+    },
+    {
+      "query": "Find the project manager checklist",
+      "expected": [
+        "BMS-PROJ-FOR-033 Project Manager Checklist.pdf"
+      ],
+      "retrieved": [],
+      "top_k_hit": false,
+      "mrr": 0.0,
+      "avg_quality": 0.0,
+      "avg_relevance": 0.0,
+      "num_results": 0,
+      "category": "project_management",
+      "difficulty": "easy"
+    },
+    {
+      "query": "How do I change my personal information?",
+      "expected": [
+        "Change of Personal Information.pdf"
+      ],
+      "retrieved": [],
+      "top_k_hit": false,
+      "mrr": 0.0,
+      "avg_quality": 0.0,
+      "avg_relevance": 0.0,
+      "num_results": 0,
+      "category": "human_resources",
+      "difficulty": "easy"
+    },
+    {
+      "query": "What is the crisis communications template for non-fatality incidents?",
+      "expected": [
+        "Crisis Comms External Press Release Template 2 (Non-Fatality).pdf"
+      ],
+      "retrieved": [],
+      "top_k_hit": false,
+      "mrr": 0.0,
+      "avg_quality": 0.0,
+      "avg_relevance": 0.0,
+      "num_results": 0,
+      "category": "communications",
+      "difficulty": "hard"
+    }
+  ]
+}
