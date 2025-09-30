@@ -1,11 +1,11 @@
 {
   "overall": {
-    "top_k_accuracy": 0.0,
-    "avg_mrr": 0.0,
+    "top_k_accuracy": 0.08,
+    "avg_mrr": 0.08,
     "avg_quality": 0.0,
-    "avg_relevance": 0.0,
+    "avg_relevance": 0.3530854101333334,
     "total_queries": 25,
-    "successful_queries": 0
+    "successful_queries": 2
   },
   "by_category": {
     "business_continuity": {
@@ -58,7 +58,7 @@
     },
     "legal": {
       "total": 2,
-      "hits": 0
+      "hits": 2
     },
     "marketing": {
       "total": 1,
@@ -76,11 +76,11 @@
     },
     "medium": {
       "total": 13,
-      "hits": 0
+      "hits": 1
     },
     "hard": {
       "total": 3,
-      "hits": 0
+      "hits": 1
     }
   },
   "detailed_results": [
@@ -90,12 +90,16 @@
         "BMS-BCON-FOR-001-Business Continuity Response Template.docx",
         "BMS-BCON-FOR-005-Business Continuity Response PR Scenario.docx"
       ],
-      "retrieved": [],
+      "retrieved": [
+        "cbdca839-fb5a-4f43-89c4-807cdffc77d5_45acfbbb-4b14-4438-973b-29127a21d8b6_Solution Design Development - Pre Sales.pdf",
+        "fff25e62-5c72-4c3c-9c26-deb9b9a87946_c0c6c7bc-fa4d-4d04-b948-11fe44ee48b3_Stock Movements in ERP.pdf",
+        "f8b81c97-aadd-4e4a-b31e-3025b80ec1eb_e8029d6a-fe84-481a-ade2-7a3de308901d_Stock Management Process.pdf"
+      ],
       "top_k_hit": false,
       "mrr": 0.0,
       "avg_quality": 0.0,
-      "avg_relevance": 0.0,
-      "num_results": 0,
+      "avg_relevance": 0.38532418333333335,
+      "num_results": 3,
       "category": "business_continuity",
       "difficulty": "easy"
     },
@@ -104,12 +108,16 @@
       "expected": [
         "BMS-HUMR-FOR-028 Overtime Form Template.xlsx"
       ],
-      "retrieved": [],
+      "retrieved": [
+        "f8b81c97-aadd-4e4a-b31e-3025b80ec1eb_e8029d6a-fe84-481a-ade2-7a3de308901d_Stock Management Process.pdf",
+        "cbdca839-fb5a-4f43-89c4-807cdffc77d5_45acfbbb-4b14-4438-973b-29127a21d8b6_Solution Design Development - Pre Sales.pdf",
+        "5925e4f4-3582-4411-904b-6231280ae45b_43b15dd3-86fc-4f61-a62c-1d26109e3ab2_RIPA Request Management Process.pdf"
+      ],
       "top_k_hit": false,
       "mrr": 0.0,
       "avg_quality": 0.0,
-      "avg_relevance": 0.0,
-      "num_results": 0,
+      "avg_relevance": 0.17824102666666666,
+      "num_results": 3,
       "category": "human_resources",
       "difficulty": "easy"
     },
@@ -118,12 +126,16 @@
       "expected": [
         "BMS-FINA-FOR-006 Company Credit Card Expense Form.xlsx"
       ],
-      "retrieved": [],
+      "retrieved": [
+        "f8b81c97-aadd-4e4a-b31e-3025b80ec1eb_e8029d6a-fe84-481a-ade2-7a3de308901d_Stock Management Process.pdf",
+        "5925e4f4-3582-4411-904b-6231280ae45b_43b15dd3-86fc-4f61-a62c-1d26109e3ab2_RIPA Request Management Process.pdf",
+        "5925e4f4-3582-4411-904b-6231280ae45b_43b15dd3-86fc-4f61-a62c-1d26109e3ab2_RIPA Request Management Process.pdf"
+      ],
       "top_k_hit": false,
       "mrr": 0.0,
       "avg_quality": 0.0,
-      "avg_relevance": 0.0,
-      "num_results": 0,
+      "avg_relevance": 0.2692491733333333,
+      "num_results": 3,
       "category": "finance",
       "difficulty": "easy"
     },
@@ -132,12 +144,16 @@
       "expected": [
         "ERP Supplier Request & Approval Process.pdf"
       ],
-      "retrieved": [],
+      "retrieved": [
+        "cbdca839-fb5a-4f43-89c4-807cdffc77d5_45acfbbb-4b14-4438-973b-29127a21d8b6_Solution Design Development - Pre Sales.pdf",
+        "cbdca839-fb5a-4f43-89c4-807cdffc77d5_45acfbbb-4b14-4438-973b-29127a21d8b6_Solution Design Development - Pre Sales.pdf",
+        "cbdca839-fb5a-4f43-89c4-807cdffc77d5_45acfbbb-4b14-4438-973b-29127a21d8b6_Solution Design Development - Pre Sales.pdf"
+      ],
       "top_k_hit": false,
       "mrr": 0.0,
       "avg_quality": 0.0,
-      "avg_relevance": 0.0,
-      "num_results": 0,
+      "avg_relevance": 0.5070756166666667,
+      "num_results": 3,
       "category": "procurement",
       "difficulty": "medium"
     },
@@ -146,12 +162,16 @@
       "expected": [
         "SharePoint Permission Request.pdf"
       ],
-      "retrieved": [],
+      "retrieved": [
+        "5925e4f4-3582-4411-904b-6231280ae45b_43b15dd3-86fc-4f61-a62c-1d26109e3ab2_RIPA Request Management Process.pdf",
+        "36515da6-92b5-4fd1-999e-0469e6387b89_49aa0193-0633-4cc7-a45a-37e46a29d98e_Sales Led Legal Support Process.pdf",
+        "5925e4f4-3582-4411-904b-6231280ae45b_43b15dd3-86fc-4f61-a62c-1d26109e3ab2_RIPA Request Management Process.pdf"
+      ],
       "top_k_hit": false,
       "mrr": 0.0,
       "avg_quality": 0.0,
-      "avg_relevance": 0.0,
-      "num_results": 0,
+      "avg_relevance": 0.18123890666666664,
+      "num_results": 3,
       "category": "it_systems",
       "difficulty": "medium"
     },
@@ -160,12 +180,16 @@
       "expected": [
         "BMS-ENGI-FOR-003 PE Commissioning Report Template.xlsx"
       ],
-      "retrieved": [],
+      "retrieved": [
+        "5925e4f4-3582-4411-904b-6231280ae45b_43b15dd3-86fc-4f61-a62c-1d26109e3ab2_RIPA Request Management Process.pdf",
+        "cbdca839-fb5a-4f43-89c4-807cdffc77d5_45acfbbb-4b14-4438-973b-29127a21d8b6_Solution Design Development - Pre Sales.pdf",
+        "cbdca839-fb5a-4f43-89c4-807cdffc77d5_45acfbbb-4b14-4438-973b-29127a21d8b6_Solution Design Development - Pre Sales.pdf"
+      ],
       "top_k_hit": false,
       "mrr": 0.0,
       "avg_quality": 0.0,
-      "avg_relevance": 0.0,
-      "num_results": 0,
+      "avg_relevance": 0.41160379999999996,
+      "num_results": 3,
       "category": "engineering",
       "difficulty": "easy"
     },
@@ -174,12 +198,16 @@
       "expected": [
         "Material Management Process.pdf"
       ],
-      "retrieved": [],
+      "retrieved": [
+        "f8b81c97-aadd-4e4a-b31e-3025b80ec1eb_e8029d6a-fe84-481a-ade2-7a3de308901d_Stock Management Process.pdf",
+        "cbdca839-fb5a-4f43-89c4-807cdffc77d5_45acfbbb-4b14-4438-973b-29127a21d8b6_Solution Design Development - Pre Sales.pdf",
+        "fff25e62-5c72-4c3c-9c26-deb9b9a87946_c0c6c7bc-fa4d-4d04-b948-11fe44ee48b3_Stock Movements in ERP.pdf"
+      ],
       "top_k_hit": false,
       "mrr": 0.0,
       "avg_quality": 0.0,
-      "avg_relevance": 0.0,
-      "num_results": 0,
+      "avg_relevance": 0.4344104833333333,
+      "num_results": 3,
       "category": "operations",
       "difficulty": "medium"
     },
@@ -188,12 +216,16 @@
       "expected": [
         "Onboarding & Probation.pdf"
       ],
-      "retrieved": [],
+      "retrieved": [
+        "cbdca839-fb5a-4f43-89c4-807cdffc77d5_45acfbbb-4b14-4438-973b-29127a21d8b6_Solution Design Development - Pre Sales.pdf",
+        "cbdca839-fb5a-4f43-89c4-807cdffc77d5_45acfbbb-4b14-4438-973b-29127a21d8b6_Solution Design Development - Pre Sales.pdf",
+        "f8b81c97-aadd-4e4a-b31e-3025b80ec1eb_e8029d6a-fe84-481a-ade2-7a3de308901d_Stock Management Process.pdf"
+      ],
       "top_k_hit": false,
       "mrr": 0.0,
       "avg_quality": 0.0,
-      "avg_relevance": 0.0,
-      "num_results": 0,
+      "avg_relevance": 0.3402802333333334,
+      "num_results": 3,
       "category": "human_resources",
       "difficulty": "easy"
     },
@@ -202,12 +234,16 @@
       "expected": [
         "TEN-FRM-016 E AMS Ethics & Compliance Tender Risk Assessment form.xlsx"
       ],
-      "retrieved": [],
+      "retrieved": [
+        "cbdca839-fb5a-4f43-89c4-807cdffc77d5_45acfbbb-4b14-4438-973b-29127a21d8b6_Solution Design Development - Pre Sales.pdf",
+        "96c3457c-c6ec-4226-b5c6-e05b227b7643_94df6c2a-24e8-4e24-a996-a64b9ae49d08_BMS-BDEV-PRO-001 Bid Development.pdf",
+        "cbdca839-fb5a-4f43-89c4-807cdffc77d5_45acfbbb-4b14-4438-973b-29127a21d8b6_Solution Design Development - Pre Sales.pdf"
+      ],
       "top_k_hit": false,
       "mrr": 0.0,
       "avg_quality": 0.0,
-      "avg_relevance": 0.0,
-      "num_results": 0,
+      "avg_relevance": 0.5015394533333333,
+      "num_results": 3,
       "category": "compliance",
       "difficulty": "medium"
     },
@@ -217,12 +253,16 @@
         "Non Conforming Product - NCP Process.pdf",
         "PM - NCP Form- External Use.pdf"
       ],
-      "retrieved": [],
+      "retrieved": [
+        "cbdca839-fb5a-4f43-89c4-807cdffc77d5_45acfbbb-4b14-4438-973b-29127a21d8b6_Solution Design Development - Pre Sales.pdf",
+        "f8b81c97-aadd-4e4a-b31e-3025b80ec1eb_e8029d6a-fe84-481a-ade2-7a3de308901d_Stock Management Process.pdf",
+        "f8b81c97-aadd-4e4a-b31e-3025b80ec1eb_e8029d6a-fe84-481a-ade2-7a3de308901d_Stock Management Process.pdf"
+      ],
       "top_k_hit": false,
       "mrr": 0.0,
       "avg_quality": 0.0,
-      "avg_relevance": 0.0,
-      "num_results": 0,
+      "avg_relevance": 0.21855984000000003,
+      "num_results": 3,
       "category": "quality",
       "difficulty": "hard"
     },
@@ -231,12 +271,16 @@
       "expected": [
         "BMS-PROJ-FOR-010 Project Technical Documentation.xlsx"
       ],
-      "retrieved": [],
+      "retrieved": [
+        "cbdca839-fb5a-4f43-89c4-807cdffc77d5_45acfbbb-4b14-4438-973b-29127a21d8b6_Solution Design Development - Pre Sales.pdf",
+        "96c3457c-c6ec-4226-b5c6-e05b227b7643_94df6c2a-24e8-4e24-a996-a64b9ae49d08_BMS-BDEV-PRO-001 Bid Development.pdf",
+        "cbdca839-fb5a-4f43-89c4-807cdffc77d5_45acfbbb-4b14-4438-973b-29127a21d8b6_Solution Design Development - Pre Sales.pdf"
+      ],
       "top_k_hit": false,
       "mrr": 0.0,
       "avg_quality": 0.0,
-      "avg_relevance": 0.0,
-      "num_results": 0,
+      "avg_relevance": 0.30657195,
+      "num_results": 3,
       "category": "project_management",
       "difficulty": "medium"
     },
@@ -245,12 +289,16 @@
       "expected": [
         "BMS-PROJ-FOR-016 Commissioning Test Report.xlsx"
       ],
-      "retrieved": [],
+      "retrieved": [
+        "cbdca839-fb5a-4f43-89c4-807cdffc77d5_45acfbbb-4b14-4438-973b-29127a21d8b6_Solution Design Development - Pre Sales.pdf",
+        "5925e4f4-3582-4411-904b-6231280ae45b_43b15dd3-86fc-4f61-a62c-1d26109e3ab2_RIPA Request Management Process.pdf",
+        "cbdca839-fb5a-4f43-89c4-807cdffc77d5_45acfbbb-4b14-4438-973b-29127a21d8b6_Solution Design Development - Pre Sales.pdf"
+      ],
       "top_k_hit": false,
       "mrr": 0.0,
       "avg_quality": 0.0,
-      "avg_relevance": 0.0,
-      "num_results": 0,
+      "avg_relevance": 0.38261499,
+      "num_results": 3,
       "category": "engineering",
       "difficulty": "medium"
     },
@@ -259,12 +307,16 @@
       "expected": [
         "BMS-BDEV-FOR-027 Bid Project Task Sheet.xlsx"
       ],
-      "retrieved": [],
+      "retrieved": [
+        "cbdca839-fb5a-4f43-89c4-807cdffc77d5_45acfbbb-4b14-4438-973b-29127a21d8b6_Solution Design Development - Pre Sales.pdf",
+        "cbdca839-fb5a-4f43-89c4-807cdffc77d5_45acfbbb-4b14-4438-973b-29127a21d8b6_Solution Design Development - Pre Sales.pdf",
+        "cbdca839-fb5a-4f43-89c4-807cdffc77d5_45acfbbb-4b14-4438-973b-29127a21d8b6_Solution Design Development - Pre Sales.pdf"
+      ],
       "top_k_hit": false,
       "mrr": 0.0,
       "avg_quality": 0.0,
-      "avg_relevance": 0.0,
-      "num_results": 0,
+      "avg_relevance": 0.51438891,
+      "num_results": 3,
       "category": "business_development",
       "difficulty": "medium"
     },
@@ -273,12 +325,16 @@
       "expected": [
         "BMS-ENGI-FOR-002 PE Cable Schedule Template.xlsx"
       ],
-      "retrieved": [],
+      "retrieved": [
+        "cbdca839-fb5a-4f43-89c4-807cdffc77d5_45acfbbb-4b14-4438-973b-29127a21d8b6_Solution Design Development - Pre Sales.pdf",
+        "40b0581d-b8f4-4fad-848a-e476b0dc217a_0680dc2b-359d-4767-b63f-40a3e35398f8_BMS-BCON-FOR-001-Business Continuity Response Template.docx",
+        "cbdca839-fb5a-4f43-89c4-807cdffc77d5_45acfbbb-4b14-4438-973b-29127a21d8b6_Solution Design Development - Pre Sales.pdf"
+      ],
       "top_k_hit": false,
       "mrr": 0.0,
       "avg_quality": 0.0,
-      "avg_relevance": 0.0,
-      "num_results": 0,
+      "avg_relevance": 0.3106189833333333,
+      "num_results": 3,
       "category": "engineering",
       "difficulty": "easy"
     },
@@ -287,12 +343,16 @@
       "expected": [
         "BMS-ENGI-FOR-001 Bench BOM Template.xlsx"
       ],
-      "retrieved": [],
+      "retrieved": [
+        "cbdca839-fb5a-4f43-89c4-807cdffc77d5_45acfbbb-4b14-4438-973b-29127a21d8b6_Solution Design Development - Pre Sales.pdf",
+        "cbdca839-fb5a-4f43-89c4-807cdffc77d5_45acfbbb-4b14-4438-973b-29127a21d8b6_Solution Design Development - Pre Sales.pdf",
+        "cbdca839-fb5a-4f43-89c4-807cdffc77d5_45acfbbb-4b14-4438-973b-29127a21d8b6_Solution Design Development - Pre Sales.pdf"
+      ],
       "top_k_hit": false,
       "mrr": 0.0,
       "avg_quality": 0.0,
-      "avg_relevance": 0.0,
-      "num_results": 0,
+      "avg_relevance": 0.4084879666666667,
+      "num_results": 3,
       "category": "engineering",
       "difficulty": "easy"
     },
@@ -301,12 +361,16 @@
       "expected": [
         "BMS-BCON-FOR-003-Business Continuity Response Template - CyberIncidents.docx"
       ],
-      "retrieved": [],
+      "retrieved": [
+        "40b0581d-b8f4-4fad-848a-e476b0dc217a_0680dc2b-359d-4767-b63f-40a3e35398f8_BMS-BCON-FOR-001-Business Continuity Response Template.docx",
+        "5925e4f4-3582-4411-904b-6231280ae45b_43b15dd3-86fc-4f61-a62c-1d26109e3ab2_RIPA Request Management Process.pdf",
+        "5925e4f4-3582-4411-904b-6231280ae45b_43b15dd3-86fc-4f61-a62c-1d26109e3ab2_RIPA Request Management Process.pdf"
+      ],
       "top_k_hit": false,
       "mrr": 0.0,
       "avg_quality": 0.0,
-      "avg_relevance": 0.0,
-      "num_results": 0,
+      "avg_relevance": 0.1940581366666667,
+      "num_results": 3,
       "category": "security",
       "difficulty": "medium"
     },
@@ -315,12 +379,16 @@
       "expected": [
         "BMS-BCON-FOR-004-Business Continuity Response Template - IT.docx"
       ],
-      "retrieved": [],
+      "retrieved": [
+        "cbdca839-fb5a-4f43-89c4-807cdffc77d5_45acfbbb-4b14-4438-973b-29127a21d8b6_Solution Design Development - Pre Sales.pdf",
+        "cbdca839-fb5a-4f43-89c4-807cdffc77d5_45acfbbb-4b14-4438-973b-29127a21d8b6_Solution Design Development - Pre Sales.pdf",
+        "40b0581d-b8f4-4fad-848a-e476b0dc217a_0680dc2b-359d-4767-b63f-40a3e35398f8_BMS-BCON-FOR-001-Business Continuity Response Template.docx"
+      ],
       "top_k_hit": false,
       "mrr": 0.0,
       "avg_quality": 0.0,
-      "avg_relevance": 0.0,
-      "num_results": 0,
+      "avg_relevance": 0.46954705,
+      "num_results": 3,
       "category": "it_systems",
       "difficulty": "medium"
     },
@@ -329,12 +397,16 @@
       "expected": [
         "Sales Led Legal Support Process.pdf"
       ],
-      "retrieved": [],
-      "top_k_hit": false,
-      "mrr": 0.0,
+      "retrieved": [
+        "36515da6-92b5-4fd1-999e-0469e6387b89_49aa0193-0633-4cc7-a45a-37e46a29d98e_Sales Led Legal Support Process.pdf",
+        "f8b81c97-aadd-4e4a-b31e-3025b80ec1eb_e8029d6a-fe84-481a-ade2-7a3de308901d_Stock Management Process.pdf",
+        "fff25e62-5c72-4c3c-9c26-deb9b9a87946_c0c6c7bc-fa4d-4d04-b948-11fe44ee48b3_Stock Movements in ERP.pdf"
+      ],
+      "top_k_hit": true,
+      "mrr": 1.0,
       "avg_quality": 0.0,
-      "avg_relevance": 0.0,
-      "num_results": 0,
+      "avg_relevance": 0.5177590433333333,
+      "num_results": 3,
       "category": "legal",
       "difficulty": "medium"
     },
@@ -343,12 +415,16 @@
       "expected": [
         "RIPA Request Management Process.pdf"
       ],
-      "retrieved": [],
-      "top_k_hit": false,
-      "mrr": 0.0,
+      "retrieved": [
+        "5925e4f4-3582-4411-904b-6231280ae45b_43b15dd3-86fc-4f61-a62c-1d26109e3ab2_RIPA Request Management Process.pdf",
+        "5925e4f4-3582-4411-904b-6231280ae45b_43b15dd3-86fc-4f61-a62c-1d26109e3ab2_RIPA Request Management Process.pdf",
+        "cbdca839-fb5a-4f43-89c4-807cdffc77d5_45acfbbb-4b14-4438-973b-29127a21d8b6_Solution Design Development - Pre Sales.pdf"
+      ],
+      "top_k_hit": true,
+      "mrr": 1.0,
       "avg_quality": 0.0,
-      "avg_relevance": 0.0,
-      "num_results": 0,
+      "avg_relevance": 0.5211488999999999,
+      "num_results": 3,
       "category": "legal",
       "difficulty": "hard"
     },
@@ -357,12 +433,16 @@
       "expected": [
         "Marketing Opt-In and Opt-Out Process.pdf"
       ],
-      "retrieved": [],
+      "retrieved": [
+        "cbdca839-fb5a-4f43-89c4-807cdffc77d5_45acfbbb-4b14-4438-973b-29127a21d8b6_Solution Design Development - Pre Sales.pdf",
+        "cbdca839-fb5a-4f43-89c4-807cdffc77d5_45acfbbb-4b14-4438-973b-29127a21d8b6_Solution Design Development - Pre Sales.pdf",
+        "cbdca839-fb5a-4f43-89c4-807cdffc77d5_45acfbbb-4b14-4438-973b-29127a21d8b6_Solution Design Development - Pre Sales.pdf"
+      ],
       "top_k_hit": false,
       "mrr": 0.0,
       "avg_quality": 0.0,
-      "avg_relevance": 0.0,
-      "num_results": 0,
+      "avg_relevance": 0.2642600533333333,
+      "num_results": 3,
       "category": "marketing",
       "difficulty": "medium"
     },
@@ -371,12 +451,16 @@
       "expected": [
         "HR Employee Lifecycle Process Overview.pdf"
       ],
-      "retrieved": [],
+      "retrieved": [
+        "40b0581d-b8f4-4fad-848a-e476b0dc217a_0680dc2b-359d-4767-b63f-40a3e35398f8_BMS-BCON-FOR-001-Business Continuity Response Template.docx",
+        "f8b81c97-aadd-4e4a-b31e-3025b80ec1eb_e8029d6a-fe84-481a-ade2-7a3de308901d_Stock Management Process.pdf",
+        "fff25e62-5c72-4c3c-9c26-deb9b9a87946_c0c6c7bc-fa4d-4d04-b948-11fe44ee48b3_Stock Movements in ERP.pdf"
+      ],
       "top_k_hit": false,
       "mrr": 0.0,
       "avg_quality": 0.0,
-      "avg_relevance": 0.0,
-      "num_results": 0,
+      "avg_relevance": 0.27939479,
+      "num_results": 3,
       "category": "human_resources",
       "difficulty": "medium"
     },
@@ -385,12 +469,16 @@
       "expected": [
         "Dev & QA Process.pdf"
       ],
-      "retrieved": [],
+      "retrieved": [
+        "cbdca839-fb5a-4f43-89c4-807cdffc77d5_45acfbbb-4b14-4438-973b-29127a21d8b6_Solution Design Development - Pre Sales.pdf",
+        "cbdca839-fb5a-4f43-89c4-807cdffc77d5_45acfbbb-4b14-4438-973b-29127a21d8b6_Solution Design Development - Pre Sales.pdf",
+        "cbdca839-fb5a-4f43-89c4-807cdffc77d5_45acfbbb-4b14-4438-973b-29127a21d8b6_Solution Design Development - Pre Sales.pdf"
+      ],
       "top_k_hit": false,
       "mrr": 0.0,
       "avg_quality": 0.0,
-      "avg_relevance": 0.0,
-      "num_results": 0,
+      "avg_relevance": 0.38929266,
+      "num_results": 3,
       "category": "it_systems",
       "difficulty": "medium"
     },
@@ -399,12 +487,16 @@
       "expected": [
         "BMS-PROJ-FOR-033 Project Manager Checklist.pdf"
       ],
-      "retrieved": [],
+      "retrieved": [
+        "cbdca839-fb5a-4f43-89c4-807cdffc77d5_45acfbbb-4b14-4438-973b-29127a21d8b6_Solution Design Development - Pre Sales.pdf",
+        "cbdca839-fb5a-4f43-89c4-807cdffc77d5_45acfbbb-4b14-4438-973b-29127a21d8b6_Solution Design Development - Pre Sales.pdf",
+        "cbdca839-fb5a-4f43-89c4-807cdffc77d5_45acfbbb-4b14-4438-973b-29127a21d8b6_Solution Design Development - Pre Sales.pdf"
+      ],
       "top_k_hit": false,
       "mrr": 0.0,
       "avg_quality": 0.0,
-      "avg_relevance": 0.0,
-      "num_results": 0,
+      "avg_relevance": 0.34877508333333335,
+      "num_results": 3,
       "category": "project_management",
       "difficulty": "easy"
     },
@@ -413,12 +505,16 @@
       "expected": [
         "Change of Personal Information.pdf"
       ],
-      "retrieved": [],
+      "retrieved": [
+        "5925e4f4-3582-4411-904b-6231280ae45b_43b15dd3-86fc-4f61-a62c-1d26109e3ab2_RIPA Request Management Process.pdf",
+        "5925e4f4-3582-4411-904b-6231280ae45b_43b15dd3-86fc-4f61-a62c-1d26109e3ab2_RIPA Request Management Process.pdf",
+        "36515da6-92b5-4fd1-999e-0469e6387b89_49aa0193-0633-4cc7-a45a-37e46a29d98e_Sales Led Legal Support Process.pdf"
+      ],
       "top_k_hit": false,
       "mrr": 0.0,
       "avg_quality": 0.0,
-      "avg_relevance": 0.0,
-      "num_results": 0,
+      "avg_relevance": 0.13255310666666667,
+      "num_results": 3,
       "category": "human_resources",
       "difficulty": "easy"
     },
@@ -427,12 +523,16 @@
       "expected": [
         "Crisis Comms External Press Release Template 2 (Non-Fatality).pdf"
       ],
-      "retrieved": [],
+      "retrieved": [
+        "40b0581d-b8f4-4fad-848a-e476b0dc217a_0680dc2b-359d-4767-b63f-40a3e35398f8_BMS-BCON-FOR-001-Business Continuity Response Template.docx",
+        "5925e4f4-3582-4411-904b-6231280ae45b_43b15dd3-86fc-4f61-a62c-1d26109e3ab2_RIPA Request Management Process.pdf",
+        "5925e4f4-3582-4411-904b-6231280ae45b_43b15dd3-86fc-4f61-a62c-1d26109e3ab2_RIPA Request Management Process.pdf"
+      ],
       "top_k_hit": false,
       "mrr": 0.0,
       "avg_quality": 0.0,
-      "avg_relevance": 0.0,
-      "num_results": 0,
+      "avg_relevance": 0.3601409133333333,
+      "num_results": 3,
       "category": "communications",
       "difficulty": "hard"
     }
