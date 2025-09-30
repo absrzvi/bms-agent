@@ -20,11 +20,12 @@ Key Features:
 - Qdrant vector database with multi-vector schema
 - Ollama GPU-accelerated embeddings (73.7 tokens/sec)
 
-Search Capabilities:
-1. Semantic Search: Dense vector similarity (best for conceptual queries)
-2. Hybrid Search: Combines semantic + keyword matching (best for specific terms)
-3. Quality Filtering: Filter by document quality score
-4. Type Filtering: Search within specific document types
+Search Capabilities (ALL AVAILABLE):
+1. search_semantic(): Dense vector similarity (best for conceptual queries)
+2. search_hybrid(): Semantic + keyword/BM25 (best for specific terms/codes)
+3. search_by_document_type(): Filter by document type (pdf, docx, etc.)
+4. get_api_status(): Check BMS API health
+5. compare_search_types(): Compare semantic vs hybrid results side-by-side
 
 Tested Query Types:
 - Direct process queries ("What is X process?")
@@ -178,27 +179,33 @@ class Tools:
     
     def search_semantic(self, query: str, limit: int = 5) -> str:
         """
-        Perform semantic search using dense vector embeddings.
+        Perform SEMANTIC search using dense vector embeddings.
+        
+        Best for: Conceptual queries, natural language questions, synonym variations
+        Example: "What is business continuity?" or "How do we handle new employees?"
         
         Args:
             query: Search query text
             limit: Number of results (default: 5)
         
         Returns:
-            Formatted search results
+            Formatted search results with relevance scores
         """
         return self.search_documents(query, limit=limit, search_type="semantic")
     
     def search_hybrid(self, query: str, limit: int = 5) -> str:
         """
-        Perform hybrid search combining semantic and keyword matching.
+        Perform HYBRID search combining semantic vectors + keyword/BM25 matching.
+        
+        Best for: Specific document names, codes, exact terminology
+        Example: "BMS-ENGI-FOR-003" or "material management process"
         
         Args:
             query: Search query text
             limit: Number of results (default: 5)
         
         Returns:
-            Formatted search results
+            Formatted search results with combined relevance scores
         """
         return self.search_documents(query, limit=limit, search_type="hybrid")
     
@@ -221,6 +228,42 @@ class Tools:
         """
         filters = {"document_type": document_type}
         return self.search_documents(query, limit=limit, filters=filters)
+    
+    def compare_search_types(self, query: str, limit: int = 3) -> str:
+        """
+        Compare semantic vs hybrid search results side-by-side.
+        
+        Useful for understanding which search type works better for your query.
+        
+        Args:
+            query: Search query text
+            limit: Number of results per search type (default: 3)
+        
+        Returns:
+            Side-by-side comparison of both search types
+        """
+        output = [f"🔍 **Comparing Search Types for:** '{query}'\n"]
+        output.append("=" * 70)
+        
+        # Semantic search
+        output.append("\n**🎯 SEMANTIC SEARCH** (Conceptual matching)")
+        output.append("-" * 70)
+        semantic_result = self.search_semantic(query, limit=limit)
+        output.append(semantic_result)
+        
+        # Hybrid search
+        output.append("\n" + "=" * 70)
+        output.append("\n**⚡ HYBRID SEARCH** (Semantic + Keyword)")
+        output.append("-" * 70)
+        hybrid_result = self.search_hybrid(query, limit=limit)
+        output.append(hybrid_result)
+        
+        output.append("\n" + "=" * 70)
+        output.append("\n**💡 Recommendation:**")
+        output.append("- Use **Semantic** for conceptual/natural language queries")
+        output.append("- Use **Hybrid** for specific terms, codes, or exact matches")
+        
+        return "\n".join(output)
     
     def get_api_status(self) -> str:
         """
