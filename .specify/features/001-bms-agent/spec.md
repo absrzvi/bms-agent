@@ -21,10 +21,18 @@
 - **Document Processing**
   - R1.1: Ingest PDF, DOCX, PPTX, CSV, XLSX, and TXT files up to 100 MB with rejection for unsupported types. **POC DECISION**: 100 MB limit for POC; 1 GB target for production.
     - *Acceptance*: Upload endpoint streams and processes 100 MB test fixtures without memory errors; returns HTTP 400/413 with descriptive errors for invalid types or oversize payloads.
-  - R1.2: **MVP DECISION**: Enhanced Document Processor v4.0 with optimized quality processing - Sentence-aware chunking (2000 chars, 400 overlap), quality validation (≥0.70 minimum score), contextual retrieval, perfect data cleaning, and BM25 keyword extraction. Store 768-dimensional embeddings (sentence-transformers/all-mpnet-base-v2) per chunk in Qdrant collection `nomad_bms_documents`.
+  - R1.2: **MVP DECISION**: Enhanced Document Processor v4.0 with optimized quality processing - Sentence-aware chunking (2000 chars, 400 overlap), quality validation (≥0.70 minimum score), contextual retrieval, perfect data cleaning, and BM25 keyword extraction. Store 768-dimensional embeddings (sentence-transformers/all-mpnet-base-v2) per chunk in Qdrant v1.7.4+ vector database with v4.0 multi-vector schema, collection `nomad_bms_documents`.
     - *Acceptance*: Quality score ≥0.70 minimum (actual: 0.72-0.85 by format) with 100% pass rate; zero data artifacts in XLSX/CSV processing; complete multi-format support (PDF, DOCX, PPTX, XLSX, CSV, TXT); 768-dim embeddings; comprehensive test suite validates all features.
   - R1.3: **QUALITY ASSURANCE**: Achieve enterprise-grade processing quality with comprehensive format support and data cleaning.
     - *Acceptance*: DOCX processing with python-docx (0.714-0.895 quality); PPTX slide structure preservation; XLSX perfect cleaning (zero NaN/Unnamed artifacts); CSV enhanced formatting; multi-language support (German/English); business document intelligence.
+  - R1.4: **CLARIFIED**: Document re-upload behavior - When a document with the same filename is uploaded, perform destructive replacement: remove existing document and all associated chunks, then process as new upload.
+    - *Acceptance*: Re-uploading same filename removes old version from Qdrant; new chunks replace old; document ID may change or be reused.
+  - R1.5: **CLARIFIED**: Upload concurrency - Support unlimited concurrent document uploads with queue-based processing to handle variable loads.
+    - *Acceptance*: Multiple simultaneous uploads accepted (HTTP 202); background queue processes documents; no artificial concurrency limits; track processing status per document.
+  - R1.6: **CLARIFIED**: Failed document processing - Store all chunks regardless of quality score; flag low-quality chunks (< 0.70) in metadata for filtering/monitoring.
+    - *Acceptance*: Documents with quality < 0.70 still indexed; chunks have quality_score field; search can optionally filter by quality threshold; processing never fails due to low quality alone.
+  - R1.7: **CLARIFIED**: Document deletion - Admin-only capability via dedicated API endpoint to remove documents and associated chunks.
+    - *Acceptance*: DELETE endpoint requires admin authentication (production); removes document metadata and all chunks from Qdrant; returns 204 on success; audit log records deletion.
 
 - **Search & Retrieval**
   - R2.1: **POC DECISION**: Provide semantic search via `/api/v1/search/semantic` with best effort performance; no hard latency requirements for POC. Performance benchmarking for baseline establishment only. **Production target**: ≤100ms p95 for 20-100 concurrent users.
@@ -32,6 +40,8 @@
     - *Acceptance*: `scripts/evaluate_retrieval.py` reports accuracy ≥95 %.
   - R2.3: Support hybrid retrieval (semantic + keyword/BM25) with query-time fusion.
     - *Acceptance*: Hybrid search endpoint returns both dense and sparse scores; integration tests verify BM25 keywords stored in Qdrant payload and exposed via API.
+  - R2.4: **CLARIFIED**: Configurable relevance filtering - Search endpoints accept optional `min_score` query parameter to filter results below specified similarity threshold (default: no filtering, return all top-k).
+    - *Acceptance*: `/api/v1/search/semantic?min_score=0.7` filters results; parameter validated (0.0-1.0 range); documented in OpenAPI spec; default behavior returns all top-k results regardless of score.
   - R3.1: **POC DECISION**: No authentication required for proof of concept. All endpoints are publicly accessible. JWT and API key authentication deferred to production phase. Document security roadmap in `docs/security-notes.md`.
   - R3.2: Enforce rate limiting optimized for 20-100 concurrent users (default 60 requests/min per IP, scalable configuration) without external dependencies.
   - R3.3: Expose OpenAPI 3.0 documentation at `/openapi.json` with simplified security schemes (API key optional).
@@ -42,6 +52,7 @@
 
 - **Testing & Quality**
   - R5.1: **MVP DECISION**: Basic testing scope - Core functionality tests with manual quality checks; comprehensive CI and security scans deferred to production phase.
+    - *Acceptance*: ≥80% test coverage for core logic per constitution §4; basic functionality tests pass.
   - R5.2: Include basic regression tests for core document processing and search functionality.
   - R5.3: **MVP DECISION**: Manual code quality checks; automated pre-commit tooling and strict typing enforcement deferred to production phase.
 - **Workflow & Change Management**
@@ -50,7 +61,8 @@
   - R6.3: Produce container images for the API service, follow semantic versioning, and automate database migrations as part of the release workflow.
   
 - **Observability & Operations**
-  - R7.1: **POC DECISION**: Basic `/metrics/uplink` endpoint for POC; full Prometheus integration and Grafana dashboards deferred to post-MVP phase per constitution §8 POC exception.
+  - R7.1: **MVP REQUIREMENT**: Implement basic Prometheus/Grafana integration per constitution §8; configure `/metrics/uplink` endpoint and basic dashboards for MVP.
+    - *Acceptance*: Prometheus scraping metrics from BMS API; Grafana dashboard showing latency, throughput, errors; manual alert runbooks documented.
   - R7.2: **POC DECISION**: Basic operational documentation for POC; comprehensive manual alert runbooks deferred to post-MVP phase.
     - *Acceptance*: `DEPLOYMENT_CHECKLIST.md` contains basic operational procedures for POC. Full runbooks (latency, ingestion, dependency degradation, contact matrix) deferred to production.
   - R7.3: Maintain `DEPLOYMENT_CHECKLIST.md` with escalation steps and contact matrix.
@@ -70,3 +82,19 @@
   - Security: JWT + API key authentication enforced.
   - Monitoring: Prometheus/Grafana operational with alert runbooks.
   - CI/CD: Full pipeline with coverage, security scans, pre-commit hooks.
+
+## Clarifications Changelog
+
+### Session 1 - 2025-10-02 08:40 UTC
+**Clarifier**: Workflow `/clarify` execution  
+**Questions Resolved**: 5 critical ambiguities
+
+| ID | Category | Question | Decision | Requirements Added |
+|----|----------|----------|----------|-------------------|
+| Q1 | Document Lifecycle | How to handle re-upload of same filename? | **A**: Destructive replacement | R1.4 |
+| Q2 | Search Quality | Should results be filtered by minimum score? | **D**: Configurable threshold via query param | R2.4 |
+| Q3 | Upload Concurrency | How many simultaneous uploads? | **A**: Unlimited queue-based processing | R1.5 |
+| Q4 | Document Deletion | Should deletion be supported? | **D**: Admin-only API endpoint | R1.7 |
+| Q5 | Failed Processing | What happens when quality < 0.70? | **D**: Store all, flag low-quality in metadata | R1.6 |
+
+**Impact**: 5 new requirements added (R1.4-R1.7, R2.4); requires 5 new implementation tasks (T036-T040)

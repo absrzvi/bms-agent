@@ -27,16 +27,16 @@ fi
 if [ -d /workspace/001-bms-agent ]; then
     echo "Starting BMS API..."
     cd /workspace/001-bms-agent
-    source .venv/bin/activate
+    source /workspace/bms-api-venv/bin/activate
     nohup uvicorn api.main:app --host 0.0.0.0 --port 8000 > /workspace/logs/api.log 2>&1 &
     sleep 3
 fi
 
 # Start OpenWebUI
-if [ -f /workspace/001-bms-agent/.venv/bin/open-webui ]; then
+if [ -f /workspace/openwebui/venv/bin/open-webui ]; then
     echo "Starting OpenWebUI..."
-    cd /workspace/001-bms-agent
-    source .venv/bin/activate
+    cd /workspace/openwebui
+    source /workspace/openwebui/venv/bin/activate
     export OPENWEBUI_DATA_DIR=/workspace/data/openwebui
     nohup open-webui serve --host 0.0.0.0 --port 3000 > /workspace/logs/openwebui.log 2>&1 &
     sleep 3

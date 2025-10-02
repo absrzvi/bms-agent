@@ -2677,15 +2677,25 @@ def setup_distributed_processing():
         logger.warning("Ray not available for distributed processing")
         return False
 
-@ray.remote
-class DistributedDocumentProcessor:
-    """Ray actor for distributed document processing"""
-    
-    def __init__(self, config: ProcessingConfig):
-        self.processor = EnhancedDocumentProcessor(config)
-    
-    def process(self, file_path: str) -> Dict[str, Any]:
-        return self.processor.process_document(file_path)
+if RAY_AVAILABLE:
+    @ray.remote
+    class DistributedDocumentProcessor:
+        """Ray actor for distributed document processing"""
+        
+        def __init__(self, config: ProcessingConfig):
+            self.processor = EnhancedDocumentProcessor(config)
+        
+        def process(self, file_path: str) -> Dict[str, Any]:
+            return self.processor.process_document(file_path)
+else:
+    class DistributedDocumentProcessor:
+        """Fallback processor when Ray is not available"""
+        
+        def __init__(self, config: ProcessingConfig):
+            self.processor = EnhancedDocumentProcessor(config)
+        
+        def process(self, file_path: str) -> Dict[str, Any]:
+            return self.processor.process_document(file_path)
 
 def process_directory_distributed(
     directory: Path,

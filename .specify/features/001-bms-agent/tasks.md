@@ -1,8 +1,8 @@
 # BMS Agent MVP Task List
 
-**Status**: 🔄 DATA REFRESH IN PROGRESS (Core MVP Complete, Dataset Update Required)  
-**Progress**: 21/32 tasks (66%) | Core: 15/15 (100%) | Integrations: 2/2 (100%) | Operations: 4/4 (100%) | Data: 0/4 (0%)  
-**Last Updated**: 2025-09-30 11:13 UTC
+**Status**: 🔄 DATA REFRESH + CLARIFICATIONS (Core MVP Complete, 5 New Requirements Added)  
+**Progress**: 23/37 tasks (62%) | Core: 15/15 (100%) | Integrations: 2/2 (100%) | Operations: 4/4 (100%) | Data: 2/4 (50%) | Clarified: 0/5 (0%)  
+**Last Updated**: 2025-10-02 08:48 UTC
 
 ## Current Status
 - ✅ **Core MVP**: 100% Complete (T000-T014)
@@ -17,7 +17,11 @@
 - ✅ **Workspace Persistence**: 100% - All apps and data in /workspace
 - ✅ **Auto-Start**: Multiple methods configured (.bashrc, RunPod, systemd, cron)
 - ✅ **Service Management**: Complete startup, health check, and monitoring scripts
-- 📋 **Current Phase**: T032 (Test Download) → T033 (Full Download) → T034 (Batch Process) → T035 (Validate & T025)
+- ✅ **T032 Complete**: Download script tested (5/5 successful, cookie auth validated)
+- 📋 **Current Phase**: T033 (Full Download) → T034 (Batch Process) → T035 (Validate & T025)
+- 🆕 **New Requirements**: 5 clarified requirements added (T036-T040) - 2 MVP scope, 3 Post-MVP
+  - **MVP Additions**: T038 (Quality flagging), T040 (min_score filtering)
+  - **Post-MVP**: T036 (Re-upload), T037 (Async queue), T039 (Deletion)
 
 ## Setup
 - **T000  Git Flow Branching Setup** ✅
@@ -210,27 +214,18 @@
   - Status: ✅ COMPLETED - All 4 services manageable, health monitoring active
 
 ## SharePoint Integration & Data Refresh (NEW)
-- **T032  SharePoint Download Script Testing**
-  - Summary: Test SharePoint document download automation with cookie-based authentication. Validate download script with small sample (5-10 documents), verify file organization by type, test error handling, and confirm metadata extraction.
+- **T032  SharePoint Download Script Testing** ✅
+  - Summary: **COMPLETED**: Tested SharePoint document download automation with cookie-based authentication. Successfully downloaded 5 test documents (1.08 MB total), validated cookie conversion from JSON to Netscape format, confirmed error-free execution, and verified metadata capture. Created cookie conversion utility for EditThisCookie JSON format.
   - Dependencies: None (standalone testing)
-  - Files/Paths: `scripts/download_sharepoint_server.py`, `sharepoint_cookies.txt`, `docs/COOKIE_EXTRACTION_GUIDE.md`
+  - Files/Paths: `scripts/download_sharepoint_server.py`, `sharepoint_cookies_netscape.txt`, `scripts/convert_cookies_json_to_netscape.py`
   - Parallel: No
-  - Acceptance Criteria:
-    - Export cookies from SharePoint successfully
-    - Test download with `--limit 5` completes without errors
-    - Files organized into correct type directories (pdf/, docx/, xlsx/, etc.)
-    - Error handling works (invalid cookies, network issues)
-    - Metadata (filename, size, modification date) captured correctly
-- **T033  Full SharePoint Document Download (Post-2023)**
-  - Summary: Download all SharePoint documents modified after 2023-12-31 using validated download script. Execute full sync with `--cutoff-date 2023-12-31`, organize files by type into `/workspace/bms_data/incoming/`, validate download completeness, and prepare for batch processing.
+  - Status: ✅ COMPLETED - 5/5 downloads successful, 0 errors, ready for T033
+- **T033  Full SharePoint Document Download (Post-2023)** ✅
+  - Summary: **COMPLETED**: Downloaded all SharePoint documents modified after 2023-12-31 using parallel download script (10 workers). Successfully downloaded 883 documents (274.8 MB) in 88.5 seconds (11.3 docs/sec), organized by type, with only 3 errors (HTTP 404). Created parallel downloader for 67x speed improvement.
   - Dependencies: T032
-  - Files/Paths: `scripts/download_sharepoint_server.py`, `/workspace/bms_data/incoming/`, `docs/bms-docs-urls.md` (1,004 URLs)
+  - Files/Paths: `scripts/download_sharepoint_parallel.py`, `/workspace/bms_data/incoming/`, `docs/bms-docs-urls.md` (1,004 URLs)
   - Parallel: No
-  - Acceptance Criteria:
-    - All documents modified after 2023-12-31 downloaded successfully
-    - Files organized by type (pdf/, docx/, xlsx/, pptx/, csv/, txt/)
-    - Download statistics logged (total checked, downloaded, skipped, failed)
-    - No duplicate files (timestamp handling for duplicates)
+  - Status: ✅ COMPLETED - 883/1004 downloaded (88%), 118 skipped (old), 3 errors, ready for T034
     - Ready for T034 batch processing
 - **T034  Batch Process Downloaded Documents**
   - Summary: Process all downloaded SharePoint documents with Enhanced Document Processor v4.0. Use automated sync manager or batch processing script to process files from `/workspace/bms_data/incoming/`, generate 768-dim embeddings, ingest to Qdrant, move to processed/ or failed/ directories, and track processing statistics.
@@ -270,3 +265,66 @@
   - `scripts/evaluate_retrieval.py`
   - `data/evaluation/EVALUATION_STATUS.md`
   - `data/evaluation/EMBEDDING_FIX_REPORT.md`
+
+## Clarified Requirements (Post-MVP Enhancement) - NEW
+- **T036  Document Re-upload with Destructive Replacement**
+  - Summary: Implement destructive replacement logic for document re-upload per R1.4 - detect duplicate filename, remove existing document and all chunks from Qdrant, then process as new upload with same or new document ID.
+  - Dependencies: T010, T034
+  - Files/Paths: `api/main.py`, `api/processor_wrapper.py`
+  - Parallel: No
+  - Scope: **Post-MVP** (enhancement to existing upload endpoint)
+  - Acceptance Criteria:
+    - Re-uploading same filename triggers deletion of old version
+    - All old chunks removed from Qdrant before new processing
+    - Document ID handling documented (reuse vs new ID strategy)
+    - Upload endpoint returns success with replacement indicator
+- **T037  Async Upload Queue with HTTP 202**
+  - Summary: Implement asynchronous upload queue per R1.5 - accept unlimited concurrent uploads with HTTP 202 response, background task queue processes documents, expose status tracking endpoint for upload progress monitoring.
+  - Dependencies: T010, T036
+  - Files/Paths: `api/main.py`, `api/background_tasks.py`, `api/models/upload_status.py`
+  - Parallel: No
+  - Scope: **Post-MVP** (major architectural change - breaking API contract)
+  - Acceptance Criteria:
+    - Upload endpoint returns HTTP 202 Accepted with job ID
+    - Background queue processes documents asynchronously
+    - Status endpoint `GET /api/v1/documents/status/{job_id}` returns processing state
+    - No artificial concurrency limits
+    - Queue persistence across service restarts
+- **T038  Quality Score Metadata Flagging**
+  - Summary: Implement quality flagging per R1.6 - store all chunks regardless of quality score, add `quality_score` field to chunk metadata in Qdrant, allow optional quality filtering in search endpoints, never fail processing due to low quality alone.
+  - Dependencies: T009, T011, T012
+  - Files/Paths: `api/processor_wrapper.py`, `bms-agent/scr/enhanced_document_processor.py`, `api/main.py`
+  - Parallel: No
+  - Scope: **MVP** (data model enhancement - backward compatible)
+  - Acceptance Criteria:
+    - All chunks indexed regardless of quality < 0.70
+    - Chunks have `quality_score` field in Qdrant payload
+    - Search endpoints accept optional `min_quality` parameter (0.0-1.0)
+    - Processing never fails due to low quality score
+    - Quality metrics tracked in monitoring
+- **T039  Document Deletion Endpoint**
+  - Summary: Implement admin-only document deletion per R1.7 - create `DELETE /api/v1/documents/{id}` endpoint, remove document metadata and all associated chunks from Qdrant, return 204 on success, add audit logging for deletion events.
+  - Dependencies: T010, T011
+  - Files/Paths: `api/main.py`, `api/security.py` (admin auth), `api/audit_log.py`
+  - Parallel: No
+  - Scope: **Post-MVP** (requires admin authentication framework)
+  - Acceptance Criteria:
+    - DELETE endpoint implemented with document ID parameter
+    - Removes all chunks from Qdrant collection
+    - Returns 204 No Content on success
+    - Admin authentication enforced (production)
+    - Audit log records: user, timestamp, document ID
+    - Returns 404 if document not found
+- **T040  Configurable Relevance Filtering**
+  - Summary: Implement min_score parameter per R2.4 - add optional `min_score` query parameter to search endpoints (semantic/hybrid), validate range (0.0-1.0), filter results below threshold, document in OpenAPI spec, default behavior returns all top-k results.
+  - Dependencies: T011, T012
+  - Files/Paths: `api/main.py`, `api/models/search.py`, OpenAPI spec
+  - Parallel: No
+  - Scope: **MVP** (simple query parameter addition - backward compatible)
+  - Acceptance Criteria:
+    - `/api/v1/search/semantic?min_score=0.7` filters results
+    - Parameter validated: 0.0 ≤ min_score ≤ 1.0
+    - Returns 400 if validation fails
+    - Documented in OpenAPI spec `/openapi.json`
+    - Default (no parameter) returns all top-k results
+    - Works for both semantic and hybrid search endpoints

@@ -88,8 +88,10 @@ class BMSDocumentProcessor:
         if SENTENCE_TRANSFORMERS_AVAILABLE:
             try:
                 from sentence_transformers import SentenceTransformer
-                self.embedding_model = SentenceTransformer('sentence-transformers/all-mpnet-base-v2')
-                logger.info("✅ sentence-transformers model loaded (768-d embeddings)")
+                import torch
+                device = 'cuda' if torch.cuda.is_available() else 'cpu'
+                self.embedding_model = SentenceTransformer('sentence-transformers/all-mpnet-base-v2', device=device)
+                logger.info(f"✅ sentence-transformers model loaded (768-d embeddings) on {device.upper()}")
             except Exception as e:
                 logger.warning(f"⚠️  sentence-transformers not available: {e}")
         
@@ -206,15 +208,25 @@ class BMSDocumentProcessor:
         return features
     
     def _generate_embeddings(self, text: str) -> Optional[List[float]]:
-        """Generate embeddings using sentence-transformers (768-d, 35x faster than Ollama)"""
+        """Generate embeddings using sentence-transformers (768-d, GPU-accelerated)"""
         try:
             if not self.embedding_model:
                 logger.error("Embedding model not initialized")
                 return None
             
-            # Generate embedding using sentence-transformers
-            embedding = self.embedding_model.encode(text, convert_to_numpy=True)
-            return embedding.tolist()
+            # Generate embedding using sentence-transformers with GPU
+            # convert_to_tensor=True keeps computation on GPU for speed
+            # Then convert to numpy/list for storage
+            embedding = self.embedding_model.encode(
+                text, 
+                convert_to_tensor=True,  # Keep on GPU during computation
+                show_progress_bar=False,
+                batch_size=1,  # Single text, no batching needed
+                normalize_embeddings=False
+            )
+            
+            # Convert tensor to list (moves from GPU to CPU)
+            return embedding.cpu().numpy().tolist()
                 
         except Exception as e:
             logger.error(f"Error generating embeddings: {e}")
@@ -372,6 +384,27 @@ class BMSDocumentProcessor:
                 error=str(e)
             )
     
+    def _generate_embeddings_batch(self, texts: List[str]) -> List[List[float]]:
+        """Generate embeddings for multiple texts in one batch (GPU-optimized)"""
+        try:
+            if not self.embedding_model or not texts:
+                return []
+            
+            # Batch encode all texts at once on GPU
+            embeddings = self.embedding_model.encode(
+                texts,
+                convert_to_tensor=True,
+                show_progress_bar=False,
+                batch_size=32,  # Process 32 texts at a time on GPU
+                normalize_embeddings=False
+            )
+            
+            # Convert to list of lists
+            return [emb.cpu().numpy().tolist() for emb in embeddings]
+        except Exception as e:
+            logger.error(f"Error generating batch embeddings: {e}")
+            return []
+    
     def _store_in_qdrant(self, 
                         document_id: str,
                         file_name: str,
@@ -384,6 +417,14 @@ class BMSDocumentProcessor:
             logger.error("Qdrant client not available")
             return 0
         
+        # OPTIMIZATION: Generate all embeddings in one batch (5-10x faster)
+        chunk_contents = [chunk.get("content", "") for chunk in chunks]
+        all_embeddings = self._generate_embeddings_batch(chunk_contents)
+        
+        if len(all_embeddings) != len(chunks):
+            logger.error(f"Embedding count mismatch: {len(all_embeddings)} vs {len(chunks)}")
+            return 0
+        
         points = []
         
         for i, chunk in enumerate(chunks):
@@ -391,11 +432,8 @@ class BMSDocumentProcessor:
                 chunk_id = f"{document_id}_chunk_{i}_{uuid.uuid4().hex[:8]}"
                 content = chunk.get("content", "")
                 
-                # Generate embeddings for all vector types
-                chunk_embedding = self._generate_embeddings(content)
-                if not chunk_embedding:
-                    logger.warning(f"Failed to generate embedding for chunk {i}")
-                    continue
+                # Use pre-generated embedding from batch
+                chunk_embedding = all_embeddings[i]
                 
                 # Create different embedding types for multi-vector support
                 parent_embedding = chunk_embedding  # Same for POC, could be different
@@ -459,22 +497,24 @@ class BMSDocumentProcessor:
                 }
                 
                 # Create point with multi-vector support
+                vectors_dict = {
+                    "chunk_embedding": chunk_embedding,
+                    "parent_embedding": parent_embedding,
+                    "child_embedding": child_embedding,
+                    "full_doc_embedding": full_doc_embedding
+                }
+                
+                # Add sparse vector if available
+                if sparse_vector:
+                    vectors_dict["keywords"] = sparse_vector
+                
                 point = PointStruct(
-                    id=chunk_id,
-                    vector={
-                        "chunk_embedding": chunk_embedding,
-                        "parent_embedding": parent_embedding,
-                        "child_embedding": child_embedding,
-                        "full_doc_embedding": full_doc_embedding
-                    },
-                    sparse_vector={
-                        "keyword_sparse": sparse_vector
-                    } if sparse_vector else None,
+                    id=str(uuid.uuid4()),
+                    vector=vectors_dict,
                     payload=payload
                 )
                 
                 points.append(point)
-                
             except Exception as e:
                 logger.error(f"Error creating point for chunk {i}: {e}")
                 continue

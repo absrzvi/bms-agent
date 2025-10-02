@@ -19,23 +19,25 @@ Single-pod deployment on RunPod.io with direct binary installations (no Docker) 
 
 ### Core Services
 - **Qdrant v1.7.4** (application) with **v4.0 schema** (document processor): Direct binary installation (no Docker)
-  - Multi-vector schema: `chunk_embedding`, `parent_embedding`, `child_embedding`, `full_doc_embedding` (1024-d for snowflake-arctic-embed2)
+  - Multi-vector schema: `chunk_embedding`, `parent_embedding`, `child_embedding`, `full_doc_embedding` (768-d for sentence-transformers/all-mpnet-base-v2)
   - Sparse vectors for BM25 keyword search with complete hybrid search support
   - On-disk storage for memory efficiency and persistence under `/workspace/qdrant_storage`
   - Collection: `nomad_bms_documents`
 
-- **Ollama Models**:
-  - Embeddings: snowflake-arctic-embed2 (1024 dimensions)
-  - Alternative: qwen2.5:14b or llama3.1:8b if needed
+- **Embedding Model**:
+  - Primary: sentence-transformers/all-mpnet-base-v2 (768 dimensions)
+  - Alternative: Ollama snowflake-arctic-embed2 (1024-d) for future upgrade
+  - LLM: qwen2.5:14b or llama3.1:8b via Ollama if needed
 
 - **Python 3.11+**: Direct installation with venv
   - No containerization, runs as system process
   - FastAPI on port 8000 for API endpoints
   - Persistent data in /workspace/bms_data/
 
-- **n8n Workflows**:
-  - Slack bot integration (Priority 1)
-  - Webhook endpoints (POC: no authentication required)
+- **Slack Integration**:
+  - Direct FastAPI integration (n8n not available on deployment environment)
+  - Slack slash commands and event handlers
+  - POC: no authentication required; Production: signature verification
 
 - **OpenWebUI**:
   - Custom Qdrant tool integration (Priority 2)
@@ -52,9 +54,9 @@ Single-pod deployment on RunPod.io with direct binary installations (no Docker) 
 ### Phase 1 – Environment & Qdrant (`T001–T005`)
 1. Provision project directories and persistent storage (`tasks.md` `T001`) sized for ≥1 TB to support multi-GB uploads and indexes.
 2. Create Python virtual environment and install dependencies as per `reqs/requirements.txt` (`T002`).
-3. Install Qdrant binary 1.7.4 locally (no Docker) and place logs under `~/persistent/logs` (`T003`).
+3. Install Qdrant binary 1.7.4 locally (no Docker) and place logs under `/workspace/logs` (`T003`).
 4. Generate `scripts/start_qdrant.sh` with optimized settings (on-disk vectors/payloads) and start the service (`T004`).
-5. Initialize the `nomad_bms_documents` collection using `scripts/init_qdrant.py` with 1024-d vector schema plus sparse vector support for hybrid search (`T005`).
+5. Initialize the `nomad_bms_documents` collection using `scripts/init_qdrant.py` with 768-d vector schema plus sparse vector support for hybrid search (`T005`).
 
 ### Phase 2 – Core Application (`T006`, `T007`, `T011`)
 1. Author `api/processor_wrapper.py` that wraps Enhanced Document Processor v4.0 with complete multi-format support (PDF, DOCX, PPTX, XLSX, CSV, TXT), quality optimization (0.718 score, 100% pass rate), perfect data cleaning, and enterprise-grade processing.
@@ -69,18 +71,18 @@ Single-pod deployment on RunPod.io with direct binary installations (no Docker) 
 5. Implement streaming upload pipeline capable of handling 1 GB files without exhausting memory and persist both dense and sparse (keyword/BM25) payloads for each chunk.
 6. Expose hybrid search utilities in the wrapper (query fusion, keyword extraction) for reuse by future endpoints.
 
-### Phase 3 – Integrations (`T008`, `T009`)
-- Build n8n Slack workflow (`n8n/workflows/slack_bot.json`) to call the FastAPI search endpoint and format responses.
-- Create OpenWebUI tool (`~/.openwebui/tools/bms_search.py`) to query the same Qdrant collection via HTTP.
+### Phase 3 – Integrations (`T017`, `T018`)
+- Implement direct FastAPI Slack integration (`api/slack_integration.py`) with slash command handlers and Block Kit formatting.
+- Create OpenWebUI tool (`tools/bms_search.py`) to query the Qdrant collection via BMS API HTTP endpoints.
 
-### Phase 4 – Security & Compliance (`T014` - POC Simplified)
-1. **POC DECISION**: Skip authentication implementation for development phase:
-   - No JWT validation required
-   - No API key authentication 
+### Phase 4 – Security & Compliance (`T015`, `T016` - POC Simplified)
+1. **POC DECISION**: Basic security for development phase:
+   - No JWT validation required (deferred to production)
+   - No API key authentication (deferred to production)
    - Basic rate limiting (60 req/min per IP) using lightweight in-memory token bucket
    - Basic security headers middleware (X-Frame-Options, X-Content-Type-Options)
 2. Ensure basic error handling (400/413/429) is covered by tests.
-3. Document security roadmap in `docs/security-notes.md` for production implementation.
+3. Document security roadmap in `docs/security-notes.md` for production implementation (JWT + API key enforcement).
 
 ### Phase 5 – Documentation, Tooling & CI/CD (`T015`, `T016`, `T023`, `T024` – post-MVP optional)
 - Configure GitHub Actions (`.github/workflows/ci-cd.yml`) to run tests, coverage, security scans (Bandit, Safety), pre-commit hooks (Black, Ruff, mypy), and provide deployment placeholders for RunPod automation.
@@ -100,6 +102,8 @@ Single-pod deployment on RunPod.io with direct binary installations (no Docker) 
 4. Note automated paging/notification delivery as post-MVP follow-up; document monitoring routine, log rotation, manual escalation steps, and incident response in `DEPLOYMENT_CHECKLIST.md`.
 
 ## File Structure
+```
+/workspace/
 │   ├── qdrant_storage/            # Qdrant data files
 │   ├── bms_data/
 │   │   ├── uploads/               # Source documents
@@ -109,12 +113,14 @@ Single-pod deployment on RunPod.io with direct binary installations (no Docker) 
 │       ├── qdrant.log
 │       └── api.log
 │
-└── bms-agent/
+└── 001-bms-agent/
     ├── api/
     │   ├── main.py                # FastAPI entry point
     │   ├── processor_wrapper.py
-    │   └── security.py            # JWT, rate limiting, headers
-    ├── n8n/workflows/slack_bot.json
+    │   ├── security.py            # Rate limiting, headers
+    │   └── slack_integration.py   # Direct Slack integration
+    ├── tools/
+    │   └── bms_search.py          # OpenWebUI tool
     ├── scripts/
     │   ├── start_qdrant.sh
     │   ├── init_qdrant.py
@@ -141,7 +147,7 @@ Single-pod deployment on RunPod.io with direct binary installations (no Docker) 
 ## Configuration (`.env` or `config/env.sh`)
 ```env
 # Core paths & logging
-PERSISTENT_PATH=~/persistent
+WORKSPACE_ROOT=/workspace
 LOG_LEVEL=INFO
 
 # Security
@@ -194,17 +200,17 @@ N8N_WEBHOOK_JWT=...
 ## Monitoring & Backup Strategy
 
 - Health script scheduled via cron/systemd on RunPod to log status snapshots.
-- Log rotation for `~/persistent/logs/*.log` using `logrotate` or custom cron.
-- Daily backups: `tar -czf ~/persistent/backups/bms_$(date +%Y%m%d).tar.gz ~/persistent/qdrant_storage ~/persistent/bms_data` (automate in cron after initial validation).
+- Log rotation for `/workspace/logs/*.log` using `logrotate` or custom cron.
+- Daily backups: `tar -czf /workspace/backups/bms_$(date +%Y%m%d).tar.gz /workspace/qdrant_storage /workspace/bms_data` (automate in cron after initial validation).
 - **MVP REQUIREMENT**: Implement Prometheus/Grafana integration as part of MVP per constitution §8; configure basic dashboards and metrics scraping via `/metrics/uplink` endpoint.
 
 ## Success Criteria & Priority Order
 
 1. Qdrant installed, collection initialized (`nomad_bms_documents`).
 2. Documents ingest via API and are searchable with relevant top results.
-3. Slack workflow returns contextual answers; OpenWebUI tool surfaces matching chunks.
-4. JWT + API key security enforced; rate limiting verified.
-5. Retrieval accuracy evaluation ≥95 %; performance benchmarks within target.
+3. Slack integration returns contextual answers; OpenWebUI tool surfaces matching chunks.
+4. **POC**: Basic rate limiting (60 req/min) verified; **Production**: JWT + API key security enforced.
+5. Retrieval accuracy evaluation ≥95 %; performance benchmarks within target.
 6. Monitoring scripts and health endpoints provide actionable status.
 7. CI pipeline green (tests, coverage, security scans) on main branch.
 
