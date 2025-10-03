@@ -1,100 +1,201 @@
 ---
-description: "Phase 1 quickstart guide for BMS Agent MVP"
+description: "Production quickstart guide for BMS Agent v1.0"
 ---
 
-# Quickstart – BMS Agent MVP
+# Quickstart – BMS Agent v1.0
 
 ## Prerequisites
-- RunPod pod with Ubuntu 22.04+, 8–16 vCPU, 32–64 GB RAM, 200–500 GB NVMe.
-- Python 3.11 virtual environment on the pod.
-- Qdrant binary 1.7.4 installed (no Docker).
-- Ollama installed with access to `snowflake-arctic-embed2` and `mistral-nemo:12b-instruct` models.
-- Environment variables configured (`BMS_API_KEY`, `BMS_JWT_PUBLIC_KEY`, `QDRANT_HOST`, etc.).
-- `bms-agent/` repository synced to the pod.
+- RunPod pod with Ubuntu 22.04+, 8–16 vCPU, 32–64 GB RAM, 200–500 GB NVMe
+- NVIDIA GPU (for Ollama)
+- Python 3.11+
+- All services installed via RunPod initialization (automatic)
+- Repository cloned to `/workspace/001-bms-agent`
 
-## 1. Bootstrap Environment
-```bash
-python3.11 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-pip install -r requirements-test.txt
-```
+## 1. Automatic Setup (RunPod)
 
-## 2. Start Qdrant
+The RunPod initialization script handles everything automatically:
+- SSH key restoration
+- System packages installation
+- Python requirements installation
+- Ollama GPU setup
+- Service startup
+
+**Verify initialization:**
 ```bash
-./scripts/start_qdrant.sh
-./scripts/init_qdrant.py
-```
-Confirm collection creation via:
-```bash
-curl http://localhost:6333/collections | jq
+tail -100 /workspace/logs/runpod_init.log
 ```
 
-## 3. Launch API Service
+## 2. Manual Service Management (if needed)
+
+**Start all services:**
 ```bash
-uvicorn api.main:app --host 0.0.0.0 --port 8000
+cd /workspace/001-bms-agent
+./scripts/manage_services.sh start
 ```
-Verify health:
+
+**Check service status:**
+```bash
+./scripts/manage_services.sh status
+```
+
+**Run health checks:**
+```bash
+./scripts/health_check.sh
+```
+
+## 3. Verify Qdrant Collection
+
+**Check collection exists:**
+```bash
+curl http://localhost:6333/collections/nomad_bms_documents | jq
+```
+
+**Expected output:** Collection with 1,744 points (chunks)
+
+## 4. Verify API Health
+
+**Basic health check:**
 ```bash
 curl http://localhost:8000/health
 ```
 
-## 4. Upload Test Document
+**Detailed health check:**
+```bash
+curl http://localhost:8000/health/detailed | jq
+```
+
+## 5. Upload Test Document (Optional)
+
+**Upload a document:**
 ```bash
 curl -X POST http://localhost:8000/api/v1/documents/upload \
-     -H "X-API-Key: ${BMS_API_KEY}" \
-     -F "file=@data/sample_docs/railway_sops.pdf"
+     -F "file=@/path/to/document.pdf" \
+     -F "profile=railway"
 ```
-Check processing logs and confirm chunk count via Qdrant.
 
-## 5. Semantic Search Smoke Test
+**Expected response:** Processing status with document ID
+
+## 6. Semantic Search Test
+
+**Basic semantic search:**
 ```bash
 curl -X POST http://localhost:8000/api/v1/search/semantic \
      -H "Content-Type: application/json" \
-     -H "X-API-Key: ${BMS_API_KEY}" \
-     -d '{"query": "emergency brake procedure", "limit": 5}'
+     -d '{"query": "railway safety procedures", "limit": 5}'
 ```
-Expect response payload containing `results` with dense scores and snippets.
 
-## 6. Hybrid Search Test
+**With quality filtering:**
+```bash
+curl -X POST http://localhost:8000/api/v1/search/semantic \
+     -d '{"query": "train control systems", "limit": 5, "min_quality": 0.95, "min_score": 0.7}'
+```
+**Expected response:** JSON with `results` array containing chunks with scores and metadata
+
+## 7. Hybrid Search Test
+
+**Hybrid search with custom weights:**
 ```bash
 curl -X POST http://localhost:8000/api/v1/search/hybrid \
      -H "Content-Type: application/json" \
-     -H "X-API-Key: ${BMS_API_KEY}" \
-     -d '{"query": "trackside repeater", "candidate_multiplier": 3, "vector_weight": 0.6, "keyword_weight": 0.4}'
+     -d '{"query": "network maintenance", "limit": 5, "vector_weight": 0.6, "keyword_weight": 0.4}'
 ```
-Verify `score_dense`, `score_sparse`, and `score_fused` fields.
 
-## 7. Integrations
-- **Slack (n8n workflow)**: Import `n8n/workflows/slack_bot.json`, set JWT/API key secrets, confirm `/search` command returns top chunks.
-- **OpenWebUI tool**: Place `~/.openwebui/tools/bms_search.py`, configure API key, and test queries from the UI.
-
-## 8. Observability Checks
-- Access Grafana dashboard (URL TBD) to view latency and ingestion panels.
-- Follow manual alert runbooks if latency >100 ms p95 or ingestion failures occur.
-
-## 9. Performance Validation
+**With quality and relevance filtering:**
 ```bash
-locust -f tests/performance/load/test_locust.py --headless -u 1000 -r 50 -t 7m --host http://localhost:8000
+curl -X POST http://localhost:8000/api/v1/search/hybrid \
+     -H "Content-Type: application/json" \
+     -d '{"query": "emergency procedures", "limit": 5, "min_quality": 0.95, "min_score": 0.6}'
 ```
-Ensure ≤100 ms p95 latency and capture JSON stats for documentation.
 
-## 10. Retrieval Accuracy
+**Expected response:** JSON with `hybrid_score`, `semantic_score`, and `keyword_score` fields
+
+## 8. Integration Tests
+
+**Slack Integration:**
+- Endpoints available at `/api/v1/slack/search` and `/api/v1/slack/events`
+- See `api/main.py` for implementation details
+
+**OpenWebUI Tool:**
+- Tool script: `tools/bms_search.py`
+- 7/7 tests passing
+- See `tools/README.md` for installation
+
+## 9. Service Management
+
+**Restart a specific service:**
 ```bash
-python scripts/evaluate_retrieval.py --ground-truth data/evaluation/ground_truth.jsonl
+./scripts/manage_services.sh restart api
 ```
-Confirm ≥95 % top-5 accuracy. Store results in `reports/performance-baseline.md`.
 
-## 11. Security Verification
-```bash
-pytest tests/security/test_auth.py -m security
-pytest tests/security/test_rate_limit.py
-```
-Validate JWT + API key enforcement, rate limiting, and audit logging hooks.
-
-## 12. Shutdown & Cleanup
+**Stop all services:**
 ```bash
 ./scripts/manage_services.sh stop
-./scripts/start_qdrant.sh stop
 ```
-Persist logs under `~/persistent/logs/` and back up Qdrant storage if necessary.
+
+**View logs:**
+```bash
+tail -f /workspace/logs/api.log
+tail -f /workspace/logs/qdrant.log
+tail -f /workspace/logs/ollama.log
+```
+
+## 10. Security Features
+
+**Rate limiting:** 60 requests/minute per IP (configurable via `RATE_LIMIT_PER_MIN`)
+
+**Security headers:** Automatic (X-Content-Type-Options, X-Frame-Options, etc.)
+
+**Test rate limiting:**
+```bash
+# Run 100 requests rapidly
+for i in {1..100}; do
+  curl -X POST http://localhost:8000/api/v1/search/semantic \
+    -H "Content-Type: application/json" \
+    -d '{"query": "test", "limit": 1}' &
+done
+```
+
+**Expected:** Some requests return HTTP 429 (Too Many Requests)
+
+## 11. Backup & Recovery
+
+**Run manual backup:**
+```bash
+./scripts/backup_system.sh
+```
+
+**Verify backup:**
+```bash
+./scripts/verify_backup.sh
+```
+
+**Restore from backup:**
+```bash
+./scripts/restore_backup.sh
+```
+
+**Backups location:** `/workspace/backups/`
+
+## 12. Troubleshooting
+
+**Check service health:**
+```bash
+./scripts/health_check.sh
+```
+
+**View initialization logs:**
+```bash
+cat /workspace/logs/runpod_init.log
+cat /workspace/logs/startup.log
+```
+
+**Restart all services:**
+```bash
+./scripts/manage_services.sh restart
+```
+
+## Next Steps
+
+- See [DEPLOYMENT_CHECKLIST.md](../../DEPLOYMENT_CHECKLIST.md) for complete deployment procedures
+- See [README.md](../../README.md) for architecture details
+- See [docs/security-notes.md](../../docs/security-notes.md) for security roadmap

@@ -1,8 +1,8 @@
 # BMS Agent MVP Task List
 
 **Status**: ✅ MVP REQUIREMENTS COMPLETE! 🎉  
-**Progress**: 35/41 tasks (85%) | Core: 15/15 (100%) | Security: 2/2 (100%) ✅ | Integrations: 2/2 (100%) | Operations: 6/6 (100%) ✅ | Data: 4/4 (100%) | **MVP Additions: 4/4 (100%)** ✅ | Docs: 1/5 (20%) | Post-MVP: 0/3 (0%)  
-**Last Updated**: 2025-10-03 23:03 UTC
+**Progress**: 36/41 tasks (88%) | Core: 15/15 (100%) | Security: 2/2 (100%) ✅ | Integrations: 2/2 (100%) | Operations: 6/6 (100%) ✅ | Data: 4/4 (100%) | **MVP Additions: 4/4 (100%)** ✅ | Docs: 2/5 (40%) | Post-MVP: 0/3 (0%)  
+**Last Updated**: 2025-10-03 23:13 UTC
 
 ## Current Status
 - ✅ **Core MVP**: 100% Complete (T000-T014)
@@ -179,11 +179,12 @@
     - Dashboard JSON exported to `grafana/dashboards/bms-agent.json`
 
 ## Documentation & Validation
-- **T022  Quickstart Verification [P]**
+- **T022  Quickstart Verification [P]** ✅
   - Summary: Walk through `quickstart.md`, update instructions with actual commands, ensure curl examples function end-to-end.
   - Dependencies: T010–T018
   - Files/Paths: `specs/001-bms-agent/quickstart.md`
   - Parallel: Yes ([P])
+  - Status: ✅ **COMPLETED** - Quickstart updated with production commands, service management, security features
 - **T023  README/Docs Sync [P]** ✅
   - Summary: Refresh `README.md`, `TESTING.md`, `reports/performance-baseline.md`, and `docs/security-notes.md` to mirror current workflow and metrics.
   - Dependencies: T008–T021
