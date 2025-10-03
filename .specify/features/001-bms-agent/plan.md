@@ -23,6 +23,7 @@ Single-pod deployment on RunPod.io with direct binary installations (no Docker) 
   - Sparse vectors for BM25 keyword search with complete hybrid search support
   - On-disk storage for memory efficiency and persistence under `/workspace/qdrant_storage`
   - Collection: `nomad_bms_documents`
+  - **CORRECTED**: All vectors are 768-dimensional (not 1024-d) to match sentence-transformers/all-mpnet-base-v2 model output
 
 - **Embedding Model**:
   - Primary: sentence-transformers/all-mpnet-base-v2 (768 dimensions)
@@ -56,7 +57,7 @@ Single-pod deployment on RunPod.io with direct binary installations (no Docker) 
 2. Create Python virtual environment and install dependencies as per `reqs/requirements.txt` (`T002`).
 3. Install Qdrant binary 1.7.4 locally (no Docker) and place logs under `/workspace/logs` (`T003`).
 4. Generate `scripts/start_qdrant.sh` with optimized settings (on-disk vectors/payloads) and start the service (`T004`).
-5. Initialize the `nomad_bms_documents` collection using `scripts/init_qdrant.py` with 768-d vector schema plus sparse vector support for hybrid search (`T005`).
+5. Initialize the `nomad_bms_documents` collection using `scripts/init_qdrant.py` with 768-d vector schema (matching sentence-transformers/all-mpnet-base-v2) plus sparse vector support for hybrid search (`T005`).
 
 ### Phase 2 – Core Application (`T006`, `T007`, `T011`)
 1. Author `api/processor_wrapper.py` that wraps Enhanced Document Processor v4.0 with complete multi-format support (PDF, DOCX, PPTX, XLSX, CSV, TXT), quality optimization (0.718 score, 100% pass rate), perfect data cleaning, and enterprise-grade processing.
@@ -85,8 +86,9 @@ Single-pod deployment on RunPod.io with direct binary installations (no Docker) 
 3. Document security roadmap in `docs/security-notes.md` for production implementation (JWT + API key enforcement).
 
 ### Phase 5 – Documentation, Tooling & CI/CD (`T015`, `T016`, `T023`, `T024` – post-MVP optional)
-- Configure GitHub Actions (`.github/workflows/ci-cd.yml`) to run tests, coverage, security scans (Bandit, Safety), pre-commit hooks (Black, Ruff, mypy), and provide deployment placeholders for RunPod automation.
+- Configure GitHub Actions (`.github/workflows/ci-cd.yml`) to run tests, coverage, basic security scans (Bandit, Safety - even for POC per constitution §5), pre-commit hooks (Black, Ruff, mypy), and provide deployment placeholders for RunPod automation.
 - Document required secrets (`BMS_API_KEY`, `DEPLOY_KEY`, optional `CODECOV_TOKEN`, `SAFETY_API_KEY`, future `RUNPOD_USER/HOST`, `REGISTRY_USERNAME/PASSWORD`).
+- **Database Migration Note**: Alembic not required for Qdrant (NoSQL vector database). Manual schema changes tracked in `docs/migrations.md` per Phase 0. Future SQL databases (if added) will require Alembic implementation per constitution §9.
 
 ### Phase 6 – Testing & Evaluation (`T010`, `T017`, `T019`, `T020`)
 1. Use `scripts/run_tests.sh` to orchestrate integration tests (processor, API smoke checks).
@@ -200,8 +202,8 @@ N8N_WEBHOOK_JWT=...
 ## Monitoring & Backup Strategy
 
 - Health script scheduled via cron/systemd on RunPod to log status snapshots.
-- Log rotation for `/workspace/logs/*.log` using `logrotate` or custom cron.
-- Daily backups: `tar -czf /workspace/backups/bms_$(date +%Y%m%d).tar.gz /workspace/qdrant_storage /workspace/bms_data` (automate in cron after initial validation).
+- Log rotation for `/workspace/logs/*.log` using `logrotate` or custom cron with 30-day retention (per R7.4).
+- Daily backups: `tar -czf /workspace/backups/bms_$(date +%Y%m%d).tar.gz /workspace/qdrant_storage /workspace/bms_data` with 90-day retention for data backups (automate in cron after initial validation, per R7.4).
 - **MVP REQUIREMENT**: Implement Prometheus/Grafana integration as part of MVP per constitution §8; configure basic dashboards and metrics scraping via `/metrics/uplink` endpoint.
 
 ## Success Criteria & Priority Order

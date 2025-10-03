@@ -4,6 +4,7 @@
 - **Purpose**: Deliver a retrieval-augmented assistant for railway network documentation, deployed on a single RunPod pod with persistent storage.
 - **Scope**: **MVP DECISION**: Full integration stack - Document ingestion (PDF, DOCX, PPTX, CSV, XLSX, TXT), semantic search, **Direct FastAPI Slack integration** (n8n unavailable on deployment environment), OpenWebUI custom tool, API endpoints for internal services. Health checks simplified for POC.
 - **Constitution Alignment**: Implements Railway IT standards (EN50155, EN45545), RAG architecture mandates, API authentication (JWT + API key deferred to production), code quality & testing minimums, availability/monitoring targets.
+- **Terminology**: "POC" (Proof of Concept) and "MVP" (Minimum Viable Product) are used interchangeably in this document to refer to the initial deployment phase with simplified requirements. Production phase refers to full-scale deployment with all constitution requirements enforced.
 
 ## User Stories
 - As a network engineer, I need to search railway documentation via Slack
@@ -23,33 +24,31 @@
     - *Acceptance*: Upload endpoint streams and processes 100 MB test fixtures without memory errors; returns HTTP 400/413 with descriptive errors for invalid types or oversize payloads.
   - R1.2: **MVP DECISION**: Enhanced Document Processor v4.0 with optimized quality processing - Sentence-aware chunking (2000 chars, 400 overlap), quality validation (≥0.70 minimum score), contextual retrieval, perfect data cleaning, and BM25 keyword extraction. Store 768-dimensional embeddings (sentence-transformers/all-mpnet-base-v2) per chunk in Qdrant v1.7.4+ vector database with v4.0 multi-vector schema, collection `nomad_bms_documents`.
     - *Acceptance*: Quality score ≥0.70 minimum (actual: 0.72-0.85 by format) with 100% pass rate; zero data artifacts in XLSX/CSV processing; complete multi-format support (PDF, DOCX, PPTX, XLSX, CSV, TXT); 768-dim embeddings; comprehensive test suite validates all features.
-  - R1.3: **QUALITY ASSURANCE**: Achieve enterprise-grade processing quality with comprehensive format support and data cleaning.
-    - *Acceptance*: DOCX processing with python-docx (0.714-0.895 quality); PPTX slide structure preservation; XLSX perfect cleaning (zero NaN/Unnamed artifacts); CSV enhanced formatting; multi-language support (German/English); business document intelligence.
+  - R1.3: **QUALITY ASSURANCE**: Achieve measurable processing quality with comprehensive format support and data cleaning.
+    - *Acceptance*: DOCX processing with python-docx (quality score 0.714-0.895); PPTX slide structure preservation with text extraction from all slide elements; XLSX perfect cleaning (zero NaN/Unnamed artifacts, 100% data integrity); CSV enhanced formatting with proper delimiter detection; multi-language support (German/English); business document intelligence (tables, lists, headers preserved).
   - R1.4: **CLARIFIED**: Document re-upload behavior - When a document with the same filename is uploaded, perform destructive replacement: remove existing document and all associated chunks, then process as new upload.
     - *Acceptance*: Re-uploading same filename removes old version from Qdrant; new chunks replace old; document ID may change or be reused.
   - R1.5: **CLARIFIED**: Upload concurrency - Support unlimited concurrent document uploads with queue-based processing to handle variable loads.
     - *Acceptance*: Multiple simultaneous uploads accepted (HTTP 202); background queue processes documents; no artificial concurrency limits; track processing status per document.
   - R1.6: **CLARIFIED**: Failed document processing - Store all chunks regardless of quality score; flag low-quality chunks (< 0.70) in metadata for filtering/monitoring.
-    - *Acceptance*: Documents with quality < 0.70 still indexed; chunks have quality_score field; search can optionally filter by quality threshold; processing never fails due to low quality alone.
   - R1.7: **CLARIFIED**: Document deletion - Admin-only capability via dedicated API endpoint to remove documents and associated chunks.
     - *Acceptance*: DELETE endpoint requires admin authentication (production); removes document metadata and all chunks from Qdrant; returns 204 on success; audit log records deletion.
 
 - **Search & Retrieval**
-  - R2.1: **POC DECISION**: Provide semantic search via `/api/v1/search/semantic` with best effort performance; no hard latency requirements for POC. Performance benchmarking for baseline establishment only. **Production target**: ≤100ms p95 for 20-100 concurrent users.
-  - R2.2: Achieve ≥95 % top-5 retrieval accuracy on curated validation set (`data/evaluation/ground_truth.jsonl`).
-    - *Acceptance*: `scripts/evaluate_retrieval.py` reports accuracy ≥95 %.
+  - R2.1: **POC DECISION**: Provide semantic search via `/api/v1/search/semantic` with POC performance target ≤500ms p95 latency under 20 concurrent users; no hard requirements for POC but baseline must be established. Performance benchmarking for baseline establishment only. **Production target**: ≤100ms p95 for 20-100 concurrent users.
+  - R2.2: Achieve ≥95 % top-5 retrieval accuracy on curated validation set (`data/evaluation/ground_truth.jsonl`) containing minimum 50 queries across 10 categories.
+    - *Acceptance*: `scripts/evaluate_retrieval.py` reports accuracy ≥95 % on dataset with ≥50 test queries.
   - R2.3: Support hybrid retrieval (semantic + keyword/BM25) with query-time fusion.
     - *Acceptance*: Hybrid search endpoint returns both dense and sparse scores; integration tests verify BM25 keywords stored in Qdrant payload and exposed via API.
   - R2.4: **CLARIFIED**: Configurable relevance filtering - Search endpoints accept optional `min_score` query parameter to filter results below specified similarity threshold (default: no filtering, return all top-k).
     - *Acceptance*: `/api/v1/search/semantic?min_score=0.7` filters results; parameter validated (0.0-1.0 range); documented in OpenAPI spec; default behavior returns all top-k results regardless of score.
-  - R3.1: **POC DECISION**: No authentication required for proof of concept. All endpoints are publicly accessible. JWT and API key authentication deferred to production phase. Document security roadmap in `docs/security-notes.md`.
+  - R3.1: **POC DECISION**: No authentication required for proof of concept. All endpoints are publicly accessible. JWT and API key authentication deferred to production phase. Slack signature verification implemented but optional for POC (can be disabled via config). Document security roadmap in `docs/security-notes.md`.
   - R3.2: Enforce rate limiting optimized for 20-100 concurrent users (default 60 requests/min per IP, scalable configuration) without external dependencies.
   - R3.3: Expose OpenAPI 3.0 documentation at `/openapi.json` with simplified security schemes (API key optional).
 
   - R4.1: **POC DECISION**: Provide basic `/health` endpoint only; detailed service health checks (Qdrant, Ollama, OpenWebUI) deferred to production phase.
   - R4.2: Provide `/metrics/uplink` endpoint publishing latency, throughput, and recent errors for monitoring.
   - R4.3: Maintain 99.99 % availability target via documented monitoring + incident response playbook (`DEPLOYMENT_CHECKLIST.md`).
-
 - **Testing & Quality**
   - R5.1: **MVP DECISION**: Basic testing scope - Core functionality tests with manual quality checks; comprehensive CI and security scans deferred to production phase.
     - *Acceptance*: ≥80% test coverage for core logic per constitution §4; basic functionality tests pass.
@@ -66,6 +65,8 @@
   - R7.2: **POC DECISION**: Basic operational documentation for POC; comprehensive manual alert runbooks deferred to post-MVP phase.
     - *Acceptance*: `DEPLOYMENT_CHECKLIST.md` contains basic operational procedures for POC. Full runbooks (latency, ingestion, dependency degradation, contact matrix) deferred to production.
   - R7.3: Maintain `DEPLOYMENT_CHECKLIST.md` with escalation steps and contact matrix.
+  - R7.4: **BACKUP & RETENTION**: Implement daily automated backups of `/workspace/qdrant_storage` and `/workspace/bms_data` with 30-day retention policy for logs and 90-day retention for data backups.
+    - *Acceptance*: Backup script runs daily via cron; backups stored in `/workspace/backups/` with date stamps; log rotation configured for 30-day retention; backup verification documented in `DEPLOYMENT_CHECKLIST.md`.
 
 - **Success Criteria (POC)**
   - Ingestion workload runs successfully; invalid files rejected with specific errors.

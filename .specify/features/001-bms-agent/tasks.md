@@ -45,7 +45,7 @@
   - Files/Paths: `scripts/start_qdrant.sh`
   - Parallel: No
 - **T004  Qdrant Collection Initializer** ✅
-  - Summary: Implement `scripts/init_qdrant.py` to create the `nomad_bms_documents` multi-vector collection with named vectors (`chunk_embedding`, `parent_embedding`, both 1024-d cosine), payload indexes for `document_id`, `version_id`, hierarchical metadata, and sparse keyword/BM25 fields plus default HNSW params.
+  - Summary: Implement `scripts/init_qdrant.py` to create the `nomad_bms_documents` multi-vector collection with named vectors (`chunk_embedding`, `parent_embedding`, both 768-d cosine for sentence-transformers/all-mpnet-base-v2), payload indexes for `document_id`, `version_id`, hierarchical metadata, and sparse keyword/BM25 fields plus default HNSW params.
   - Dependencies: T003
   - Files/Paths: `scripts/init_qdrant.py`
   - Parallel: No
@@ -152,6 +152,12 @@
   - Dependencies: T014, T020
   - Files/Paths: `grafana/`, `DEPLOYMENT_CHECKLIST.md`
   - Parallel: No
+  - Acceptance Criteria:
+    - Prometheus scraping `/metrics/uplink` endpoint successfully
+    - Grafana dashboard panels: API latency (p50/p95/p99), request throughput, error rate, Qdrant health
+    - Manual alert runbooks documented for: latency degradation, ingestion failures, dependency outages
+    - Contact matrix with escalation timelines in `DEPLOYMENT_CHECKLIST.md`
+    - Dashboard JSON exported to `grafana/dashboards/bms-agent.json`
 
 ## Documentation & Validation
 - **T022  Quickstart Verification [P]**
@@ -170,10 +176,15 @@
   - Files/Paths: `reports/performance-baseline.md`
   - Parallel: No
 - **T025  Retrieval Accuracy & Quality Evaluation**
-  - Summary: Build `data/evaluation/ground_truth.jsonl`, implement `scripts/evaluate_retrieval.py`, compute RAGAS metrics (faithfulness, relevancy, context precision/recall), and wire CI hook enforcing ≥95 % top-5 accuracy plus quality thresholds from EnhancedDocumentProcessor.
-  - Dependencies: T009, T011, T016
+  - Summary: Build `data/evaluation/ground_truth.jsonl` with minimum 50 queries across 10 categories, implement `scripts/evaluate_retrieval.py`, compute RAGAS metrics (faithfulness, relevancy, context precision/recall), and wire CI hook enforcing ≥95 % top-5 accuracy plus quality thresholds from EnhancedDocumentProcessor.
+  - Dependencies: T009, T011, T016, T035 (requires full dataset)
   - Files/Paths: `data/evaluation/ground_truth.jsonl`, `scripts/evaluate_retrieval.py`, `.github/workflows/ci-cd.yml`
   - Parallel: No
+  - Acceptance Criteria:
+    - Ground truth dataset contains ≥50 queries across ≥10 categories
+    - Evaluation script reports ≥95% top-5 accuracy
+    - Full dataset (883+ documents) indexed in Qdrant before evaluation
+    - CI integration passes/fails based on accuracy threshold
 
 ## Polish
 - **T026  Pre-commit & CI Hooks [P]**
