@@ -51,14 +51,47 @@ log "Step 2: Installing system packages..."
 if ! command -v jq &> /dev/null || ! command -v htop &> /dev/null; then
     log "Installing essential packages (jq, htop, tmux, etc.)..."
     apt-get update -qq
-    apt-get install -y -qq jq htop tmux vim nano curl wget git net-tools >> "$LOG_FILE" 2>&1
+    apt-get install -y -qq jq htop tmux vim nano curl wget git net-tools python3-pip >> "$LOG_FILE" 2>&1
     log "✅ System packages installed"
 else
     log "✅ System packages already present"
 fi
 
-# 3. Ollama Installation from Backup
-log "Step 3: Restoring Ollama installation..."
+# 3. Python Requirements Installation
+log "Step 3: Installing Python requirements..."
+if [ -f /workspace/001-bms-agent/requirements.txt ]; then
+    log "Found requirements.txt in /workspace/001-bms-agent/"
+    
+    # Check if virtual environment exists
+    if [ ! -d /workspace/001-bms-agent/.venv ]; then
+        log "Creating Python virtual environment..."
+        cd /workspace/001-bms-agent
+        python3 -m venv .venv >> "$LOG_FILE" 2>&1
+        log "✅ Virtual environment created"
+    fi
+    
+    # Activate and install requirements
+    log "Installing Python packages from requirements.txt..."
+    cd /workspace/001-bms-agent
+    source .venv/bin/activate
+    pip install --upgrade pip >> "$LOG_FILE" 2>&1
+    pip install -r requirements.txt >> "$LOG_FILE" 2>&1
+    
+    if [ $? -eq 0 ]; then
+        log "✅ Python requirements installed successfully"
+        INSTALLED_PACKAGES=$(pip list --format=freeze | wc -l)
+        log "   Installed packages: $INSTALLED_PACKAGES"
+    else
+        log "⚠️  Some Python packages may have failed to install"
+        log "   Check $LOG_FILE for details"
+    fi
+else
+    log "⚠️  requirements.txt not found in /workspace/001-bms-agent/"
+    log "   Python dependencies may need to be installed manually"
+fi
+
+# 4. Ollama Installation from Backup
+log "Step 4: Restoring Ollama installation..."
 if [ -d /workspace/backups/ollama_install ]; then
     log "Found Ollama backup in /workspace/backups/ollama_install"
     
@@ -103,8 +136,8 @@ else
     log "✅ Ollama backup created in /workspace/backups/ollama_install/"
 fi
 
-# 4. GPU Verification
-log "Step 4: Verifying GPU availability..."
+# 5. GPU Verification
+log "Step 5: Verifying GPU availability..."
 if command -v nvidia-smi &> /dev/null; then
     GPU_INFO=$(nvidia-smi --query-gpu=name,driver_version,memory.total --format=csv,noheader 2>/dev/null || echo "GPU query failed")
     log "✅ GPU detected: $GPU_INFO"
@@ -119,8 +152,8 @@ else
     log "⚠️  nvidia-smi not found - GPU support may not be available"
 fi
 
-# 5. Ollama Configuration
-log "Step 5: Configuring Ollama..."
+# 6. Ollama Configuration
+log "Step 6: Configuring Ollama..."
 mkdir -p /workspace/data/ollama_models
 
 # Start Ollama service with OLLAMA_MODELS environment variable
@@ -151,8 +184,8 @@ else
     log "   Check /workspace/logs/ollama.log for errors"
 fi
 
-# 6. Pre-load Ollama Models
-log "Step 6: Checking Ollama models..."
+# 7. Pre-load Ollama Models
+log "Step 7: Checking Ollama models..."
 # Check if any models exist in the persistent storage
 MODEL_COUNT=$(OLLAMA_MODELS=/workspace/data/ollama_models ollama list 2>/dev/null | grep -v "NAME" | wc -l)
 if [ "$MODEL_COUNT" -gt 0 ]; then
@@ -166,8 +199,8 @@ else
     log "   Skipping automatic model download to avoid delays"
 fi
 
-# 7. Start BMS Agent Services
-log "Step 7: Starting BMS Agent services..."
+# 8. Start BMS Agent Services
+log "Step 8: Starting BMS Agent services..."
 if [ -f /workspace/001-bms-agent/scripts/start_all_services.sh ]; then
     log "Executing start_all_services.sh..."
     bash /workspace/001-bms-agent/scripts/start_all_services.sh >> "$LOG_FILE" 2>&1
@@ -180,8 +213,8 @@ else
     log "⚠️  start_all_services.sh not found in /workspace/001-bms-agent/scripts/ or /workspace/scripts/"
 fi
 
-# 8. Health Check
-log "Step 8: Running comprehensive health checks..."
+# 9. Health Check
+log "Step 9: Running comprehensive health checks..."
 log "Waiting for services to fully start..."
 sleep 10
 
@@ -228,8 +261,8 @@ if [ "$WEBUI_HEALTHY" = false ]; then
     log "   Check /workspace/logs/openwebui.log for errors"
 fi
 
-# 9. Final Summary
-log "Step 9: Generating initialization summary..."
+# 10. Final Summary
+log "Step 10: Generating initialization summary..."
 
 # Count successful services
 SERVICES_UP=0
