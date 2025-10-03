@@ -35,9 +35,14 @@ Single-pod deployment on RunPod.io with direct binary installations (no Docker) 
   - Persistent data in /workspace/bms_data/
 
 - **Slack Integration**:
-  - Direct FastAPI integration (n8n not available on deployment environment)
+  - Direct FastAPI integration (primary)
   - Slack slash commands and event handlers
   - POC: no authentication required; Production: signature verification
+
+- **n8n Integration**:
+  - Optional workflow orchestration (secondary/post-MVP)
+  - Webhook endpoints for document processing automation
+  - POC: basic webhook support; Production: full workflow integration
 
 - **OpenWebUI**:
   - Custom Qdrant tool integration (Priority 2)
@@ -75,13 +80,13 @@ Single-pod deployment on RunPod.io with direct binary installations (no Docker) 
 - Implement direct FastAPI Slack integration (`api/slack_integration.py`) with slash command handlers and Block Kit formatting.
 - Create OpenWebUI tool (`tools/bms_search.py`) to query the Qdrant collection via BMS API HTTP endpoints.
 
-### Phase 4 – Security & Compliance (`T015`, `T016` - POC Simplified)
-1. **POC DECISION**: Basic security for development phase:
-   - No JWT validation required (deferred to production)
-   - No API key authentication (deferred to production)
-   - Basic rate limiting (60 req/min per IP) using lightweight in-memory token bucket
+### Phase 4 – Security & Compliance (`T015`, `T016`)
+1. **MVP REQUIREMENT**: Basic security implementation:
+   - No JWT validation required for MVP (deferred to production)
+   - No API key authentication for MVP (deferred to production)
+   - Rate limiting (60 req/min per IP) using in-memory token bucket algorithm (T015)
    - Basic security headers middleware (X-Frame-Options, X-Content-Type-Options)
-2. Ensure basic error handling (400/413/429) is covered by tests.
+2. Ensure error handling (400/413/429) is covered by automated tests (T016).
 3. Document security roadmap in `docs/security-notes.md` for production implementation (JWT + API key enforcement).
 
 ### Phase 5 – Documentation, Tooling & CI/CD (`T015`, `T016`, `T023`, `T024` – post-MVP optional)
@@ -164,7 +169,7 @@ QDRANT_COLLECTION=nomad_bms_documents
 
 # Ollama
 OLLAMA_URL=http://localhost:11434
-EMBEDDING_MODEL=snowflake-arctic-embed2
+EMBEDDING_MODEL=sentence-transformers/all-mpnet-base-v2
 GENERATION_MODEL=mistral-nemo:12b-instruct
 
 # Integrations
@@ -177,32 +182,33 @@ N8N_WEBHOOK_JWT=...
 ## API Endpoints (MVP)
 
 - `POST /api/v1/documents/upload` – Upload and process a single document (≤1 GB streaming, chunked write).
-- `POST /api/v1/search/semantic` – Semantic vector search (JWT + API key protected, rate limited).
+- `POST /api/v1/search/semantic` – Semantic vector search (POC: no authentication; Production: JWT + API key protected, rate limited).
 - `GET /health` – Lightweight service heartbeat.
 - `GET /health/detailed` – Extended health report (Qdrant collection state, Ollama status, n8n/OpenWebUI reachability).
-- `GET /metrics/uplink` – Operational metrics (latency, throughput, error counters) in JSON.
 - `GET /` – API overview and endpoint discovery.
 
 ## Testing & Validation Workflow
 
 1. `./scripts/run_tests.sh` – Ensures Qdrant running, processor ingestion works, API responsive.
-2. `pytest -v --cov=./ --cov-report=term-missing` – Unit/integration coverage (≥80 %).
-3. `locust -f tests/performance/load/test_locust.py --headless -u 1000 -r 50 -t 7m --host http://localhost:8000` – Validates ≤100 ms p95 and ≤50 ms average latency under 1,000 concurrent users.
-4. `python scripts/evaluate_retrieval.py` – Computes top-5 accuracy vs `data/evaluation/ground_truth.jsonl` (≥95 %).
-5. Manual smoke tests via Slack bot and OpenWebUI to ensure integrations operate with current API key/JWT configuration.
+2. `pytest -v --cov=./ --cov-report=term-missing` – Unit/integration coverage (≥80 %).
+3. `locust -f tests/performance/load/test_locust.py --headless -u 20 -r 5 -t 5m --host http://localhost:8000` – Establishes baseline performance metrics. See `spec.md` Performance Targets for phase-specific thresholds (POC: <500ms baseline, MVP: <200ms, Production: ≤100ms p95).
+4. `python scripts/evaluate_retrieval.py` – Computes top-5 accuracy vs `data/evaluation/ground_truth.jsonl` (≥95 %).
+5. Manual smoke tests via Slack bot and OpenWebUI to ensure integrations operate correctly.
 
 ## Performance & Reliability Targets
 
-- Document processing throughput: ≥10 documents/minute (using EnhancedDocumentProcessor).
-- Semantic query latency: ≤100 ms p95 with 1,000 concurrent users (validated via `tests/performance/load/test_locust.py`).
-- Availability: 99.99 % (documented monitoring + incident response, failover guidance TBD).
-- Storage efficiency: ≤100 GB for 10 k documents using on-disk vectors/payloads.
+See `spec.md` Performance Targets section for complete phase-specific requirements.
+
+**Summary**:
+- **POC**: p95 <500ms baseline (escalate if >1000ms), ≥5 docs/min, best-effort availability
+- **MVP**: p95 <200ms for 20-50 users, ≥10 docs/min, 99.9% availability
+- **Production**: p95 ≤100ms for 20-100 users, ≥20 docs/min, 99.99% availability
+- Storage efficiency: ≤100 GB for 10k documents using on-disk vectors/payloads
 
 ## Monitoring & Backup Strategy
 
 - Health script scheduled via cron/systemd on RunPod to log status snapshots.
 - Log rotation for `/workspace/logs/*.log` using `logrotate` or custom cron with 30-day retention (per R7.4).
-- Daily backups: `tar -czf /workspace/backups/bms_$(date +%Y%m%d).tar.gz /workspace/qdrant_storage /workspace/bms_data` with 90-day retention for data backups (automate in cron after initial validation, per R7.4).
 - **MVP REQUIREMENT**: Implement Prometheus/Grafana integration as part of MVP per constitution §8; configure basic dashboards and metrics scraping via `/metrics/uplink` endpoint.
 
 ## Success Criteria & Priority Order

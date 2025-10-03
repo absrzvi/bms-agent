@@ -1,13 +1,15 @@
 # BMS Agent MVP Task List
 
-**Status**: ✅ MVP COMPLETE + SEARCH v2.0 DEPLOYED (All Critical Tasks Complete)  
-**Progress**: 26/38 tasks (68%) | Core: 15/15 (100%) | Integrations: 2/2 (100%) | Operations: 4/4 (100%) | Data: 4/4 (100%) | Clarified: 0/5 (0%) | Backup: 1/1 (100%)  
-**Last Updated**: 2025-10-03 15:55 UTC
+**Status**: ✅ MVP CORE COMPLETE + Security Tasks Pending (T015, T016) + 4 MVP Enhancement Tasks Prioritized  
+**Progress**: 26/41 tasks (63%) | Core: 15/15 (100%) | Security: 0/2 (0%) | Integrations: 2/2 (100%) | Operations: 4/4 (100%) | Data: 4/4 (100%) | **MVP Additions: 0/4 (0%)** | Post-MVP: 0/3 (0%)  
+**Last Updated**: 2025-10-03 19:16 UTC
 
 ## Current Status
-- ✅ **Core MVP**: 100% Complete (T000-T014)
+- ✅ **Core MVP**: 100% Complete (T000-T014 excluding security)
+- ⚠️ **Security (MVP REQUIREMENT)**: 0% Complete (T015-T016) - **BLOCKING FOR MVP**
 - ✅ **Integrations**: 100% Complete (T017-T018)
 - ✅ **Operations**: 100% Complete (T019-T020 + T028-T031)
+- ✅ **Data Pipeline**: 100% Complete (T032-T035)
 - ✅ **Slack Integration**: Complete - FastAPI endpoints ready
 - ✅ **OpenWebUI Tool**: Complete - 7/7 tests passing, metadata fixes applied
 - ✅ **Ollama GPU**: Optimized - 73.7 tokens/sec (123x improvement)
@@ -17,10 +19,9 @@
 - ✅ **Workspace Persistence**: 100% - All apps and data in /workspace
 - ✅ **Auto-Start**: Multiple methods configured (.bashrc, RunPod, systemd, cron)
 - ✅ **Service Management**: Complete startup, health check, and monitoring scripts
-- ✅ **T032 Complete**: Download script tested (5/5 successful, cookie auth validated)
-- 📋 **Current Phase**: T033 (Full Download) → T034 (Batch Process) → T035 (Validate & T025)
-- 🆕 **New Requirements**: 5 clarified requirements added (T036-T040) - 2 MVP scope, 3 Post-MVP
-  - **MVP Additions**: T038 (Quality flagging), T040 (min_score filtering)
+- 🔴 **Current Priority**: T015-T016 (Security - MVP REQUIREMENT per constitution §5)
+- 🆕 **New Requirements**: 5 clarified requirements added (T036-T040) + 2 operational requirements (T041-T042)
+  - **MVP Priority**: T015-T016 (Security), T038 (Quality flagging), T040 (min_score filtering), T041 (Automated backups), T042 (RunPod init validation)
   - **Post-MVP**: T036 (Re-upload), T037 (Async queue), T039 (Deletion)
 
 ## Setup
@@ -110,18 +111,33 @@
   - Files/Paths: `api/main.py`
   - Parallel: No
 
-## Security & Compliance (POC Simplified)
-- **T015  Basic Security Module Implementation**
-  - Summary: **POC DECISION**: Build basic `api/security.py` with token bucket rate limiting algorithm (60 req/min per IP, in-memory implementation) and basic security headers only. No JWT or API key authentication required.
+## Security & Compliance (MVP REQUIREMENT) 🔴
+- **T015  Basic Security Module Implementation** 🔥 **MVP BLOCKING**
+  - Summary: **MVP REQUIREMENT**: Build basic `api/security.py` with token bucket rate limiting algorithm (60 req/min per IP, in-memory implementation) and basic security headers middleware. No JWT or API key authentication required for MVP (deferred to production per spec.md R3.1).
   - Dependencies: T011
   - Files/Paths: `api/security.py`
   - Parallel: No
-  - Implementation Details: Use token bucket algorithm for rate limiting with configurable bucket size and refill rate; store state in-memory (acceptable for POC); return HTTP 429 with Retry-After header when limit exceeded
-- **T016  Security Wiring & Tests**
-  - Summary: **POC DECISION**: Integrate basic security middleware into FastAPI app, update tests for 400/413/429 error handling, and document production security roadmap in `docs/security-notes.md`.
+  - Status: ⚠️ **PENDING** - Required for MVP per constitution §5 and spec.md R3.2
+  - Implementation Details: Use token bucket algorithm for rate limiting with configurable bucket size and refill rate; store state in-memory (acceptable for MVP); return HTTP 429 with Retry-After header when limit exceeded; add security headers (X-Frame-Options, X-Content-Type-Options, X-XSS-Protection)
+  - Acceptance Criteria:
+    - Rate limiting middleware returns HTTP 429 when limit exceeded
+    - Retry-After header included in 429 responses
+    - Configurable via environment variables (RATE_LIMIT_PER_MIN)
+    - Security headers applied to all responses
+    - In-memory token bucket implementation (no external dependencies)
+- **T016  Security Wiring & Tests** 🔥 **MVP BLOCKING**
+  - Summary: **MVP REQUIREMENT**: Integrate basic security middleware into FastAPI app, add automated tests for 400/413/429 error handling, and document production security roadmap in `docs/security-notes.md`.
   - Dependencies: T015, T005–T007
-  - Files/Paths: `api/main.py`, `docs/security-notes.md`, `tests/basic/`
+  - Files/Paths: `api/main.py`, `docs/security-notes.md`, `tests/security/test_rate_limiting.py`, `tests/security/test_security_headers.py`
   - Parallel: No
+  - Status: ⚠️ **PENDING** - Required for MVP per constitution §5
+  - Acceptance Criteria:
+    - Security middleware integrated into FastAPI app startup
+    - Automated tests verify rate limiting (429 responses)
+    - Automated tests verify security headers on all responses
+    - Automated tests verify error handling (400/413/429)
+    - Production security roadmap documented in `docs/security-notes.md`
+    - Test coverage ≥80% for security module
 
 ## Integrations
 - **T017  Slack Integration** ✅
@@ -280,7 +296,67 @@
   - `data/evaluation/EVALUATION_STATUS.md`
   - `data/evaluation/EMBEDDING_FIX_REPORT.md`
 
-## Clarified Requirements (Post-MVP Enhancement) - NEW
+## MVP Enhancement Tasks (Clarified Requirements) - NEW
+- **T038  Quality Score Metadata Flagging**
+  - Summary: Implement quality flagging per R1.6 - store all chunks regardless of quality score, add `quality_score` field to chunk metadata in Qdrant, allow optional quality filtering in search endpoints, never fail processing due to low quality alone.
+  - Dependencies: T009, T011, T012
+  - Files/Paths: `api/processor_wrapper.py`, `bms-agent/scr/enhanced_document_processor.py`, `api/main.py`
+  - Parallel: No
+  - Scope: **MVP** (data model enhancement - backward compatible)
+  - Acceptance Criteria:
+    - All chunks indexed regardless of quality < 0.70
+    - Chunks have `quality_score` field in Qdrant payload
+    - Search endpoints accept optional `min_quality` parameter (0.0-1.0)
+    - Processing never fails due to low quality score
+    - Quality metrics tracked in monitoring
+- **T040  Configurable Relevance Filtering**
+  - Summary: Implement min_score parameter per R2.4 - add optional `min_score` query parameter to search endpoints (semantic/hybrid), validate range (0.0-1.0), filter results below threshold, document in OpenAPI spec, default behavior returns all top-k results.
+  - Dependencies: T011, T012
+  - Files/Paths: `api/main.py`, `api/models/search.py`, OpenAPI spec
+  - Parallel: No
+  - Scope: **MVP** (simple query parameter addition - backward compatible)
+  - Acceptance Criteria:
+    - `/api/v1/search/semantic?min_score=0.7` filters results
+    - Parameter validated: 0.0 ≤ min_score ≤ 1.0
+    - Returns 400 if validation fails
+    - Documented in OpenAPI spec `/openapi.json`
+    - Default (no parameter) returns all top-k results
+    - Works for both semantic and hybrid search endpoints
+- **T041  Automated Backup System** 🔥 **MVP REQUIREMENT**
+  - Summary: Implement automated backup system per R7.4 - create backup script for Qdrant storage and BMS data, configure cron job for daily execution, implement retention policies (30-day logs, 90-day data), add backup verification and restoration procedures.
+  - Dependencies: T028, T031
+  - Files/Paths: `scripts/backup_system.sh`, `scripts/verify_backup.sh`, `scripts/restore_backup.sh`, `/etc/cron.d/bms-backup`, `DEPLOYMENT_CHECKLIST.md`
+  - Parallel: No
+  - Scope: **MVP** (operational requirement per constitution §8)
+  - Acceptance Criteria:
+    - Backup script creates timestamped archives in `/workspace/backups/`
+    - Backs up `/workspace/qdrant_storage` and `/workspace/bms_data`
+    - Cron job configured for daily execution (2 AM)
+    - Implements retention: deletes logs >30 days, data backups >90 days
+    - Backup verification script validates archive integrity
+    - Restoration script documented and tested
+    - Disk space check before backup (fails if <10% free)
+    - Logs backup operations to `/workspace/logs/backup.log`
+    - Documented in `DEPLOYMENT_CHECKLIST.md`
+- **T042  RunPod Initialization & Service Startup Validation** 🔥 **MVP REQUIREMENT**
+  - Summary: Enhance and validate RunPod initialization scripts for production reliability - improve `scripts/runpod_init.sh` with SSH key persistence, comprehensive system package installation, Ollama GPU setup with health checks, and proper error handling. Validate `start_all_services.sh` orchestration with service readiness checks and comprehensive logging.
+  - Dependencies: T028, T029, T031
+  - Files/Paths: `scripts/runpod_init.sh`, `/workspace/scripts/start_all_services.sh`, `/workspace/config/authorized_keys`, `/workspace/logs/startup.log`
+  - Parallel: No
+  - Scope: **MVP** (operational requirement for reliable pod restarts)
+  - Acceptance Criteria:
+    - Enhanced `runpod_init.sh` with SSH key persistence from `/workspace/config/authorized_keys`
+    - System package installation (vim, nano, git, curl, wget, htop, tmux, jq, etc.)
+    - Ollama GPU installation with version verification and health checks
+    - Ollama model pre-loading (mistral-nemo:12b-instruct) with cache validation
+    - Proper service startup orchestration via `start_all_services.sh`
+    - Comprehensive logging to `/workspace/logs/startup.log` and service-specific logs
+    - Error handling with exit codes and failure messages
+    - Service readiness validation (30s timeout for Ollama, health checks for all services)
+    - Documentation in `DEPLOYMENT_CHECKLIST.md` for RunPod configuration
+    - Tested on fresh pod restart with all services starting successfully
+
+## Post-MVP Enhancement Tasks - NEW
 - **T036  Document Re-upload with Destructive Replacement**
   - Summary: Implement destructive replacement logic for document re-upload per R1.4 - detect duplicate filename, remove existing document and all chunks from Qdrant, then process as new upload with same or new document ID.
   - Dependencies: T010, T034
@@ -304,18 +380,6 @@
     - Status endpoint `GET /api/v1/documents/status/{job_id}` returns processing state
     - No artificial concurrency limits
     - Queue persistence across service restarts
-- **T038  Quality Score Metadata Flagging**
-  - Summary: Implement quality flagging per R1.6 - store all chunks regardless of quality score, add `quality_score` field to chunk metadata in Qdrant, allow optional quality filtering in search endpoints, never fail processing due to low quality alone.
-  - Dependencies: T009, T011, T012
-  - Files/Paths: `api/processor_wrapper.py`, `bms-agent/scr/enhanced_document_processor.py`, `api/main.py`
-  - Parallel: No
-  - Scope: **MVP** (data model enhancement - backward compatible)
-  - Acceptance Criteria:
-    - All chunks indexed regardless of quality < 0.70
-    - Chunks have `quality_score` field in Qdrant payload
-    - Search endpoints accept optional `min_quality` parameter (0.0-1.0)
-    - Processing never fails due to low quality score
-    - Quality metrics tracked in monitoring
 - **T039  Document Deletion Endpoint**
   - Summary: Implement admin-only document deletion per R1.7 - create `DELETE /api/v1/documents/{id}` endpoint, remove document metadata and all associated chunks from Qdrant, return 204 on success, add audit logging for deletion events.
   - Dependencies: T010, T011
@@ -329,34 +393,3 @@
     - Admin authentication enforced (production)
     - Audit log records: user, timestamp, document ID
     - Returns 404 if document not found
-- **T040  Configurable Relevance Filtering**
-  - Summary: Implement min_score parameter per R2.4 - add optional `min_score` query parameter to search endpoints (semantic/hybrid), validate range (0.0-1.0), filter results below threshold, document in OpenAPI spec, default behavior returns all top-k results.
-  - Dependencies: T011, T012
-  - Files/Paths: `api/main.py`, `api/models/search.py`, OpenAPI spec
-  - Parallel: No
-  - Scope: **MVP** (simple query parameter addition - backward compatible)
-  - Acceptance Criteria:
-    - `/api/v1/search/semantic?min_score=0.7` filters results
-    - Parameter validated: 0.0 ≤ min_score ≤ 1.0
-    - Returns 400 if validation fails
-    - Documented in OpenAPI spec `/openapi.json`
-    - Default (no parameter) returns all top-k results
-    - Works for both semantic and hybrid search endpoints
-
-## Backup & Automation (NEW)
-- **T041  Automated Backup System**
-  - Summary: Implement automated backup system per R7.4 - create backup script for Qdrant storage and BMS data, configure cron job for daily execution, implement retention policies (30-day logs, 90-day data), add backup verification and restoration procedures.
-  - Dependencies: T028, T031
-  - Files/Paths: `scripts/backup_system.sh`, `scripts/verify_backup.sh`, `scripts/restore_backup.sh`, `/etc/cron.d/bms-backup`, `DEPLOYMENT_CHECKLIST.md`
-  - Parallel: No
-  - Scope: **MVP** (operational requirement per constitution §8)
-  - Acceptance Criteria:
-    - Backup script creates timestamped archives in `/workspace/backups/`
-    - Backs up `/workspace/qdrant_storage` and `/workspace/bms_data`
-    - Cron job configured for daily execution (2 AM)
-    - Implements retention: deletes logs >30 days, data backups >90 days
-    - Backup verification script validates archive integrity
-    - Restoration script documented and tested
-    - Disk space check before backup (fails if <10% free)
-    - Logs backup operations to `/workspace/logs/backup.log`
-    - Documented in `DEPLOYMENT_CHECKLIST.md`
