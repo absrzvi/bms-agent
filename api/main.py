@@ -84,6 +84,7 @@ class SearchRequest(BaseModel):
     query: str = Field(..., min_length=1, description="Search query text")
     limit: int = Field(10, ge=1, le=100, description="Maximum number of results")
     filters: Optional[Dict[str, Any]] = Field(None, description="Search filters")
+    min_score: Optional[float] = Field(None, ge=0.0, le=1.0, description="Minimum similarity score threshold (0.0-1.0)")
 
 class HybridSearchRequest(SearchRequest):
     vector_weight: float = Field(0.5, ge=0.0, le=1.0, description="Weight for semantic search")
@@ -283,6 +284,7 @@ async def semantic_search(request: SearchRequest):
     - **query**: Search query text
     - **limit**: Maximum number of results (1-100)
     - **filters**: Optional filters for document type, profile, etc.
+    - **min_score**: Optional minimum similarity score threshold (0.0-1.0). Results below this score are filtered out.
     """
     
     try:
@@ -329,9 +331,16 @@ async def semantic_search(request: SearchRequest):
         
         search_time = (datetime.now() - start_time).total_seconds() * 1000
         
-        # Format results
+        # Format results with optional min_score filtering
         results = []
+        filtered_count = 0
+        
         for result in search_results:
+            # Apply min_score filter if specified
+            if request.min_score is not None and result.score < request.min_score:
+                filtered_count += 1
+                continue
+                
             payload = result.payload
             results.append({
                 "chunk_id": payload.get("chunk_id"),
@@ -349,7 +358,7 @@ async def semantic_search(request: SearchRequest):
                 }
             })
         
-        return {
+        response_data = {
             "status": "success",
             "query": request.query,
             "results": results,
@@ -359,6 +368,13 @@ async def semantic_search(request: SearchRequest):
                 "embedding_model": "snowflake-arctic-embed2"
             }
         }
+        
+        # Add filtering info if min_score was applied
+        if request.min_score is not None:
+            response_data["search_metadata"]["min_score_filter"] = request.min_score
+            response_data["search_metadata"]["filtered_count"] = filtered_count
+        
+        return response_data
         
     except HTTPException:
         raise
@@ -376,6 +392,7 @@ async def hybrid_search(request: HybridSearchRequest):
     - **vector_weight**: Weight for semantic search component (0.0-1.0)
     - **keyword_weight**: Weight for keyword search component (0.0-1.0)
     - **filters**: Optional filters
+    - **min_score**: Optional minimum hybrid score threshold (0.0-1.0). Results below this score are filtered out.
     """
     
     try:
@@ -438,8 +455,10 @@ async def hybrid_search(request: HybridSearchRequest):
         
         search_time = (datetime.now() - start_time).total_seconds() * 1000
         
-        # Format results with enhanced metadata-aware hybrid scoring
+        # Format results with enhanced metadata-aware hybrid scoring and optional min_score filtering
         results = []
+        filtered_count = 0
+        
         for result in search_results:
             payload = result.payload
             
@@ -484,6 +503,11 @@ async def hybrid_search(request: HybridSearchRequest):
             semantic_score = float(result.score)
             hybrid_score = (semantic_score * request.vector_weight) + (keyword_score * request.keyword_weight) + quality_boost
             
+            # Apply min_score filter if specified (filter on hybrid_score for hybrid search)
+            if request.min_score is not None and hybrid_score < request.min_score:
+                filtered_count += 1
+                continue
+            
             results.append({
                 "chunk_id": payload.get("chunk_id"),
                 "document_id": payload.get("document_id"),
@@ -518,7 +542,7 @@ async def hybrid_search(request: HybridSearchRequest):
         # Sort by hybrid score
         results.sort(key=lambda x: x["hybrid_score"], reverse=True)
         
-        return {
+        response_data = {
             "status": "success",
             "query": request.query,
             "results": results,
@@ -530,6 +554,13 @@ async def hybrid_search(request: HybridSearchRequest):
                 "fusion_method": "weighted_sum"
             }
         }
+        
+        # Add filtering info if min_score was applied
+        if request.min_score is not None:
+            response_data["search_metadata"]["min_score_filter"] = request.min_score
+            response_data["search_metadata"]["filtered_count"] = filtered_count
+        
+        return response_data
         
     except HTTPException:
         raise

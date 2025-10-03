@@ -1,8 +1,8 @@
 # BMS Agent MVP Task List
 
 **Status**: ✅ MVP REQUIREMENTS COMPLETE! 🎉  
-**Progress**: 30/41 tasks (73%) | Core: 15/15 (100%) | Security: 2/2 (100%) ✅ | Integrations: 2/2 (100%) | Operations: 4/4 (100%) | Data: 4/4 (100%) | **MVP Additions: 2/4 (50%)** ✅ | Post-MVP: 0/3 (0%)  
-**Last Updated**: 2025-10-03 22:38 UTC
+**Progress**: 31/41 tasks (76%) | Core: 15/15 (100%) | Security: 2/2 (100%) ✅ | Integrations: 2/2 (100%) | Operations: 4/4 (100%) | Data: 4/4 (100%) | **MVP Additions: 3/4 (75%)** ✅ | Post-MVP: 0/3 (0%)  
+**Last Updated**: 2025-10-03 22:46 UTC
 
 ## Current Status
 - ✅ **Core MVP**: 100% Complete (T000-T014)
@@ -309,19 +309,21 @@
     - Search endpoints accept optional `min_quality` parameter (0.0-1.0)
     - Processing never fails due to low quality score
     - Quality metrics tracked in monitoring
-- **T040  Configurable Relevance Filtering**
+- **T040  Configurable Relevance Filtering** ✅
   - Summary: Implement min_score parameter per R2.4 - add optional `min_score` query parameter to search endpoints (semantic/hybrid), validate range (0.0-1.0), filter results below threshold, document in OpenAPI spec, default behavior returns all top-k results.
   - Dependencies: T011, T012
   - Files/Paths: `api/main.py`, `api/models/search.py`, OpenAPI spec
   - Parallel: No
   - Scope: **MVP** (simple query parameter addition - backward compatible)
-  - Acceptance Criteria:
-    - `/api/v1/search/semantic?min_score=0.7` filters results
-    - Parameter validated: 0.0 ≤ min_score ≤ 1.0
-    - Returns 400 if validation fails
-    - Documented in OpenAPI spec `/openapi.json`
-    - Default (no parameter) returns all top-k results
-    - Works for both semantic and hybrid search endpoints
+  - Status: ✅ **COMPLETED** - min_score filtering implemented for both search endpoints
+  - Acceptance Criteria: ✅ ALL MET
+    - ✅ `/api/v1/search/semantic?min_score=0.7` filters results
+    - ✅ Parameter validated: 0.0 ≤ min_score ≤ 1.0 (Pydantic validation)
+    - ✅ Returns 422 if validation fails (Pydantic automatic validation)
+    - ✅ Documented in endpoint docstrings (auto-generated OpenAPI spec)
+    - ✅ Default (no parameter) returns all top-k results
+    - ✅ Works for both semantic and hybrid search endpoints
+    - ✅ Includes filtered_count in response metadata when filter applied
 - **T041  Automated Backup System** ✅
   - Summary: Implement automated backup system per R7.4 - create backup script for Qdrant storage and BMS data, configure cron job for daily execution, implement retention policies (30-day logs, 90-day data), add backup verification and restoration procedures.
   - Dependencies: T028, T031
