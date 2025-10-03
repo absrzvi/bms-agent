@@ -85,6 +85,7 @@ class SearchRequest(BaseModel):
     limit: int = Field(10, ge=1, le=100, description="Maximum number of results")
     filters: Optional[Dict[str, Any]] = Field(None, description="Search filters")
     min_score: Optional[float] = Field(None, ge=0.0, le=1.0, description="Minimum similarity score threshold (0.0-1.0)")
+    min_quality: Optional[float] = Field(None, ge=0.0, le=1.0, description="Minimum quality score threshold (0.0-1.0)")
 
 class HybridSearchRequest(SearchRequest):
     vector_weight: float = Field(0.5, ge=0.0, le=1.0, description="Weight for semantic search")
@@ -285,6 +286,7 @@ async def semantic_search(request: SearchRequest):
     - **limit**: Maximum number of results (1-100)
     - **filters**: Optional filters for document type, profile, etc.
     - **min_score**: Optional minimum similarity score threshold (0.0-1.0). Results below this score are filtered out.
+    - **min_quality**: Optional minimum quality score threshold (0.0-1.0). Filters chunks by RAGAS quality score.
     """
     
     try:
@@ -300,9 +302,18 @@ async def semantic_search(request: SearchRequest):
         
         # Build search filter
         search_filter = None
+        conditions = []
+        
+        # Add min_quality filter if specified
+        if request.min_quality is not None:
+            from qdrant_client.models import Range, FieldCondition
+            conditions.append(
+                FieldCondition(key="quality_score", range=Range(gte=request.min_quality))
+            )
+        
+        # Add other filters
         if request.filters:
             from qdrant_client.models import Filter, FieldCondition, MatchValue
-            conditions = []
             
             for key, value in request.filters.items():
                 if key in ["document_type", "processing_profile", "hierarchy_level"]:
@@ -314,9 +325,10 @@ async def semantic_search(request: SearchRequest):
                     conditions.append(
                         FieldCondition(key="quality_score", range=Range(gte=float(value)))
                     )
-            
-            if conditions:
-                search_filter = Filter(must=conditions)
+        
+        if conditions:
+            from qdrant_client.models import Filter
+            search_filter = Filter(must=conditions)
         
         # Perform semantic search
         start_time = datetime.now()
@@ -393,6 +405,7 @@ async def hybrid_search(request: HybridSearchRequest):
     - **keyword_weight**: Weight for keyword search component (0.0-1.0)
     - **filters**: Optional filters
     - **min_score**: Optional minimum hybrid score threshold (0.0-1.0). Results below this score are filtered out.
+    - **min_quality**: Optional minimum quality score threshold (0.0-1.0). Filters chunks by RAGAS quality score.
     """
     
     try:
@@ -422,9 +435,18 @@ async def hybrid_search(request: HybridSearchRequest):
         
         # Build search filter (same as semantic search)
         search_filter = None
+        conditions = []
+        
+        # Add min_quality filter if specified
+        if request.min_quality is not None:
+            from qdrant_client.models import Range, FieldCondition
+            conditions.append(
+                FieldCondition(key="quality_score", range=Range(gte=request.min_quality))
+            )
+        
+        # Add other filters
         if request.filters:
             from qdrant_client.models import Filter, FieldCondition, MatchValue
-            conditions = []
             
             for key, value in request.filters.items():
                 if key in ["document_type", "processing_profile", "has_context", "is_parent"]:
@@ -436,9 +458,10 @@ async def hybrid_search(request: HybridSearchRequest):
                     conditions.append(
                         FieldCondition(key="quality_score", range=Range(gte=float(value)))
                     )
-            
-            if conditions:
-                search_filter = Filter(must=conditions)
+        
+        if conditions:
+            from qdrant_client.models import Filter
+            search_filter = Filter(must=conditions)
         
         # Perform hybrid search
         start_time = datetime.now()
