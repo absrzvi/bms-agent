@@ -15,12 +15,15 @@ if [ -f /workspace/apps/qdrant/qdrant ]; then
     sleep 3
 fi
 
-# Start Ollama
+# Start Ollama (only if not already running)
 if [ -f /usr/local/bin/ollama ]; then
-    echo "Starting Ollama..."
-    export OLLAMA_MODELS=/workspace/data/ollama_models
-    /usr/local/bin/ollama serve > /workspace/logs/ollama.log 2>&1 &
-    sleep 3
+    if ! pgrep -x "ollama" > /dev/null; then
+        echo "Starting Ollama..."
+        OLLAMA_MODELS=/workspace/data/ollama_models /usr/local/bin/ollama serve > /workspace/logs/ollama.log 2>&1 &
+        sleep 3
+    else
+        echo "Ollama already running, skipping..."
+    fi
 fi
 
 # Start BMS API
@@ -30,6 +33,7 @@ if [ -d /workspace/001-bms-agent ]; then
     source /workspace/bms-api-venv/bin/activate
     nohup uvicorn api.main:app --host 0.0.0.0 --port 8000 > /workspace/logs/api.log 2>&1 &
     sleep 3
+    deactivate
 fi
 
 # Start OpenWebUI
@@ -40,6 +44,7 @@ if [ -f /workspace/openwebui/venv/bin/open-webui ]; then
     export OPENWEBUI_DATA_DIR=/workspace/data/openwebui
     nohup open-webui serve --host 0.0.0.0 --port 3000 > /workspace/logs/openwebui.log 2>&1 &
     sleep 3
+    deactivate
 fi
 
 echo "✅ All services started!"

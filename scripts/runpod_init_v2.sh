@@ -97,46 +97,55 @@ fi
 
 # 4. Ollama Configuration
 log "Step 4: Configuring Ollama..."
-export OLLAMA_MODELS=/workspace/data/ollama_models
 mkdir -p /workspace/data/ollama_models
 
-# Start Ollama service
+# Start Ollama service with OLLAMA_MODELS environment variable
 log "Starting Ollama service..."
-ollama serve > /workspace/logs/ollama.log 2>&1 &
+OLLAMA_MODELS=/workspace/data/ollama_models ollama serve > /workspace/logs/ollama.log 2>&1 &
 OLLAMA_PID=$!
 sleep 5
 
 # Verify Ollama is running
 if curl -s http://localhost:11434/api/tags > /dev/null 2>&1; then
     log "✅ Ollama service started successfully (PID: $OLLAMA_PID)"
+    log "   Models directory: /workspace/data/ollama_models"
 else
     log "❌ Ollama service failed to start"
 fi
 
 # 5. Pre-load Ollama Models
 log "Step 5: Checking Ollama models..."
-REQUIRED_MODEL="mistral-nemo:12b-instruct"
-if ollama list | grep -q "$REQUIRED_MODEL"; then
-    log "✅ Model $REQUIRED_MODEL already available"
+# Check if any models exist in the persistent storage
+MODEL_COUNT=$(OLLAMA_MODELS=/workspace/data/ollama_models ollama list 2>/dev/null | grep -v "NAME" | wc -l)
+if [ "$MODEL_COUNT" -gt 0 ]; then
+    log "✅ Found $MODEL_COUNT model(s) in /workspace/data/ollama_models"
+    OLLAMA_MODELS=/workspace/data/ollama_models ollama list | grep -v "NAME" | while read line; do
+        log "   - $line"
+    done
 else
-    log "Pulling model $REQUIRED_MODEL (this may take several minutes)..."
-    ollama pull "$REQUIRED_MODEL" >> "$LOG_FILE" 2>&1
-    log "✅ Model $REQUIRED_MODEL downloaded"
+    log "⚠️  No models found in /workspace/data/ollama_models"
+    log "   Models should be pre-downloaded and stored in persistent storage"
+    log "   Skipping automatic model download to avoid delays"
 fi
 
 # 6. Start BMS Agent Services
 log "Step 6: Starting BMS Agent services..."
-if [ -f /workspace/scripts/start_all_services.sh ]; then
+if [ -f /workspace/001-bms-agent/scripts/start_all_services.sh ]; then
     log "Executing start_all_services.sh..."
+    bash /workspace/001-bms-agent/scripts/start_all_services.sh >> "$LOG_FILE" 2>&1
+    log "✅ BMS Agent services started"
+elif [ -f /workspace/scripts/start_all_services.sh ]; then
+    log "Executing start_all_services.sh from /workspace/scripts..."
     bash /workspace/scripts/start_all_services.sh >> "$LOG_FILE" 2>&1
     log "✅ BMS Agent services started"
 else
-    log "⚠️  /workspace/scripts/start_all_services.sh not found"
+    log "⚠️  start_all_services.sh not found in /workspace/001-bms-agent/scripts/ or /workspace/scripts/"
 fi
 
 # 7. Health Check
 log "Step 7: Running health checks..."
-sleep 5
+log "Waiting for services to fully start..."
+sleep 10
 
 # Check Qdrant
 if curl -s http://localhost:6333/healthz > /dev/null 2>&1; then
@@ -145,18 +154,40 @@ else
     log "⚠️  Qdrant: not responding"
 fi
 
-# Check BMS API
-if curl -s http://localhost:8000/health > /dev/null 2>&1; then
-    log "✅ BMS API: healthy"
-else
-    log "⚠️  BMS API: not responding"
+# Check BMS API (with retries)
+BMS_HEALTHY=false
+for i in {1..6}; do
+    if curl -s http://localhost:8000/health > /dev/null 2>&1; then
+        log "✅ BMS API: healthy"
+        BMS_HEALTHY=true
+        break
+    fi
+    if [ $i -lt 6 ]; then
+        log "   Waiting for BMS API... (attempt $i/6)"
+        sleep 5
+    fi
+done
+if [ "$BMS_HEALTHY" = false ]; then
+    log "⚠️  BMS API: not responding after 6 attempts"
+    log "   Check /workspace/logs/api.log for errors"
 fi
 
-# Check OpenWebUI
-if curl -s http://localhost:3000 > /dev/null 2>&1; then
-    log "✅ OpenWebUI: healthy"
-else
-    log "⚠️  OpenWebUI: not responding"
+# Check OpenWebUI (with retries)
+WEBUI_HEALTHY=false
+for i in {1..6}; do
+    if curl -s http://localhost:3000 > /dev/null 2>&1; then
+        log "✅ OpenWebUI: healthy"
+        WEBUI_HEALTHY=true
+        break
+    fi
+    if [ $i -lt 6 ]; then
+        log "   Waiting for OpenWebUI... (attempt $i/6)"
+        sleep 5
+    fi
+done
+if [ "$WEBUI_HEALTHY" = false ]; then
+    log "⚠️  OpenWebUI: not responding after 6 attempts"
+    log "   Check /workspace/logs/openwebui.log for errors"
 fi
 
 # 8. Mark initialization complete
