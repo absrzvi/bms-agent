@@ -1,8 +1,8 @@
 # BMS Agent MVP Task List
 
-**Status**: 🔄 DATA REFRESH + CLARIFICATIONS (Core MVP Complete, 5 New Requirements Added)  
-**Progress**: 23/37 tasks (62%) | Core: 15/15 (100%) | Integrations: 2/2 (100%) | Operations: 4/4 (100%) | Data: 2/4 (50%) | Clarified: 0/5 (0%)  
-**Last Updated**: 2025-10-02 08:48 UTC
+**Status**: 🔄 DATA REFRESH + CLARIFICATIONS (Core MVP Complete, 6 New Requirements Added)  
+**Progress**: 23/38 tasks (61%) | Core: 15/15 (100%) | Integrations: 2/2 (100%) | Operations: 4/4 (100%) | Data: 2/4 (50%) | Clarified: 0/5 (0%) | Backup: 0/1 (0%)  
+**Last Updated**: 2025-10-03 13:22 UTC
 
 ## Current Status
 - ✅ **Core MVP**: 100% Complete (T000-T014)
@@ -112,10 +112,11 @@
 
 ## Security & Compliance (POC Simplified)
 - **T015  Basic Security Module Implementation**
-  - Summary: **POC DECISION**: Build basic `api/security.py` with simple rate limiting (60 req/min per IP) and basic security headers only. No JWT or API key authentication required.
+  - Summary: **POC DECISION**: Build basic `api/security.py` with token bucket rate limiting algorithm (60 req/min per IP, in-memory implementation) and basic security headers only. No JWT or API key authentication required.
   - Dependencies: T011
   - Files/Paths: `api/security.py`
   - Parallel: No
+  - Implementation Details: Use token bucket algorithm for rate limiting with configurable bucket size and refill rate; store state in-memory (acceptable for POC); return HTTP 429 with Retry-After header when limit exceeded
 - **T016  Security Wiring & Tests**
   - Summary: **POC DECISION**: Integrate basic security middleware into FastAPI app, update tests for 400/413/429 error handling, and document production security roadmap in `docs/security-notes.md`.
   - Dependencies: T015, T005–T007
@@ -248,6 +249,7 @@
     - 768-dim embeddings generated for all documents
     - Documents ingested to Qdrant collection `nomad_bms_documents`
     - Processing statistics: success rate ≥95%, quality scores ≥0.70
+    - Processing throughput: ≥10 documents/minute average
     - Failed documents logged with error details
     - Qdrant collection updated with new document count
 - **T035  Post-Download Validation & T025 Completion**
@@ -339,3 +341,21 @@
     - Documented in OpenAPI spec `/openapi.json`
     - Default (no parameter) returns all top-k results
     - Works for both semantic and hybrid search endpoints
+
+## Backup & Automation (NEW)
+- **T041  Automated Backup System**
+  - Summary: Implement automated backup system per R7.4 - create backup script for Qdrant storage and BMS data, configure cron job for daily execution, implement retention policies (30-day logs, 90-day data), add backup verification and restoration procedures.
+  - Dependencies: T028, T031
+  - Files/Paths: `scripts/backup_system.sh`, `scripts/verify_backup.sh`, `scripts/restore_backup.sh`, `/etc/cron.d/bms-backup`, `DEPLOYMENT_CHECKLIST.md`
+  - Parallel: No
+  - Scope: **MVP** (operational requirement per constitution §8)
+  - Acceptance Criteria:
+    - Backup script creates timestamped archives in `/workspace/backups/`
+    - Backs up `/workspace/qdrant_storage` and `/workspace/bms_data`
+    - Cron job configured for daily execution (2 AM)
+    - Implements retention: deletes logs >30 days, data backups >90 days
+    - Backup verification script validates archive integrity
+    - Restoration script documented and tested
+    - Disk space check before backup (fails if <10% free)
+    - Logs backup operations to `/workspace/logs/backup.log`
+    - Documented in `DEPLOYMENT_CHECKLIST.md`

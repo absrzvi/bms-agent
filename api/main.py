@@ -425,44 +425,80 @@ async def hybrid_search(request: HybridSearchRequest):
         
         search_time = (datetime.now() - start_time).total_seconds() * 1000
         
-        # Format results with hybrid scoring simulation
+        # Format results with enhanced metadata-aware hybrid scoring
         results = []
         for result in search_results:
             payload = result.payload
             
-            # Improved keyword scoring with document name matching
+            # Extract metadata fields
             content = payload.get("content", "").lower()
             doc_name = payload.get("document_name", "").lower()
             
-            # Check matches in both content and document name
+            # Parse JSON metadata fields
+            import json
+            keywords_list = json.loads(payload.get("keywords", "[]")) if isinstance(payload.get("keywords"), str) else payload.get("keywords", [])
+            entities_list = json.loads(payload.get("entities", "[]")) if isinstance(payload.get("entities"), str) else payload.get("entities", [])
+            technical_terms_list = json.loads(payload.get("technical_terms", "[]")) if isinstance(payload.get("technical_terms"), str) else payload.get("technical_terms", [])
+            
+            # Convert lists to lowercase for matching
+            keywords_lower = [str(k).lower() for k in keywords_list] if keywords_list else []
+            entities_lower = [str(e).lower() for e in entities_list] if entities_list else []
+            technical_lower = [str(t).lower() for t in technical_terms_list] if technical_terms_list else []
+            
+            # Enhanced keyword scoring with multiple metadata sources
             content_matches = sum(1 for word in query_words if word in content)
             name_matches = sum(1 for word in query_words if word in doc_name)
+            keyword_matches = sum(1 for word in query_words if any(word in kw for kw in keywords_lower))
+            entity_matches = sum(1 for word in query_words if any(word in ent for ent in entities_lower))
+            technical_matches = sum(1 for word in query_words if any(word in tech for tech in technical_lower))
             
-            # Weight document name matches higher (3x) as they're more significant
-            total_matches = content_matches + (name_matches * 3)
-            max_possible = len(query_words) * 4  # 1 for content + 3 for name
+            # Weighted scoring: name (3x), keywords (2.5x), entities (2x), technical (2x), content (1x)
+            total_matches = (
+                content_matches + 
+                (name_matches * 3) + 
+                (keyword_matches * 2.5) + 
+                (entity_matches * 2) + 
+                (technical_matches * 2)
+            )
+            max_possible = len(query_words) * 10.5  # Sum of all weights
             keyword_score = min(total_matches / max_possible, 1.0) if max_possible > 0 else 0.0
             
-            # Calculate hybrid score
+            # Quality boost: higher quality chunks get slight ranking boost
+            quality_score = payload.get("quality_score", 0.0)
+            quality_boost = quality_score * 0.1  # Up to 10% boost for perfect quality
+            
+            # Calculate enhanced hybrid score with quality boost
             semantic_score = float(result.score)
-            hybrid_score = (semantic_score * request.vector_weight) + (keyword_score * request.keyword_weight)
+            hybrid_score = (semantic_score * request.vector_weight) + (keyword_score * request.keyword_weight) + quality_boost
             
             results.append({
                 "chunk_id": payload.get("chunk_id"),
                 "document_id": payload.get("document_id"),
                 "document_name": payload.get("document_name"),
-                "document_type": payload.get("document_type", "unknown"),  # FIX 1: Add document_type
-                "content": payload.get("content", "")[:1500],  # Increased for better context
-                "score": hybrid_score,  # Use hybrid_score as main score
+                "document_type": payload.get("document_type", "unknown"),
+                "content": payload.get("content", "")[:1500],
+                "score": hybrid_score,
                 "hybrid_score": hybrid_score,
                 "semantic_score": semantic_score,
                 "keyword_score": keyword_score,
+                "quality_boost": quality_boost,
                 "metadata": {
                     "chunk_index": payload.get("chunk_index"),
                     "hierarchy_level": payload.get("hierarchy_level"),
-                    "quality_score": payload.get("quality_score", 0.0),
-                    "keywords": payload.get("keywords"),
-                    "technical_terms": payload.get("technical_terms")
+                    "quality_score": quality_score,
+                    "has_context": payload.get("has_context", False),
+                    "contextual_description": payload.get("contextual_description", ""),
+                    "keywords": keywords_list,
+                    "entities": entities_list,
+                    "technical_terms": technical_terms_list,
+                    "fleet_type": payload.get("fleet_type", ""),
+                    "train_id": payload.get("train_id", ""),
+                    "standard_compliance": payload.get("standard_compliance", ""),
+                    "network_component": payload.get("network_component", ""),
+                    "department": payload.get("department", ""),
+                    "parent_chunk_id": payload.get("parent_chunk_id"),
+                    "is_parent": payload.get("is_parent", False),
+                    "late_chunking_applied": payload.get("late_chunking_applied", False)
                 }
             })
         

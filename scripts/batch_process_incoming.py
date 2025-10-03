@@ -41,7 +41,7 @@ logger = logging.getLogger(__name__)
 class BatchProcessor:
     """Batch processor for incoming SharePoint documents"""
     
-    def __init__(self):
+    def __init__(self, use_gpu: bool = True):
         self.base_dir = Path('/workspace/bms_data')
         self.incoming_dir = self.base_dir / 'incoming'
         self.processed_dir = self.base_dir / 'processed'
@@ -61,7 +61,8 @@ class BatchProcessor:
             enable_quality_validation=True,
             enable_contextual_retrieval=True,
             enable_late_chunking=True,
-            processing_profile=ProcessingProfile.RAILWAY
+            processing_profile=ProcessingProfile.RAILWAY,
+            use_gpu=use_gpu  # Allow CPU/GPU selection
         )
         self.processor = EnhancedDocumentProcessor(config)
         
@@ -244,7 +245,11 @@ class BatchProcessor:
 
 def main():
     """Main entry point"""
-    processor = BatchProcessor()
+    parser = argparse.ArgumentParser(description='Batch Process Incoming Documents')
+    parser.add_argument('--cpu', action='store_true', help='Force CPU mode (avoid GPU OOM in parallel processing)')
+    args = parser.parse_args()
+    
+    processor = BatchProcessor(use_gpu=not args.cpu)
     return processor.run()
 
 

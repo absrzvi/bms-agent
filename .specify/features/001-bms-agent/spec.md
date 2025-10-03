@@ -35,7 +35,7 @@
     - *Acceptance*: DELETE endpoint requires admin authentication (production); removes document metadata and all chunks from Qdrant; returns 204 on success; audit log records deletion.
 
 - **Search & Retrieval**
-  - R2.1: **POC DECISION**: Provide semantic search via `/api/v1/search/semantic` with POC performance target ≤500ms p95 latency under 20 concurrent users; no hard requirements for POC but baseline must be established. Performance benchmarking for baseline establishment only. **Production target**: ≤100ms p95 for 20-100 concurrent users.
+  - R2.1: **POC DECISION**: Provide semantic search via `/api/v1/search/semantic` with POC performance target ≤500ms p95 latency under 20 concurrent users; minimum acceptable baseline ≤1000ms p95 for POC validation. Performance benchmarking for baseline establishment only. **Production target**: ≤100ms p95 for 20-100 concurrent users.
   - R2.2: Achieve ≥95 % top-5 retrieval accuracy on curated validation set (`data/evaluation/ground_truth.jsonl`) containing minimum 50 queries across 10 categories.
     - *Acceptance*: `scripts/evaluate_retrieval.py` reports accuracy ≥95 % on dataset with ≥50 test queries.
   - R2.3: Support hybrid retrieval (semantic + keyword/BM25) with query-time fusion.
@@ -67,6 +67,12 @@
   - R7.3: Maintain `DEPLOYMENT_CHECKLIST.md` with escalation steps and contact matrix.
   - R7.4: **BACKUP & RETENTION**: Implement daily automated backups of `/workspace/qdrant_storage` and `/workspace/bms_data` with 30-day retention policy for logs and 90-day retention for data backups.
     - *Acceptance*: Backup script runs daily via cron; backups stored in `/workspace/backups/` with date stamps; log rotation configured for 30-day retention; backup verification documented in `DEPLOYMENT_CHECKLIST.md`.
+
+- **SharePoint Integration & Data Synchronization**
+  - R8.1: **SHAREPOINT DOCUMENT SYNC**: Implement automated SharePoint document download and synchronization for BMS documentation repository.
+    - *Acceptance*: Download script authenticates with cookie-based auth; filters documents by modification date (post-2023); supports parallel downloads (≥10 workers); organizes by document type; handles errors gracefully with retry logic; logs download statistics.
+  - R8.2: **BATCH PROCESSING**: Process downloaded SharePoint documents with Enhanced Document Processor v4.0 in batch mode.
+    - *Acceptance*: Batch processor handles variable document loads; achieves ≥95% success rate; maintains ≥0.70 quality score threshold; processes ≥10 documents/minute; moves processed files to appropriate directories; logs processing statistics and errors.
 
 - **Success Criteria (POC)**
   - Ingestion workload runs successfully; invalid files rejected with specific errors.

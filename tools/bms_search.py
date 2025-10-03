@@ -1,39 +1,47 @@
 """
-BMS Agent Search Tool for OpenWebUI
-Provides semantic and hybrid search capabilities for railway documentation
+BMS Agent Search Tool for OpenWebUI - ENHANCED v2.0
+Provides metadata-aware semantic and hybrid search for railway documentation
 
-OPTIMIZATION STATUS: Production-Ready (96% Accuracy)
-=====================================================
+OPTIMIZATION STATUS: Production-Ready (96% Accuracy) + Enhanced Metadata Ranking
+================================================================================
 
-This tool leverages the BMS Agent API which has been optimized to achieve:
+This tool leverages the BMS Agent API with advanced metadata-aware ranking:
 - 96% retrieval accuracy on 50 diverse queries (exceeds 95% threshold)
-- Semantic search using snowflake-arctic-embed2 (1024-d vectors)
-- Hybrid search combining semantic + keyword/BM25
-- Quality filtering (0.714 average quality score)
+- Semantic search using sentence-transformers/all-mpnet-base-v2 (768-d vectors)
+- Enhanced hybrid search with keywords, entities, and technical terms
+- Quality-aware ranking with automatic quality boost
 - Multi-format support (PDF, DOCX, PPTX, XLSX, CSV, TXT)
-- 448 indexed documents from railway operations
+- 600+ indexed documents from railway operations
 
-Key Features:
-- Sentence-aware chunking with 400-char overlap for context preservation
-- Quality validation with RAGAS metrics
-- Enterprise-grade metadata extraction
-- Qdrant vector database with multi-vector schema
-- Ollama GPU-accelerated embeddings (73.7 tokens/sec)
+Enhanced Features (v2.0):
+- Metadata-aware ranking: keywords (2.5x), entities (2x), technical terms (2x)
+- Quality boost: up to 10% ranking improvement for high-quality chunks
+- Railway-specific filters: fleet type, standards, department
+- Contextual search: prioritize chunks with rich context descriptions
+- Hierarchical metadata: parent/child chunk relationships
+- Entity extraction: automatic entity recognition and matching
 
-Search Capabilities (ALL AVAILABLE):
+Search Capabilities (11 FUNCTIONS):
 1. search_semantic(): Dense vector similarity (best for conceptual queries)
-2. search_hybrid(): Semantic + keyword/BM25 (best for specific terms/codes)
+2. search_hybrid(): Enhanced with keywords, entities, technical terms
 3. search_by_document_type(): Filter by document type (pdf, docx, etc.)
-4. get_api_status(): Check BMS API health
-5. compare_search_types(): Compare semantic vs hybrid results side-by-side
+4. search_by_fleet_type(): Filter by railway fleet/train type
+5. search_by_standard(): Filter by compliance standard (EN50155, EN45545)
+6. search_by_department(): Filter by BMS department (HUMR, ENGI, ISEC)
+7. search_with_context(): Prioritize contextually rich chunks
+8. search_high_quality(): Filter by quality score (>= 0.80)
+9. compare_search_types(): Compare semantic vs hybrid side-by-side
+10. get_api_status(): Check BMS API health
+11. search_documents(): General search with full configurability
 
-Tested Query Types:
-- Direct process queries ("What is X process?")
-- Scenario-based ("New employee starting, what steps?")
-- Problem-solving ("Need to report IT issue")
-- Permission requests ("How do I get access?")
-- Multi-concept ("inventory and procurement")
-- Technical terminology (document codes like BMS-ENGI-FOR-003)
+Metadata Fields Used for Ranking:
+- Keywords: Extracted key terms (2.5x weight)
+- Entities: Named entities (2x weight)
+- Technical Terms: Domain-specific terminology (2x weight)
+- Quality Score: Automatic quality boost (up to 10%)
+- Document Name: Exact matches (3x weight)
+- Contextual Description: Rich context information
+- Railway-Specific: Fleet type, standards, department, network components
 """
 
 import os
@@ -150,18 +158,52 @@ class Tools:
             for i, result in enumerate(results, 1):
                 score = result.get("score", 0.0)
                 
-                # Extract metadata (try direct fields first, fallback to payload)
+                # Extract metadata
                 doc_name = result.get("document_name") or result.get("payload", {}).get("document_name", "Unknown")
                 doc_type = result.get("document_type") or result.get("payload", {}).get("document_type", "unknown")
-                # Quality score is in metadata object
-                quality = result.get("metadata", {}).get("quality_score", 0.0) or result.get("quality_score", 0.0)
+                metadata = result.get("metadata", {})
+                quality = metadata.get("quality_score", 0.0) or result.get("quality_score", 0.0)
                 content = result.get("content", "")
                 
-                # Truncate content for display (increased to 800 chars for better context)
+                # Extract enhanced metadata
+                keywords = metadata.get("keywords", [])
+                entities = metadata.get("entities", [])
+                technical_terms = metadata.get("technical_terms", [])
+                has_context = metadata.get("has_context", False)
+                contextual_desc = metadata.get("contextual_description", "")
+                department = metadata.get("department", "")
+                fleet_type = metadata.get("fleet_type", "")
+                standard = metadata.get("standard_compliance", "")
+                
+                # Truncate content for display
                 content_preview = content[:800] + "..." if len(content) > 800 else content
                 
                 output.append(f"\n**{i}. {doc_name}**")
-                output.append(f"   📄 Type: {doc_type} | Quality: {quality:.2f} | Relevance: {score:.3f}")
+                
+                # Build metadata line with available info
+                meta_parts = [f"Type: {doc_type}", f"Quality: {quality:.2f}", f"Relevance: {score:.3f}"]
+                if department:
+                    meta_parts.append(f"Dept: {department}")
+                if fleet_type:
+                    meta_parts.append(f"Fleet: {fleet_type}")
+                if standard:
+                    meta_parts.append(f"Standard: {standard}")
+                
+                output.append(f"   📄 {' | '.join(meta_parts)}")
+                
+                # Add contextual description if available
+                if has_context and contextual_desc:
+                    output.append(f"   🎯 Context: {contextual_desc[:200]}")
+                
+                # Add keywords/entities if available
+                if keywords:
+                    keywords_str = ", ".join(str(k) for k in keywords[:5])
+                    output.append(f"   🔑 Keywords: {keywords_str}")
+                
+                if technical_terms:
+                    terms_str = ", ".join(str(t) for t in technical_terms[:5])
+                    output.append(f"   ⚙️ Technical: {terms_str}")
+                
                 output.append(f"   📝 {content_preview}\n")
             
             # Add metadata
@@ -266,6 +308,82 @@ class Tools:
         
         return "\n".join(output)
     
+    def search_by_fleet_type(self, query: str, fleet_type: str, limit: int = 5) -> str:
+        """
+        Search for railway documentation filtered by fleet/train type.
+        
+        Args:
+            query: Search query text
+            fleet_type: Fleet type to filter by (e.g., "Railjet", "Cityjet")
+            limit: Number of results (default: 5)
+        
+        Returns:
+            Formatted search results for specific fleet type
+        """
+        filters = {"fleet_type": fleet_type}
+        return self.search_documents(query, limit=limit, search_type="hybrid", filters=filters)
+    
+    def search_by_standard(self, query: str, standard: str, limit: int = 5) -> str:
+        """
+        Search for documentation filtered by compliance standard.
+        
+        Args:
+            query: Search query text
+            standard: Standard to filter by (e.g., "EN50155", "EN45545")
+            limit: Number of results (default: 5)
+        
+        Returns:
+            Formatted search results for specific standard
+        """
+        filters = {"standard_compliance": standard}
+        return self.search_documents(query, limit=limit, search_type="hybrid", filters=filters)
+    
+    def search_by_department(self, query: str, department: str, limit: int = 5) -> str:
+        """
+        Search for documentation filtered by BMS department.
+        
+        Args:
+            query: Search query text
+            department: Department code (e.g., "HUMR", "ENGI", "ISEC")
+            limit: Number of results (default: 5)
+        
+        Returns:
+            Formatted search results for specific department
+        """
+        filters = {"department": department}
+        return self.search_documents(query, limit=limit, search_type="hybrid", filters=filters)
+    
+    def search_with_context(self, query: str, limit: int = 5) -> str:
+        """
+        Search prioritizing chunks with rich contextual descriptions.
+        
+        Best for: Complex queries needing detailed context
+        
+        Args:
+            query: Search query text
+            limit: Number of results (default: 5)
+        
+        Returns:
+            Formatted search results with contextual information
+        """
+        filters = {"has_context": True}
+        return self.search_documents(query, limit=limit, search_type="hybrid", filters=filters)
+    
+    def search_high_quality(self, query: str, min_quality: float = 0.80, limit: int = 5) -> str:
+        """
+        Search for high-quality chunks only.
+        
+        Args:
+            query: Search query text
+            min_quality: Minimum quality score (0.0-1.0, default: 0.80)
+            limit: Number of results (default: 5)
+        
+        Returns:
+            Formatted search results with quality >= min_quality
+        """
+        filters = {"quality_score_min": min_quality}
+        return self.search_documents(query, limit=limit, search_type="hybrid", filters=filters)
+    
     def get_api_status(self) -> str:
         """
         Check BMS API health status.
@@ -300,26 +418,50 @@ class Tools:
 
 # Tool metadata for OpenWebUI
 TOOL_METADATA = {
-    "name": "BMS Agent Search",
-    "description": "Search railway network documentation using semantic and hybrid search",
-    "version": "1.0.0",
+    "name": "BMS Agent Search - Enhanced",
+    "description": "Advanced railway documentation search with metadata-aware ranking",
+    "version": "2.0.0",
     "author": "BMS Agent Team",
     "functions": [
         {
             "name": "search_documents",
-            "description": "General search with configurable options"
+            "description": "General search with configurable options and metadata filtering"
         },
         {
             "name": "search_semantic",
-            "description": "Semantic search using AI embeddings"
+            "description": "Semantic search using AI embeddings (768-d vectors)"
         },
         {
             "name": "search_hybrid",
-            "description": "Hybrid search combining semantic and keyword matching"
+            "description": "Enhanced hybrid search with keywords, entities, and technical terms"
         },
         {
             "name": "search_by_document_type",
-            "description": "Search within specific document types"
+            "description": "Search within specific document types (pdf, docx, xlsx, etc.)"
+        },
+        {
+            "name": "search_by_fleet_type",
+            "description": "Search filtered by railway fleet/train type"
+        },
+        {
+            "name": "search_by_standard",
+            "description": "Search filtered by compliance standard (EN50155, EN45545, etc.)"
+        },
+        {
+            "name": "search_by_department",
+            "description": "Search filtered by BMS department code (HUMR, ENGI, ISEC, etc.)"
+        },
+        {
+            "name": "search_with_context",
+            "description": "Search prioritizing chunks with rich contextual descriptions"
+        },
+        {
+            "name": "search_high_quality",
+            "description": "Search for high-quality chunks only (quality >= 0.80)"
+        },
+        {
+            "name": "compare_search_types",
+            "description": "Compare semantic vs hybrid search results side-by-side"
         },
         {
             "name": "get_api_status",

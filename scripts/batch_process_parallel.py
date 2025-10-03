@@ -32,13 +32,13 @@ logger = logging.getLogger(__name__)
 
 
 def process_single_document(args):
-    """Process a single document - runs in worker process"""
-    file_path_str, incoming_dir, processed_dir, failed_dir = args
+    """Process a single document - runs in worker process (CPU or GPU)"""
+    file_path_str, incoming_dir, processed_dir, failed_dir, use_gpu = args
     
     try:
         file_path = Path(file_path_str)
         
-        # Initialize processor in worker
+        # Initialize processor with specified device
         config = ProcessingConfig(
             chunk_size=2000,
             chunk_overlap=400,
@@ -46,7 +46,8 @@ def process_single_document(args):
             enable_quality_validation=True,
             enable_contextual_retrieval=True,
             enable_late_chunking=True,
-            processing_profile=ProcessingProfile.RAILWAY
+            processing_profile=ProcessingProfile.RAILWAY,
+            use_gpu=use_gpu  # Use GPU or CPU based on worker type
         )
         processor = EnhancedDocumentProcessor(config)
         
@@ -80,6 +81,7 @@ def process_single_document(args):
             'filename': file_path.name,
             'chunks': len(chunks),
             'quality': avg_quality,
+            'device': 'GPU' if use_gpu else 'CPU',
             'errors': result.get('errors', []) if not success else []
         }
         
@@ -90,13 +92,16 @@ def process_single_document(args):
             'filename': Path(file_path_str).name,
             'chunks': 0,
             'quality': 0.0,
+            'device': 'GPU' if use_gpu else 'CPU',
             'errors': [str(e)]
         }
 
 
 def main():
-    parser = argparse.ArgumentParser(description='Parallel Batch Processing for BMS Agent')
-    parser.add_argument('-w', '--workers', type=int, default=4, help='Number of parallel workers (default: 4)')
+    parser = argparse.ArgumentParser(description='Parallel Batch Processing for BMS Agent - Hybrid CPU+GPU')
+    parser.add_argument('-w', '--workers', type=int, default=4, help='Number of CPU workers (default: 4)')
+    parser.add_argument('--gpu-workers', type=int, default=1, help='Number of GPU workers (default: 1)')
+    parser.add_argument('--cpu-only', action='store_true', help='Use only CPU workers (no GPU)')
     parser.add_argument('--max-workers', type=int, default=None, help='Maximum workers (default: CPU count)')
     args = parser.parse_args()
     
@@ -124,18 +129,21 @@ def main():
         print("❌ No files found in incoming directory!")
         return 1
     
-    # Determine worker count
+    # Determine worker configuration
     max_workers = args.max_workers or cpu_count()
-    num_workers = min(args.workers, max_workers, total_files)
+    cpu_workers = min(args.workers, max_workers - args.gpu_workers if not args.cpu_only else max_workers, total_files)
+    gpu_workers = 0 if args.cpu_only else min(args.gpu_workers, 1)  # Limit to 1 GPU worker to avoid OOM
+    total_workers = cpu_workers + gpu_workers
     
     print("="*80)
-    print("🚀 BMS Agent - Parallel Batch Processing (T034)")
+    print("🚀 BMS Agent - Hybrid CPU+GPU Parallel Batch Processing (T034)")
     print("="*80)
     print(f"📁 Input Directory: {incoming_dir}")
     print(f"📁 Processed Directory: {processed_dir}")
     print(f"📁 Failed Directory: {failed_dir}")
     print(f"📋 Total Files: {total_files}")
-    print(f"⚡ Workers: {num_workers} (max available: {max_workers})")
+    print(f"⚡ Workers: {total_workers} total ({cpu_workers} CPU + {gpu_workers} GPU)")
+    print(f"   Max Available: {max_workers} CPU cores")
     print("="*80)
     print()
     
@@ -145,19 +153,25 @@ def main():
         'failed': 0,
         'total_chunks': 0,
         'quality_scores': [],
+        'cpu_processed': 0,
+        'gpu_processed': 0,
         'start_time': time.time()
     }
     
-    # Prepare arguments for workers
-    file_args = [(str(f), str(incoming_dir), str(processed_dir), str(failed_dir)) for f in all_files]
+    # Prepare arguments for workers - interleave GPU and CPU tasks
+    file_args = []
+    for i, f in enumerate(all_files):
+        # Assign every Nth file to GPU worker (round-robin distribution)
+        use_gpu = (i % (cpu_workers + gpu_workers) < gpu_workers) if gpu_workers > 0 else False
+        file_args.append((str(f), str(incoming_dir), str(processed_dir), str(failed_dir), use_gpu))
     
     # Process with progress display
-    print("🔄 Processing documents...")
+    print("🔄 Processing documents with hybrid CPU+GPU workers...")
     print()
     
-    with ProcessPoolExecutor(max_workers=num_workers) as executor:
+    with ProcessPoolExecutor(max_workers=total_workers) as executor:
         # Submit all tasks
-        future_to_file = {executor.submit(process_single_document, arg): arg[0] for arg in file_args}
+        future_to_file = {executor.submit(process_single_document, arg): arg for arg in file_args}
         
         # Process completed tasks with progress
         for i, future in enumerate(as_completed(future_to_file), 1):
@@ -169,19 +183,26 @@ def main():
                     stats['total_chunks'] += result['chunks']
                     if result['quality'] > 0:
                         stats['quality_scores'].append(result['quality'])
-                    status = f"✅ {result['chunks']} chunks, quality: {result['quality']:.3f}"
+                    
+                    # Track device usage
+                    if result.get('device') == 'GPU':
+                        stats['gpu_processed'] += 1
+                    else:
+                        stats['cpu_processed'] += 1
+                    
+                    status = f"✅ [{result.get('device', 'CPU')}] {result['chunks']} chunks, quality: {result['quality']:.3f}"
                 else:
                     stats['failed'] += 1
                     error_msg = result['errors'][0] if result['errors'] else 'Unknown error'
-                    status = f"❌ {error_msg[:50]}"
+                    status = f"❌ [{result.get('device', 'CPU')}] {error_msg[:50]}"
                 
                 # Progress display
                 elapsed = time.time() - stats['start_time']
                 rate = i / elapsed if elapsed > 0 else 0
                 eta = (total_files - i) / rate if rate > 0 else 0
                 
-                print(f"[{i}/{total_files}] {result['filename'][:50]:50s} {status}")
-                print(f"  Progress: {i/total_files*100:.1f}% | Rate: {rate:.1f} docs/sec | ETA: {eta/60:.1f} min")
+                print(f"[{i}/{total_files}] {result['filename'][:45]:45s} {status}")
+                print(f"  Progress: {i/total_files*100:.1f}% | Rate: {rate:.1f} docs/sec | ETA: {eta/60:.1f} min | CPU: {stats['cpu_processed']} GPU: {stats['gpu_processed']}")
                 print()
                 
             except Exception as e:
@@ -203,6 +224,8 @@ def main():
     print(f"   🎯 Average Quality: {avg_quality:.3f}")
     print(f"   ⏱️  Time Elapsed: {elapsed/60:.1f} minutes")
     print(f"   ⚡ Speed: {total_files/elapsed:.2f} docs/sec")
+    print(f"   🖥️  CPU Processed: {stats['cpu_processed']}")
+    print(f"   🎮 GPU Processed: {stats['gpu_processed']}")
     print("="*80)
     print()
     print("✅ Acceptance Criteria Check:")

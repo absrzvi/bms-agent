@@ -27,7 +27,6 @@ Single-pod deployment on RunPod.io with direct binary installations (no Docker) 
 
 - **Embedding Model**:
   - Primary: sentence-transformers/all-mpnet-base-v2 (768 dimensions)
-  - Alternative: Ollama snowflake-arctic-embed2 (1024-d) for future upgrade
   - LLM: qwen2.5:14b or llama3.1:8b via Ollama if needed
 
 - **Python 3.11+**: Direct installation with venv

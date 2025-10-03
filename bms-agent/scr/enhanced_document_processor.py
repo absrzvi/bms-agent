@@ -1973,9 +1973,16 @@ class EnhancedDocumentProcessor:
         self.embedding_model = None
         if SENTENCE_TRANSFORMERS_AVAILABLE:
             try:
+                import torch
                 from sentence_transformers import SentenceTransformer
-                self.embedding_model = SentenceTransformer('sentence-transformers/all-mpnet-base-v2')
-                logger.info("✅ sentence-transformers model loaded (768-d embeddings)")
+                
+                # Force CPU mode if use_gpu is False or if CUDA is not available
+                device = 'cpu'
+                if self.config.use_gpu and torch.cuda.is_available():
+                    device = 'cuda'
+                
+                self.embedding_model = SentenceTransformer('sentence-transformers/all-mpnet-base-v2', device=device)
+                logger.info(f"✅ sentence-transformers model loaded (768-d embeddings) on {device}")
             except Exception as e:
                 logger.warning(f"⚠️  sentence-transformers not available: {e}")
         
@@ -1995,7 +2002,9 @@ class EnhancedDocumentProcessor:
                 return None
             
             # Generate embedding using sentence-transformers
-            embedding = self.embedding_model.encode(text, convert_to_numpy=True)
+            # Note: convert_to_numpy=True will move to CPU, but that's needed for Qdrant
+            # The actual computation happens on the model's device (GPU if available)
+            embedding = self.embedding_model.encode(text, convert_to_numpy=True, show_progress_bar=False)
             return embedding.tolist()
                 
         except Exception as e:
