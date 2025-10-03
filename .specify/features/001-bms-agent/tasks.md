@@ -1,8 +1,8 @@
 # BMS Agent MVP Task List
 
 **Status**: ✅ MVP REQUIREMENTS COMPLETE! 🎉  
-**Progress**: 32/41 tasks (78%) | Core: 15/15 (100%) | Security: 2/2 (100%) ✅ | Integrations: 2/2 (100%) | Operations: 4/4 (100%) | Data: 4/4 (100%) | **MVP Additions: 4/4 (100%)** ✅ | Post-MVP: 0/3 (0%)  
-**Last Updated**: 2025-10-03 22:51 UTC
+**Progress**: 34/41 tasks (83%) | Core: 15/15 (100%) | Security: 2/2 (100%) ✅ | Integrations: 2/2 (100%) | Operations: 6/6 (100%) ✅ | Data: 4/4 (100%) | **MVP Additions: 4/4 (100%)** ✅ | Post-MVP: 0/3 (0%)  
+**Last Updated**: 2025-10-03 22:54 UTC
 
 ## Current Status
 - ✅ **Core MVP**: 100% Complete (T000-T014)
@@ -154,16 +154,18 @@
   - Status: ✅ COMPLETED - Tool implemented, tested, and documented. OpenWebUI installation in progress.
 
 ## Observability & Operations
-- **T019  Manage Services Script**
+- **T019  Manage Services Script** ✅
   - Summary: Complete `scripts/manage_services.sh` with start/stop/status/restart flows for Qdrant and API, logging to `/workspace/logs/`.
   - Dependencies: T003, T010
   - Files/Paths: `scripts/manage_services.sh`
   - Parallel: No
-- **T020  Health Check Script**
+  - Status: ✅ **COMPLETED** - Comprehensive service management with start/stop/restart/status
+- **T020  Health Check Script** ✅
   - Summary: Extend `scripts/health_check.sh` to probe API endpoints, Ollama, n8n, OpenWebUI, metrics, and log results with timestamps.
   - Dependencies: T013, T019
   - Files/Paths: `scripts/health_check.sh`
   - Parallel: No
+  - Status: ✅ **COMPLETED** - Enhanced health checks with logging, disk/memory monitoring
 - **T021  Manual Alert Runbooks & Grafana Dashboards**
   - Summary: Configure Prometheus scrape targets, create Grafana panels per constitution §8, and document comprehensive manual alert runbooks in `DEPLOYMENT_CHECKLIST.md` covering: (1) API latency >100ms p95 procedures, (2) Document ingestion failure escalation, (3) Qdrant/Ollama/n8n dependency recovery, (4) Contact matrix with timelines, (5) Manual monitoring and log analysis procedures.
   - Dependencies: T014, T020
