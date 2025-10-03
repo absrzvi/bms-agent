@@ -31,6 +31,9 @@ except ImportError:
     SLACK_AVAILABLE = False
     logger.warning("Slack integration not available")
 
+# Import security middleware
+from security import RateLimitMiddleware, SecurityHeadersMiddleware, get_rate_limit_config
+
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -43,6 +46,16 @@ app = FastAPI(
     docs_url="/docs",
     redoc_url="/redoc"
 )
+
+# Security middleware (MVP requirement)
+rate_limit_config = get_rate_limit_config()
+app.add_middleware(
+    RateLimitMiddleware,
+    requests_per_minute=rate_limit_config["requests_per_minute"],
+    burst_size=rate_limit_config["burst_size"]
+)
+app.add_middleware(SecurityHeadersMiddleware)
+logger.info(f"✅ Security middleware enabled: {rate_limit_config['requests_per_minute']} req/min")
 
 # CORS middleware for development
 app.add_middleware(

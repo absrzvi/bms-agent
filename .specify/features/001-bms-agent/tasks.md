@@ -1,12 +1,12 @@
 # BMS Agent MVP Task List
 
-**Status**: ✅ MVP CORE COMPLETE + Security Tasks Pending (T015, T016) + 4 MVP Enhancement Tasks Prioritized  
-**Progress**: 26/41 tasks (63%) | Core: 15/15 (100%) | Security: 0/2 (0%) | Integrations: 2/2 (100%) | Operations: 4/4 (100%) | Data: 4/4 (100%) | **MVP Additions: 0/4 (0%)** | Post-MVP: 0/3 (0%)  
-**Last Updated**: 2025-10-03 19:16 UTC
+**Status**: ✅ MVP SECURITY COMPLETE + 4 MVP Enhancement Tasks Remaining  
+**Progress**: 28/41 tasks (68%) | Core: 15/15 (100%) | Security: 2/2 (100%) ✅ | Integrations: 2/2 (100%) | Operations: 4/4 (100%) | Data: 4/4 (100%) | **MVP Additions: 0/4 (0%)** | Post-MVP: 0/3 (0%)  
+**Last Updated**: 2025-10-03 22:27 UTC
 
 ## Current Status
-- ✅ **Core MVP**: 100% Complete (T000-T014 excluding security)
-- ⚠️ **Security (MVP REQUIREMENT)**: 0% Complete (T015-T016) - **BLOCKING FOR MVP**
+- ✅ **Core MVP**: 100% Complete (T000-T014)
+- ✅ **Security (MVP REQUIREMENT)**: 100% Complete (T015-T016) ✅
 - ✅ **Integrations**: 100% Complete (T017-T018)
 - ✅ **Operations**: 100% Complete (T019-T020 + T028-T031)
 - ✅ **Data Pipeline**: 100% Complete (T032-T035)
@@ -19,7 +19,7 @@
 - ✅ **Workspace Persistence**: 100% - All apps and data in /workspace
 - ✅ **Auto-Start**: Multiple methods configured (.bashrc, RunPod, systemd, cron)
 - ✅ **Service Management**: Complete startup, health check, and monitoring scripts
-- 🔴 **Current Priority**: T015-T016 (Security - MVP REQUIREMENT per constitution §5)
+- 🟢 **Current Priority**: T041-T042 (Operational requirements - MVP REQUIREMENT)
 - 🆕 **New Requirements**: 5 clarified requirements added (T036-T040) + 2 operational requirements (T041-T042)
   - **MVP Priority**: T015-T016 (Security), T038 (Quality flagging), T040 (min_score filtering), T041 (Automated backups), T042 (RunPod init validation)
   - **Post-MVP**: T036 (Re-upload), T037 (Async queue), T039 (Deletion)
@@ -111,13 +111,13 @@
   - Files/Paths: `api/main.py`
   - Parallel: No
 
-## Security & Compliance (MVP REQUIREMENT) 🔴
-- **T015  Basic Security Module Implementation** 🔥 **MVP BLOCKING**
+## Security & Compliance (MVP REQUIREMENT) ✅
+- **T015  Basic Security Module Implementation** ✅
   - Summary: **MVP REQUIREMENT**: Build basic `api/security.py` with token bucket rate limiting algorithm (60 req/min per IP, in-memory implementation) and basic security headers middleware. No JWT or API key authentication required for MVP (deferred to production per spec.md R3.1).
   - Dependencies: T011
   - Files/Paths: `api/security.py`
   - Parallel: No
-  - Status: ⚠️ **PENDING** - Required for MVP per constitution §5 and spec.md R3.2
+  - Status: ✅ **COMPLETED** - Token bucket rate limiting + security headers implemented
   - Implementation Details: Use token bucket algorithm for rate limiting with configurable bucket size and refill rate; store state in-memory (acceptable for MVP); return HTTP 429 with Retry-After header when limit exceeded; add security headers (X-Frame-Options, X-Content-Type-Options, X-XSS-Protection)
   - Acceptance Criteria:
     - Rate limiting middleware returns HTTP 429 when limit exceeded
@@ -125,12 +125,12 @@
     - Configurable via environment variables (RATE_LIMIT_PER_MIN)
     - Security headers applied to all responses
     - In-memory token bucket implementation (no external dependencies)
-- **T016  Security Wiring & Tests** 🔥 **MVP BLOCKING**
+- **T016  Security Wiring & Tests** ✅
   - Summary: **MVP REQUIREMENT**: Integrate basic security middleware into FastAPI app, add automated tests for 400/413/429 error handling, and document production security roadmap in `docs/security-notes.md`.
   - Dependencies: T015, T005–T007
   - Files/Paths: `api/main.py`, `docs/security-notes.md`, `tests/security/test_rate_limiting.py`, `tests/security/test_security_headers.py`
   - Parallel: No
-  - Status: ⚠️ **PENDING** - Required for MVP per constitution §5
+  - Status: ✅ **COMPLETED** - Security middleware integrated, 12/12 tests passing, roadmap documented
   - Acceptance Criteria:
     - Security middleware integrated into FastAPI app startup
     - Automated tests verify rate limiting (429 responses)
