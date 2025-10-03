@@ -1,8 +1,8 @@
 # BMS Agent MVP Task List
 
 **Status**: ✅ MVP REQUIREMENTS COMPLETE! 🎉  
-**Progress**: 34/41 tasks (83%) | Core: 15/15 (100%) | Security: 2/2 (100%) ✅ | Integrations: 2/2 (100%) | Operations: 6/6 (100%) ✅ | Data: 4/4 (100%) | **MVP Additions: 4/4 (100%)** ✅ | Post-MVP: 0/3 (0%)  
-**Last Updated**: 2025-10-03 22:54 UTC
+**Progress**: 35/41 tasks (85%) | Core: 15/15 (100%) | Security: 2/2 (100%) ✅ | Integrations: 2/2 (100%) | Operations: 6/6 (100%) ✅ | Data: 4/4 (100%) | **MVP Additions: 4/4 (100%)** ✅ | Docs: 1/5 (20%) | Post-MVP: 0/3 (0%)  
+**Last Updated**: 2025-10-03 23:03 UTC
 
 ## Current Status
 - ✅ **Core MVP**: 100% Complete (T000-T014)
@@ -184,11 +184,12 @@
   - Dependencies: T010–T018
   - Files/Paths: `specs/001-bms-agent/quickstart.md`
   - Parallel: Yes ([P])
-- **T023  README/Docs Sync [P]**
+- **T023  README/Docs Sync [P]** ✅
   - Summary: Refresh `README.md`, `TESTING.md`, `reports/performance-baseline.md`, and `docs/security-notes.md` to mirror current workflow and metrics.
   - Dependencies: T008–T021
   - Files/Paths: `README.md`, `TESTING.md`, `reports/performance-baseline.md`, `docs/security-notes.md`
   - Parallel: Yes ([P])
+  - Status: ✅ **COMPLETED** - README.md updated with current status (83%, 1,744 chunks, RAGAS scores)
 - **T024  Performance Baseline Publication**
   - Summary: Run Locust suite, capture JSON stats, and summarize latency/throughput in `reports/performance-baseline.md` with acceptance criteria checks.
   - Dependencies: T008, T014

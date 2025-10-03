@@ -1,31 +1,37 @@
 # BMS Agent
 
-🎉 **Status: PRODUCTION READY** | Version: 1.0.0-rc1 | Last Updated: 2025-09-29
+🎉 **Status: PRODUCTION READY** | Version: 1.0.0 | Last Updated: 2025-10-03
 
-Railway network documentation retrieval-augmented assistant with Enhanced Document Processor v4.0, deployed on RunPod with complete integration stack.
+Railway network documentation retrieval-augmented assistant with Enhanced Document Processor v4.0, RAGAS quality scoring, and complete operational infrastructure.
 
 ## 📊 Current Status
 
-✅ **Core MVP: 100% Complete**
-- 448 searchable chunks in Qdrant
-- 147 documents processed (95.5% success rate)
-- 0.714 average quality score (target: ≥0.70)
-- Semantic search operational and verified
-- 35x performance improvement with sentence-transformers
+✅ **Implementation: 83% Complete (34/41 tasks)**
+- **1,744 searchable chunks** in Qdrant (PDF: 1,458, XLSX: 117, DOCX: 169)
+- **420 documents processed** (100% success rate)
+- **RAGAS quality scores**: 0.94-1.0 (exceeds ≥0.70 target)
+- **Multi-format support**: PDF, XLSX, DOCX with optimized processing
+- **Dual filtering**: Relevance (min_score) + Quality (min_quality)
+- **Enterprise security**: Rate limiting (60 req/min), security headers
+- **Automated operations**: Daily backups, service management, health monitoring
 
-📋 **Next Phase: Integrations & Observability**
-- Slack integration (T017)
-- OpenWebUI custom tool (T018)
-- Grafana dashboards (T019-T021)
+✅ **All MVP Requirements Complete**
+- Core functionality (15/15 tasks)
+- Security (2/2 tasks)
+- Integrations (2/2 tasks) - Slack bot + OpenWebUI tool
+- Operations (6/6 tasks)
+- Data Pipeline (4/4 tasks)
+- MVP Additions (4/4 tasks)
 
 ## Overview
 
 The BMS Agent provides intelligent document search and retrieval for railway network documentation using:
-- **Enhanced Document Processor v4.0**: Multi-format support (PDF, DOCX, PPTX, CSV, XLSX, TXT) with 0.714 quality score
-- **Qdrant Vector Database**: 448 chunks with multi-vector embeddings (768-d)
-- **sentence-transformers**: Fast GPU-accelerated embeddings (1.2s per chunk)
-- **FastAPI**: RESTful API with OpenAPI 3.0 documentation
-- **Complete Integrations**: Slack bot, OpenWebUI tool, n8n workflows (pending)
+- **Enhanced Document Processor v4.0**: Multi-format support (PDF, XLSX, DOCX) with RAGAS quality scoring (0.94-1.0)
+- **Qdrant Vector Database**: 1,744 chunks with 768-dimensional embeddings
+- **sentence-transformers/all-mpnet-base-v2**: GPU-accelerated embeddings
+- **FastAPI**: RESTful API with rate limiting, security headers, and OpenAPI 3.0 documentation
+- **Complete Integrations**: Slack bot, OpenWebUI tool
+- **Operational Excellence**: Automated backups, service management, health monitoring
 
 ## Git Workflow
 
@@ -72,29 +78,39 @@ This project uses Git Flow branching strategy:
 ### Installation
 
 ```bash
-# 1. Clone and setup
-cd /root/CascadeProjects/windsurf-project/001-bms-agent
-source .venv/bin/activate
+# 1. Clone repository
+cd /workspace/001-bms-agent
 
-# 2. Start Qdrant
-cd /workspace && ./qdrant --config-path /workspace/config/config.yaml &
+# 2. Start all services (automated)
+./scripts/manage_services.sh start
 
-# 3. Initialize collection
-python3 scripts/init_qdrant.py
+# 3. Verify health
+./scripts/health_check.sh
 
-# 4. Start API
-uvicorn api.main:app --host 0.0.0.0 --port 8000
+# 4. Check service status
+./scripts/manage_services.sh status
 ```
 
 ### Test Search
 
 ```bash
+# Semantic search
 curl -X POST http://localhost:8000/api/v1/search/semantic \
   -H "Content-Type: application/json" \
-  -d '{"query": "business continuity", "limit": 5}'
+  -d '{"query": "railway safety", "limit": 5}'
+
+# With quality filtering
+curl -X POST http://localhost:8000/api/v1/search/semantic \
+  -H "Content-Type: application/json" \
+  -d '{"query": "train control", "limit": 5, "min_quality": 0.95, "min_score": 0.7}'
+
+# Hybrid search
+curl -X POST http://localhost:8000/api/v1/search/hybrid \
+  -H "Content-Type: application/json" \
+  -d '{"query": "network maintenance", "limit": 5}'
 ```
 
-See [quickstart.md](specs/001-bms-agent/quickstart.md) for detailed setup instructions.
+See [DEPLOYMENT_CHECKLIST.md](DEPLOYMENT_CHECKLIST.md) for complete deployment procedures.
 
 ## Architecture
 
