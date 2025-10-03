@@ -12,6 +12,7 @@ import hashlib
 import logging
 import argparse
 import unicodedata
+import uuid
 from pathlib import Path
 from typing import List, Dict, Any, Optional, Union, Tuple, Set, Generator
 from datetime import datetime
@@ -335,6 +336,14 @@ class AdvancedTextPreprocessor:
         text = re.sub(r'^\s*Page\s+\d+\s*$', '', text, flags=re.MULTILINE)
         text = re.sub(r'^\s*\d+\s*$', '', text, flags=re.MULTILINE)
         
+        # Remove document references that appear inline (like "Doc. Ref. BMS-ISEC-FOR-001")
+        text = re.sub(r'\s*Doc\.?\s*Ref\.?\s*[A-Z]{2,}[-\s][A-Z0-9\-]+\s*', ' ', text, flags=re.IGNORECASE)
+        text = re.sub(r'\s*Revision\s+(?:January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{4}\s*', ' ', text, flags=re.IGNORECASE)
+        
+        # Remove copyright and company name footers
+        text = re.sub(r'\s*(?:Nomad Digital Limited|All rights reserved)\.?\s*', ' ', text, flags=re.IGNORECASE)
+        text = re.sub(r'\s*Information contained in this document is indicative only\.?\s*', ' ', text, flags=re.IGNORECASE)
+        
         # Remove headers/footers (repeated text patterns)
         lines = text.split('\n')
         if len(lines) > 10:
@@ -352,6 +361,16 @@ class AdvancedTextPreprocessor:
         
         # Remove table of contents patterns
         text = re.sub(r'\.{3,}\s*\d+', '', text)  # Dotted lines with page numbers
+        
+        # Normalize line breaks - replace single newlines with spaces
+        # Keep double newlines for paragraph breaks
+        text = re.sub(r'(?<!\n)\n(?!\n)', ' ', text)  # Single \n -> space
+        text = re.sub(r'\n{2,}', '\n\n', text)  # Multiple \n -> double \n
+        
+        # Clean up excessive whitespace
+        text = re.sub(r' {2,}', ' ', text)  # Multiple spaces -> single space
+        text = re.sub(r' \n', '\n', text)  # Space before newline
+        text = re.sub(r'\n ', '\n', text)  # Space after newline
         
         return text
     
@@ -449,10 +468,12 @@ class AdvancedTextPreprocessor:
             r'^\s*proprietary\s*$',
             r'^\s*page\s+\d+\s+of\s+\d+\s*$',
             r'^\s*\d+\s*/\s*\d+\s*$',
+            r'^\s*doc\.?\s*ref\.?\s*[A-Z0-9\-]+\s*$',  # Document references like "Doc. Ref. BMS-ISEC-FOR-001"
+            r'^\s*ref\.?\s*[A-Z0-9\-]+\s*$',  # Short references like "Ref. ABC-123"
         ]
         
         for pattern in obvious_patterns:
-            if re.match(pattern, line_lower):
+            if re.match(pattern, line_lower, re.IGNORECASE):
                 return True
         
         return False
@@ -687,7 +708,14 @@ class ContextualRetrievalEngine:
         # Add context to chunk
         enhanced_chunk = f"<context>\n{context}\n</context>\n\n{chunk}"
         
-        return enhanced_chunk
+        # Return both enhanced content and metadata
+        return {
+            'content': enhanced_chunk,
+            'contextual_description': context,
+            'surrounding_context': f"Previous: {prev_chunk[:100]}... | Next: {next_chunk[:100]}..." if (prev_chunk or next_chunk) else "",
+            'context_type': 'document_aware',
+            'has_context': True
+        }
     
     def _summarize_chunk(self, chunk: str) -> str:
         """Generate a brief summary of chunk content"""
@@ -1018,44 +1046,100 @@ class HybridSearchPreparator:
         
         content = chunk.get('content', '')
         
-        # Extract keywords for BM25
-        keywords = self._extract_keywords(content)
+        # Extract department from document name (e.g., BMS-HUMR-POL-010 -> HUMR)
+        document_name = chunk.get('document_name', '')
+        department = self._extract_department_from_filename(document_name)
+        
+        # Extract keywords for BM25 (limit to 9 to make room for department)
+        keywords = self._extract_keywords(content, limit=9 if department else 10)
+        
+        if department:
+            # Add department as a keyword for searchability
+            keywords.insert(0, department)  # Add at the beginning for prominence
         
         # Generate sparse vector representation (simplified BM25 prep)
         term_frequencies = self._calculate_term_frequencies(content)
         
-        # Prepare enhanced chunk
-        hybrid_chunk = {
+        # Prepare enhanced chunk - preserve all existing fields
+        hybrid_chunk = chunk.copy()  # Preserve all fields including hierarchical metadata
+        hybrid_chunk.update({
             'content': content,
             'vector_content': content,  # For dense embeddings
             'keyword_content': ' '.join(keywords),  # For BM25
             'term_frequencies': term_frequencies,
-            'metadata': {
-                **chunk.get('metadata', {}),
-                'search_type': 'hybrid',
-                'vector_weight': self.config.vector_weight,
-                'keyword_weight': self.config.keyword_weight,
-                'keyword_count': len(keywords)
-            }
-        }
+            'keywords': keywords,  # Store extracted keywords (includes department)
+            'department': department,  # Store department separately for filtering
+        })
+        
+        # Extract technical terms and entities from content if not already present
+        if 'technical_terms' not in hybrid_chunk:
+            hybrid_chunk['technical_terms'] = self._extract_technical_terms(content)
+        if 'entities' not in hybrid_chunk:
+            hybrid_chunk['entities'] = self._extract_entities_simple(content)
+        
+        # Update metadata without losing existing metadata
+        if 'metadata' not in hybrid_chunk:
+            hybrid_chunk['metadata'] = {}
+        hybrid_chunk['metadata'].update({
+            'search_type': 'hybrid',
+            'vector_weight': self.config.vector_weight,
+            'keyword_weight': self.config.keyword_weight,
+            'keyword_count': len(keywords)
+        })
         
         return hybrid_chunk
     
-    def _extract_keywords(self, text: str) -> List[str]:
+    def _extract_department_from_filename(self, filename: str) -> str:
+        """Extract department code from BMS filename (e.g., BMS-HUMR-POL-010 -> HUMR)"""
+        if not filename:
+            return ""
+        
+        # Remove file extension
+        name_without_ext = filename.rsplit('.', 1)[0] if '.' in filename else filename
+        
+        # Split by hyphen and check if it follows BMS-DEPT-* pattern
+        parts = name_without_ext.split('-')
+        
+        # BMS files should have format: BMS-DEPT-TYPE-NUMBER
+        if len(parts) >= 2 and parts[0].upper() == 'BMS':
+            department = parts[1].upper()
+            return department
+        
+        return ""
+    
+    def _extract_keywords(self, text: str, limit: int = 10) -> List[str]:
         """Extract keywords from text"""
         keywords = []
         
+        # Metadata artifacts and common words to exclude from keywords
+        excluded_terms = {
+            'context', 'document', 'section', 'content', 'modified',
+            'summary', 'follows', 'discussion', 'precedes', 'page',
+            # Common filler words
+            'welcome', 'during', 'your', 'that', 'this', 'these', 'those',
+            'have', 'will', 'been', 'were', 'would', 'could', 'should',
+            'make', 'made', 'also', 'well', 'may', 'can', 'must',
+            'such', 'very', 'much', 'many', 'some', 'any', 'all',
+            'each', 'every', 'both', 'few', 'more', 'most', 'other',
+            'into', 'through', 'about', 'between', 'under', 'over'
+        }
+        
+        # Remove context tags before tokenization
+        text_clean = re.sub(r'<context>.*?</context>', '', text, flags=re.DOTALL)
+        
         if NLTK_AVAILABLE:
             # Tokenize and filter
-            tokens = word_tokenize(text.lower())
+            tokens = word_tokenize(text_clean.lower())
             
-            # Remove stopwords and short tokens
+            # Remove stopwords, short tokens, and metadata artifacts
+            # Prioritize longer, more specific terms (min 4 chars)
             keywords = [
                 self.lemmatizer.lemmatize(token)
                 for token in tokens
                 if token.isalnum() and 
-                   len(token) > 2 and 
-                   token not in self.stop_words
+                   len(token) > 3 and  # Increased from 2 to 3 for more specific terms
+                   token not in self.stop_words and
+                   token not in excluded_terms
             ]
             
             # Extract named entities if available
@@ -1071,17 +1155,19 @@ class HybridSearchPreparator:
         else:
             # Simple keyword extraction
             words = text.lower().split()
-            keywords = [w for w in words if len(w) > 3]
+            keywords = [w for w in words if len(w) > 3 and w not in excluded_terms]
         
         # Remove duplicates while preserving order
         seen = set()
         unique_keywords = []
         for kw in keywords:
-            if kw not in seen:
+            # Skip if already seen or contains only special characters
+            if kw not in seen and kw.replace('-', '').replace('_', '').isalnum():
                 seen.add(kw)
                 unique_keywords.append(kw)
         
-        return unique_keywords
+        # Return limited number of most relevant keywords
+        return unique_keywords[:limit]
     
     def _calculate_term_frequencies(self, text: str) -> Dict[str, float]:
         """Calculate term frequencies for BM25"""
@@ -1106,6 +1192,66 @@ class HybridSearchPreparator:
         }
         
         return term_freq
+    
+    def _extract_technical_terms(self, text: str) -> List[str]:
+        """Extract technical and railway-specific terms"""
+        technical_terms = []
+        
+        # Railway-specific patterns
+        railway_patterns = [
+            r'EN\s?\d{5}',  # Standards like EN50155
+            r'R\d{4}[A-Z]?-\d[A-Z]+',  # Product codes
+            r'\d+\s?Gbps',  # Network speeds
+            r'VLAN\s?\d+',  # VLAN IDs
+            r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}',  # IP addresses
+            r'[A-Z]{2,}[-/][A-Z0-9]{2,}',  # Technical codes
+        ]
+        
+        for pattern in railway_patterns:
+            matches = re.findall(pattern, text, re.IGNORECASE)
+            technical_terms.extend(matches)
+        
+        # Extract capitalized technical terms (likely acronyms or proper nouns)
+        words = text.split()
+        for word in words:
+            # Acronyms (2+ uppercase letters)
+            if len(word) >= 2 and word.isupper() and word.isalpha():
+                technical_terms.append(word)
+        
+        # Remove duplicates
+        return list(set(technical_terms))
+    
+    def _extract_entities_simple(self, text: str) -> List[str]:
+        """Simple entity extraction without heavy NLP"""
+        entities = []
+        
+        # Extract proper nouns (capitalized words not at sentence start)
+        sentences = text.split('. ')
+        for sentence in sentences:
+            words = sentence.split()
+            for i, word in enumerate(words):
+                # Skip first word of sentence
+                if i == 0:
+                    continue
+                # Check if capitalized and not common word
+                if word and word[0].isupper() and len(word) > 2:
+                    # Remove punctuation
+                    clean_word = re.sub(r'[^\w\s]', '', word)
+                    if clean_word and clean_word not in ['The', 'This', 'That', 'These', 'Those']:
+                        entities.append(clean_word)
+        
+        # Extract organizations (words with Ltd, Inc, Corp, etc.)
+        org_patterns = [
+            r'[A-Z][a-z]+(?:\s+[A-Z][a-z]+)*\s+(?:Ltd|Inc|Corp|GmbH|Limited|Corporation)',
+            r'[A-Z]{2,}(?:\s+[A-Z]{2,})*',  # Acronym organizations
+        ]
+        
+        for pattern in org_patterns:
+            matches = re.findall(pattern, text)
+            entities.extend(matches)
+        
+        # Remove duplicates
+        return list(set(entities))
 
 # =============================
 # Advanced Entity Extraction
@@ -1973,6 +2119,7 @@ class EnhancedDocumentProcessor:
                     "standard_compliance": chunk.get("standard_compliance", ""),
                     "network_component": chunk.get("network_component", ""),
                     "configuration_type": chunk.get("configuration_type", ""),
+                    "department": chunk.get("department", ""),  # BMS department code
                     
                     # Search optimization metadata
                     "search_type": "hybrid",
@@ -2080,15 +2227,31 @@ class EnhancedDocumentProcessor:
             if self.config.processing_profile in [ProcessingProfile.TECHNICAL, ProcessingProfile.RAILWAY]:
                 result['entities'] = self.entity_extractor.extract_entities_and_relations(content)
             
+            # Extract standard compliance from content
+            standard_compliance = self._extract_standards(content)
+            
             # Apply chunking strategy
             if self.config.chunking_strategy == ChunkingStrategy.HIERARCHICAL:
                 hierarchy = self.hierarchical_engine.create_hierarchical_chunks(content)
                 chunks = self._flatten_hierarchy(hierarchy)
+                # Mark as not late chunked
+                for chunk in chunks:
+                    chunk['late_chunking_applied'] = False
             elif self.config.enable_late_chunking:
                 chunks = self.late_chunking_engine.apply_late_chunking(content)
+                # Mark as late chunked
+                for chunk in chunks:
+                    chunk['late_chunking_applied'] = True
             else:
                 # Fallback to simple chunking
                 chunks = self._simple_chunking(content)
+                for chunk in chunks:
+                    chunk['late_chunking_applied'] = False
+            
+            # Add standard compliance and document name to all chunks
+            for chunk in chunks:
+                chunk['standard_compliance'] = standard_compliance
+                chunk['document_name'] = file_path.name  # Add for department extraction
             
             # Merge short chunks to improve quality
             chunks = self._merge_short_chunks(chunks)
@@ -2407,6 +2570,27 @@ class EnhancedDocumentProcessor:
             # Try to read as text
             return file_path.read_text(encoding='utf-8')
     
+    def _extract_standards(self, content: str) -> str:
+        """Extract railway and technical standards from content"""
+        standards = []
+        
+        # Railway and technical standard patterns
+        standard_patterns = [
+            r'EN\s?\d{5}',  # EN50155, EN45545, etc.
+            r'IEC\s?\d{5}',  # IEC standards
+            r'ISO\s?\d{4,5}',  # ISO standards
+            r'IEEE\s?\d{3,4}',  # IEEE standards
+            r'CENELEC\s?EN\s?\d{5}',  # CENELEC standards
+        ]
+        
+        for pattern in standard_patterns:
+            matches = re.findall(pattern, content, re.IGNORECASE)
+            standards.extend(matches)
+        
+        # Remove duplicates and return as comma-separated string
+        unique_standards = list(set(standards))
+        return ', '.join(unique_standards) if unique_standards else ''
+    
     def _simple_chunking(self, content: str) -> List[Dict[str, Any]]:
         """Sentence-aware chunking with proper boundaries"""
         chunks = []
@@ -2502,15 +2686,44 @@ class EnhancedDocumentProcessor:
         
         for item in hierarchy.get('structure', []):
             # Add parent as a chunk
-            parent = item['parent']
-            parent['hierarchy'] = 'parent'
-            chunks.append(parent)
+            parent = item['parent'].copy()
+            parent_id = str(uuid.uuid4())
+            
+            # Create parent chunk with proper metadata
+            parent_chunk = {
+                'content': parent.get('content', ''),
+                'index': parent.get('index', 0),
+                'chunk_id': parent_id,
+                'chunk_type': 'parent',
+                'hierarchy_level': 'parent',
+                'is_parent': True,
+                'is_child': False,
+                'parent_chunk_id': None,
+            }
+            # Merge any existing metadata
+            if 'metadata' in parent:
+                parent_chunk.update(parent['metadata'])
+            
+            chunks.append(parent_chunk)
             
             # Add children as chunks
             for child in item.get('children', []):
-                child['hierarchy'] = 'child'
-                child['parent_index'] = parent['index']
-                chunks.append(child)
+                child_chunk = {
+                    'content': child.get('content', ''),
+                    'index': child.get('index', 0),
+                    'chunk_id': str(uuid.uuid4()),
+                    'chunk_type': 'child',
+                    'hierarchy_level': 'child',
+                    'is_parent': False,
+                    'is_child': True,
+                    'parent_chunk_id': parent_id,
+                    'parent_index': parent.get('index', 0),
+                }
+                # Merge any existing metadata
+                if 'metadata' in child:
+                    child_chunk.update(child['metadata'])
+                
+                chunks.append(child_chunk)
         
         return chunks
     
@@ -2523,15 +2736,19 @@ class EnhancedDocumentProcessor:
         total_chunks = len(chunks)
         
         for i, chunk in enumerate(chunks):
-            enhanced_content = self.contextual_engine.generate_chunk_context(
+            context_result = self.contextual_engine.generate_chunk_context(
                 document, 
                 chunk.get('content', ''),
                 i,
                 total_chunks
             )
             
-            chunk['content'] = enhanced_content
-            chunk['has_context'] = True
+            # Update chunk with contextual metadata
+            chunk['content'] = context_result['content']
+            chunk['contextual_description'] = context_result['contextual_description']
+            chunk['surrounding_context'] = context_result['surrounding_context']
+            chunk['context_type'] = context_result['context_type']
+            chunk['has_context'] = context_result['has_context']
             enhanced_chunks.append(chunk)
         
         return enhanced_chunks
@@ -2556,16 +2773,19 @@ class EnhancedDocumentProcessor:
                 # Merge if combined size is reasonable
                 combined_content = current_content + ' ' + next_content
                 if len(combined_content) <= self.config.chunk_size * 2:
-                    # Create merged chunk
-                    merged_chunk = {
-                        'content': combined_content,
-                        'metadata': {
-                            **current_chunk.get('metadata', {}),
+                    # Create merged chunk - preserve all fields from current chunk
+                    merged_chunk = current_chunk.copy()
+                    merged_chunk['content'] = combined_content
+                    merged_chunk['merged'] = True
+                    merged_chunk['original_chunks'] = 2
+                    # Update metadata if it exists
+                    if 'metadata' in merged_chunk:
+                        merged_chunk['metadata'] = {
+                            **merged_chunk['metadata'],
                             'merged': True,
                             'original_chunks': 2,
                             'size': len(combined_content)
                         }
-                    }
                     merged_chunks.append(merged_chunk)
                     i += 2  # Skip next chunk as it's been merged
                     continue

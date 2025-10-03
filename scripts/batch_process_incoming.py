@@ -3,14 +3,18 @@
 Batch Process Incoming Documents - T034 Implementation
 Process all downloaded SharePoint documents from /workspace/bms_data/incoming/
 and ingest them into Qdrant with 768-dim embeddings.
+Supports parallel processing with multiple workers.
 """
 
 import sys
 import json
 import shutil
+import argparse
 from pathlib import Path
 from datetime import datetime
 from typing import Dict, List, Tuple
+from concurrent.futures import ProcessPoolExecutor, as_completed
+from multiprocessing import Manager
 import logging
 
 # Add project root to path
@@ -94,11 +98,11 @@ class BatchProcessor:
         return 'other'
     
     def process_file(self, file_path: Path) -> Tuple[bool, Dict]:
-        """Process a single file and ingest to Qdrant"""
+        """Process a single file - Enhanced Document Processor handles Qdrant ingestion"""
         try:
             logger.info(f"Processing: {file_path.name}")
             
-            # Process document
+            # Process document (processor handles Qdrant storage automatically)
             result = self.processor.process_document(str(file_path))
             
             if not result.get('processing_success', False):
@@ -109,46 +113,18 @@ class BatchProcessor:
             chunks = result.get('chunks', [])
             quality_report = result.get('quality_report', {})
             avg_quality = quality_report.get('average_quality', 0.0)
+            num_chunks = len(chunks)
             
-            if len(chunks) == 0:
+            if num_chunks == 0:
                 logger.warning(f"⚠️  No chunks generated: {file_path.name}")
                 return False, result
             
-            # Ingest to Qdrant
-            points = []
-            for idx, chunk in enumerate(chunks):
-                # Get embedding (768-dim from sentence-transformers/all-mpnet-base-v2)
-                embedding = chunk.get('embedding')
-                if embedding is None or len(embedding) == 0:
-                    logger.warning(f"⚠️  No embedding for chunk {idx}")
-                    continue
-                
-                # Create point with metadata
-                point = PointStruct(
-                    id=f"{result['document_id']}_{idx}",
-                    vector=embedding,
-                    payload={
-                        'document_id': result['document_id'],
-                        'chunk_index': idx,
-                        'content': chunk.get('content', ''),
-                        'quality_score': chunk.get('quality_score', avg_quality),
-                        'document_name': file_path.name,
-                        'document_type': file_path.suffix.lower().lstrip('.'),
-                        'metadata': chunk.get('metadata', {}),
-                        'processed_date': datetime.now().isoformat()
-                    }
-                )
-                points.append(point)
-            
-            if points:
-                self.qdrant_client.upsert(
-                    collection_name=self.collection_name,
-                    points=points
-                )
-                logger.info(f"✅ Ingested {len(points)} chunks (quality: {avg_quality:.3f})")
+            # Enhanced Document Processor v4.0 already stored chunks in Qdrant
+            # Just track statistics here
+            logger.info(f"✅ Processed {num_chunks} chunks (quality: {avg_quality:.3f})")
             
             self.stats['quality_scores'].append(avg_quality)
-            self.stats['total_chunks'] += len(points)
+            self.stats['total_chunks'] += num_chunks
             
             return True, result
             
@@ -210,7 +186,9 @@ class BatchProcessor:
                 self.move_file(file_path, success=False)
                 # Log error details
                 errors = result.get('errors', ['Unknown error'])
-                with open(self.failed_dir / file_path.parent.name / f"{file_path.stem}_error.log", 'w') as f:
+                file_type = self.get_file_type(file_path)
+                error_log_path = self.failed_dir / file_type / f"{file_path.stem}_error.log"
+                with open(error_log_path, 'w') as f:
                     f.write(f"File: {file_path.name}\n")
                     f.write(f"Timestamp: {datetime.now().isoformat()}\n")
                     f.write(f"Errors:\n")

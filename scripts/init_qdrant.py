@@ -150,6 +150,7 @@ class QdrantInitializer:
                 ("standard_compliance", PayloadSchemaType.KEYWORD),
                 ("network_component", PayloadSchemaType.KEYWORD),
                 ("configuration_type", PayloadSchemaType.KEYWORD),
+                ("department", PayloadSchemaType.KEYWORD),  # BMS department code
             ]
             
             # Search optimization indexes
