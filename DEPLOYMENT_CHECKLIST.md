@@ -4,9 +4,15 @@
 
 ### System Requirements
 - [ ] RunPod pod with 8-16 vCPUs, 32-64GB RAM, 200-500GB NVMe SSD
-- [ ] GPU support enabled (for Ollama)
+- [ ] GPU support enabled (for Ollama) - NVIDIA GPU recommended
 - [ ] `/workspace` directory with persistent storage
 - [ ] Internet connectivity for initial setup
+
+### RunPod Configuration
+- [ ] Copy `scripts/runpod_init_v2.sh` to RunPod startup script field
+- [ ] SSH keys stored in `/workspace/config/authorized_keys` (optional)
+- [ ] Ollama models pre-downloaded to `/workspace/data/ollama_models`
+- [ ] Environment variables configured (if needed)
 
 ### Dependencies
 - [ ] Python 3.11+ installed
@@ -23,6 +29,25 @@
   - `EMBEDDING_MODEL` (sentence-transformers/all-mpnet-base-v2)
 
 ## Deployment Steps
+
+### 0. RunPod Pod Initialization (Automatic)
+The `scripts/runpod_init_v2.sh` script runs automatically on pod boot and:
+- Restores SSH keys from `/workspace/config/authorized_keys`
+- Installs system packages (jq, htop, tmux, vim, etc.)
+- Restores/installs Ollama with GPU support
+- Verifies GPU availability
+- Starts all BMS Agent services
+- Performs comprehensive health checks
+- Logs to `/workspace/logs/runpod_init.log` and `/workspace/logs/startup.log`
+
+**Verification:**
+```bash
+# Check initialization log
+tail -100 /workspace/logs/runpod_init.log
+
+# Verify all services started
+tail -50 /workspace/logs/startup.log | grep "services operational"
+```
 
 ### 1. Initialize Qdrant
 ```bash

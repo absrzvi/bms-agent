@@ -1,19 +1,27 @@
 #!/bin/bash
-# RunPod Initialization Script v2.0
+# RunPod Initialization Script v2.1 (Enhanced for T042)
 # Place this in RunPod's startup script field
 # This script runs ONCE per pod boot and sets up the environment
+# Enhanced with: GPU verification, comprehensive error handling, service readiness checks
 
-set -e
+set -euo pipefail
 
 INIT_MARKER="/tmp/runpod_init_complete"
 LOG_FILE="/workspace/logs/runpod_init.log"
+STARTUP_LOG="/workspace/logs/startup.log"
 
 # Create logs directory
 mkdir -p /workspace/logs
 
 # Function to log with timestamp
 log() {
-    echo "$(date '+%Y-%m-%d %H:%M:%S') - $1" | tee -a "$LOG_FILE"
+    echo "$(date '+%Y-%m-%d %H:%M:%S') - $1" | tee -a "$LOG_FILE" | tee -a "$STARTUP_LOG"
+}
+
+# Function to log errors
+error_exit() {
+    log "❌ ERROR: $1"
+    exit 1
 }
 
 # Check if initialization already completed this boot
@@ -95,26 +103,56 @@ else
     log "✅ Ollama backup created in /workspace/backups/ollama_install/"
 fi
 
-# 4. Ollama Configuration
-log "Step 4: Configuring Ollama..."
+# 4. GPU Verification
+log "Step 4: Verifying GPU availability..."
+if command -v nvidia-smi &> /dev/null; then
+    GPU_INFO=$(nvidia-smi --query-gpu=name,driver_version,memory.total --format=csv,noheader 2>/dev/null || echo "GPU query failed")
+    log "✅ GPU detected: $GPU_INFO"
+    
+    # Verify CUDA environment
+    if [ -n "${CUDA_VISIBLE_DEVICES:-}" ]; then
+        log "✅ CUDA_VISIBLE_DEVICES: $CUDA_VISIBLE_DEVICES"
+    else
+        log "⚠️  CUDA_VISIBLE_DEVICES not set, GPU may not be accessible"
+    fi
+else
+    log "⚠️  nvidia-smi not found - GPU support may not be available"
+fi
+
+# 5. Ollama Configuration
+log "Step 5: Configuring Ollama..."
 mkdir -p /workspace/data/ollama_models
 
 # Start Ollama service with OLLAMA_MODELS environment variable
 log "Starting Ollama service..."
 OLLAMA_MODELS=/workspace/data/ollama_models ollama serve > /workspace/logs/ollama.log 2>&1 &
 OLLAMA_PID=$!
-sleep 5
 
-# Verify Ollama is running
-if curl -s http://localhost:11434/api/tags > /dev/null 2>&1; then
+# Wait for Ollama with timeout
+log "Waiting for Ollama to start (30s timeout)..."
+OLLAMA_READY=false
+for i in {1..30}; do
+    if curl -s http://localhost:11434/api/tags > /dev/null 2>&1; then
+        OLLAMA_READY=true
+        break
+    fi
+    sleep 1
+done
+
+if [ "$OLLAMA_READY" = true ]; then
     log "✅ Ollama service started successfully (PID: $OLLAMA_PID)"
     log "   Models directory: /workspace/data/ollama_models"
+    
+    # Verify Ollama version
+    OLLAMA_VERSION=$(ollama --version 2>/dev/null || echo "unknown")
+    log "   Ollama version: $OLLAMA_VERSION"
 else
-    log "❌ Ollama service failed to start"
+    log "❌ Ollama service failed to start within 30 seconds"
+    log "   Check /workspace/logs/ollama.log for errors"
 fi
 
-# 5. Pre-load Ollama Models
-log "Step 5: Checking Ollama models..."
+# 6. Pre-load Ollama Models
+log "Step 6: Checking Ollama models..."
 # Check if any models exist in the persistent storage
 MODEL_COUNT=$(OLLAMA_MODELS=/workspace/data/ollama_models ollama list 2>/dev/null | grep -v "NAME" | wc -l)
 if [ "$MODEL_COUNT" -gt 0 ]; then
@@ -128,8 +166,8 @@ else
     log "   Skipping automatic model download to avoid delays"
 fi
 
-# 6. Start BMS Agent Services
-log "Step 6: Starting BMS Agent services..."
+# 7. Start BMS Agent Services
+log "Step 7: Starting BMS Agent services..."
 if [ -f /workspace/001-bms-agent/scripts/start_all_services.sh ]; then
     log "Executing start_all_services.sh..."
     bash /workspace/001-bms-agent/scripts/start_all_services.sh >> "$LOG_FILE" 2>&1
@@ -142,8 +180,8 @@ else
     log "⚠️  start_all_services.sh not found in /workspace/001-bms-agent/scripts/ or /workspace/scripts/"
 fi
 
-# 7. Health Check
-log "Step 7: Running health checks..."
+# 8. Health Check
+log "Step 8: Running comprehensive health checks..."
 log "Waiting for services to fully start..."
 sleep 10
 
@@ -190,16 +228,52 @@ if [ "$WEBUI_HEALTHY" = false ]; then
     log "   Check /workspace/logs/openwebui.log for errors"
 fi
 
-# 8. Mark initialization complete
+# 9. Final Summary
+log "Step 9: Generating initialization summary..."
+
+# Count successful services
+SERVICES_UP=0
+SERVICES_TOTAL=4
+
+if curl -s http://localhost:6333/healthz > /dev/null 2>&1; then
+    SERVICES_UP=$((SERVICES_UP + 1))
+fi
+if curl -s http://localhost:8000/health > /dev/null 2>&1; then
+    SERVICES_UP=$((SERVICES_UP + 1))
+fi
+if curl -s http://localhost:3000 > /dev/null 2>&1; then
+    SERVICES_UP=$((SERVICES_UP + 1))
+fi
+if curl -s http://localhost:11434/api/tags > /dev/null 2>&1; then
+    SERVICES_UP=$((SERVICES_UP + 1))
+fi
+
+# Mark initialization complete
 touch "$INIT_MARKER"
+
 log "=========================================="
 log "RunPod Initialization Complete!"
 log "=========================================="
+log "Status: $SERVICES_UP/$SERVICES_TOTAL services operational"
+log ""
 log "Services:"
 log "  - Qdrant:    http://localhost:6333"
 log "  - BMS API:   http://localhost:8000"
 log "  - OpenWebUI: http://localhost:3000"
 log "  - Ollama:    http://localhost:11434"
+log ""
+log "Logs:"
+log "  - Init:      $LOG_FILE"
+log "  - Startup:   $STARTUP_LOG"
+log "  - API:       /workspace/logs/api.log"
+log "  - Qdrant:    /workspace/logs/qdrant.log"
+log "  - Ollama:    /workspace/logs/ollama.log"
+log ""
+if [ "$SERVICES_UP" -eq "$SERVICES_TOTAL" ]; then
+    log "✅ All services started successfully!"
+else
+    log "⚠️  Some services failed to start. Check logs for details."
+fi
 log "=========================================="
 
 exit 0
