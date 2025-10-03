@@ -16,10 +16,10 @@ if [ -f /workspace/apps/qdrant/qdrant ]; then
 fi
 
 # Start Ollama
-if [ -f /workspace/apps/ollama/ollama ]; then
+if [ -f /usr/local/bin/ollama ]; then
     echo "Starting Ollama..."
     export OLLAMA_MODELS=/workspace/data/ollama_models
-    /workspace/apps/ollama/ollama serve > /workspace/logs/ollama.log 2>&1 &
+    /usr/local/bin/ollama serve > /workspace/logs/ollama.log 2>&1 &
     sleep 3
 fi
 
