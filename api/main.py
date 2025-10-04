@@ -135,6 +135,15 @@ class CachedSearchRequest(SearchRequest):
     use_cache: bool = Field(True, description="Use semantic cache if available")
     cache_ttl: Optional[int] = Field(None, description="Override default cache TTL (seconds)")
 
+class AskRequest(BaseModel):
+    query: str = Field(..., min_length=1, description="Question to answer")
+    max_chunks: int = Field(5, ge=1, le=10, description="Maximum chunks for context")
+    include_citations: bool = Field(True, description="Include citations in answer")
+    temperature: float = Field(0.7, ge=0.0, le=1.0, description="LLM temperature")
+    max_tokens: int = Field(500, ge=50, le=2000, description="Maximum tokens in answer")
+    filters: Optional[Dict[str, Any]] = Field(None, description="Search filters")
+    min_score: Optional[float] = Field(None, ge=0.0, le=1.0, description="Minimum similarity score")
+
 class HealthResponse(BaseModel):
     status: str
     timestamp: str
@@ -1180,6 +1189,139 @@ async def rerank_search(request: RerankSearchRequest):
         import traceback
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Rerank search failed: {str(e)}")
+
+@app.post("/api/v1/ask")
+async def ask_question(request: AskRequest):
+    """
+    Ask a question and get an LLM-generated answer with citations
+    
+    Performs retrieval + answer generation pipeline:
+    1. Semantic search for relevant chunks
+    2. LLM-based answer generation from context
+    3. Citation tracking and confidence scoring
+    
+    - **query**: Question to answer
+    - **max_chunks**: Maximum chunks for context (1-10, default: 5)
+    - **include_citations**: Include source citations
+    - **temperature**: LLM sampling temperature (0.0-1.0, default: 0.7)
+    - **max_tokens**: Maximum tokens in answer (50-2000, default: 500)
+    - **filters**: Optional search filters
+    - **min_score**: Minimum similarity score threshold
+    """
+    
+    try:
+        from generation.answer_generator import RailwayAnswerGenerator
+        
+        processor = get_processor()
+        
+        if not processor.qdrant_client:
+            raise HTTPException(status_code=503, detail="Search service unavailable")
+        
+        # Step 1: Retrieve relevant chunks
+        query_embedding = processor._generate_embeddings(request.query)
+        if not query_embedding:
+            raise HTTPException(status_code=500, detail="Failed to generate query embedding")
+        
+        # Build search filter
+        search_filter = None
+        if request.filters:
+            from qdrant_client.models import Filter, FieldCondition, MatchValue
+            conditions = []
+            for key, value in request.filters.items():
+                conditions.append(
+                    FieldCondition(key=key, match=MatchValue(value=value))
+                )
+            search_filter = Filter(must=conditions)
+        
+        # Search for chunks
+        search_results = processor.qdrant_client.search(
+            collection_name=processor.collection_name,
+            query_vector=("chunk_embedding", query_embedding),
+            query_filter=search_filter,
+            limit=request.max_chunks * 2,  # Get more for better context
+            with_payload=True,
+            with_vectors=False
+        )
+        
+        # Filter by min_score if provided
+        if request.min_score is not None:
+            search_results = [r for r in search_results if r.score >= request.min_score]
+        
+        # Format chunks for answer generation
+        chunks = []
+        for result in search_results[:request.max_chunks]:
+            chunks.append({
+                "chunk_id": result.payload.get("chunk_id", str(result.id)),
+                "content": result.payload.get("content", ""),
+                "score": result.score,
+                "metadata": result.payload
+            })
+        
+        if not chunks:
+            return {
+                "status": "success",
+                "query": request.query,
+                "answer": "I couldn't find relevant information to answer your question.",
+                "citations": [],
+                "confidence": 0.0,
+                "generation_time_ms": 0.0,
+                "timestamp": datetime.now().isoformat()
+            }
+        
+        # Step 2: Generate answer
+        generator = RailwayAnswerGenerator(
+            ollama_url=os.getenv("OLLAMA_URL", "http://localhost:11434"),
+            model_name=os.getenv("GENERATION_MODEL", "mistral-nemo:12b-instruct"),
+            temperature=request.temperature,
+            max_tokens=request.max_tokens
+        )
+        
+        generated = generator.generate_answer(
+            query=request.query,
+            chunks=chunks,
+            max_chunks=request.max_chunks,
+            include_citations=request.include_citations
+        )
+        
+        # Step 3: Validate answer
+        validation = generator.validate_answer(
+            answer=generated.answer,
+            query=request.query,
+            chunks=chunks
+        )
+        
+        # Format citations
+        formatted_citations = []
+        for i, citation in enumerate(generated.citations, 1):
+            formatted_citations.append({
+                "index": i,
+                "chunk_id": citation.chunk_id,
+                "document_name": citation.document_name,
+                "preview": citation.content,
+                "relevance_score": citation.relevance_score,
+                "chunk_index": citation.chunk_index
+            })
+        
+        return {
+            "status": "success",
+            "query": request.query,
+            "answer": generated.answer,
+            "citations": formatted_citations,
+            "confidence": generated.confidence,
+            "generation_time_ms": generated.generation_time_ms,
+            "model_name": generated.model_name,
+            "validation": validation,
+            "chunks_used": len(chunks),
+            "timestamp": datetime.now().isoformat()
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ Ask endpoint error: {e}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Answer generation failed: {str(e)}")
 
 @app.get("/api/v1/cache/stats")
 async def get_cache_stats():
