@@ -90,49 +90,42 @@ bash -c 'sleep infinity'
 
 **Important:** This ensures `/workspace` persists across pod restarts.
 
-### Step 6: Configure Startup Script (MOST IMPORTANT)
+### Step 6: Configure Docker Start Command (MOST IMPORTANT)
 
-**In the "Docker Start Command" or "Start Script" field:**
-
-#### Option A: Direct Script (Recommended)
+**In the "Docker Start Command" field, paste this one-liner:**
 
 ```bash
-#!/bin/bash
-
-# Clone repository if not present
-if [ ! -d /workspace/001-bms-agent ]; then
-    cd /workspace
-    git clone https://github.com/absrzvi/bms-agent.git 001-bms-agent
-fi
-
-# Pull latest changes
-cd /workspace/001-bms-agent
-git pull origin 001-bms-agent
-
-# Make script executable
-chmod +x scripts/runpod_init.sh
-
-# Run initialization script
-bash scripts/runpod_init.sh
+bash -c 'cd /workspace && ([ ! -d 001-bms-agent ] && git clone https://github.com/absrzvi/bms-agent.git 001-bms-agent || (cd 001-bms-agent && git pull origin 001-bms-agent)) && cd 001-bms-agent && chmod +x scripts/runpod_init.sh && bash scripts/runpod_init.sh'
 ```
 
-#### Option B: One-Liner (Alternative)
+**What this does:**
+- Clones repository if not present, or pulls latest changes if it exists
+- Makes the init script executable
+- Runs the latest version of `runpod_init.sh` from GitHub
+- Ensures you always get the latest working version
 
-```bash
-bash -c 'cd /workspace && [ ! -d 001-bms-agent ] && git clone https://github.com/absrzvi/bms-agent.git 001-bms-agent; cd 001-bms-agent && git pull origin 001-bms-agent && chmod +x scripts/runpod_init.sh && bash scripts/runpod_init.sh'
-```
+**Note:** RunPod only provides a "Docker Start Command" field (not a full script editor), so we use a one-liner.
 
 ### Step 7: Configure Exposed Ports
 
-**Add these ports:**
+**HTTP Ports (Expose HTTP Ports section in RunPod GUI):**
 
-| Port | Description |
-|------|-------------|
-| 22 | SSH |
-| 8000 | BMS API |
-| 3000 | OpenWebUI |
-| 6333 | Qdrant |
-| 11434 | Ollama |
+| Port | Service | Description |
+|------|---------|-------------|
+| 8000 | BMS API | FastAPI application (Swagger UI at /docs) |
+| 3000 | OpenWebUI | Web interface for LLM interaction |
+| 6333 | Qdrant | Vector database dashboard |
+
+**TCP Ports (Expose TCP Ports section in RunPod GUI):**
+
+| Port | Service | Description |
+|------|---------|-------------|
+| 22 | SSH | Secure shell access |
+| 11434 | Ollama | Ollama API endpoint |
+
+**How to add in RunPod GUI:**
+1. Scroll to "Expose HTTP Ports" section → Add: `8000, 3000, 6333`
+2. Scroll to "Expose TCP Ports" section → Add: `22, 11434`
 
 ### Step 8: Save Template
 
