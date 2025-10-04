@@ -9,14 +9,94 @@ set -e  # Exit on error
 LOGFILE="/workspace/logs/runpod_init.log"
 PROJECT_DIR="/workspace/001-bms-agent"
 VENV_DIR="/workspace/bms-api-venv"
+INIT_MARKER="/workspace/.runpod_init_complete"
 
 # Function for logging
 log() {
     echo "$(date '+%Y-%m-%d %H:%M:%S'): $1" | tee -a "$LOGFILE"
 }
 
+# Check if initialization already completed
+if [ -f "$INIT_MARKER" ]; then
+    log "Initialization already completed. Skipping full init."
+    log "Starting services only..."
+    
+    # Restore SSH keys
+    if [ -f /workspace/config/authorized_keys ]; then
+        log "Restoring SSH keys..."
+        mkdir -p /root/.ssh
+        chmod 700 /root/.ssh
+        
+        # Append workspace keys to root authorized_keys (avoid duplicates)
+        if [ -f /root/.ssh/authorized_keys ]; then
+            # Backup existing keys
+            cp /root/.ssh/authorized_keys /root/.ssh/authorized_keys.backup
+            # Append new keys, removing duplicates
+            cat /workspace/config/authorized_keys /root/.ssh/authorized_keys | sort -u > /root/.ssh/authorized_keys.tmp
+            mv /root/.ssh/authorized_keys.tmp /root/.ssh/authorized_keys
+        else
+            cp /workspace/config/authorized_keys /root/.ssh/authorized_keys
+        fi
+        
+        chmod 600 /root/.ssh/authorized_keys
+        log "SSH keys restored"
+    fi
+    
+    # Set Ollama models directory
+    export OLLAMA_MODELS=/workspace/data/ollama_models
+    
+    # Start services
+    if [ -f "$PROJECT_DIR/scripts/start_all_services.sh" ]; then
+        cd "$PROJECT_DIR"
+        bash scripts/start_all_services.sh >> "$LOGFILE" 2>&1
+        log "Services started"
+    fi
+    
+    exit 0
+fi
+
+log "=== RunPod Initialization Started ==="
+
 # Wait for system to be ready
 sleep 10
+
+# Restore SSH keys FIRST (before anything else)
+if [ -f /workspace/config/authorized_keys ]; then
+    log "Restoring SSH keys from /workspace/config/authorized_keys..."
+    mkdir -p /root/.ssh
+    chmod 700 /root/.ssh
+    
+    # Append workspace keys to root authorized_keys (avoid duplicates)
+    if [ -f /root/.ssh/authorized_keys ]; then
+        log "Existing SSH keys found, merging..."
+        # Backup existing keys
+        cp /root/.ssh/authorized_keys /root/.ssh/authorized_keys.backup
+        # Append new keys, removing duplicates
+        cat /workspace/config/authorized_keys /root/.ssh/authorized_keys | sort -u > /root/.ssh/authorized_keys.tmp
+        mv /root/.ssh/authorized_keys.tmp /root/.ssh/authorized_keys
+        log "SSH keys merged (duplicates removed)"
+    else
+        log "No existing SSH keys, copying from workspace..."
+        cp /workspace/config/authorized_keys /root/.ssh/authorized_keys
+    fi
+    
+    chmod 600 /root/.ssh/authorized_keys
+    log "✅ SSH keys restored successfully"
+    
+    # Also save to workspace for backup
+    cp /root/.ssh/authorized_keys /workspace/config/authorized_keys.backup
+else
+    log "⚠️  No SSH keys found at /workspace/config/authorized_keys"
+    log "Creating directory for future use..."
+    mkdir -p /workspace/config
+    
+    # If root has keys, copy them to workspace
+    if [ -f /root/.ssh/authorized_keys ]; then
+        log "Backing up existing root SSH keys to workspace..."
+        cp /root/.ssh/authorized_keys /workspace/config/authorized_keys
+        log "SSH keys backed up to /workspace/config/authorized_keys"
+    fi
+fi
 
 # Create necessary directories
 log "Creating directory structure..."
@@ -166,3 +246,8 @@ fi
 
 log "RunPod initialization script completed"
 log "Check logs at: /workspace/logs/"
+
+# Mark initialization as complete to prevent re-running on restart
+touch "$INIT_MARKER"
+log "✅ Initialization marker created: $INIT_MARKER"
+log "=== Full initialization will be skipped on next restart ==="
