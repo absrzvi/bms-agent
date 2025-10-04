@@ -1323,6 +1323,46 @@ async def ask_question(request: AskRequest):
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Answer generation failed: {str(e)}")
 
+@app.post("/api/v1/evaluate/metrics")
+async def evaluate_retrieval_metrics(
+    queries_results: List[Dict[str, Any]]
+):
+    """
+    Evaluate retrieval metrics for multiple queries
+    
+    Calculates NDCG, MRR, MAP, Precision@k, Recall@k, Hit Rate@k
+    
+    Request body should be a list of query results:
+    [
+        {
+            "relevance_scores": [0.9, 0.8, 0.7, ...],
+            "total_relevant": 10  # optional
+        },
+        ...
+    ]
+    
+    Returns comprehensive metrics aggregated across all queries.
+    """
+    try:
+        from evaluation.metrics import RetrievalEvaluator
+        
+        evaluator = RetrievalEvaluator(k_values=[1, 3, 5, 10, 20])
+        
+        metrics = evaluator.evaluate_batch(queries_results)
+        formatted = evaluator.format_metrics(metrics)
+        
+        return {
+            "status": "success",
+            "metrics": formatted,
+            "timestamp": datetime.now().isoformat()
+        }
+        
+    except Exception as e:
+        logger.error(f"❌ Metrics evaluation error: {e}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Metrics evaluation failed: {str(e)}")
+
 @app.get("/api/v1/cache/stats")
 async def get_cache_stats():
     """
