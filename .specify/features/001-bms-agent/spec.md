@@ -183,3 +183,67 @@ Progressive performance requirements aligned with deployment phases:
 - Database migrations: T053 activated (Alembic framework implementation)
 - LLM backends: Single backend (Ollama) acceptable for initial production
 - Sprint priority: Complete retrieval enhancements → Production compliance → Multi-backend LLM
+
+### Session 3 - 2025-10-04 17:55 UTC
+**Clarifier**: Workflow `/clarify` execution  
+**Questions Resolved**: 5 POC scope and validation ambiguities
+
+| ID | Category | Question | Decision | Impact |
+|----|----------|----------|----------|--------|
+| Q11 | Project Phase | What is the current active phase? | **A**: POC - Core functionality validation with simplified requirements | Production compliance (T001-T020) deferred to future sprint |
+| Q12 | Success Criteria | Minimum document corpus for POC validation? | **B**: 700 total documents (430 PDFs + 270 Office files) required | SharePoint Office file ingestion is POC-blocking work |
+| Q13 | Implementation Scope | SharePoint automation level required? | **B**: Hybrid - Automated for 70 direct URLs, manual bulk download acceptable for 212 Office Online URLs | Pragmatic automation approach for POC |
+| Q14 | Validation Requirements | Retrieval evaluation requirements for POC? | **A**: Formal evaluation - 50-query ground truth dataset with ≥95% accuracy measurement | Ground truth dataset creation is POC-blocking |
+| Q15 | Integration Completeness | Which integrations must be operational? | **A**: All three - Slack + OpenWebUI + n8n functional and tested | All integrations required for POC signoff despite n8n "optional" label |
+
+**Impact**:
+- POC phase confirmed as current active sprint
+- Document ingestion completion is critical path: 430/700 documents (61% complete)
+- SharePoint integration tasks required: Automated script for 70 files + manual bulk download documentation for 212 files
+- Evaluation dataset creation added to POC scope: 50 queries across 10 categories
+- Integration development scope: All three integrations (Slack, OpenWebUI, n8n) must be functional
+- Production compliance tasks (T001-T020) explicitly deferred until POC completion
+
+### Session 4 - 2025-10-04 20:00 UTC
+**Context**: POC Evaluation Completion & Cross-Artifact Analysis  
+**Achievement**: 80% Top-5 Accuracy (40/50 queries passing) after 15 hours comprehensive evaluation work  
+**Questions Resolved**: 1 critical acceptance criteria clarification
+
+| ID | Category | Question | Decision | Impact |
+|----|----------|----------|----------|--------|
+| Q16 | Retrieval Accuracy | Is 80% Top-5 accuracy sufficient for POC completion or must we reach 95%? | **A**: 80-85% acceptable for POC signoff; 95% remains production target (R2.2). Path to 95% documented (30-40 hours: missing doc recovery +6%, full BM25 +3%, fine-tuning +3-5%). | POC can proceed to integration testing; 95% target deferred to MVP/Production phases |
+
+**Evaluation Results Summary**:
+- **Achieved**: 80% Top-5 accuracy (40/50 queries, +18% from 62% baseline)
+- **Category Performance**: 4 categories at 100% (Finance, Quality, Procurement, Business Development); 7/10 at 80%+
+- **Technical Innovations**: Form augmentation (83 chunks), lightweight keyword matching (pseudo-BM25), metadata-based reranking (now user-accessible via search_smart() function in OpenWebUI tool)
+- **Blocking Issues**: 4 missing documents (8% of queries impossible: HUMR-FOR-005, HUMR-FOR-018, ISEC-FOR-015, QHSE-FOR-029)
+- **Path to 95%**: Document recovery (+6-8%) → Full BM25 integration (+2-3%) → Domain-specific fine-tuning (+3-5%)
+
+**Impact**:
+- **R2.2 Clarification**: "≥95% top-5 retrieval accuracy" remains production target; POC acceptance criteria adjusted to 80-85% with documented improvement path
+- **POC Signoff Criteria**: 80% accuracy sufficient for POC completion alongside functional integrations and baseline performance
+- **MVP Target**: 85-90% accuracy (missing document recovery + full BM25 integration)
+- **Production Target**: 92-95% accuracy (domain-specific embedding fine-tuning)
+- **Effort Estimates**: MVP improvements 12-17 hours; Production fine-tuning 45-65 hours
+
+### Session 5 - 2025-10-04 20:45 UTC
+**Context**: POC Completion Readiness & Testing Criteria Refinement  
+**Trigger**: OpenWebUI tool enhancement complete (search_smart() with metadata boosting), integration testing scope clarification needed  
+**Questions Resolved**: 5 POC signoff criteria clarifications
+
+| ID | Category | Question | Decision | Impact |
+|----|----------|----------|----------|--------|
+| Q17 | Integration Testing | Should POC signoff require all three integrations (Slack, OpenWebUI, n8n) per Q15, or just OpenWebUI? | **B**: Honor Q15 - Complete all three integrations before POC signoff | T023 scope confirmed: all integrations required; T023b undeferred |
+| Q18 | Documentation | Should search_smart() implementation be documented in Session 4 POC results? | **C**: Update Session 4 "Technical Innovations" to clarify metadata boosting now user-accessible | Session 4 results updated to reflect user-facing implementation |
+| Q19 | Document Recovery | Should missing document recovery be POC-blocking? | **C**: Best effort recovery (1-2 hours); accept POC if not found | T021 scope: attempt recovery of HUMR-FOR-005, HUMR-FOR-018, ISEC-FOR-015, QHSE-FOR-029; document outcome |
+| Q20 | Performance Baseline | What p95 latency threshold is required for POC signoff? | **D**: Best-effort baseline; no hard threshold for POC | T024 establishes baseline regardless of result; optimization deferred to MVP if needed |
+| Q21 | Test Coverage | How is ≥80% coverage requirement enforced for POC? | **B**: Core-only strict - ≥80% on api/, scripts/; integrations/tools can be lower | T025 scope: measure coverage separately for core vs integrations; 80% required for core logic only |
+
+**Impact**:
+- **Integration Testing Scope**: All three integrations (Slack, OpenWebUI, n8n) must be functional and tested for POC signoff (reaffirms Q15 decision)
+- **T023 Execution Plan**: OpenWebUI (12/12 tests passing) ✅ complete; Slack and n8n testing required before T026
+- **Document Recovery**: Best-effort 1-2 hour attempt for 4 missing documents; POC proceeds regardless of recovery success
+- **Performance Baseline**: T024 establishes baseline metrics without POC-blocking thresholds; <1000ms acceptable, optimization work deferred to MVP if p95 >500ms
+- **Test Coverage Definition**: "Core logic" defined as api/ and scripts/ directories; tools/ and integrations can have lower coverage without blocking POC
+- **POC Readiness**: Clear signoff criteria established - 80% accuracy ✅, all integrations tested, baseline established, ≥80% core coverage, evidence collected

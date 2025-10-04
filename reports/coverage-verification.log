@@ -1,0 +1,217 @@
+============================= test session starts ==============================
+platform linux -- Python 3.11.11, pytest-8.4.2, pluggy-1.6.0
+rootdir: /workspace/001-bms-agent
+configfile: pyproject.toml
+testpaths: tests
+plugins: locust-2.41.3, asyncio-1.2.0, cov-7.0.0, anyio-4.11.0
+asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collected 35 items / 18 errors
+
+==================================== ERRORS ====================================
+_____________ ERROR collecting tests/cache/test_semantic_cache.py ______________
+ImportError while importing test module '/workspace/001-bms-agent/tests/cache/test_semantic_cache.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/lib/python3.11/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/cache/test_semantic_cache.py:8: in <module>
+    from api.cache.semantic_cache import SemanticCache, CacheManager, CacheEntry
+E   ModuleNotFoundError: No module named 'api'
+_____________ ERROR collecting tests/conversation/test_context.py ______________
+ImportError while importing test module '/workspace/001-bms-agent/tests/conversation/test_context.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/lib/python3.11/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/conversation/test_context.py:5: in <module>
+    from api.conversation.context_manager import (
+E   ModuleNotFoundError: No module named 'api'
+______________ ERROR collecting tests/evaluation/test_metrics.py _______________
+ImportError while importing test module '/workspace/001-bms-agent/tests/evaluation/test_metrics.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/lib/python3.11/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/evaluation/test_metrics.py:7: in <module>
+    from api.evaluation.metrics import (
+E   ModuleNotFoundError: No module named 'api'
+__________ ERROR collecting tests/generation/test_answer_generator.py __________
+ImportError while importing test module '/workspace/001-bms-agent/tests/generation/test_answer_generator.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/lib/python3.11/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/generation/test_answer_generator.py:7: in <module>
+    from api.generation.answer_generator import (
+E   ModuleNotFoundError: No module named 'api'
+__________ ERROR collecting tests/metadata/test_railway_enrichment.py __________
+ImportError while importing test module '/workspace/001-bms-agent/tests/metadata/test_railway_enrichment.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/lib/python3.11/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/metadata/test_railway_enrichment.py:4: in <module>
+    from api.metadata.ontology import RailwayOntology
+E   ModuleNotFoundError: No module named 'api'
+__________ ERROR collecting tests/monitoring/test_quality_monitor.py ___________
+ImportError while importing test module '/workspace/001-bms-agent/tests/monitoring/test_quality_monitor.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/lib/python3.11/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/monitoring/test_quality_monitor.py:7: in <module>
+    from api.monitoring.quality_monitor import (
+E   ModuleNotFoundError: No module named 'api'
+_________ ERROR collecting tests/performance/test_index_performance.py _________
+ImportError while importing test module '/workspace/001-bms-agent/tests/performance/test_index_performance.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/lib/python3.11/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/performance/test_index_performance.py:5: in <module>
+    from scripts.optimize_qdrant_index import QdrantIndexOptimizer
+E   ModuleNotFoundError: No module named 'scripts'
+________________ ERROR collecting tests/retrieval/test_batch.py ________________
+ImportError while importing test module '/workspace/001-bms-agent/tests/retrieval/test_batch.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/lib/python3.11/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/retrieval/test_batch.py:7: in <module>
+    from api.retrieval.batch import BatchRetriever, BatchEmbeddingCache
+E   ModuleNotFoundError: No module named 'api'
+_____________ ERROR collecting tests/retrieval/test_contextual.py ______________
+ImportError while importing test module '/workspace/001-bms-agent/tests/retrieval/test_contextual.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/lib/python3.11/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/retrieval/test_contextual.py:7: in <module>
+    from api.retrieval.contextual import ContextualRetriever, ContextualResult
+E   ModuleNotFoundError: No module named 'api'
+______________ ERROR collecting tests/retrieval/test_explainer.py ______________
+ImportError while importing test module '/workspace/001-bms-agent/tests/retrieval/test_explainer.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/lib/python3.11/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/retrieval/test_explainer.py:4: in <module>
+    from api.retrieval.explainer import RetrievalExplainer
+E   ModuleNotFoundError: No module named 'api'
+_______________ ERROR collecting tests/retrieval/test_filters.py _______________
+ImportError while importing test module '/workspace/001-bms-agent/tests/retrieval/test_filters.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/lib/python3.11/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/retrieval/test_filters.py:4: in <module>
+    from api.models.filter_builder import (
+E   ModuleNotFoundError: No module named 'api'
+_______________ ERROR collecting tests/retrieval/test_fusion.py ________________
+ImportError while importing test module '/workspace/001-bms-agent/tests/retrieval/test_fusion.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/lib/python3.11/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/retrieval/test_fusion.py:4: in <module>
+    from api.retrieval.fusion import HybridFusion, FusionStrategy
+E   ModuleNotFoundError: No module named 'api'
+___________ ERROR collecting tests/retrieval/test_query_expansion.py ___________
+ImportError while importing test module '/workspace/001-bms-agent/tests/retrieval/test_query_expansion.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/lib/python3.11/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/retrieval/test_query_expansion.py:7: in <module>
+    from api.retrieval.query_classifier import QueryClassifier, QueryType
+E   ModuleNotFoundError: No module named 'api'
+______________ ERROR collecting tests/retrieval/test_reranking.py ______________
+ImportError while importing test module '/workspace/001-bms-agent/tests/retrieval/test_reranking.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/lib/python3.11/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/retrieval/test_reranking.py:7: in <module>
+    from api.retrieval.reranker import CrossEncoderReranker, RerankingPipeline, RerankResult
+E   ModuleNotFoundError: No module named 'api'
+______________ ERROR collecting tests/retrieval/test_temporal.py _______________
+ImportError while importing test module '/workspace/001-bms-agent/tests/retrieval/test_temporal.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/lib/python3.11/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/retrieval/test_temporal.py:5: in <module>
+    from api.retrieval.temporal import (
+E   ModuleNotFoundError: No module named 'api'
+____________ ERROR collecting tests/security/test_rate_limiting.py _____________
+ImportError while importing test module '/workspace/001-bms-agent/tests/security/test_rate_limiting.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/lib/python3.11/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/security/test_rate_limiting.py:10: in <module>
+    from api.security import RateLimitMiddleware, TokenBucket
+E   ModuleNotFoundError: No module named 'api'
+___________ ERROR collecting tests/security/test_security_headers.py ___________
+ImportError while importing test module '/workspace/001-bms-agent/tests/security/test_security_headers.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/lib/python3.11/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/security/test_security_headers.py:9: in <module>
+    from api.security import SecurityHeadersMiddleware
+E   ModuleNotFoundError: No module named 'api'
+______________ ERROR collecting tests/synthesis/test_multi_doc.py ______________
+ImportError while importing test module '/workspace/001-bms-agent/tests/synthesis/test_multi_doc.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/lib/python3.11/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/synthesis/test_multi_doc.py:4: in <module>
+    from api.synthesis.multi_doc import (
+E   ModuleNotFoundError: No module named 'api'
+=============================== warnings summary ===============================
+../bms-api-venv/lib/python3.11/site-packages/locust/__init__.py:16
+  /workspace/bms-api-venv/lib/python3.11/site-packages/locust/__init__.py:16: MonkeyPatchWarning: Monkey-patching ssl after ssl has already been imported may lead to errors, including RecursionError on Python 3.6. It may also silently lead to incorrect behaviour on Python 3.7. Please monkey-patch earlier. See https://github.com/gevent/gevent/issues/1016. Modules that had direct imports (NOT patched): ['anyio.streams.tls (/workspace/bms-api-venv/lib/python3.11/site-packages/anyio/streams/tls.py)', 'urllib3.util (/workspace/bms-api-venv/lib/python3.11/site-packages/urllib3/util/__init__.py)', 'urllib3.util.ssl_ (/workspace/bms-api-venv/lib/python3.11/site-packages/urllib3/util/ssl_.py)']. 
+    monkey.patch_all()
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+ERROR tests/cache/test_semantic_cache.py
+ERROR tests/conversation/test_context.py
+ERROR tests/evaluation/test_metrics.py
+ERROR tests/generation/test_answer_generator.py
+ERROR tests/metadata/test_railway_enrichment.py
+ERROR tests/monitoring/test_quality_monitor.py
+ERROR tests/performance/test_index_performance.py
+ERROR tests/retrieval/test_batch.py
+ERROR tests/retrieval/test_contextual.py
+ERROR tests/retrieval/test_explainer.py
+ERROR tests/retrieval/test_filters.py
+ERROR tests/retrieval/test_fusion.py
+ERROR tests/retrieval/test_query_expansion.py
+ERROR tests/retrieval/test_reranking.py
+ERROR tests/retrieval/test_temporal.py
+ERROR tests/security/test_rate_limiting.py
+ERROR tests/security/test_security_headers.py
+ERROR tests/synthesis/test_multi_doc.py
+!!!!!!!!!!!!!!!!!!! Interrupted: 18 errors during collection !!!!!!!!!!!!!!!!!!!
+======================== 1 warning, 18 errors in 9.54s =========================

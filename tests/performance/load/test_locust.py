@@ -113,9 +113,9 @@ class BMSAgentUser(HttpUser):
             if doc_path.exists():
                 doc_path.unlink()
     
-    @task(3)
+    @task(1)
     def upload_document(self):
-        """Upload a document for processing (30% of tasks)"""
+        """Upload a document for processing (5% of tasks per Q8 spec)"""
         if not self.test_docs:
             return
             
@@ -150,9 +150,9 @@ class BMSAgentUser(HttpUser):
         except Exception as e:
             logger.error(f"Upload error: {e}")
     
-    @task(5)
+    @task(12)
     def semantic_search(self):
-        """Perform semantic search (50% of tasks)"""
+        """Perform semantic search (60% of tasks per Q8 spec - primary read operation)"""
         query = random.choice(self.test_queries)
         
         payload = {
@@ -186,9 +186,9 @@ class BMSAgentUser(HttpUser):
             else:
                 response.failure(f"HTTP {response.status_code}")
     
-    @task(2)
+    @task(6)
     def hybrid_search(self):
-        """Perform hybrid search (20% of tasks)"""
+        """Perform hybrid search (30% of tasks per Q8 spec)"""
         query = random.choice(self.test_queries)
         
         payload = {

@@ -1107,6 +1107,168 @@ class HybridSearchPreparator:
         
         return ""
     
+    def _detect_document_category(self, filename: str, content: str) -> str:
+        """
+        Detect document category for improved form/template retrieval.
+        
+        Returns:
+            - "form_template": Forms, templates, checklists
+            - "process": Process documents
+            - "policy": Policy documents
+            - "manual": Manuals and guides
+            - "standard": Standard/generic document
+        """
+        filename_lower = filename.lower()
+        content_lower = content[:500].lower() if content else ""  # Check first 500 chars
+        
+        # Extract document type code from BMS naming (e.g., BMS-DEPT-FOR-001)
+        parts = filename.split('-')
+        doc_type_code = parts[2].upper() if len(parts) >= 3 and parts[0].upper() == 'BMS' else ""
+        
+        # Form/Template detection (highest priority for retrieval improvement)
+        form_indicators = [
+            'FOR-' in filename.upper(),  # BMS form code
+            doc_type_code == 'FOR',
+            'template' in filename_lower,
+            'form' in filename_lower and not 'platform' in filename_lower,
+            'checklist' in filename_lower,
+            'questionnaire' in filename_lower,
+            'declaration' in filename_lower,
+            'request form' in content_lower,
+            'form template' in content_lower
+        ]
+        
+        if any(form_indicators):
+            return "form_template"
+        
+        # Process document detection
+        if doc_type_code == 'PRO' or 'process' in filename_lower:
+            return "process"
+        
+        # Policy document detection  
+        if doc_type_code == 'POL' or 'policy' in filename_lower:
+            return "policy"
+        
+        # Manual/Guide detection
+        if doc_type_code in ['MAN', 'GUI'] or any(word in filename_lower for word in ['manual', 'guide', 'guideline']):
+            return "manual"
+        
+        return "standard"
+    
+    def _is_template(self, filename: str, content: str) -> bool:
+        """
+        Detect if document is a template.
+        Templates are reusable documents meant to be filled out or copied.
+        """
+        filename_lower = filename.lower()
+        content_lower = content[:500].lower() if content else ""
+        
+        template_indicators = [
+            'template' in filename_lower,
+            'blank' in filename_lower,
+            'example' in filename_lower and ('form' in filename_lower or 'template' in filename_lower),
+            'sample' in filename_lower and 'form' in filename_lower,
+            # Content indicators
+            '[insert' in content_lower or '[enter' in content_lower,
+            'fill out' in content_lower or 'complete this' in content_lower,
+        ]
+        
+        return any(template_indicators)
+    
+    def _augment_form_content(self, filename: str, content: str, doc_type_category: str) -> str:
+        """
+        Augment sparse form/template documents with semantic-rich descriptions.
+        Helps improve retrieval by adding context about the form's purpose.
+        """
+        # Only augment if content is sparse and it's a form/template
+        if len(content) > 1000 or doc_type_category not in ["form_template"]:
+            return content
+        
+        # Extract information from filename
+        parts = filename.split('-')
+        
+        # Extract department, document type, and name
+        department = ""
+        doc_type = ""
+        doc_name = filename
+        
+        if len(parts) >= 3 and parts[0].upper() == 'BMS':
+            department = parts[1].upper()
+            doc_type = parts[2].upper()
+            doc_name = ' '.join(parts[3:]).replace('.docx', '').replace('.xlsx', '').replace('.pptx', '')
+        
+        # Map department codes to full names
+        dept_names = {
+            'HUMR': 'Human Resources',
+            'ISEC': 'Information Security',
+            'QHSE': 'Quality, Health, Safety and Environment',
+            'PROJ': 'Project Management',
+            'ENGI': 'Engineering',
+            'BDEV': 'Business Development',
+            'FINA': 'Finance',
+            'PROC': 'Procurement',
+            'SERV': 'Service Management',
+            'PROD': 'Product Development',
+            'RENG': 'Railway Engineering',
+            'MARK': 'Marketing',
+            'SALE': 'Sales'
+        }
+        
+        dept_full = dept_names.get(department, department)
+        
+        # Generate augmentation text
+        augmentation_parts = []
+        
+        # Add form purpose description
+        if doc_type == 'FOR':
+            augmentation_parts.append(f"This is a form template used in {dept_full} department.")
+        
+        # Add specific purpose based on keywords in name
+        purpose_keywords = {
+            'approval': 'to obtain approval and authorization',
+            'checklist': 'to ensure all required items are completed',
+            'declaration': 'to formally declare or certify information',
+            'report': 'to report and document information',
+            'request': 'to submit a formal request',
+            'sign-off': 'to obtain sign-off and approval',
+            'register': 'to register and track items',
+            'questionnaire': 'to collect information through questions',
+            'assessment': 'to assess and evaluate',
+            'plan': 'to plan and document activities',
+            'bom': 'to list bill of materials and components',
+            'release note': 'to document software or hardware releases',
+            'commissioning': 'to document commissioning activities and tests',
+            'test': 'to document testing activities and results',
+            'change': 'to request and track changes',
+            'risk': 'to identify and assess risks',
+            'audit': 'to conduct and document audits'
+        }
+        
+        doc_name_lower = doc_name.lower()
+        for keyword, purpose in purpose_keywords.items():
+            if keyword in doc_name_lower:
+                augmentation_parts.append(f"Use this form {purpose}.")
+                break
+        
+        # Add context about when to use
+        if 'employee' in doc_name_lower or 'driver' in doc_name_lower:
+            augmentation_parts.append("Required for employee-related processes.")
+        elif 'incident' in doc_name_lower:
+            augmentation_parts.append("Required when reporting incidents.")
+        elif 'project' in doc_name_lower:
+            augmentation_parts.append("Required for project documentation.")
+        elif 'supplier' in doc_name_lower or 'vendor' in doc_name_lower:
+            augmentation_parts.append("Required for supplier and vendor management.")
+        elif 'bid' in doc_name_lower or 'tender' in doc_name_lower:
+            augmentation_parts.append("Required for bidding and tendering processes.")
+        
+        # Create augmentation prefix
+        if augmentation_parts:
+            augmentation = "FORM DESCRIPTION: " + " ".join(augmentation_parts) + "\n\n"
+            return augmentation + content
+        
+        return content
+    
     def _extract_keywords(self, text: str, limit: int = 10) -> List[str]:
         """Extract keywords from text"""
         keywords = []
@@ -2130,9 +2292,15 @@ class EnhancedDocumentProcessor:
                     "configuration_type": chunk.get("configuration_type", ""),
                     "department": chunk.get("department", ""),  # BMS department code
                     
+                    # Document categorization for improved retrieval
+                    "document_type_category": self._detect_document_category(file_name, content),
+                    "is_form": self._detect_document_category(file_name, content) == "form_template",
+                    "is_template": self._is_template(file_name, content),
+                    "is_process": self._detect_document_category(file_name, content) == "process",
+                    
                     # Search optimization metadata
                     "search_type": "hybrid",
-                    "processing_version": "v4.0_enhanced"
+                    "processing_version": "v4.2_form_augmented"
                 }
                 
                 # Create point with multi-vector support (no sparse for now)
@@ -2224,6 +2392,14 @@ class EnhancedDocumentProcessor:
             char_reduction = len(raw_content) - len(content)
             if char_reduction > 0:
                 logger.info(f"✅ Text preprocessing removed {char_reduction} characters ({char_reduction/len(raw_content)*100:.1f}% reduction)")
+            
+            # Augment form content if it's sparse (BEFORE chunking)
+            doc_category = self._detect_document_category(file_path.name, content)
+            if doc_category == "form_template" and len(content) < 1000:
+                original_len = len(content)
+                content = self._augment_form_content(file_path.name, content, doc_category)
+                if len(content) > original_len:
+                    logger.info(f"📝 Augmented sparse form with descriptive text (+{len(content) - original_len} chars)")
             
             # Apply railway-specific processing if configured
             if self.railway_processor and self.config.processing_profile == ProcessingProfile.RAILWAY:
@@ -2494,7 +2670,14 @@ class EnhancedDocumentProcessor:
         
         elif extension in ['.xlsx', '.xls']:
             if PANDAS_AVAILABLE:
-                df = pd.read_excel(file_path)
+                # Specify engine based on file extension
+                engine = 'openpyxl' if extension == '.xlsx' else 'xlrd'
+                try:
+                    df = pd.read_excel(file_path, engine=engine)
+                except Exception as e:
+                    # Fallback: try openpyxl for both formats
+                    logger.warning(f"Failed with {engine}, trying openpyxl: {e}")
+                    df = pd.read_excel(file_path, engine='openpyxl')
                 
                 # Clean up the dataframe for better text extraction
                 # Replace NaN values with empty strings
@@ -2688,6 +2871,136 @@ class EnhancedDocumentProcessor:
             sentences.append(current_sentence.strip())
         
         return sentences
+    
+    def _detect_document_category(self, filename: str, content: str) -> str:
+        """
+        Detect document category for improved form/template retrieval.
+        
+        Returns:
+            - "form_template": Forms, templates, checklists
+            - "process": Process documents
+            - "policy": Policy documents
+            - "manual": Manuals and guides
+            - "standard": Standard/generic document
+        """
+        filename_lower = filename.lower()
+        content_lower = content[:500].lower() if content else ""  # Check first 500 chars
+        
+        # Extract document type code from BMS naming (e.g., BMS-DEPT-FOR-001)
+        parts = filename.split('-')
+        doc_type_code = parts[2].upper() if len(parts) >= 3 and parts[0].upper() == 'BMS' else ""
+        
+        # Form/Template detection (highest priority for retrieval improvement)
+        form_indicators = [
+            'FOR-' in filename.upper(),  # BMS form code
+            doc_type_code == 'FOR',
+            'template' in filename_lower,
+            'form' in filename_lower and not 'platform' in filename_lower,
+            'checklist' in filename_lower,
+            'questionnaire' in filename_lower,
+            'declaration' in filename_lower,
+            'request form' in content_lower,
+            'form template' in content_lower
+        ]
+        
+        if any(form_indicators):
+            return "form_template"
+        
+        # Process document detection
+        if doc_type_code == 'PRO' or 'process' in filename_lower:
+            return "process"
+        
+        # Policy document detection  
+        if doc_type_code == 'POL' or 'policy' in filename_lower:
+            return "policy"
+        
+        # Manual/Guide detection
+        if doc_type_code in ['MAN', 'GUI'] or any(word in filename_lower for word in ['manual', 'guide', 'guideline']):
+            return "manual"
+        
+        return "standard"
+    
+    def _is_template(self, filename: str, content: str) -> bool:
+        """
+        Detect if document is a template.
+        Templates are reusable documents meant to be filled out or copied.
+        """
+        filename_lower = filename.lower()
+        content_lower = content[:500].lower() if content else ""
+        
+        template_indicators = [
+            'template' in filename_lower,
+            'blank' in filename_lower,
+            'example' in filename_lower and ('form' in filename_lower or 'template' in filename_lower),
+            'sample' in filename_lower and 'form' in filename_lower,
+            # Content indicators
+            '[insert' in content_lower or '[enter' in content_lower,
+            'fill out' in content_lower or 'complete this' in content_lower,
+        ]
+        
+        return any(template_indicators)
+    
+    def _augment_form_content(self, filename: str, content: str, doc_type_category: str) -> str:
+        """
+        Augment sparse form/template documents with semantic-rich descriptions.
+        Helps improve retrieval by adding context about the form's purpose.
+        """
+        # Only augment if content is sparse and it's a form/template
+        if len(content) > 1000 or doc_type_category not in ["form_template"]:
+            return content
+        
+        # Extract information from filename
+        parts = filename.split('-')
+        
+        # Extract department, document type, and name
+        department = ""
+        doc_type = ""
+        doc_name = filename
+        
+        if len(parts) >= 3 and parts[0].upper() == 'BMS':
+            department = parts[1].upper()
+            doc_type = parts[2].upper()
+            doc_name = ' '.join(parts[3:]).replace('.docx', '').replace('.xlsx', '').replace('.pptx', '').replace('.pdf', '')
+        
+        # Map department codes to full names
+        dept_names = {
+            'HUMR': 'Human Resources',
+            'ISEC': 'Information Security',
+            'QHSE': 'Quality, Health, Safety and Environment',
+            'PROJ': 'Project Management',
+            'ENGI': 'Engineering',
+            'BDEV': 'Business Development',
+            'FINA': 'Finance',
+            'PROC': 'Procurement',
+        }
+        
+        dept_full = dept_names.get(department, department)
+        
+        # Create semantic-rich prefix
+        prefix = f"<form_description>\n"
+        prefix += f"This is a {dept_full} {'form' if doc_type == 'FOR' else 'document'}"
+        if doc_name:
+            prefix += f" titled '{doc_name}'"
+        prefix += f". Department: {dept_full} ({department}).\n"
+        prefix += f"Document code: {'-'.join(parts[:4]) if len(parts) >= 4 else filename}\n"
+        
+        # Add purpose hints based on filename
+        if 'onboarding' in filename.lower() or 'new employee' in filename.lower():
+            prefix += "Purpose: Employee onboarding and new hire documentation.\n"
+        elif 'expense' in filename.lower() or 'reimbursement' in filename.lower():
+            prefix += "Purpose: Financial expense reporting and reimbursement requests.\n"
+        elif 'leave' in filename.lower() or 'vacation' in filename.lower() or 'absence' in filename.lower():
+            prefix += "Purpose: Employee leave and absence management.\n"
+        elif 'procurement' in filename.lower() or 'purchase' in filename.lower() or 'requisition' in filename.lower():
+            prefix += "Purpose: Procurement and purchasing requests.\n"
+        elif 'security' in filename.lower():
+            prefix += "Purpose: Information security and access management.\n"
+        elif 'quality' in filename.lower() or 'qhse' in filename.lower():
+            prefix += "Purpose: Quality assurance and safety documentation.\n"
+        
+        prefix += "</form_description>\n\n"
+        
+        return prefix + content
     
     def _flatten_hierarchy(self, hierarchy: Dict) -> List[Dict[str, Any]]:
         """Flatten hierarchical structure for processing"""

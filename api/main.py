@@ -616,7 +616,7 @@ async def semantic_search(request: SearchRequest):
             "search_metadata": {
                 "total_results": len(results),
                 "search_time_ms": int(search_time),
-                "embedding_model": "snowflake-arctic-embed2"
+                "embedding_model": "sentence-transformers/all-mpnet-base-v2"
             }
         }
         

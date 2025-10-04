@@ -41,11 +41,21 @@ logger = logging.getLogger(__name__)
 class BatchProcessor:
     """Batch processor for incoming SharePoint documents"""
     
-    def __init__(self, use_gpu: bool = True):
+    def __init__(self, use_gpu: bool = True, shard_index: int | None = None, shard_count: int | None = None):
         self.base_dir = Path('/workspace/bms_data')
         self.incoming_dir = self.base_dir / 'incoming'
         self.processed_dir = self.base_dir / 'processed'
         self.failed_dir = self.base_dir / 'failed'
+
+        if shard_count is not None and shard_count <= 0:
+            raise ValueError("shard_count must be positive")
+        if shard_index is not None and shard_count is None:
+            raise ValueError("shard_count must be provided when shard_index is set")
+        if shard_index is not None and not (0 <= shard_index < shard_count):
+            raise ValueError("shard_index must be in range [0, shard_count)")
+
+        self.shard_index = shard_index
+        self.shard_count = shard_count
         
         # Create output directories
         for dir_path in [self.processed_dir, self.failed_dir]:
@@ -158,25 +168,35 @@ class BatchProcessor:
         logger.info("="*80)
         logger.info(f"📁 Input Directory: {self.incoming_dir}")
         logger.info(f"📁 Processed Directory: {self.processed_dir}")
-        logger.info(f"📁 Failed Directory: {self.failed_dir}")
         logger.info(f"🗄️  Qdrant Collection: {self.collection_name}")
         logger.info("")
         
         # Get all files
         all_files = self.get_all_files()
-        self.stats['total_files'] = len(all_files)
-        
-        if not all_files:
+
+        if self.shard_count and self.shard_count > 1:
+            filtered_files = [
+                file_path
+                for idx, file_path in enumerate(all_files)
+                if idx % self.shard_count == self.shard_index
+            ]
+        else:
+            filtered_files = all_files
+
+        self.stats['total_files'] = len(filtered_files)
+
+        if not filtered_files:
             logger.error("❌ No files found in incoming directory!")
             return 1
         
         logger.info(f"📋 Found {len(all_files)} documents to process")
+        if self.shard_count and self.shard_count > 1:
+            logger.info(f"🔀 Shard {self.shard_index + 1}/{self.shard_count}: processing {len(filtered_files)} documents")
         logger.info("")
         
         # Process each file
-        for i, file_path in enumerate(all_files, 1):
-            logger.info(f"[{i}/{len(all_files)}] {file_path.name}")
-            
+        for i, file_path in enumerate(filtered_files, 1):
+            logger.info(f"[{i}/{len(filtered_files)}] {file_path.name}")
             success, result = self.process_file(file_path)
             
             if success:
@@ -247,9 +267,15 @@ def main():
     """Main entry point"""
     parser = argparse.ArgumentParser(description='Batch Process Incoming Documents')
     parser.add_argument('--cpu', action='store_true', help='Force CPU mode (avoid GPU OOM in parallel processing)')
+    parser.add_argument('--shard-index', type=int, help='Zero-based shard index for splitting work across workers')
+    parser.add_argument('--shard-count', type=int, help='Total number of shards/workers when splitting work')
     args = parser.parse_args()
     
-    processor = BatchProcessor(use_gpu=not args.cpu)
+    processor = BatchProcessor(
+        use_gpu=not args.cpu,
+        shard_index=args.shard_index,
+        shard_count=args.shard_count
+    )
     return processor.run()
 
 
