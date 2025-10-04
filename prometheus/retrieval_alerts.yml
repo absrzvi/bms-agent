@@ -1,0 +1,108 @@
+groups:
+  - name: retrieval_quality
+    interval: 30s
+    rules:
+      # Accuracy alerts
+      - alert: RetrievalAccuracyLow
+        expr: retrieval_accuracy < 0.95
+        for: 5m
+        labels:
+          severity: critical
+          component: retrieval
+        annotations:
+          summary: "Retrieval accuracy below threshold"
+          description: "Retrieval accuracy is {{ $value | humanizePercentage }}, below 95% threshold"
+          
+      - alert: RetrievalAccuracyDegraded
+        expr: (retrieval_accuracy - retrieval_accuracy offset 1h) < -0.05
+        for: 5m
+        labels:
+          severity: warning
+          component: retrieval
+        annotations:
+          summary: "Retrieval accuracy degraded"
+          description: "Retrieval accuracy dropped by {{ $value | humanizePercentage }} in the last hour"
+      
+      # Latency alerts
+      - alert: RetrievalLatencyHigh
+        expr: histogram_quantile(0.95, rate(retrieval_latency_seconds_bucket[5m])) > 0.2
+        for: 5m
+        labels:
+          severity: warning
+          component: retrieval
+        annotations:
+          summary: "Retrieval P95 latency high"
+          description: "P95 latency is {{ $value | humanizeDuration }}, exceeding 200ms threshold"
+          
+      - alert: RetrievalLatencyCritical
+        expr: histogram_quantile(0.95, rate(retrieval_latency_seconds_bucket[5m])) > 0.5
+        for: 2m
+        labels:
+          severity: critical
+          component: retrieval
+        annotations:
+          summary: "Retrieval P95 latency critical"
+          description: "P95 latency is {{ $value | humanizeDuration }}, exceeding 500ms critical threshold"
+      
+      # Cache performance alerts
+      - alert: CacheHitRateLow
+        expr: retrieval_cache_hit_rate < 0.5
+        for: 10m
+        labels:
+          severity: info
+          component: cache
+        annotations:
+          summary: "Cache hit rate low"
+          description: "Cache hit rate is {{ $value | humanizePercentage }}, below 50% threshold"
+          
+      - alert: CacheHitRateDegraded
+        expr: (retrieval_cache_hit_rate - retrieval_cache_hit_rate offset 1h) < -0.2
+        for: 5m
+        labels:
+          severity: warning
+          component: cache
+        annotations:
+          summary: "Cache hit rate degraded"
+          description: "Cache hit rate dropped by {{ $value | humanizePercentage }} in the last hour"
+      
+      # Error rate alerts
+      - alert: RetrievalErrorRateHigh
+        expr: rate(retrieval_errors_total[5m]) / rate(retrieval_queries_total[5m]) > 0.05
+        for: 5m
+        labels:
+          severity: warning
+          component: retrieval
+        annotations:
+          summary: "Retrieval error rate high"
+          description: "Error rate is {{ $value | humanizePercentage }}, exceeding 5% threshold"
+          
+      - alert: RetrievalErrorRateCritical
+        expr: rate(retrieval_errors_total[5m]) / rate(retrieval_queries_total[5m]) > 0.1
+        for: 2m
+        labels:
+          severity: critical
+          component: retrieval
+        annotations:
+          summary: "Retrieval error rate critical"
+          description: "Error rate is {{ $value | humanizePercentage }}, exceeding 10% critical threshold"
+      
+      # Query volume alerts
+      - alert: RetrievalQueryVolumeHigh
+        expr: rate(retrieval_queries_total[5m]) > 100
+        for: 10m
+        labels:
+          severity: info
+          component: retrieval
+        annotations:
+          summary: "High query volume"
+          description: "Query rate is {{ $value }} queries/sec, consider scaling"
+          
+      - alert: RetrievalQueryVolumeLow
+        expr: rate(retrieval_queries_total[5m]) < 0.1
+        for: 30m
+        labels:
+          severity: info
+          component: retrieval
+        annotations:
+          summary: "Low query volume"
+          description: "Query rate is {{ $value }} queries/sec, unusually low"

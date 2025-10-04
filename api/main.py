@@ -50,6 +50,9 @@ from security import RateLimitMiddleware, SecurityHeadersMiddleware, get_rate_li
 # Import semantic cache
 from cache.semantic_cache import get_cache_manager
 
+# Import quality monitoring
+from monitoring.quality_monitor import get_quality_monitor, get_metrics_collector
+
 # Initialize semantic cache
 cache_manager = get_cache_manager()
 search_cache = cache_manager.create_cache(
@@ -58,6 +61,10 @@ search_cache = cache_manager.create_cache(
     similarity_threshold=0.95,
     ttl_seconds=3600
 )
+
+# Initialize quality monitoring
+quality_monitor = get_quality_monitor()
+metrics_collector = get_metrics_collector()
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -1422,6 +1429,137 @@ async def invalidate_expired_cache():
     except Exception as e:
         logger.error(f"❌ Cache invalidation error: {e}")
         raise HTTPException(status_code=500, detail="Failed to invalidate cache")
+
+@app.get("/api/v1/monitoring/quality")
+async def get_quality_metrics():
+    """
+    Get current retrieval quality metrics
+    
+    Returns real-time quality metrics including accuracy, latency, cache hit rate
+    """
+    try:
+        metrics = quality_monitor.get_current_metrics()
+        
+        return {
+            "status": "success",
+            "metrics": metrics,
+            "timestamp": datetime.now().isoformat()
+        }
+    except Exception as e:
+        logger.error(f"❌ Quality metrics error: {e}")
+        raise HTTPException(status_code=500, detail="Failed to get quality metrics")
+
+@app.get("/api/v1/monitoring/health")
+async def get_quality_health():
+    """
+    Get retrieval quality health report
+    
+    Returns comprehensive health report with score, status, and alerts
+    """
+    try:
+        report = quality_monitor.generate_report()
+        
+        return {
+            "status": "success",
+            "report": report,
+            "timestamp": datetime.now().isoformat()
+        }
+    except Exception as e:
+        logger.error(f"❌ Quality health error: {e}")
+        raise HTTPException(status_code=500, detail="Failed to get quality health")
+
+@app.get("/api/v1/monitoring/alerts")
+async def get_quality_alerts(
+    severity: Optional[str] = None,
+    limit: int = 100
+):
+    """
+    Get quality alerts
+    
+    - **severity**: Filter by severity (critical, warning, info)
+    - **limit**: Maximum number of alerts to return
+    """
+    try:
+        alerts = quality_monitor.get_alerts(severity=severity, limit=limit)
+        
+        formatted_alerts = [
+            {
+                "type": a.alert_type,
+                "severity": a.severity,
+                "message": a.message,
+                "current_value": a.current_value,
+                "threshold": a.threshold,
+                "timestamp": a.timestamp.isoformat()
+            }
+            for a in alerts
+        ]
+        
+        return {
+            "status": "success",
+            "alerts": formatted_alerts,
+            "count": len(formatted_alerts),
+            "timestamp": datetime.now().isoformat()
+        }
+    except Exception as e:
+        logger.error(f"❌ Alerts error: {e}")
+        raise HTTPException(status_code=500, detail="Failed to get alerts")
+
+@app.get("/api/v1/monitoring/trends")
+async def get_quality_trends(hours: int = 24):
+    """
+    Get quality trends over time
+    
+    - **hours**: Number of hours to analyze (default: 24)
+    """
+    try:
+        trends = quality_monitor.get_trends(hours=hours)
+        
+        return {
+            "status": "success",
+            "trends": trends,
+            "timestamp": datetime.now().isoformat()
+        }
+    except Exception as e:
+        logger.error(f"❌ Trends error: {e}")
+        raise HTTPException(status_code=500, detail="Failed to get trends")
+
+@app.post("/api/v1/monitoring/baseline")
+async def set_quality_baseline():
+    """
+    Set current metrics as baseline for degradation detection
+    """
+    try:
+        quality_monitor.set_baseline()
+        current = quality_monitor.get_current_metrics()
+        
+        return {
+            "status": "success",
+            "message": "Baseline set successfully",
+            "baseline": {
+                "accuracy": quality_monitor._baseline_accuracy,
+                "latency_p95": quality_monitor._baseline_latency
+            },
+            "timestamp": datetime.now().isoformat()
+        }
+    except Exception as e:
+        logger.error(f"❌ Baseline error: {e}")
+        raise HTTPException(status_code=500, detail="Failed to set baseline")
+
+@app.get("/api/v1/monitoring/prometheus")
+async def get_prometheus_metrics():
+    """
+    Get metrics in Prometheus format
+    
+    Returns metrics formatted for Prometheus scraping
+    """
+    try:
+        prometheus_text = metrics_collector.get_prometheus_metrics()
+        
+        from fastapi.responses import PlainTextResponse
+        return PlainTextResponse(content=prometheus_text)
+    except Exception as e:
+        logger.error(f"❌ Prometheus metrics error: {e}")
+        raise HTTPException(status_code=500, detail="Failed to get Prometheus metrics")
 
 # Error handlers
 @app.exception_handler(404)
