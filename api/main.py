@@ -112,6 +112,13 @@ class ContextualSearchRequest(SearchRequest):
     child_weight: float = Field(0.2, ge=0.0, le=1.0, description="Weight for child embeddings")
     full_doc_weight: float = Field(0.1, ge=0.0, le=1.0, description="Weight for full document embeddings")
 
+class RerankSearchRequest(SearchRequest):
+    rerank: bool = Field(True, description="Enable reranking")
+    rerank_top_k: int = Field(20, ge=1, le=100, description="Number of results to rerank")
+    retrieval_weight: float = Field(0.7, ge=0.0, le=1.0, description="Weight for retrieval scores")
+    rerank_weight: float = Field(0.3, ge=0.0, le=1.0, description="Weight for rerank scores")
+    min_rerank_score: Optional[float] = Field(None, ge=0.0, le=1.0, description="Minimum rerank score threshold")
+
 class HealthResponse(BaseModel):
     status: str
     timestamp: str
@@ -985,6 +992,178 @@ async def contextual_search(request: ContextualSearchRequest):
         import traceback
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Contextual search failed: {str(e)}")
+
+@app.post("/api/v1/search/rerank")
+async def rerank_search(request: RerankSearchRequest):
+    """
+    Perform search with cross-encoder reranking for improved relevance
+    
+    Two-stage retrieval: initial semantic search followed by cross-encoder reranking.
+    
+    - **query**: Search query text
+    - **limit**: Maximum number of final results (1-100)
+    - **rerank**: Enable/disable reranking
+    - **rerank_top_k**: Number of initial results to rerank (default: 20)
+    - **retrieval_weight**: Weight for initial retrieval scores (0.0-1.0, default: 0.7)
+    - **rerank_weight**: Weight for reranking scores (0.0-1.0, default: 0.3)
+    - **min_rerank_score**: Minimum rerank score threshold
+    - **filters**: Optional filters for document type, profile, etc.
+    - **min_score**: Optional minimum similarity score threshold
+    - **min_quality**: Optional minimum quality score threshold
+    """
+    
+    try:
+        from retrieval.reranker import CrossEncoderReranker
+        import time
+        
+        processor = get_processor()
+        
+        if not processor.qdrant_client:
+            raise HTTPException(status_code=503, detail="Search service unavailable")
+        
+        # Generate query embedding
+        query_embedding = processor._generate_embeddings(request.query)
+        if not query_embedding:
+            raise HTTPException(status_code=500, detail="Failed to generate query embedding")
+        
+        # Build search filter
+        search_filter = None
+        conditions = []
+        
+        # Add min_quality filter if specified
+        if request.min_quality is not None:
+            from qdrant_client.models import Filter, FieldCondition, Range
+            conditions.append(
+                FieldCondition(
+                    key="quality_score",
+                    range=Range(gte=request.min_quality)
+                )
+            )
+        
+        # Add custom filters if provided
+        if request.filters:
+            from qdrant_client.models import FieldCondition, MatchValue
+            for key, value in request.filters.items():
+                conditions.append(
+                    FieldCondition(
+                        key=key,
+                        match=MatchValue(value=value)
+                    )
+                )
+        
+        if conditions:
+            from qdrant_client.models import Filter
+            search_filter = Filter(must=conditions)
+        
+        # Stage 1: Initial semantic search (retrieve more for reranking)
+        initial_limit = max(request.rerank_top_k, request.limit * 2)
+        
+        search_results = processor.qdrant_client.search(
+            collection_name=processor.collection_name,
+            query_vector=("chunk_embedding", query_embedding),
+            query_filter=search_filter,
+            limit=initial_limit,
+            with_payload=True,
+            with_vectors=False
+        )
+        
+        # Filter by min_score if provided
+        if request.min_score is not None:
+            search_results = [r for r in search_results if r.score >= request.min_score]
+        
+        # Format initial results for reranking
+        initial_results = []
+        for result in search_results:
+            initial_results.append({
+                "chunk_id": result.payload.get("chunk_id", str(result.id)),
+                "content": result.payload.get("content", ""),
+                "score": result.score,
+                "metadata": result.payload
+            })
+        
+        if not request.rerank or not initial_results:
+            # Return without reranking
+            formatted_results = []
+            for idx, result in enumerate(initial_results[:request.limit]):
+                formatted_results.append({
+                    "chunk_id": result["chunk_id"],
+                    "content": result["content"],
+                    "score": result["score"],
+                    "metadata": {
+                        "document_name": result["metadata"].get("document_name"),
+                        "document_type": result["metadata"].get("document_type"),
+                        "quality_score": result["metadata"].get("quality_score"),
+                        "chunk_index": result["metadata"].get("chunk_index")
+                    },
+                    "rank": idx
+                })
+            
+            return {
+                "status": "success",
+                "query": request.query,
+                "results": formatted_results,
+                "count": len(formatted_results),
+                "search_type": "semantic",
+                "reranking_enabled": False,
+                "timestamp": datetime.now().isoformat()
+            }
+        
+        # Stage 2: Reranking
+        start_rerank = time.time()
+        
+        reranker = CrossEncoderReranker(
+            retrieval_weight=request.retrieval_weight,
+            rerank_weight=request.rerank_weight,
+            device="cpu"  # Use CPU for now, can be configured for GPU
+        )
+        
+        reranked_results = reranker.rerank(
+            query=request.query,
+            results=initial_results,
+            top_k=request.rerank_top_k,
+            min_rerank_score=request.min_rerank_score
+        )
+        
+        rerank_time = (time.time() - start_rerank) * 1000
+        
+        # Format final results
+        formatted_results = []
+        for result in reranked_results[:request.limit]:
+            formatted_results.append({
+                "chunk_id": result.chunk_id,
+                "content": result.content,
+                "retrieval_score": result.retrieval_score,
+                "rerank_score": result.rerank_score,
+                "combined_score": result.combined_score,
+                "metadata": {
+                    "document_name": result.metadata.get("document_name"),
+                    "document_type": result.metadata.get("document_type"),
+                    "quality_score": result.metadata.get("quality_score"),
+                    "chunk_index": result.metadata.get("chunk_index")
+                },
+                "rank": result.rank,
+                "original_rank": result.original_rank
+            })
+        
+        return {
+            "status": "success",
+            "query": request.query,
+            "results": formatted_results,
+            "count": len(formatted_results),
+            "search_type": "reranked",
+            "reranking_enabled": True,
+            "reranking_time_ms": rerank_time,
+            "model_info": reranker.get_model_info(),
+            "timestamp": datetime.now().isoformat()
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ Rerank search error: {e}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Rerank search failed: {str(e)}")
 
 # Error handlers
 @app.exception_handler(404)
