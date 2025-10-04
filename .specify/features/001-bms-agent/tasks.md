@@ -1,955 +1,138 @@
-# BMS Agent MVP Task List
+# 001-bms-agent Production Compliance Tasks
 
-**Status**: ✅ **MVP + POST-MVP COMPLETE!** 🎉🚀 | 🎉 **ALL RETRIEVAL ENHANCEMENTS COMPLETE!** 🚀  
-**Progress**: 59/70 tasks (84%) | Core: 15/15 (100%) | Security: 2/2 (100%) ✅ | Integrations: 2/2 (100%) | Operations: 6/6 (100%) ✅ | Data: 4/4 (100%) | **MVP Additions: 4/4 (100%)** ✅ | **Docs: 5/5 (100%)** ✅ | **Post-MVP: 3/3 (100%)** ✅ | **Constitution: 0/13 (0%)** ⚠️ | **Retrieval Enhancements: 16/16 (100%)** ✅ - ALL COMPLETE! 🎉  
-**Last Updated**: 2025-10-04 12:38 UTC
+**Objective**: Deliver full constitution compliance and production readiness for BMS Agent by **2025-12-04**.
 
-## Current Status
-- ✅ **Core MVP**: 100% Complete (T000-T014)
-- ✅ **Security (MVP REQUIREMENT)**: 100% Complete (T015-T016) ✅
-- ✅ **Integrations**: 100% Complete (T017-T018)
-- ✅ **Operations**: 100% Complete (T019-T020 + T028-T031)
-- ✅ **Data Pipeline**: 100% Complete (T032-T035)
-- ✅ **Slack Integration**: Complete - FastAPI endpoints ready
-- ✅ **OpenWebUI Tool**: Complete - 7/7 tests passing, metadata fixes applied
-- ✅ **Ollama GPU**: Optimized - 73.7 tokens/sec (123x improvement)
-- ✅ **Dataset Status**: 420 documents processed, 1,458 chunks indexed (768-dim) - Complete
-- ✅ **API Configuration**: 768-dim embeddings (sentence-transformers/all-mpnet-base-v2)
-- ✅ **Metadata Quality**: Type, quality, relevance all displaying correctly
-- ✅ **Workspace Persistence**: 100% - All apps and data in /workspace
-- ✅ **Auto-Start**: Multiple methods configured (.bashrc, RunPod, systemd, cron)
-- ✅ **Service Management**: Complete startup, health check, and monitoring scripts
-- ✅ **MVP Phase**: 100% Complete! All MVP requirements satisfied
-- ✅ **Documentation & CI/CD**: 100% Complete (T021, T024-T027)
-- ✅ **Post-MVP Enhancements**: 100% Complete! (T036-T039)
-- 🟢 **Current Priority**: Production readiness (T043-T055) - Constitution compliance
-- 🆕 **New Requirements**: 5 clarified requirements added (T036-T040) + 2 operational requirements (T041-T042)
-  - **MVP Priority**: ✅ All MVP tasks complete (T015-T016, T038, T040-T042)
-  - **Post-MVP**: T036 (Re-upload), T037 (Async queue), T039 (Deletion)
-- ⚠️ **Constitution Compliance**: 13 production tasks added (T043-T055) to address MUST requirements from constitution §5, §7, §8, §9, §11
-  - **Critical**: Encryption at rest, GDPR, audit logging, RBAC/JWT (§5)
-  - **Architecture**: Multi-backend LLM, model versioning, air-gap validation (§11)
-  - **Operations**: Automated alerting, 1GB processing, horizontal scaling (§7, §8)
-  - **Workflow**: Full CI/CD, Alembic migrations (§9)
-  - **Meta**: Production readiness checklist (T055)
-- 📋 **Retrieval Pipeline Enhancements**: 16 enhancement tasks added (T056-T071) for advanced RAG capabilities
-  - **Advanced Retrieval**: Contextual retrieval, reranking, query expansion, hybrid optimization (T056-T059)
-  - **Metadata & Filtering**: Advanced filters, temporal retrieval, domain enrichment (T060-T062)
-  - **Performance**: Semantic caching, batch optimization, index tuning (T063-T065)
-  - **Answer Generation**: LLM-based answers, multi-doc synthesis, conversational context (T066-T068)
-  - **Evaluation**: Advanced metrics, explainability, quality monitoring (T069-T071)
-  - **Expected Outcomes**: +15-20% accuracy, <100ms p95 latency, 10k+ docs scale
+## Parallel Execution Guidance
+- **[P] Tests Batch 1**: `task run T003 & task run T004`
+- **[P] Tests Batch 2**: `task run T005 & task run T006`
+- **[P] Documentation Polish**: `task run T019 & task run T020`
 
 ## Setup
-- **T000  Git Flow Branching Setup** ✅
-  - Summary: Establish Git flow branching strategy per R6.1 - configure feature/<name> and release/<version> branch patterns, set up semantic commit message templates, and document workflow in README.md.
-  - Dependencies: None
-  - Files/Paths: `.gitflow`, `README.md`, `.gitmessage`
+
+- **T001  Compliance Baseline Review**  
+  - Summary: Review constitution (§5, §7, §8, §9, §11), production requirements in spec and plan, and produce master checklist `docs/compliance/production_requirements.md`.  
+  - Dependencies: None  
+  - Files/Paths: `.specify/features/001-bms-agent/spec.md`, `.specify/features/001-bms-agent/plan.md`, `docs/compliance/production_requirements.md`  
   - Parallel: No
-- **T001  Provision Persistent Storage** ✅
-  - Summary: Create `/workspace/qdrant_storage`, `/workspace/bms_data/{uploads,processed,evaluations}`, and `/workspace/logs` with correct permissions per operational requirements.
-  - Dependencies: None
-  - Files/Paths: `/workspace/`
-  - Parallel: No
-- **T002  Python Environment Bootstrap** ✅
-  - Summary: Create `.venv`, install `requirements.txt` and `requirements-test.txt`, pin versions in `requirements.txt` as needed.
-  - Dependencies: T001
-  - Files/Paths: `requirements.txt`, `requirements-test.txt`
-  - Parallel: No
-- **T003  Qdrant Binary Install & Service Script** ✅
-  - Summary: Install Qdrant 1.7.4 (non-Docker) and finalize `scripts/start_qdrant.sh` with start/stop/status commands logging to `/workspace/logs/qdrant.log`.
-  - Dependencies: T002
-  - Files/Paths: `scripts/start_qdrant.sh`
-  - Parallel: No
-- **T004  Qdrant Collection Initializer** ✅
-  - Summary: Implement `scripts/init_qdrant.py` to create the `nomad_bms_documents` multi-vector collection with named vectors (`chunk_embedding`, `parent_embedding`, both 768-d cosine for sentence-transformers/all-mpnet-base-v2), payload indexes for `document_id`, `version_id`, hierarchical metadata, and sparse keyword/BM25 fields plus default HNSW params.
-  - Dependencies: T003
-  - Files/Paths: `scripts/init_qdrant.py`
+
+- **T002  Compliance Branch & Tooling Setup**  
+  - Summary: Create `feature/production-compliance` branch, configure task agent defaults, scaffold compliance helpers (`scripts/compliance/README.md`, `.env.production.sample`).  
+  - Dependencies: T001  
+  - Files/Paths: `scripts/compliance/README.md`, `.env.production.sample`, `.taskagent/config.yml`  
   - Parallel: No
 
 ## Tests First (TDD)
-- **T005  Contract Test – Document Upload [P]** ✅
-  - Summary: Add failing contract tests in `tests/contract/test_upload_document.py` covering success, 400 (invalid type), and 413 responses based on `contracts/api-documents.yaml`.
-  - Dependencies: T002
-  - Files/Paths: `tests/contract/test_upload_document.py`
+
+- **T003  Encryption at Rest Tests [P]**  
+  - Summary: Add failing tests ensuring `/workspace/qdrant_storage` and `/workspace/bms_data` are encrypted and backups remain recoverable.  
+  - Dependencies: T002  
+  - Files/Paths: `tests/security/test_encryption_at_rest.py`, `scripts/backup_system.sh`  
   - Parallel: Yes ([P])
-- **T006  Contract Test – Search Endpoints [P]** ✅
-  - Summary: Add failing contract tests in `tests/contract/test_search_endpoints.py` for semantic and hybrid routes per `contracts/api-search.yaml`.
-  - Dependencies: T002
-  - Files/Paths: `tests/contract/test_search_endpoints.py`
+
+- **T004  GDPR Compliance Tests [P]**  
+  - Summary: Add failing tests for retention windows (90-day data, 30-day logs) and right-to-erasure workflow.  
+  - Dependencies: T002  
+  - Files/Paths: `tests/compliance/test_gdpr.py`, `api/main.py`  
   - Parallel: Yes ([P])
-- **T007  Integration Smoke Tests [P]** ✅
-  - Summary: Extend `tests/test_basic.py` with ingestion+search smoke flows using fixtures; include 413 scenario.
-  - Dependencies: T002
-  - Files/Paths: `tests/test_basic.py`
+
+- **T005  JWT & RBAC Tests [P]**  
+  - Summary: Add failing authN/authZ tests enforcing JWT verification and role policies on protected endpoints.  
+  - Dependencies: T002  
+  - Files/Paths: `tests/security/test_authentication.py`, `api/security.py`  
   - Parallel: Yes ([P])
-- **T008  Locust Performance Suite** ✅
-  - Summary: **POC DECISION**: Expand `tests/performance/load/test_locust.py` to emit baseline performance JSON stats (latency p95/p99, throughput) for establishing performance baselines only - no target thresholds or pass/fail criteria for POC phase.
-  - Dependencies: T002
-  - Files/Paths: `tests/performance/load/test_locust.py`
+
+- **T006  Automated Alerting Tests [P]**  
+  - Summary: Add failing monitoring tests validating Prometheus alerts trigger notifications and reference runbooks.  
+  - Dependencies: T002  
+  - Files/Paths: `tests/monitoring/test_alerting.py`, `prometheus/alerts.yml`  
+  - Parallel: Yes ([P])
+
+- **T007  CI Retrieval Guardrails**  
+  - Summary: Update `.github/workflows/ci-cd.yml` to fail when top-5 accuracy <95% or quality <0.80 and add retrieval smoke job.  
+  - Dependencies: T002  
+  - Files/Paths: `.github/workflows/ci-cd.yml`, `scripts/evaluate_retrieval.py`  
   - Parallel: No
 
 ## Core Implementation
-- **T009  Enhanced Document Processor v4.0 Integration**
-  - Summary: **COMPLETED**: Implement `api/processor_wrapper.py` with Enhanced Document Processor v4.0 featuring complete multi-format support (PDF, DOCX, PPTX, XLSX, CSV, TXT), quality optimization (0.718 score, 100% pass rate), perfect data cleaning (zero artifacts), sentence-aware chunking (2000 chars, 400 overlap), and enterprise-grade processing. Includes comprehensive test suite: 25+ validation scripts covering all formats, quality scenarios, and business document processing.
-  - Dependencies: T004, T005–T008
-  - Files/Paths: `api/processor_wrapper.py`, `bms-agent/scr/enhanced_document_processor.py`, `scripts/test_*.py` (25+ test files)
+
+- **T008  Implement Storage Encryption**  
+  - Summary: Encrypt Qdrant and data directories, manage keys, and update backup/restore scripts for encrypted volumes.  
+  - Dependencies: T003  
+  - Files/Paths: `scripts/setup_encryption.sh`, `scripts/restore_backup.sh`, `docs/security-notes.md`  
   - Parallel: No
-  - Status: ✅ COMPLETED - All features implemented and tested
-- **T009A  API Data Models [P]** ✅
-  - Summary: Implement Pydantic models in `api/models/` based on data-model.md entities: Document, DocumentVersion, Chunk, ChunkEmbedding, RetrievalQuery, UserIdentity, AuditLog with proper validation and relationships.
-  - Dependencies: T002
-  - Files/Paths: `api/models/documents.py`, `api/models/search.py`, `api/models/health.py`
+
+- **T009  GDPR Enforcement & Data Retention**  
+  - Summary: Implement retention jobs, right-to-erasure workflow, and update compliance documentation.  
+  - Dependencies: T004  
+  - Files/Paths: `api/main.py`, `scripts/cleanup_retention.sh`, `docs/security-notes.md`  
+  - Parallel: No
+
+- **T010  Audit Logging Framework**  
+  - Summary: Add structured audit logging for admin operations and document audit procedures.  
+  - Dependencies: T003, T004  
+  - Files/Paths: `api/audit_log.py`, `api/main.py`, `docs/audit-log.md`  
+  - Parallel: No
+
+- **T011  JWT Authentication & RBAC**  
+  - Summary: Integrate JWT verification, role-based access control, and production secrets management.  
+  - Dependencies: T005  
+  - Files/Paths: `api/security.py`, `api/main.py`, `.env.production`  
+  - Parallel: No
+
+- **T012  Automated Alerting Pipeline**  
+  - Summary: Implement alert routing (PagerDuty/Slack), finalize Prometheus rules, and document escalation in runbooks.  
+  - Dependencies: T006  
+  - Files/Paths: `prometheus/alerts.yml`, `grafana/dashboards/bms-agent.json`, `DEPLOYMENT_CHECKLIST.md`  
+  - Parallel: No
+
+- **T013  Expand Retrieval Evaluation Dataset**  
+  - Summary: Grow ground-truth dataset to ≥50 queries, refresh metrics, and record evidence.  
+  - Dependencies: T007  
+  - Files/Paths: `data/evaluation/ground_truth.jsonl`, `data/evaluation/EVALUATION_STATUS.md`  
+  - Parallel: No
+
+- **T014  Spec & Plan Alignment for Retrieval Enhancements**  
+  - Summary: Update spec.md with requirements R2.5-R2.20 and align plan.md for retrieval enhancements.  
+  - Dependencies: T013  
+  - Files/Paths: `.specify/features/001-bms-agent/spec.md`, `.specify/features/001-bms-agent/plan.md`  
+  - Parallel: No
+
+## Integration & Architecture
+
+- **T015  Alembic Migration Framework**  
+  - Summary: Scaffold Alembic, add initial migration placeholder, and document dual strategy with Qdrant manual logs.  
+  - Dependencies: T008  
+  - Files/Paths: `alembic.ini`, `migrations/versions/`, `docs/migrations.md`  
+  - Parallel: No
+
+- **T016  Multi-Backend LLM Enablement**  
+  - Summary: Add vLLM integration option, update service scripts, and document LLM fallback strategy.  
+  - Dependencies: T011  
+  - Files/Paths: `scripts/manage_services.sh`, `scripts/start_all_services.sh`, `docs/llm-architecture.md`  
+  - Parallel: No
+
+- **T017  Model Versioning & Hashing**  
+  - Summary: Implement model artifact hashing, cataloging, and verification prior to deployment.  
+  - Dependencies: T016  
+  - Files/Paths: `scripts/model_versioning.py`, `docs/llm-architecture.md`, `DEPLOYMENT_CHECKLIST.md`  
+  - Parallel: No
+
+- **T018  Air-Gap Validation & Network Controls**  
+  - Summary: Build air-gap verification script, tighten firewall rules, and document audit steps.  
+  - Dependencies: T017  
+  - Files/Paths: `scripts/airgap_validate.py`, `docs/security-notes.md`, `config/firewall.rules`  
+  - Parallel: No
+
+## Polish & Readiness
+
+- **T019  Documentation Refresh [P]**  
+  - Summary: Update README, quickstart, security notes, and deployment checklist with production compliance changes.  
+  - Dependencies: T008, T009, T010, T011, T012, T013, T014, T015, T016, T017, T018  
+  - Files/Paths: `README.md`, `specs/001-bms-agent/quickstart.md`, `docs/security-notes.md`, `DEPLOYMENT_CHECKLIST.md`  
   - Parallel: Yes ([P])
-- **T010  Upload Endpoint** ✅
-  - Summary: Implement `POST /api/v1/documents/upload` in `api/main.py`, wiring streaming pipeline from `/workspace/bms_data/uploads/`, ensuring MIME/type validation for all supported formats (PDF, DOCX, PPTX, CSV, XLSX, TXT), checksum logging, and versioning per data model.
-  - Dependencies: T009
-  - Files/Paths: `api/main.py`
-  - Parallel: No
-- **T011  Semantic Search Endpoint** ✅
-  - Summary: Implement `POST /api/v1/search/semantic` returning top chunks with dense scores and latency metadata.
-  - Dependencies: T009, T006
-  - Files/Paths: `api/main.py`
-  - Parallel: No
-- **T012  Hybrid Search Endpoint** ✅
-  - Summary: Implement `POST /api/v1/search/hybrid` with fusion weights, sparse tokens, and response schema from contract.
-  - Dependencies: T011
-  - Files/Paths: `api/main.py`
-  - Parallel: No
-- **T013  Health Endpoints** ✅
-  - Summary: Implement `/health` and `/health/detailed` including checks for Qdrant, Ollama, n8n webhook, OpenWebUI, and storage space.
-  - Dependencies: T009
-  - Files/Paths: `api/main.py`
-  - Parallel: No
-- **T014  Metrics Endpoint** ✅
-  - Summary: Implement `/metrics/uplink` returning latency histogram, ingestion throughput, error counts, and scrape freshness per data model.
-  - Dependencies: T009, T008
-  - Files/Paths: `api/main.py`
-  - Parallel: No
 
-## Security & Compliance (MVP REQUIREMENT) ✅
-- **T015  Basic Security Module Implementation** ✅
-  - Summary: **MVP REQUIREMENT**: Build basic `api/security.py` with token bucket rate limiting algorithm (60 req/min per IP, in-memory implementation) and basic security headers middleware. No JWT or API key authentication required for MVP (deferred to production per spec.md R3.1).
-  - Dependencies: T011
-  - Files/Paths: `api/security.py`
-  - Parallel: No
-  - Status: ✅ **COMPLETED** - Token bucket rate limiting + security headers implemented
-  - Implementation Details: Use token bucket algorithm for rate limiting with configurable bucket size and refill rate; store state in-memory (acceptable for MVP); return HTTP 429 with Retry-After header when limit exceeded; add security headers (X-Frame-Options, X-Content-Type-Options, X-XSS-Protection)
-  - Acceptance Criteria:
-    - Rate limiting middleware returns HTTP 429 when limit exceeded
-    - Retry-After header included in 429 responses
-    - Configurable via environment variables (RATE_LIMIT_PER_MIN)
-    - Security headers applied to all responses
-    - In-memory token bucket implementation (no external dependencies)
-- **T016  Security Wiring & Tests** ✅
-  - Summary: **MVP REQUIREMENT**: Integrate basic security middleware into FastAPI app, add automated tests for 400/413/429 error handling, and document production security roadmap in `docs/security-notes.md`.
-  - Dependencies: T015, T005–T007
-  - Files/Paths: `api/main.py`, `docs/security-notes.md`, `tests/security/test_rate_limiting.py`, `tests/security/test_security_headers.py`
-  - Parallel: No
-  - Status: ✅ **COMPLETED** - Security middleware integrated, 12/12 tests passing, roadmap documented
-  - Acceptance Criteria:
-    - Security middleware integrated into FastAPI app startup
-    - Automated tests verify rate limiting (429 responses)
-    - Automated tests verify security headers on all responses
-    - Automated tests verify error handling (400/413/429)
-    - Production security roadmap documented in `docs/security-notes.md`
-    - Test coverage ≥80% for security module
-
-## Integrations
-- **T017  Slack Integration** ✅
-  - Summary: **COMPLETED**: Implemented direct FastAPI Slack integration (n8n not available). Created `api/slack_integration.py` with slash command handlers (`/bms-search`, `/bms-search-hybrid`, `/bms-help`), Slack Block Kit formatting, signature verification, and event handling. Complete setup guide in `docs/SLACK_SETUP.md`. POC mode: optional authentication.
-  - Dependencies: T011, T016
-  - Files/Paths: `api/slack_integration.py`, `docs/SLACK_SETUP.md`, `api/main.py` (router integration)
-  - Parallel: No
-  - Status: ✅ COMPLETED - Endpoints ready, integrated into API, documented
-- **T018  OpenWebUI Tool Script** ✅
-  - Summary: **COMPLETED**: Implemented `tools/bms_search.py` with 5 search functions (semantic, hybrid, filtered, document type, health check), 7 configurable Valves, complete error handling, and comprehensive documentation. Test suite: 7/7 tests passing (100%). Tool ready for OpenWebUI deployment.
-  - Dependencies: T011, T012
-  - Files/Paths: `tools/bms_search.py`, `tools/README.md`, `tools/TESTING.md`, `tools/test_bms_search.py`
-  - Parallel: No
-  - Status: ✅ COMPLETED - Tool implemented, tested, and documented. OpenWebUI installation in progress.
-
-## Observability & Operations
-- **T019  Manage Services Script** ✅
-  - Summary: Complete `scripts/manage_services.sh` with start/stop/status/restart flows for Qdrant and API, logging to `/workspace/logs/`.
-  - Dependencies: T003, T010
-  - Files/Paths: `scripts/manage_services.sh`
-  - Parallel: No
-  - Status: ✅ **COMPLETED** - Comprehensive service management with start/stop/restart/status
-- **T020  Health Check Script** ✅
-  - Summary: Extend `scripts/health_check.sh` to probe API endpoints, Ollama, n8n, OpenWebUI, metrics, and log results with timestamps.
-  - Dependencies: T013, T019
-  - Files/Paths: `scripts/health_check.sh`
-  - Parallel: No
-  - Status: ✅ **COMPLETED** - Enhanced health checks with logging, disk/memory monitoring
-- **T021  Manual Alert Runbooks & Grafana Dashboards** ✅
-  - Summary: Configure Prometheus scrape targets, create Grafana panels per constitution §8, and document comprehensive manual alert runbooks in `DEPLOYMENT_CHECKLIST.md` covering: (1) API latency >100ms p95 procedures, (2) Document ingestion failure escalation, (3) Qdrant/Ollama/n8n dependency recovery, (4) Contact matrix with timelines, (5) Manual monitoring and log analysis procedures.
-  - Dependencies: T014, T020
-  - Files/Paths: `grafana/`, `DEPLOYMENT_CHECKLIST.md`
-  - Parallel: No
-  - Status: ✅ **COMPLETED** - Prometheus config, alert rules, Grafana dashboard, and runbooks documented
-  - Acceptance Criteria: ✅ ALL MET
-    - ✅ Prometheus configuration created (`prometheus/prometheus.yml`)
-    - ✅ Alert rules configured (`prometheus/alerts.yml`) with 12 alert definitions
-    - ✅ Grafana dashboard created (`grafana/dashboards/bms-agent.json`) with 6 panels
-    - ✅ Dashboard panels: API latency (p50/p95/p99), request throughput, error rate, service health, Qdrant stats
-    - ✅ Manual alert runbooks documented in `DEPLOYMENT_CHECKLIST.md`
-    - ✅ Contact matrix with escalation timelines included
-    - ✅ Runbooks cover: latency degradation, ingestion failures, dependency outages, rate limiting
-
-## Documentation & Validation
-- **T022  Quickstart Verification [P]** ✅
-  - Summary: Walk through `quickstart.md`, update instructions with actual commands, ensure curl examples function end-to-end.
-  - Dependencies: T010–T018
-  - Files/Paths: `specs/001-bms-agent/quickstart.md`
+- **T020  Production Readiness Verification [P]**  
+  - Summary: Execute final compliance checklist, gather evidence (logs, screenshots), and sign off in `docs/compliance/production_readiness.md`.  
+  - Dependencies: T019  
+  - Files/Paths: `docs/compliance/production_readiness.md`, `logs/`, `reports/performance-baseline.md`  
   - Parallel: Yes ([P])
-  - Status: ✅ **COMPLETED** - Quickstart updated with production commands, service management, security features
-- **T023  README/Docs Sync [P]** ✅
-  - Summary: Refresh `README.md`, `TESTING.md`, `reports/performance-baseline.md`, and `docs/security-notes.md` to mirror current workflow and metrics.
-  - Dependencies: T008–T021
-  - Files/Paths: `README.md`, `TESTING.md`, `reports/performance-baseline.md`, `docs/security-notes.md`
-  - Parallel: Yes ([P])
-  - Status: ✅ **COMPLETED** - README.md updated with current status (83%, 1,744 chunks, RAGAS scores)
-- **T024  Performance Baseline Publication** ✅
-  - Summary: Run Locust suite, capture JSON stats, and summarize latency/throughput in `reports/performance-baseline.md` with acceptance criteria checks.
-  - Dependencies: T008, T014
-  - Files/Paths: `reports/performance-baseline.md`
-  - Parallel: No
-  - Status: ✅ **COMPLETED** - Comprehensive performance baseline report published
-  - Acceptance Criteria: ✅ ALL MET
-    - ✅ Performance baseline report created in `reports/performance-baseline.md`
-    - ✅ Latency metrics documented (p50/p95/p99 for semantic and hybrid search)
-    - ✅ Throughput metrics documented (~9 docs/min average)
-    - ✅ Acceptance criteria validated against POC/MVP/Production targets
-    - ✅ Resource utilization metrics included (memory, disk, GPU)
-    - ✅ Retrieval accuracy confirmed (96%, exceeds ≥95% threshold)
-    - ✅ Recommendations for optimization provided
-- **T025  Retrieval Accuracy & Quality Evaluation** ✅
-  - Summary: Build `data/evaluation/ground_truth.jsonl` with minimum 50 queries across 10 categories, implement `scripts/evaluate_retrieval.py`, compute RAGAS metrics (faithfulness, relevancy, context precision/recall), and wire CI hook enforcing ≥95 % top-5 accuracy plus quality thresholds from EnhancedDocumentProcessor.
-  - Dependencies: T009, T011, T016 (T035 completes this task with full dataset validation)
-  - Files/Paths: `data/evaluation/ground_truth.jsonl`, `scripts/evaluate_retrieval.py`, `.github/workflows/ci-cd.yml`
-  - Parallel: No
-  - Status: ✅ **COMPLETED** - Evaluation system operational, 96% accuracy achieved
-  - Acceptance Criteria: ⚠️ MOSTLY MET (dataset size below target, but accuracy exceeds threshold)
-    - ⚠️ Ground truth dataset: 25 queries across 15 categories (target: ≥50 queries, ≥10 categories)
-    - ✅ Evaluation script implemented and functional
-    - ✅ Reports 96% top-5 accuracy (exceeds ≥95% threshold)
-    - ✅ Full dataset (420 documents, 1,458 chunks) indexed in Qdrant
-    - ⚠️ CI integration not yet implemented (manual execution only)
-  - Note: Dataset size below target but quality excellent; recommend expanding to 50+ queries for production
-
-## Polish
-- **T026  Pre-commit & CI Hooks [P]** ✅
-  - Summary: Configure `.pre-commit-config.yaml` with Black, Ruff, mypy; update CI to enforce hooks before merge.
-  - Dependencies: T016, T023
-  - Files/Paths: `.pre-commit-config.yaml`, `.github/workflows/ci-cd.yml`
-  - Parallel: Yes ([P])
-  - Status: ✅ **COMPLETED** - Pre-commit hooks and CI/CD pipeline configured
-  - Acceptance Criteria: ✅ ALL MET
-    - ✅ `.pre-commit-config.yaml` created with Black, Ruff, mypy, Bandit
-    - ✅ Additional hooks: YAML/JSON validation, markdown linting, secret detection
-    - ✅ CI/CD pipeline created (`.github/workflows/ci-cd.yml`)
-    - ✅ CI enforces pre-commit hooks, quality checks, security scans
-    - ✅ Test coverage validation (≥80% threshold)
-    - ✅ Performance and retrieval accuracy jobs included
-    - ✅ `pyproject.toml` created for tool configuration
-- **T027  Release Pipeline Prep** ✅
-  - Summary: Draft container build steps and migration automation placeholders (`.github/workflows/ci-cd.yml`, `docs/migrations.md`) for post-MVP release process.
-  - Dependencies: T015, T019, T026
-  - Files/Paths: `.github/workflows/ci-cd.yml`, `docs/migrations.md`
-  - Parallel: No
-  - Status: ✅ **COMPLETED** - Release pipeline placeholders and migration documentation complete
-  - Acceptance Criteria: ✅ ALL MET
-    - ✅ CI/CD pipeline includes build and deployment placeholders
-    - ✅ Container build steps documented (commented for future implementation)
-    - ✅ Deployment automation placeholders for RunPod
-    - ✅ `docs/migrations.md` comprehensive migration tracking and procedures
-    - ✅ Migration history documented (v1.0.0 → v1.2.0)
-    - ✅ Pending migrations mapped to production tasks (v2.0.0)
-    - ✅ Rollback procedures documented
-
-## Operational Excellence (NEW)
-- **T028  Workspace Persistence Migration** ✅
-  - Summary: **COMPLETED**: Migrated all critical applications and data to `/workspace` for RunPod persistence. Includes Ollama binary (33MB), Qdrant binary (49MB) with config, Qdrant data (142MB, 448 docs), OpenWebUI data, and centralized logging. Created automated migration script with backup, disk space validation, and rollback capability.
-  - Dependencies: T001, T003, T004
-  - Files/Paths: `/workspace/apps/{ollama,qdrant}/`, `/workspace/data/{ollama_models,qdrant_storage,openwebui}/`, `scripts/migrate_to_workspace.sh`, `PERSISTENCE_MIGRATION.md`
-  - Parallel: No
-  - Status: ✅ COMPLETED - 100% persistence achieved, all services running from /workspace
-- **T029  Auto-Start Configuration** ✅
-  - Summary: **COMPLETED**: Implemented comprehensive auto-start system with multiple methods: .bashrc integration (active), RunPod startup script, systemd service template, and cron job template. Created setup script with testing instructions and logging. All services now auto-start on shell login and pod reboot.
-  - Dependencies: T028, T019, T020
-  - Files/Paths: `scripts/setup_autostart.sh`, `scripts/runpod_init.sh`, `scripts/bms-agent.service`, `scripts/crontab.txt`, `~/.bashrc`
-  - Parallel: No
-  - Status: ✅ COMPLETED - Auto-start active via .bashrc, RunPod script ready
-- **T030  Metadata Quality Fixes** ✅
-  - Summary: **COMPLETED**: Fixed all metadata display issues in search results. Updated API to return document_type field, improved hybrid search scoring with document name weighting (3x), updated quality scores for all 448 documents (0.72-0.85 by type), and increased content preview to 800 chars for better LLM context.
-  - Dependencies: T011, T012, T018
-  - Files/Paths: `api/main.py`, `tools/bms_search.py`, `scripts/update_quality_scores.py`
-  - Parallel: No
-  - Status: ✅ COMPLETED - Type: docx/pdf/xlsx, Quality: 0.72-0.85, Relevance: 0.4-0.8
-- **T031  Service Management Scripts** ✅
-  - Summary: **COMPLETED**: Created complete service management infrastructure including master startup script (start_all_services.sh), health check script with service monitoring, environment configuration (env.sh), and Qdrant config file. All services (Qdrant, Ollama, BMS API, OpenWebUI) now manageable via unified scripts.
-  - Dependencies: T019, T020, T028
-  - Files/Paths: `scripts/start_all_services.sh`, `scripts/health_check.sh`, `scripts/env.sh`, `config.yaml`
-  - Parallel: No
-  - Status: ✅ COMPLETED - All 4 services manageable, health monitoring active
-
-## SharePoint Integration & Data Refresh (NEW)
-- **T032  SharePoint Download Script Testing** ✅
-  - Summary: **COMPLETED**: Tested SharePoint document download automation with cookie-based authentication. Successfully downloaded 5 test documents (1.08 MB total), validated cookie conversion from JSON to Netscape format, confirmed error-free execution, and verified metadata capture. Created cookie conversion utility for EditThisCookie JSON format.
-  - Dependencies: None (standalone testing)
-  - Files/Paths: `scripts/download_sharepoint_server.py`, `sharepoint_cookies_netscape.txt`, `scripts/convert_cookies_json_to_netscape.py`
-  - Parallel: No
-  - Status: ✅ COMPLETED - 5/5 downloads successful, 0 errors, ready for T033
-- **T033  Full SharePoint Document Download (Post-2023)** ✅
-  - Summary: **COMPLETED**: Downloaded all SharePoint documents modified after 2023-12-31 using parallel download script (10 workers). Successfully downloaded 883 documents (274.8 MB) in 88.5 seconds (11.3 docs/sec), organized by type, with only 3 errors (HTTP 404). Created parallel downloader for 67x speed improvement.
-  - Dependencies: T032
-  - Files/Paths: `scripts/download_sharepoint_parallel.py`, `/workspace/bms_data/incoming/`, `docs/bms-docs-urls.md` (1,004 URLs)
-  - Parallel: No
-  - Status: ✅ COMPLETED - 883/1004 downloaded (88%), 118 skipped (old), 3 errors, ready for T034
-    - Ready for T034 batch processing
-- **T034  Batch Process Downloaded Documents** ✅
-  - Summary: **COMPLETED**: Processed all 420 downloaded SharePoint documents with Enhanced Document Processor v4.0 using single-threaded GPU mode. Successfully generated 768-dim embeddings, ingested 1,458 chunks to Qdrant (5,832 vectors), achieved 100% success rate with quality scores 0.72-0.85 by format. Processing completed in ~46 minutes at ~9 docs/min average.
-  - Dependencies: T033, T009
-  - Files/Paths: `scripts/batch_process_incoming.py`, `/workspace/bms_data/incoming/`, `/workspace/bms_data/processed/`
-  - Parallel: No
-  - Status: ✅ COMPLETED - 420/420 documents processed, 1,458 chunks, 5,832 vectors, collection status GREEN
-  - Acceptance Criteria: ✅ ALL MET
-    - ✅ All files from incoming/ processed successfully (100%)
-    - ✅ 768-dim embeddings generated for all documents
-    - ✅ Documents ingested to Qdrant collection `nomad_bms_documents`
-    - ✅ Processing statistics: 100% success rate, quality scores 0.72-0.85
-    - ✅ Processing throughput: ~9 documents/minute average (GPU-optimized)
-    - ✅ Qdrant collection updated: 1,458 chunks, 5,832 vectors, status GREEN
-- **T035  Post-Download Validation & T025 Completion** ✅
-  - Summary: **COMPLETED**: Validated complete dataset in Qdrant (420 docs, 1,458 chunks). Confirmed 768-dim embeddings, quality scores 0.72-0.85. Retrieval evaluation shows 96% accuracy (exceeds ≥95% threshold). System validated for production readiness.
-  - Dependencies: T034, T025
-  - Files/Paths: `scripts/evaluate_retrieval.py`, `data/evaluation/ground_truth.jsonl`, Qdrant collection
-  - Parallel: No
-  - Status: ✅ COMPLETED - All validation passed, 96% accuracy achieved
-  - Acceptance Criteria: ✅ ALL MET
-    - ✅ Qdrant collection: 420 documents, 1,458 chunks
-    - ✅ All embeddings 768-dimensional
-    - ✅ Quality scores 0.72-0.85 (exceeds ≥0.70)
-    - ✅ Evaluation: 96% top-5 accuracy (exceeds ≥95%)
-    - ✅ T025 marked complete
-    - ✅ Production ready
-
-## T025 Status Update (2025-09-30)
-- **Implementation**: 80% Complete
-- **Ground Truth Dataset**: ✅ Created (25 queries, 15 categories)
-- **Evaluation Script**: ✅ Implemented (top-k accuracy, MRR, quality metrics)
-- **Execution**: ⚠️ BLOCKED - Requires full dataset re-indexing with 768-dim embeddings
-- **Fix Applied**: ✅ API configured for 768-dim (sentence-transformers/all-mpnet-base-v2)
-- **Next Steps**: T032 → T033 → T034 → T035 (complete T025)
-- **Expected Result**: 96% accuracy (based on informal testing) - will pass ≥95% threshold
-- **Files Created**: 
-  - `data/evaluation/ground_truth.jsonl`
-  - `scripts/evaluate_retrieval.py`
-  - `data/evaluation/EVALUATION_STATUS.md`
-  - `data/evaluation/EMBEDDING_FIX_REPORT.md`
-
-## MVP Enhancement Tasks (Clarified Requirements) - NEW
-- **T038  Quality Score Metadata Flagging** ✅
-  - Summary: Implement quality flagging per R1.6 - store all chunks regardless of quality score, add `quality_score` field to chunk metadata in Qdrant, allow optional quality filtering in search endpoints, never fail processing due to low quality alone.
-  - Dependencies: T009, T011, T012
-  - Files/Paths: `api/processor_wrapper.py`, `bms-agent/scr/enhanced_document_processor.py`, `api/main.py`
-  - Parallel: No
-  - Scope: **MVP** (data model enhancement - backward compatible)
-  - Status: ✅ **COMPLETED** - Quality filtering implemented with min_quality parameter
-  - Acceptance Criteria: ✅ ALL MET
-    - ✅ All chunks indexed regardless of quality (RAGAS scores: 0.94-1.0)
-    - ✅ Chunks have `quality_score` field in Qdrant payload (verified)
-    - ✅ Search endpoints accept optional `min_quality` parameter (0.0-1.0)
-    - ✅ Processing never fails due to low quality score
-    - ✅ Quality metrics available in search results metadata
-- **T040  Configurable Relevance Filtering** ✅
-  - Summary: Implement min_score parameter per R2.4 - add optional `min_score` query parameter to search endpoints (semantic/hybrid), validate range (0.0-1.0), filter results below threshold, document in OpenAPI spec, default behavior returns all top-k results.
-  - Dependencies: T011, T012
-  - Files/Paths: `api/main.py`, `api/models/search.py`, OpenAPI spec
-  - Parallel: No
-  - Scope: **MVP** (simple query parameter addition - backward compatible)
-  - Status: ✅ **COMPLETED** - min_score filtering implemented for both search endpoints
-  - Acceptance Criteria: ✅ ALL MET
-    - ✅ `/api/v1/search/semantic?min_score=0.7` filters results
-    - ✅ Parameter validated: 0.0 ≤ min_score ≤ 1.0 (Pydantic validation)
-    - ✅ Returns 422 if validation fails (Pydantic automatic validation)
-    - ✅ Documented in endpoint docstrings (auto-generated OpenAPI spec)
-    - ✅ Default (no parameter) returns all top-k results
-    - ✅ Works for both semantic and hybrid search endpoints
-    - ✅ Includes filtered_count in response metadata when filter applied
-- **T041  Automated Backup System** ✅
-  - Summary: Implement automated backup system per R7.4 - create backup script for Qdrant storage and BMS data, configure cron job for daily execution, implement retention policies (30-day logs, 90-day data), add backup verification and restoration procedures.
-  - Dependencies: T028, T031
-  - Files/Paths: `scripts/backup_system.sh`, `scripts/verify_backup.sh`, `scripts/restore_backup.sh`, `/etc/cron.d/bms-backup`, `DEPLOYMENT_CHECKLIST.md`
-  - Parallel: No
-  - Scope: **MVP** (operational requirement per constitution §8)
-  - Status: ✅ **COMPLETED** - Backup system operational, tested successfully (484M backup created)
-  - Acceptance Criteria: ✅ ALL MET
-    - ✅ Backup script creates timestamped archives in `/workspace/backups/`
-    - ✅ Backs up `/workspace/qdrant_storage` (11M) and `/workspace/bms_data` (431M)
-    - ✅ Cron job setup script created for daily execution (2 AM)
-    - ✅ Implements retention: deletes logs >30 days, data backups >90 days
-    - ✅ Backup verification script validates archive integrity (3/3 passed)
-    - ✅ Restoration script with interactive selection
-    - ✅ Disk space check before backup (fails if <10% free)
-    - ✅ Logs backup operations to `/workspace/logs/backup.log`
-    - ✅ Documented in `DEPLOYMENT_CHECKLIST.md`
-- **T042  RunPod Initialization & Service Startup Validation** ✅
-  - Summary: Enhance and validate RunPod initialization scripts for production reliability - improve `scripts/runpod_init.sh` with SSH key persistence, comprehensive system package installation, Ollama GPU setup with health checks, and proper error handling. Validate `start_all_services.sh` orchestration with service readiness checks and comprehensive logging.
-  - Dependencies: T028, T029, T031
-  - Files/Paths: `scripts/runpod_init_v2.sh`, `/workspace/scripts/start_all_services.sh`, `/workspace/config/authorized_keys`, `/workspace/logs/startup.log`
-  - Parallel: No
-  - Scope: **MVP** (operational requirement for reliable pod restarts)
-  - Status: ✅ **COMPLETED** - Enhanced init script with GPU verification, comprehensive health checks
-  - Acceptance Criteria: ✅ ALL MET
-    - ✅ Enhanced `runpod_init_v2.sh` with SSH key persistence from `/workspace/config/authorized_keys`
-    - ✅ System package installation (vim, nano, git, curl, wget, htop, tmux, jq, etc.)
-    - ✅ Ollama GPU installation with version verification and GPU detection
-    - ✅ GPU verification with nvidia-smi and CUDA environment checks
-    - ✅ Ollama model checking with cache validation
-    - ✅ Proper service startup orchestration via `start_all_services.sh`
-    - ✅ Comprehensive logging to `/workspace/logs/startup.log` and `/workspace/logs/runpod_init.log`
-    - ✅ Error handling with error_exit function and proper exit codes
-    - ✅ Service readiness validation (30s timeout for Ollama, 6 retries for API/WebUI)
-    - ✅ Final summary with service count (X/4 services operational)
-    - ✅ Documentation in `DEPLOYMENT_CHECKLIST.md` for RunPod configuration
-    - ✅ Script enhanced with set -euo pipefail for robust error handling
-
-## Post-MVP Enhancement Tasks - NEW
-- **T036  Document Re-upload with Destructive Replacement** ✅
-  - Summary: Implement destructive replacement logic for document re-upload per R1.4 - detect duplicate filename, remove existing document and all chunks from Qdrant, then process as new upload with same or new document ID.
-  - Dependencies: T010, T034
-  - Files/Paths: `api/main.py`, `api/processor_wrapper.py`
-  - Parallel: No
-  - Scope: **Post-MVP** (enhancement to existing upload endpoint)
-  - Status: ✅ **COMPLETED** - Destructive replacement implemented
-  - Acceptance Criteria: ✅ ALL MET
-    - ✅ `delete_document_by_filename()` method added to processor_wrapper
-    - ✅ Re-uploading same filename triggers deletion of old version
-    - ✅ All old chunks removed from Qdrant before new processing
-    - ✅ New document ID generated for each upload (new ID strategy)
-    - ✅ Upload endpoint returns replacement indicator and deleted chunk count
-    - ✅ ProcessingResult extended with `replaced_existing` and `deleted_chunks` fields
-- **T037  Async Upload Queue with HTTP 202** ✅
-  - Summary: Implement asynchronous upload queue per R1.5 - accept unlimited concurrent uploads with HTTP 202 response, background task queue processes documents, expose status tracking endpoint for upload progress monitoring.
-  - Dependencies: T010, T036
-  - Files/Paths: `api/main.py`, `api/background_tasks.py`, `api/models/upload_status.py`
-  - Parallel: No
-  - Scope: **Post-MVP** (major architectural change - breaking API contract)
-  - Status: ✅ **COMPLETED** - Async upload queue implemented
-  - Acceptance Criteria: ✅ ALL MET
-    - ✅ New endpoint `POST /api/v1/documents/upload/async` returns HTTP 202 with job ID
-    - ✅ Background worker processes documents asynchronously via asyncio queue
-    - ✅ Status endpoint `GET /api/v1/documents/status/{job_id}` returns processing state
-    - ✅ No artificial concurrency limits (unlimited concurrent uploads)
-    - ✅ Queue stats endpoint `GET /api/v1/documents/queue/stats` for monitoring
-    - ✅ Job history maintained (last 1000 jobs)
-    - ⚠️ Queue persistence: In-memory only (would require Redis/DB for production persistence)
-- **T039  Document Deletion Endpoint** ✅
-  - Summary: Implement admin-only document deletion per R1.7 - create `DELETE /api/v1/documents/{id}` endpoint, remove document metadata and all associated chunks from Qdrant, return 204 on success, add audit logging for deletion events.
-  - Dependencies: T010, T011
-  - Files/Paths: `api/main.py`, `api/security.py` (admin auth), `api/audit_log.py`
-  - Parallel: No
-  - Scope: **Post-MVP** (requires admin authentication framework)
-  - Status: ✅ **COMPLETED** - Document deletion endpoint implemented
-  - Acceptance Criteria: ✅ MOSTLY MET (auth deferred to production)
-    - ✅ DELETE endpoint `DELETE /api/v1/documents/{document_id}` implemented
-    - ✅ `delete_document_by_id()` method added to processor_wrapper
-    - ✅ Removes all chunks from Qdrant collection by document_id
-    - ✅ Returns 204 No Content on success
-    - ✅ Returns 404 if document not found
-    - ✅ Basic audit logging via application logs
-    - ⚠️ Admin authentication: Not enforced (POC mode, production requires T046)
-
-## Constitution Compliance Tasks (CRITICAL - Production Requirements)
-
-### Security & Compliance (Constitution §5)
-- **T043  Encryption at Rest Implementation**
-  - Summary: Implement encryption at rest per constitution §5 - encrypt Qdrant storage and BMS data directories, configure encryption keys management, document encryption strategy and key rotation procedures.
-  - Dependencies: T028, T041
-  - Files/Paths: `scripts/setup_encryption.sh`, `docs/security-notes.md`, `/workspace/qdrant_storage/`, `/workspace/bms_data/`
-  - Parallel: No
-  - Scope: **Production** (constitution §5 MUST requirement)
-  - Acceptance Criteria:
-    - Qdrant storage encrypted at rest (LUKS/dm-crypt or application-level)
-    - BMS data directories encrypted
-    - Encryption key management documented
-    - Key rotation procedures in `docs/security-notes.md`
-    - Backup system handles encrypted data correctly
-    - Performance impact documented (<10% overhead target)
-
-- **T044  GDPR Compliance Implementation**
-  - Summary: Implement GDPR compliance per constitution §5 - add data retention policies, implement right-to-erasure (document deletion), create privacy policy documentation, add consent tracking for user data.
-  - Dependencies: T039 (deletion endpoint)
-  - Files/Paths: `docs/GDPR_COMPLIANCE.md`, `docs/PRIVACY_POLICY.md`, `api/gdpr.py`, `api/models/consent.py`
-  - Parallel: No
-  - Scope: **Production** (constitution §5 MUST requirement)
-  - Acceptance Criteria:
-    - Data retention policies documented and implemented
-    - Right-to-erasure via deletion endpoint (T039)
-    - Privacy policy created in `docs/PRIVACY_POLICY.md`
-    - Consent tracking for user queries (optional for POC)
-    - Data processing records maintained
-    - GDPR compliance checklist completed
-
-- **T045  Audit Logging System**
-  - Summary: Implement comprehensive audit logging per constitution §5 - log all document operations (upload, search, deletion), user actions, authentication events, and system changes with structured format and retention policies.
-  - Dependencies: T010, T011, T039
-  - Files/Paths: `api/audit_log.py`, `api/models/audit.py`, `/workspace/logs/audit.log`, `docs/security-notes.md`
-  - Parallel: No
-  - Scope: **Production** (constitution §5 MUST requirement)
-  - Acceptance Criteria:
-    - Audit log captures: user ID, action, timestamp, resource, outcome
-    - Structured JSON format with correlation IDs
-    - Separate audit log file with 90-day retention
-    - Tamper-evident logging (append-only, checksums)
-    - Query interface for audit log retrieval
-    - Integration with document operations (upload/search/delete)
-
-- **T046  RBAC & JWT Authentication Implementation**
-  - Summary: Implement Role-Based Access Control and JWT authentication per constitution §5 - define roles (admin, user, readonly), implement JWT validation middleware, create authentication endpoints, integrate with all protected routes.
-  - Dependencies: T015, T039, T045
-  - Files/Paths: `api/auth.py`, `api/rbac.py`, `api/models/user.py`, `docs/security-notes.md`
-  - Parallel: No
-  - Scope: **Production** (constitution §5 MUST requirement - deferred from POC)
-  - Acceptance Criteria:
-    - JWT authentication middleware implemented
-    - Role definitions: admin, user, readonly
-    - Protected endpoints require valid JWT
-    - RBAC enforcement on sensitive operations (upload, delete)
-    - Authentication endpoints: login, refresh, logout
-    - Public key configuration for JWT verification
-    - Integration tests for auth flows
-
-### AI/LLM Architecture (Constitution §11)
-- **T047  Multi-Backend LLM Support**
-  - Summary: Implement multi-backend LLM support per constitution §11 - add abstraction layer for LLM backends (Ollama, vLLM), implement fallback mechanisms, document backend configuration and switching procedures.
-  - Dependencies: T009
-  - Files/Paths: `api/llm_backend.py`, `api/backends/ollama.py`, `api/backends/vllm.py`, `docs/LLM_BACKENDS.md`
-  - Parallel: No
-  - Scope: **Production** (constitution §11 MUST requirement)
-  - Acceptance Criteria:
-    - Abstract LLM backend interface defined
-    - Ollama backend implementation (existing)
-    - vLLM backend implementation (new)
-    - Fallback mechanism between backends
-    - Configuration via environment variables
-    - Backend health checks in `/health/detailed`
-    - Documentation for adding new backends
-
-- **T048  Model Versioning & Cryptographic Hashing**
-  - Summary: Implement model versioning with cryptographic hashing per constitution §11 - track embedding model versions, compute SHA-256 hashes for models, store version metadata in Qdrant, implement version migration procedures.
-  - Dependencies: T004, T009
-  - Files/Paths: `scripts/model_versioning.py`, `api/models/embedding_version.py`, `docs/MODEL_VERSIONING.md`
-  - Parallel: No
-  - Scope: **Production** (constitution §11 MUST requirement)
-  - Acceptance Criteria:
-    - Model version tracked in Qdrant collection metadata
-    - SHA-256 hash computed for embedding models
-    - Version compatibility checks on startup
-    - Migration script for model version changes
-    - Reproducible embedding generation documented
-    - Version audit trail in system logs
-
-- **T049  Air-Gapped Deployment Validation**
-  - Summary: Validate air-gapped deployment capability per constitution §11 - test complete system operation without internet access, document offline installation procedures, create offline package bundles.
-  - Dependencies: T047, T048
-  - Files/Paths: `docs/AIRGAP_DEPLOYMENT.md`, `scripts/create_offline_bundle.sh`, `scripts/install_offline.sh`
-  - Parallel: No
-  - Scope: **Production** (constitution §11 MUST requirement)
-  - Acceptance Criteria:
-    - System operates without internet connectivity
-    - Offline installation bundle created (models, dependencies, binaries)
-    - Installation procedure tested in isolated environment
-    - No external API calls during operation
-    - Data sovereignty validated (no data egress)
-    - Air-gap deployment guide in `docs/AIRGAP_DEPLOYMENT.md`
-
-### Monitoring & Observability (Constitution §8)
-- **T050  Automated Alerting System**
-  - Summary: Implement automated alerting per constitution §8 - configure Prometheus alerting rules, integrate with PagerDuty/Slack, automate alert delivery for latency, errors, and dependency failures.
-  - Dependencies: T021
-  - Files/Paths: `prometheus/alerts.yml`, `grafana/notifications.json`, `docs/ALERTING.md`, `DEPLOYMENT_CHECKLIST.md`
-  - Parallel: No
-  - Scope: **Production** (constitution §8 MUST requirement - upgrade from manual runbooks)
-  - Acceptance Criteria:
-    - Prometheus alerting rules configured (latency >100ms p95, error rate >1%, dependency down)
-    - PagerDuty integration for critical alerts
-    - Slack integration for warnings
-    - Alert escalation policies documented
-    - Test alerts validated in staging
-    - Automated alert delivery replaces manual runbooks
-
-### Performance & Scalability (Constitution §7)
-- **T051  1GB Document Processing Implementation**
-  - Summary: Implement 1 GB document processing per constitution §2 and spec.md production target - optimize memory-efficient streaming, implement chunked processing, validate with 1 GB test files.
-  - Dependencies: T009, T010
-  - Files/Paths: `api/processor_wrapper.py`, `tests/performance/test_large_files.py`, `docs/PERFORMANCE.md`
-  - Parallel: No
-  - Scope: **Production** (constitution §2 MUST requirement - deferred from POC)
-  - Acceptance Criteria:
-    - Process 1 GB files without memory exhaustion
-    - Streaming upload pipeline handles large files
-    - Memory usage <2 GB during processing
-    - Chunked write to Qdrant (batch size optimization)
-    - Performance benchmarks documented
-    - Integration tests with 1 GB fixtures
-
-- **T052  Horizontal Scaling Architecture**
-  - Summary: Implement horizontal scaling support per constitution §7 - ensure stateless API design, implement connection pooling, document scaling procedures and load balancing configuration.
-  - Dependencies: T010, T011, T046
-  - Files/Paths: `docs/SCALING.md`, `api/connection_pool.py`, `deployment/load_balancer.conf`
-  - Parallel: No
-  - Scope: **Production** (constitution §7 MUST requirement)
-  - Acceptance Criteria:
-    - API is stateless (no in-memory session state)
-    - Connection pooling for Qdrant implemented
-    - Load balancer configuration documented
-    - Multi-instance deployment tested
-    - Scaling procedures in `docs/SCALING.md`
-    - Performance validated with 1000+ concurrent requests
-
-### Development Workflow (Constitution §9)
-- **T053  Alembic Database Migrations**
-  - Summary: Implement Alembic for database migrations per constitution §9 - set up Alembic for future SQL databases, document migration workflow, create initial migration templates.
-  - Dependencies: None (preparation for future SQL integration)
-  - Files/Paths: `alembic/`, `alembic.ini`, `docs/migrations.md`
-  - Parallel: No
-  - Scope: **Production** (constitution §9 MUST requirement - currently N/A for Qdrant)
-  - Acceptance Criteria:
-    - Alembic initialized in project
-    - Migration workflow documented in `docs/migrations.md`
-    - Template migrations created
-    - Integration with CI/CD pipeline
-    - Note: Currently not required for Qdrant (NoSQL), prepared for future SQL databases
-
-- **T054  Full CI/CD Pipeline Implementation**
-  - Summary: Implement complete CI/CD pipeline per constitution §9 - add coverage reports, security scans (Bandit, Safety), pre-commit hooks enforcement, container builds, automated deployment.
-  - Dependencies: T026, T027
-  - Files/Paths: `.github/workflows/ci-cd.yml`, `.pre-commit-config.yaml`, `Dockerfile`, `docs/CI_CD.md`
-  - Parallel: No
-  - Scope: **Production** (constitution §9 MUST requirement - upgrade from basic CI)
-  - Acceptance Criteria:
-    - Coverage reports uploaded to Codecov
-    - Bandit security scans on every PR
-    - Safety dependency checks automated
-    - Pre-commit hooks enforced in CI
-    - Container images built and tagged
-    - Automated deployment to staging/production
-    - Deployment rollback procedures documented
-
-### Phase Transition Planning
-- **T055  Production Readiness Checklist**
-  - Summary: Create comprehensive production readiness checklist covering all deferred constitution requirements - document transition criteria from MVP to Production, create validation procedures, establish go-live gates.
-  - Dependencies: T043-T054
-  - Files/Paths: `docs/PRODUCTION_READINESS.md`, `DEPLOYMENT_CHECKLIST.md`
-  - Parallel: No
-  - Scope: **Production** (meta-task for phase transition)
-  - Acceptance Criteria:
-    - All constitution MUST requirements mapped to tasks
-    - Production readiness criteria defined
-    - Validation procedures for each requirement
-    - Go-live checklist with sign-off process
-    - Risk assessment and mitigation plans
-    - Rollback procedures documented
-    - Production deployment timeline established
-
-## Retrieval Pipeline Enhancement Tasks (Post-MVP)
-
-### Advanced Retrieval Techniques
-- **T056  Contextual Retrieval Enhancement** ✅
-  - Summary: Implement contextual retrieval with parent-child chunk relationships - leverage hierarchical embeddings (parent/child/full_doc) for improved context, implement multi-hop retrieval, add context window expansion for better answer generation.
-  - Dependencies: T011, T012, T034
-  - Files/Paths: `api/retrieval/contextual.py`, `api/main.py`, `tests/retrieval/test_contextual.py`
-  - Parallel: No
-  - Scope: **Production Enhancement**
-  - Priority: HIGH
-  - Status: ✅ **COMPLETED** - Contextual retrieval implemented with multi-vector scoring
-  - Acceptance Criteria: ✅ ALL MET
-    - ✅ Multi-vector retrieval using chunk + parent + full_doc embeddings
-    - ✅ Context window expansion (retrieve parent chunks for top results)
-    - ✅ Hierarchical scoring with configurable weights (parent: 0.3, child: 0.2, full_doc: 0.1)
-    - ✅ Parent-child relationship traversal implemented
-    - ✅ API endpoint: `POST /api/v1/search/contextual` with `include_context` parameter
-    - ✅ Expanded context window function (get_expanded_context with configurable window_size)
-    - ✅ 9/9 tests passing (100% test coverage)
-
-- **T057  Reranking Pipeline Implementation** ✅
-  - Summary: Implement cross-encoder reranking for improved relevance - add reranking stage after initial retrieval, use cross-encoder model (ms-marco-MiniLM), implement score fusion with original retrieval scores, add configurable reranking depth.
-  - Dependencies: T011, T012
-  - Files/Paths: `api/retrieval/reranker.py`, `api/models/reranking.py`, `tests/retrieval/test_reranking.py`
-  - Parallel: No
-  - Scope: **Production Enhancement**
-  - Priority: HIGH
-  - Status: ✅ **COMPLETED** - Cross-encoder reranking pipeline implemented
-  - Acceptance Criteria: ✅ ALL MET
-    - ✅ Cross-encoder reranking model integrated (ms-marco-MiniLM-L-6-v2)
-    - ✅ Rerank top-k results (configurable, default k=20)
-    - ✅ Score fusion: 0.7 * retrieval_score + 0.3 * rerank_score (configurable weights)
-    - ✅ API endpoint: `POST /api/v1/search/rerank` with `rerank=true` parameter
-    - ✅ Batch reranking for efficiency (configurable batch_size=32)
-    - ✅ RerankingPipeline with LRU caching support
-    - ✅ Sigmoid normalization for cross-encoder scores
-    - ✅ 14/14 tests passing (100% test coverage)
-
-- **T058  Query Expansion & Reformulation** ✅
-  - Summary: Implement query expansion using LLM for improved recall - generate query variations, extract key entities and technical terms, implement multi-query retrieval with result fusion, add query classification (technical/general).
-  - Dependencies: T011, T047
-  - Files/Paths: `api/retrieval/query_expansion.py`, `api/retrieval/query_classifier.py`, `tests/retrieval/test_query_expansion.py`
-  - Parallel: No
-  - Scope: **Production Enhancement**
-  - Priority: MEDIUM
-  - Status: ✅ **COMPLETED** - Query expansion with LLM and RRF fusion
-  - Acceptance Criteria: ✅ ALL MET
-    - ✅ LLM-based query expansion with fallback to rule-based (generate 2-3 variations)
-    - ✅ Entity extraction from queries (train IDs: R4600/Cityjet/etc, components, standards: EN50155/TSI)
-    - ✅ Multi-query retrieval with reciprocal rank fusion (RRF) via MultiQueryRetriever
-    - ✅ Query classification: technical, procedural, safety, general (QueryClassifier)
-    - ✅ Rule-based expansion for all query types with domain-specific variations
-    - ✅ Caching for common query patterns (LRU cache with 100 entries)
-    - ✅ 21/21 tests passing (100% test coverage)
-
-- **T059  Hybrid Search Optimization** ✅
-  - Summary: Optimize hybrid search with advanced fusion techniques - implement Reciprocal Rank Fusion (RRF), add learned fusion weights, optimize BM25 parameters, implement query-adaptive fusion.
-  - Dependencies: T012, T056
-  - Files/Paths: `api/retrieval/fusion.py`, `api/retrieval/bm25_optimizer.py`, `tests/retrieval/test_fusion.py`
-  - Parallel: No
-  - Scope: **Production Enhancement**
-  - Priority: MEDIUM
-  - Status: ✅ **COMPLETED** - Advanced fusion with RRF and adaptive strategies
-  - Acceptance Criteria: ✅ ALL MET
-    - ✅ Reciprocal Rank Fusion (RRF) implementation with configurable k parameter
-    - ✅ Adaptive fusion weights based on query type (technical: 40/60, procedural: 50/50, safety: 35/65, general: 70/30)
-    - ✅ BM25 parameter tuning (k1, b) per document type (6 types: pdf, docx, pptx, xlsx, csv, txt)
-    - ✅ Query-adaptive fusion (technical/safety favor keyword, general favors semantic)
-    - ✅ Three fusion strategies: LINEAR, RRF, ADAPTIVE (FusionStrategy enum)
-    - ✅ Query-adaptive BM25 parameters based on query length and complexity
-    - ✅ 26/26 tests passing (100% test coverage)
-
-### Metadata & Filtering Enhancements
-- **T060  Advanced Metadata Filtering** ✅
-  - Summary: Implement rich metadata filtering for targeted retrieval - add filter builder API, support complex boolean queries, implement faceted search, add metadata-based boosting.
-  - Dependencies: T011, T012
-  - Files/Paths: `api/retrieval/filters.py`, `api/models/filter_builder.py`, `tests/retrieval/test_filters.py`
-  - Parallel: No
-  - Scope: **Production Enhancement**
-  - Priority: MEDIUM
-  - Status: ✅ **COMPLETED** - Advanced filtering with fluent API and boosting
-  - Acceptance Criteria: ✅ ALL MET
-    - ✅ Filter builder with fluent API: `FilterBuilder().document_type("pdf").quality_above(0.9).build()`
-    - ✅ Complex boolean queries: AND, OR, NOT operations via FilterGroup
-    - ✅ Faceted search: FacetedSearch class for aggregating facet counts
-    - ✅ Metadata boosting: MetadataBooster with quality, recency, and field match boosting
-    - ✅ Filter validation with detailed error messages (FilterValidator)
-    - ✅ Filter presets for common use cases (high_quality, technical_documents, safety_critical, etc.)
-    - ✅ 42/42 tests passing (100% test coverage)
-
-- **T061  Temporal & Version-Aware Retrieval** ✅
-  - Summary: Implement temporal filtering and version awareness - add date range filtering, support "latest version only" queries, implement version comparison, add temporal boosting (prefer recent documents).
-  - Dependencies: T060
-  - Files/Paths: `api/retrieval/temporal.py`, `tests/retrieval/test_temporal.py`
-  - Parallel: No
-  - Scope: **Production Enhancement**
-  - Priority: LOW
-  - Status: ✅ **COMPLETED** - Temporal filtering with version awareness
-  - Acceptance Criteria: ✅ ALL MET
-    - ✅ Date range filtering with TemporalFilter (after/before parameters)
-    - ✅ Latest version retrieval (get_latest_versions method)
-    - ✅ Version comparison across document versions
-    - ✅ Temporal boosting with configurable decay factor (0.0-1.0)
-    - ✅ RecencyScorer for time-based relevance scoring
-    - ✅ Qdrant filter conversion for temporal queries
-    - ✅ Timezone-aware datetime handling
-    - ✅ 19/19 tests passing (100% test coverage)
-
-- **T062  Domain-Specific Metadata Enrichment** ✅
-  - Summary: Enrich metadata with railway-specific attributes - extract train IDs, network components, safety standards, add domain ontology mapping, implement metadata validation.
-  - Dependencies: T009, T034
-  - Files/Paths: `api/metadata/railway_enrichment.py`, `api/metadata/ontology.py`, `data/railway_ontology.json`
-  - Parallel: No
-  - Scope: **Production Enhancement**
-  - Priority: MEDIUM
-  - Status: ✅ **COMPLETED** - Railway domain enrichment with ontology
-  - Acceptance Criteria: ✅ ALL MET
-    - ✅ Train ID extraction with regex patterns (R4600, Cityjet, Talent3, FLIRT, etc.)
-    - ✅ Network component classification (8 components: traction, braking, HVAC, doors, pantograph, signaling, lighting, battery)
-    - ✅ Safety standard extraction (EN50155, EN45545, TSI, EN14198, etc.)
-    - ✅ Railway ontology with train models, components, standards, document categories
-    - ✅ Metadata validation against ontology with warnings/errors
-    - ✅ Batch enrichment for multiple documents (batch_enrich method)
-    - ✅ Enrichment statistics tracking (train_id/component/standard distributions)
-    - ✅ 32/32 tests passing (100% test coverage)
-
-### Performance & Scalability
-- **T063  Semantic Caching Layer** ✅
-  - Summary: Implement semantic caching for improved performance - cache query embeddings and results, use approximate nearest neighbor for cache lookup, implement cache invalidation strategy, add cache analytics.
-  - Dependencies: T011, T012
-  - Files/Paths: `api/cache/semantic_cache.py`, `api/cache/cache_manager.py`, `tests/cache/test_semantic_cache.py`
-  - Parallel: No
-  - Scope: **Production Enhancement**
-  - Priority: HIGH
-  - Status: ✅ **COMPLETED** - Semantic caching with 80%+ latency reduction
-  - Acceptance Criteria: ✅ ALL MET
-    - ✅ Semantic cache with embedding-based lookup (cosine similarity >0.95)
-    - ✅ LRU eviction policy with configurable size (default: 1000 queries)
-    - ✅ Cache hit rate tracking and metrics
-    - ✅ TTL-based invalidation (default: 1 hour, configurable)
-    - ✅ Cache warming for common queries (warm_cache method)
-    - ✅ Performance improvement: <10ms for cache hits (80%+ reduction)
-    - ✅ In-memory implementation with OrderedDict (LRU)
-    - ✅ Cache analytics: stats, top queries, hit rate
-    - ✅ API endpoints: GET /cache/stats, POST /cache/clear, POST /cache/invalidate-expired
-    - ✅ 15/15 tests passing (100% test coverage)
-
-- **T064  Batch Retrieval Optimization** ✅
-  - Summary: Optimize batch retrieval for multiple queries - implement batch embedding generation, parallel Qdrant queries, result aggregation and deduplication, add batch API endpoint.
-  - Dependencies: T011, T012
-  - Files/Paths: `api/retrieval/batch.py`, `api/endpoints/batch_search.py`, `tests/retrieval/test_batch.py`
-  - Parallel: No
-  - Scope: **Production Enhancement**
-  - Priority: MEDIUM
-  - Status: ✅ **COMPLETED** - Batch retrieval with 10x throughput improvement
-  - Acceptance Criteria: ✅ ALL MET
-    - ✅ Batch search endpoint structure (BatchSearchRequest/Response models)
-    - ✅ Batch embedding generation with caching (BatchEmbeddingCache)
-    - ✅ Parallel query execution with asyncio.gather
-    - ✅ Result deduplication across queries (configurable)
-    - ✅ Three aggregation methods: union, intersection, ranked_fusion
-    - ✅ Batch size limit (max 50 queries, chunked processing for larger batches)
-    - ✅ LRU cache for embeddings (1000 entry capacity)
-    - ✅ 20/20 tests passing (100% test coverage)
-
-- **T065  Vector Index Optimization** ✅
-  - Summary: Optimize Qdrant vector indexes for production scale - tune HNSW parameters (m, ef_construct), implement quantization for memory efficiency, add index monitoring and maintenance, benchmark index performance.
-  - Dependencies: T004, T034
-  - Files/Paths: `scripts/optimize_qdrant_index.py`, `tests/performance/test_index_performance.py`
-  - Parallel: No
-  - Scope: **Production Enhancement**
-  - Priority: MEDIUM
-  - Status: ✅ **COMPLETED** - Production-ready index optimization
-  - Acceptance Criteria: ✅ ALL MET
-    - ✅ Four HNSW presets: balanced (m=16), high_recall (m=32), fast_search (m=8), memory_efficient (m=12)
-    - ✅ Scalar quantization (INT8) with configurable quantile (0.99)
-    - ✅ Automatic preset selection based on collection size
-    - ✅ Search benchmarking with p50/p95/p99 latency metrics
-    - ✅ Production optimization command (--production flag)
-    - ✅ Collection info retrieval (points, vectors, status)
-    - ✅ CLI tool with argparse interface
-    - ✅ 14/14 tests passing (100% test coverage)
-
-### Answer Generation & RAG
-- **T066  Answer Generation Pipeline** ✅
-  - Summary: Implement LLM-based answer generation from retrieved chunks - integrate with local LLM (Ollama), implement prompt engineering for railway domain, add citation tracking, implement answer quality validation.
-  - Dependencies: T011, T047, T056
-  - Files/Paths: `api/generation/answer_generator.py`, `api/generation/prompts.py`, `api/endpoints/ask.py`, `tests/generation/test_answer_generation.py`
-  - Parallel: No
-  - Scope: **Production Enhancement**
-  - Priority: HIGH
-  - Status: ✅ **COMPLETED** - LLM-based answer generation with citations
-  - Acceptance Criteria: ✅ ALL MET
-    - ✅ Answer generation endpoint: `POST /api/v1/ask` (query → answer + citations)
-    - ✅ Railway-specific prompt templates (safety, technical, procedural, general)
-    - ✅ Citation tracking: link answers to source chunks with relevance scores
-    - ✅ Answer quality validation (relevance, completeness, safety checks)
-    - ✅ Configurable LLM parameters (temperature, max_tokens)
-    - ✅ Query classification: automatic detection of safety/technical/procedural queries
-    - ✅ Confidence scoring based on chunk relevance
-    - ✅ Fallback: return chunks if LLM unavailable (model_name="fallback")
-    - ✅ 18/18 tests passing (100% test coverage)
-
-- **T067  Multi-Document Synthesis** ✅
-  - Summary: Implement multi-document answer synthesis - aggregate information from multiple sources, detect contradictions, implement source attribution, add confidence scoring.
-  - Dependencies: T066
-  - Files/Paths: `api/synthesis/multi_doc.py`, `tests/synthesis/test_multi_doc.py`
-  - Parallel: No
-  - Scope: **Production Enhancement**
-  - Priority: MEDIUM
-  - Status: ✅ **COMPLETED** - Multi-document synthesis with clustering and consensus
-  - Acceptance Criteria: ✅ ALL MET
-    - ✅ Three synthesis strategies: cluster, timeline, hierarchy
-    - ✅ DocumentCluster for grouping related chunks across documents
-    - ✅ Cross-document comparison by metadata fields
-    - ✅ Consensus extraction (phrases appearing in multiple documents)
-    - ✅ Source attribution tracking (document IDs, topics, scores)
-    - ✅ Human-readable summary generation
-    - ✅ Configurable cluster size and similarity thresholds
-    - ✅ 18/18 tests passing (100% test coverage)
-    - API parameter: `synthesize=true` with `max_sources=5`
-    - Performance: <5s for synthesis
-
-- **T068  Conversational Context & Follow-ups** ✅
-  - Summary: Implement conversational context tracking for follow-up queries - maintain conversation history, implement context-aware retrieval, add query disambiguation, support multi-turn conversations.
-  - Dependencies: T066
-  - Files/Paths: `api/conversation/context_manager.py`, `tests/conversation/test_context.py`
-  - Parallel: No
-  - Scope: **Production Enhancement**
-  - Priority: MEDIUM
-  - Status: ✅ **COMPLETED** - Full conversational context management
-  - Acceptance Criteria: ✅ ALL MET
-    - ✅ ConversationTurn model with query/response/entities/topics
-    - ✅ ConversationContext with configurable max_turns (default: 10) and TTL (default: 30 min)
-    - ✅ ContextManager for multi-session management (max 100 sessions)
-    - ✅ QueryDisambiguator for pronoun detection and context-aware expansion
-    - ✅ Entity carryover from previous turns
-    - ✅ Session expiration and automatic cleanup
-    - ✅ Conversation history retrieval with character limits
-    - ✅ 27/27 tests passing (100% test coverage)
-
-### Evaluation & Monitoring
-- **T069  Advanced Retrieval Metrics** ✅
-  - Summary: Implement comprehensive retrieval evaluation metrics - add NDCG, MRR, MAP, implement online A/B testing framework, add user feedback collection, create evaluation dashboard.
-  - Dependencies: T025, T066
-  - Files/Paths: `scripts/evaluate_advanced_metrics.py`, `api/evaluation/metrics.py`, `api/feedback/collector.py`, `grafana/dashboards/retrieval_metrics.json`
-  - Parallel: No
-  - Scope: **Production Enhancement**
-  - Priority: HIGH
-  - Status: ✅ **COMPLETED** - Advanced metrics with A/B testing framework
-  - Acceptance Criteria: ✅ ALL MET
-    - ✅ Advanced metrics: NDCG@k, MRR, MAP, Precision@k, Recall@k, Hit Rate@k
-    - ✅ A/B testing framework for retrieval strategies (ABTestFramework)
-    - ✅ User feedback collection: Delegated to OpenWebUI (https://docs.openwebui.com/features/evaluation/)
-    - ✅ Evaluation API endpoint: `POST /api/v1/evaluate/metrics`
-    - ✅ Automated evaluation script: `scripts/evaluate_advanced_metrics.py`
-    - ✅ Batch evaluation with aggregated metrics
-    - ✅ Statistical analysis for A/B tests (mean, std, improvement %)
-    - ✅ 20/20 tests passing (100% test coverage)
-
-- **T070  Retrieval Explainability** ✅
-  - Summary: Implement retrieval explainability features - explain why chunks were retrieved, show score breakdowns (semantic, keyword, metadata), add debug mode with detailed scoring, implement retrieval visualization.
-  - Dependencies: T011, T012, T059
-  - Files/Paths: `api/retrieval/explainer.py`, `api/models/explanation.py`, `tests/retrieval/test_explainer.py`
-  - Parallel: No
-  - Scope: **Production Enhancement**
-  - Priority: MEDIUM
-  - Status: ✅ **COMPLETED** - Comprehensive explainability with score breakdowns
-  - Acceptance Criteria: ✅ ALL MET
-    - ✅ RetrievalExplanation model with complete score breakdown
-    - ✅ Score components: semantic_score, keyword_score, metadata_boost, rerank_score, quality_boost
-    - ✅ Debug mode with raw result data and query tokens
-    - ✅ Human-readable similarity explanations
-    - ✅ Matched keyword tracking with frequency and positions
-    - ✅ Matched entity detection (train_id, component, standard)
-    - ✅ Metadata match extraction (document_type, quality_score, safety_critical)
-    - ✅ Query explanation with entity extraction and classification
-    - ✅ Result comparison for ranking analysis
-    - ✅ 20/20 tests passing (100% test coverage)
-
-- **T071  Retrieval Quality Monitoring** ✅
-  - Summary: Implement continuous retrieval quality monitoring - track retrieval metrics in production, detect quality degradation, implement automated alerts, add quality dashboards.
-  - Dependencies: T069, T050
-  - Files/Paths: `api/monitoring/quality_monitor.py`, `prometheus/retrieval_alerts.yml`, `grafana/dashboards/quality_monitoring.json`
-  - Parallel: No
-  - Scope: **Production Enhancement**
-  - Priority: HIGH
-  - Status: ✅ **COMPLETED** - Continuous quality monitoring with automated alerts
-  - Acceptance Criteria: ✅ ALL MET
-    - ✅ Real-time quality metrics tracking (accuracy, latency, cache hit rate, error rate)
-    - ✅ Quality degradation detection (rolling window with configurable size)
-    - ✅ Automated alerts: accuracy <95%, latency >200ms p95, cache hit rate <50%
-    - ✅ Health scoring system (0-100) with status classification
-    - ✅ Prometheus metrics export endpoint: `GET /api/v1/monitoring/prometheus`
-    - ✅ Prometheus alert rules: `prometheus/retrieval_alerts.yml` (10 alert rules)
-    - ✅ Quality monitoring API endpoints (quality, health, alerts, trends, baseline)
-    - ✅ Baseline setting for degradation detection (>5% drop triggers alert)
-    - ✅ 20/20 tests passing (100% test coverage)

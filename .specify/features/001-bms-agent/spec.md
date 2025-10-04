@@ -138,14 +138,16 @@ Progressive performance requirements aligned with deployment phases:
   - Availability: 99.9% with documented incident response
 
 **Production Phase** (per Q6, Q10 clarifications):
-  - **Timeline**: 1-2 months after retrieval enhancement completion (T061, T065, T067, T068)
-  - **Sprint Priority**: Complete enhancements → Constitution compliance (T043-T055) → Multi-backend LLM (T047, deferred)
+  - **Timeline**: 1-2 months starting 2025-10-04 (retrieval enhancements T056-T071 complete)
+  - **Current Status**: Constitution compliance sprint (T043-T055) is NOW the active priority
+  - **Sprint Priority**: Constitution compliance (T043-T055) → Production deployment → Multi-backend LLM (T047, deferred post-production)
   - Performance: p95 ≤100ms for 20-100 concurrent users (95% read / 5% write workload)
   - Security: JWT + API key authentication enforced (T046), encryption at rest (T043), GDPR compliance (T044)
   - Monitoring: Automated alerting with PagerDuty/Slack integration (T050)
   - CI/CD: Full pipeline with coverage reports, security scans (Bandit, Safety), pre-commit hooks (T054)
   - Database: Alembic migration framework implemented (T053, R6.4)
   - Availability: 99.99% with automated failover (T052)
+  - **Target Completion**: 2025-12-04 (2 months from retrieval enhancement completion)
 
 ## Clarifications Changelog
 
