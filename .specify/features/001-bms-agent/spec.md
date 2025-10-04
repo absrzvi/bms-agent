@@ -31,21 +31,27 @@ This project follows a three-phase delivery model with progressive requirement e
 ### Performance Targets
 Progressive performance requirements aligned with deployment phases:
 
+**Concurrent User Definition** (per Q8 clarification): Mixed workload with 95% read operations (search queries) and 5% write operations (document uploads). "Concurrent users" means simultaneous active requests in flight, not just logged-in sessions.
+
 - **POC Phase**: Best-effort performance with baseline establishment
   - Baseline threshold: p95 latency <500ms acceptable for 20 concurrent users
   - Escalation trigger: p95 >1000ms requires optimization work before MVP
   - Document processing: ≥5 documents/minute minimum
   - Metrics collection: Establish performance baselines for production planning
+  - Workload mix: 95% search / 5% upload for load testing
 
 - **MVP Phase**: Production-ready performance with monitoring
   - Target: p95 latency <200ms for 20-50 concurrent users
   - Document processing: ≥10 documents/minute
   - Availability: 99.9% (three nines) with basic monitoring
+  - Workload mix: 95% search / 5% upload
 
 - **Production Phase**: Enterprise-grade performance
   - Target: p95 latency ≤100ms for 20-100 concurrent users
   - Document processing: ≥20 documents/minute with parallel processing
   - Availability: 99.99% (four nines) with automated alerting
+  - Workload mix: 95% search / 5% upload
+  - **Timeline** (per Q6 clarification): 1-2 months post-enhancement completion
 
 ### Document Processing
   - R1.1: Ingest PDF, DOCX, PPTX, CSV, XLSX, and TXT files up to 100 MB with rejection for unsupported types. **POC DECISION**: 100 MB limit for POC; 1 GB target for production.
@@ -94,6 +100,8 @@ Progressive performance requirements aligned with deployment phases:
   - R6.1: Adopt Git flow branching for feature development (e.g., `feature/<name>`, `release/<version>`) with semantic commit messages.
   - R6.2: Implement semantic versioning for all releases with proper changelog maintenance and dependency management.
   - R6.3: Produce container images for the API service, follow semantic versioning, and automate database migrations as part of the release workflow (for future SQL databases; not required for Qdrant NoSQL vector database).
+  - R6.4: **CLARIFIED** (per Q7): Implement Alembic migration framework now for future SQL database readiness, even though current deployment uses Qdrant (NoSQL). Manual Qdrant schema changes continue to be tracked in `docs/migrations.md` per constitution §9 requirement.
+    - *Acceptance*: Alembic initialized with initial migration; migration scripts executable; documentation covers both Alembic (SQL future) and manual tracking (Qdrant current); T053 task activated and completed.
 
 ### Observability & Operations
   - R7.1: **MVP REQUIREMENT**: Implement basic Prometheus/Grafana integration per constitution §8; configure `/metrics/uplink` endpoint and basic dashboards with manual alert runbooks for MVP.
@@ -129,12 +137,15 @@ Progressive performance requirements aligned with deployment phases:
   - Documentation: Complete operational procedures in `DEPLOYMENT_CHECKLIST.md`
   - Availability: 99.9% with documented incident response
 
-**Production Phase**:
-  - Performance: p95 ≤100ms for 20-100 concurrent users
-  - Security: JWT + API key authentication enforced
-  - Monitoring: Automated alerting with PagerDuty/Slack integration
-  - CI/CD: Full pipeline with coverage reports, security scans (Bandit, Safety), pre-commit hooks
-  - Availability: 99.99% with automated failover
+**Production Phase** (per Q6, Q10 clarifications):
+  - **Timeline**: 1-2 months after retrieval enhancement completion (T061, T065, T067, T068)
+  - **Sprint Priority**: Complete enhancements → Constitution compliance (T043-T055) → Multi-backend LLM (T047, deferred)
+  - Performance: p95 ≤100ms for 20-100 concurrent users (95% read / 5% write workload)
+  - Security: JWT + API key authentication enforced (T046), encryption at rest (T043), GDPR compliance (T044)
+  - Monitoring: Automated alerting with PagerDuty/Slack integration (T050)
+  - CI/CD: Full pipeline with coverage reports, security scans (Bandit, Safety), pre-commit hooks (T054)
+  - Database: Alembic migration framework implemented (T053, R6.4)
+  - Availability: 99.99% with automated failover (T052)
 
 ## Clarifications Changelog
 
@@ -151,3 +162,22 @@ Progressive performance requirements aligned with deployment phases:
 | Q5 | Failed Processing | What happens when quality < 0.70? | **D**: Store all, flag low-quality in metadata | R1.6 |
 
 **Impact**: 5 new requirements added (R1.4-R1.7, R2.4); requires 5 new implementation tasks (T036-T040)
+
+### Session 2 - 2025-10-04 12:15 UTC
+**Clarifier**: Workflow `/clarify` execution  
+**Questions Resolved**: 5 production readiness ambiguities
+
+| ID | Category | Question | Decision | Impact |
+|----|----------|----------|----------|--------|
+| Q6 | Production Timeline | When should constitution compliance tasks (T043-T055) be completed? | **A**: Within 1-2 months (immediate priority after enhancements) | Production roadmap established |
+| Q7 | Database Migrations | Should Alembic be implemented despite Qdrant being NoSQL? | **A**: Yes - Implement now for future SQL readiness | Activate T053 |
+| Q8 | Performance Definition | What does "concurrent users" mean for performance targets? | **D**: Mixed workload - 95% read, 5% write (RAG best practice) | Load testing scenarios defined |
+| Q9 | LLM Architecture | Should multi-backend LLM (T047) be in 1-2 month timeline? | **D**: Defer - Add vLLM only when performance requires | T047 deferred post-production |
+| Q10 | Feature Priority | Complete retrieval enhancements before production compliance? | **A**: Yes - Finish T061, T065, T067, T068 first | Current trajectory confirmed |
+
+**Impact**: 
+- Production deployment timeline: 1-2 months post-enhancement completion
+- Performance testing: 95% read / 5% write workload mix
+- Database migrations: T053 activated (Alembic framework implementation)
+- LLM backends: Single backend (Ollama) acceptable for initial production
+- Sprint priority: Complete retrieval enhancements → Production compliance → Multi-backend LLM
