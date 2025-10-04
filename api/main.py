@@ -104,6 +104,14 @@ class HybridSearchRequest(SearchRequest):
     vector_weight: float = Field(0.5, ge=0.0, le=1.0, description="Weight for semantic search")
     keyword_weight: float = Field(0.5, ge=0.0, le=1.0, description="Weight for keyword search")
 
+class ContextualSearchRequest(SearchRequest):
+    include_context: bool = Field(True, description="Include parent/child context")
+    expand_parents: bool = Field(True, description="Retrieve parent chunks")
+    expand_children: bool = Field(False, description="Retrieve child chunks")
+    parent_weight: float = Field(0.3, ge=0.0, le=1.0, description="Weight for parent embeddings")
+    child_weight: float = Field(0.2, ge=0.0, le=1.0, description="Weight for child embeddings")
+    full_doc_weight: float = Field(0.1, ge=0.0, le=1.0, description="Weight for full document embeddings")
+
 class HealthResponse(BaseModel):
     status: str
     timestamp: str
@@ -850,6 +858,133 @@ async def metrics_uplink():
     except Exception as e:
         logger.error(f"❌ Metrics endpoint error: {e}")
         raise HTTPException(status_code=500, detail="Metrics collection failed")
+
+@app.post("/api/v1/search/contextual")
+async def contextual_search(request: ContextualSearchRequest):
+    """
+    Perform contextual search with parent-child chunk relationships
+    
+    Enhanced retrieval using hierarchical embeddings for improved context.
+    
+    - **query**: Search query text
+    - **limit**: Maximum number of results (1-100)
+    - **include_context**: Include parent/child context in results
+    - **expand_parents**: Retrieve parent chunks for context
+    - **expand_children**: Retrieve child chunks for context
+    - **parent_weight**: Weight for parent embedding scores (0.0-1.0)
+    - **child_weight**: Weight for child embedding scores (0.0-1.0)
+    - **full_doc_weight**: Weight for full document embedding scores (0.0-1.0)
+    - **filters**: Optional filters for document type, profile, etc.
+    - **min_score**: Optional minimum similarity score threshold
+    - **min_quality**: Optional minimum quality score threshold
+    """
+    
+    try:
+        from retrieval.contextual import ContextualRetriever
+        
+        processor = get_processor()
+        
+        if not processor.qdrant_client:
+            raise HTTPException(status_code=503, detail="Search service unavailable")
+        
+        # Generate query embedding
+        query_embedding = processor._generate_embeddings(request.query)
+        if not query_embedding:
+            raise HTTPException(status_code=500, detail="Failed to generate query embedding")
+        
+        # Build search filter
+        search_filter = None
+        conditions = []
+        
+        # Add min_quality filter if specified
+        if request.min_quality is not None:
+            from qdrant_client.models import Filter, FieldCondition, Range
+            conditions.append(
+                FieldCondition(
+                    key="quality_score",
+                    range=Range(gte=request.min_quality)
+                )
+            )
+        
+        # Add custom filters if provided
+        if request.filters:
+            from qdrant_client.models import FieldCondition, MatchValue
+            for key, value in request.filters.items():
+                conditions.append(
+                    FieldCondition(
+                        key=key,
+                        match=MatchValue(value=value)
+                    )
+                )
+        
+        if conditions:
+            from qdrant_client.models import Filter
+            search_filter = Filter(must=conditions)
+        
+        # Initialize contextual retriever
+        retriever = ContextualRetriever(
+            qdrant_client=processor.qdrant_client,
+            collection_name=processor.collection_name,
+            parent_weight=request.parent_weight,
+            child_weight=request.child_weight,
+            full_doc_weight=request.full_doc_weight
+        )
+        
+        # Perform contextual search
+        results = retriever.search_with_context(
+            query_embedding=query_embedding,
+            limit=request.limit,
+            include_context=request.include_context,
+            expand_parents=request.expand_parents,
+            expand_children=request.expand_children,
+            filters=search_filter,
+            min_score=request.min_score
+        )
+        
+        # Format response
+        formatted_results = []
+        for result in results:
+            formatted_result = {
+                "chunk_id": result.chunk_id,
+                "content": result.content,
+                "score": result.score,
+                "context_score": result.context_score,
+                "combined_score": result.score + (result.context_score * 0.2),
+                "metadata": {
+                    "document_name": result.metadata.get("document_name"),
+                    "document_type": result.metadata.get("document_type"),
+                    "quality_score": result.metadata.get("quality_score"),
+                    "chunk_index": result.metadata.get("chunk_index"),
+                    "chunk_type": result.metadata.get("chunk_type"),
+                    "hierarchy_level": result.metadata.get("hierarchy_level")
+                }
+            }
+            
+            # Add context if available
+            if result.parent_content:
+                formatted_result["parent_context"] = result.parent_content
+            if result.child_contents:
+                formatted_result["child_contexts"] = result.child_contents
+            
+            formatted_results.append(formatted_result)
+        
+        return {
+            "status": "success",
+            "query": request.query,
+            "results": formatted_results,
+            "count": len(formatted_results),
+            "search_type": "contextual",
+            "context_enabled": request.include_context,
+            "timestamp": datetime.now().isoformat()
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ Contextual search error: {e}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Contextual search failed: {str(e)}")
 
 # Error handlers
 @app.exception_handler(404)
