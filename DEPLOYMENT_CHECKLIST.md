@@ -9,17 +9,31 @@
 - [ ] Internet connectivity for initial setup
 
 ### RunPod Configuration
-- [ ] Copy `scripts/runpod_init_v2.sh` to RunPod startup script field
+- [ ] Copy `scripts/runpod_init.sh` to RunPod startup script field
 - [ ] SSH keys stored in `/workspace/config/authorized_keys` (optional)
 - [ ] Ollama models pre-downloaded to `/workspace/data/ollama_models`
 - [ ] Environment variables configured (if needed)
 
-### Dependencies
-- [ ] Python 3.11+ installed
-- [ ] All packages from `requirements.txt` installed
-- [ ] Qdrant binary v1.7.4+ installed
-- [ ] Ollama installed with GPU support
-- [ ] sentence-transformers model downloaded
+### Installation Architecture (Constitution §11)
+**CRITICAL: Persistent Storage Requirements**
+- [ ] **All applications/libraries** → `/workspace` (persistent storage)
+- [ ] **Python virtual environment** → `/workspace/bms-api-venv`
+- [ ] **Qdrant data** → `/workspace/qdrant_storage`
+- [ ] **BMS data** → `/workspace/bms_data`
+- [ ] **Ollama models** → `/workspace/data/ollama_models`
+- [ ] **Logs** → `/workspace/logs`
+- [ ] **Backups** → `/workspace/backups`
+- [ ] **EXCEPTION: Ollama binary** → `/root` (default, for GPU compatibility)
+
+### Dependencies (Auto-installed by runpod_init.sh)
+- [ ] Python 3.11+ installed (system)
+- [ ] Python virtual environment created in `/workspace/bms-api-venv`
+- [ ] All packages from `requirements.txt` installed in venv
+- [ ] NLTK data downloaded (punkt_tab, wordnet, stopwords, etc.)
+- [ ] Qdrant binary v1.7.4+ installed in `/workspace`
+- [ ] Ollama installed in `/root` with GPU support
+- [ ] Ollama models pulled (nomic-embed-text, mistral)
+- [ ] System packages installed (jq, etc.)
 
 ### Configuration Files
 - [ ] `.env` or `config/env.sh` configured with:
@@ -31,22 +45,32 @@
 ## Deployment Steps
 
 ### 0. RunPod Pod Initialization (Automatic)
-The `scripts/runpod_init_v2.sh` script runs automatically on pod boot and:
-- Restores SSH keys from `/workspace/config/authorized_keys`
-- Installs system packages (jq, htop, tmux, vim, etc.)
-- Restores/installs Ollama with GPU support
-- Verifies GPU availability
+The `scripts/runpod_init.sh` script runs automatically on pod boot and:
+- Creates directory structure in `/workspace` (logs, data, qdrant_storage, bms_data, backups)
+- Installs Ollama in `/root` (for GPU compatibility)
+- Configures Ollama to use `/workspace/data/ollama_models` for model storage
+- Creates Python virtual environment in `/workspace/bms-api-venv`
+- Installs all dependencies from `requirements.txt`
+- Downloads required NLTK data files
+- Installs system packages (jq, etc.)
+- Pulls Ollama models (nomic-embed-text, mistral)
 - Starts all BMS Agent services
 - Performs comprehensive health checks
-- Logs to `/workspace/logs/runpod_init.log` and `/workspace/logs/startup.log`
+- Logs to `/workspace/logs/runpod_init.log`
 
 **Verification:**
 ```bash
 # Check initialization log
 tail -100 /workspace/logs/runpod_init.log
 
+# Verify virtual environment
+ls -la /workspace/bms-api-venv/
+
+# Verify requirements installed
+source /workspace/bms-api-venv/bin/activate && pip list
+
 # Verify all services started
-tail -50 /workspace/logs/startup.log | grep "services operational"
+tail -50 /workspace/logs/runpod_init.log | grep "✅"
 ```
 
 ### 1. Initialize Qdrant

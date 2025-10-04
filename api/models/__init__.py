@@ -30,19 +30,27 @@ from .health import (
     SystemHealth
 )
 
-from .audit import (
-    AuditLog,
-    UserIdentity,
-    EventType,
-    UserRole
-)
+# Audit and metrics modules not yet implemented (production tasks)
+# from .audit import (
+#     AuditLog,
+#     UserIdentity,
+#     EventType,
+#     UserRole
+# )
 
-from .metrics import (
-    OperationalMetrics,
-    MetricWindow,
-    LatencyMetrics,
-    IngestionMetrics,
-    ErrorMetrics
+# from .metrics import (
+#     OperationalMetrics,
+#     MetricWindow,
+#     LatencyMetrics,
+#     IngestionMetrics,
+#     ErrorMetrics
+# )
+
+# Upload status models for async queue
+from .upload_status import (
+    UploadStatus,
+    UploadJobStatus,
+    UploadJobCreate
 )
 
 __all__ = [
@@ -69,16 +77,21 @@ __all__ = [
     "ServiceStatus",
     "SystemHealth",
     
-    # Audit
-    "AuditLog",
-    "UserIdentity",
-    "EventType",
-    "UserRole",
+    # Audit (not yet implemented)
+    # "AuditLog",
+    # "UserIdentity",
+    # "EventType",
+    # "UserRole",
     
-    # Metrics
-    "OperationalMetrics",
-    "MetricWindow",
-    "LatencyMetrics", 
-    "IngestionMetrics",
-    "ErrorMetrics"
+    # Metrics (not yet implemented)
+    # "OperationalMetrics",
+    # "MetricWindow",
+    # "LatencyMetrics", 
+    # "IngestionMetrics",
+    # "ErrorMetrics",
+    
+    # Upload Status
+    "UploadStatus",
+    "UploadJobStatus",
+    "UploadJobCreate"
 ]

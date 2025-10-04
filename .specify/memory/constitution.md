@@ -147,6 +147,13 @@ This constitution establishes the governing principles and technical standards f
   - Support for air-gapped deployment scenarios
   - Local embedding generation with versioned models
   - Documented data flow with clear boundaries
+- **Installation & Persistence** (RunPod/Cloud Deployment):
+  - All applications, libraries, and dependencies MUST be installed in `/workspace` (persistent storage)
+  - Python virtual environment MUST be in `/workspace/bms-api-venv`
+  - All data directories MUST be in `/workspace` (Qdrant, models, logs, backups)
+  - **Exception**: Ollama MUST be installed in `/root` (default location) for GPU compatibility
+  - Ollama models directory MUST be symlinked/configured to `/workspace/data/ollama_models` for persistence
+  - `requirements.txt` dependencies MUST be installed during initialization via `runpod_init.sh`
 
 ## 12. Vector Database (MUST)
 - **Implementation**:

@@ -1,27 +1,168 @@
 #!/bin/bash
 # RunPod Initialization Script
 # Place this in RunPod's startup script field
+# Ensures all dependencies are installed in /workspace (persistent storage)
+# Exception: Ollama installed in /root for GPU compatibility
+
+set -e  # Exit on error
+
+LOGFILE="/workspace/logs/runpod_init.log"
+PROJECT_DIR="/workspace/001-bms-agent"
+VENV_DIR="/workspace/bms-api-venv"
+
+# Function for logging
+log() {
+    echo "$(date '+%Y-%m-%d %H:%M:%S'): $1" | tee -a "$LOGFILE"
+}
 
 # Wait for system to be ready
 sleep 10
 
-# Create logs directory if it doesn't exist
+# Create necessary directories
+log "Creating directory structure..."
 mkdir -p /workspace/logs
+mkdir -p /workspace/data/ollama_models
+mkdir -p /workspace/qdrant_storage
+mkdir -p /workspace/bms_data
+mkdir -p /workspace/backups
 
-# Install Ollama if not present (since /root is not persistent)
+# Install Ollama if not present (installed in /root for GPU compatibility)
 if [ ! -f /usr/local/bin/ollama ]; then
-    echo "$(date): Ollama not found, installing..." >> /workspace/logs/startup.log
-    curl -fsSL https://ollama.com/install.sh | sh >> /workspace/logs/startup.log 2>&1
-    echo "$(date): Ollama installed" >> /workspace/logs/startup.log
+    log "Ollama not found, installing in /root (for GPU support)..."
+    curl -fsSL https://ollama.com/install.sh | sh >> "$LOGFILE" 2>&1
+    log "Ollama installed successfully"
+else
+    log "Ollama already installed"
 fi
 
-# Ensure Ollama models directory exists in persistent storage
-mkdir -p /workspace/data/ollama_models
+# Configure Ollama to use persistent storage for models
+export OLLAMA_MODELS=/workspace/data/ollama_models
+log "Ollama models directory: $OLLAMA_MODELS"
+
+# Create/update Python virtual environment in /workspace
+if [ ! -d "$VENV_DIR" ]; then
+    log "Creating Python virtual environment in $VENV_DIR..."
+    python3 -m venv "$VENV_DIR" >> "$LOGFILE" 2>&1
+    log "Virtual environment created"
+else
+    log "Virtual environment already exists"
+fi
+
+# Activate virtual environment and install/upgrade dependencies
+log "Installing Python dependencies from requirements.txt..."
+cd "$PROJECT_DIR"
+source "$VENV_DIR/bin/activate"
+
+# Upgrade pip
+pip install --upgrade pip >> "$LOGFILE" 2>&1
+
+# Install requirements
+if [ -f "requirements.txt" ]; then
+    log "Installing requirements from requirements.txt..."
+    pip install -r requirements.txt >> "$LOGFILE" 2>&1
+    log "Requirements installed successfully"
+else
+    log "WARNING: requirements.txt not found!"
+fi
+
+# Download required NLTK data
+log "Downloading NLTK data..."
+python -c "
+import nltk
+import sys
+try:
+    nltk.download('punkt_tab', quiet=True)
+    nltk.download('punkt', quiet=True)
+    nltk.download('wordnet', quiet=True)
+    nltk.download('stopwords', quiet=True)
+    nltk.download('averaged_perceptron_tagger', quiet=True)
+    nltk.download('maxent_ne_chunker', quiet=True)
+    nltk.download('words', quiet=True)
+    print('NLTK data downloaded successfully')
+except Exception as e:
+    print(f'Error downloading NLTK data: {e}', file=sys.stderr)
+    sys.exit(1)
+" >> "$LOGFILE" 2>&1
+
+if [ $? -eq 0 ]; then
+    log "NLTK data downloaded successfully"
+else
+    log "WARNING: NLTK data download failed"
+fi
+
+deactivate
+
+# Install system dependencies if needed
+log "Checking system dependencies..."
+if ! command -v jq &> /dev/null; then
+    log "Installing jq..."
+    apt-get update >> "$LOGFILE" 2>&1
+    apt-get install -y jq >> "$LOGFILE" 2>&1
+    log "jq installed"
+fi
+
+# Pull required Ollama models
+log "Checking Ollama models..."
 export OLLAMA_MODELS=/workspace/data/ollama_models
 
-# Start BMS Agent services
-if [ -f /workspace/scripts/start_all_services.sh ]; then
-    echo "$(date): Starting BMS Agent services" >> /workspace/logs/startup.log
-    /workspace/scripts/start_all_services.sh >> /workspace/logs/startup.log 2>&1
-    echo "$(date): BMS Agent services started" >> /workspace/logs/startup.log
+# Start Ollama service first
+if ! pgrep -x "ollama" > /dev/null; then
+    log "Starting Ollama service..."
+    nohup ollama serve > /workspace/logs/ollama.log 2>&1 &
+    sleep 5
 fi
+
+# Pull embedding model if not present
+if [ ! -d "$OLLAMA_MODELS/manifests/registry.ollama.ai/library/nomic-embed-text" ]; then
+    log "Pulling nomic-embed-text model..."
+    ollama pull nomic-embed-text >> "$LOGFILE" 2>&1
+    log "nomic-embed-text model pulled"
+fi
+
+# Pull LLM model if not present
+if [ ! -d "$OLLAMA_MODELS/manifests/registry.ollama.ai/library/mistral" ]; then
+    log "Pulling mistral model..."
+    ollama pull mistral >> "$LOGFILE" 2>&1
+    log "mistral model pulled"
+fi
+
+# Start BMS Agent services
+if [ -f "$PROJECT_DIR/scripts/start_all_services.sh" ]; then
+    log "Starting BMS Agent services..."
+    cd "$PROJECT_DIR"
+    bash scripts/start_all_services.sh >> "$LOGFILE" 2>&1
+    log "BMS Agent services started"
+else
+    log "WARNING: start_all_services.sh not found!"
+fi
+
+# Final status check
+log "Initialization complete. Checking service status..."
+sleep 5
+
+if pgrep -x "ollama" > /dev/null; then
+    log "✅ Ollama: Running"
+else
+    log "❌ Ollama: Not running"
+fi
+
+if pgrep -f "qdrant" > /dev/null; then
+    log "✅ Qdrant: Running"
+else
+    log "❌ Qdrant: Not running"
+fi
+
+if pgrep -f "uvicorn api.main:app" > /dev/null; then
+    log "✅ BMS API: Running"
+else
+    log "❌ BMS API: Not running"
+fi
+
+if pgrep -f "open-webui" > /dev/null; then
+    log "✅ OpenWebUI: Running"
+else
+    log "❌ OpenWebUI: Not running"
+fi
+
+log "RunPod initialization script completed"
+log "Check logs at: /workspace/logs/"
