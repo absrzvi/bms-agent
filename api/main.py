@@ -11,7 +11,7 @@ from pathlib import Path
 from typing import Dict, Any, List, Optional
 from datetime import datetime
 
-from fastapi import FastAPI, File, UploadFile, Form, HTTPException, BackgroundTasks
+from fastapi import FastAPI, File, UploadFile, Form, HTTPException, BackgroundTasks, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
@@ -22,6 +22,15 @@ import sys
 from pathlib import Path
 sys.path.append(str(Path(__file__).parent))
 from processor_wrapper import get_processor, ProcessingResult
+
+# Import async upload queue
+try:
+    from background_tasks import get_upload_queue
+    from models.upload_status import UploadJobCreate, UploadJobStatus
+    ASYNC_QUEUE_AVAILABLE = True
+except ImportError as e:
+    ASYNC_QUEUE_AVAILABLE = False
+    logging.warning(f"Async upload queue not available: {e}")
 
 # Import Slack integration
 try:
@@ -234,6 +243,7 @@ async def upload_document(
                 "status": "success",
                 "document_id": document_id,
                 "file_name": file.filename,
+                "replaced_existing": processing_result.replaced_existing,
                 "processing_result": {
                     "chunks_created": processing_result.chunks_created,
                     "quality_score": processing_result.quality_score,
@@ -241,6 +251,13 @@ async def upload_document(
                     "features_extracted": processing_result.features_extracted
                 }
             }
+            
+            # Add replacement info if applicable
+            if processing_result.replaced_existing:
+                response_data["replacement_info"] = {
+                    "deleted_chunks": processing_result.deleted_chunks,
+                    "message": f"Replaced existing document (deleted {processing_result.deleted_chunks} chunks)"
+                }
             
             logger.info(f"✅ Document processed successfully: {document_id}")
             return response_data
@@ -263,19 +280,189 @@ async def upload_document(
         logger.error(f"❌ Upload endpoint error: {e}")
         raise HTTPException(status_code=500, detail="Internal server error")
 
-@app.get("/api/v1/documents/{document_id}")
-async def get_document_status(document_id: str):
-    """Get document processing status and metadata"""
+@app.post("/api/v1/documents/upload/async", response_model=UploadJobCreate)
+async def upload_document_async(
+    request: Request,
+    file: UploadFile = File(...),
+    profile: str = Form("general")
+):
+    """
+    Upload document for asynchronous processing (HTTP 202)
     
-    # For POC, this is a placeholder - in production would query database
-    # Currently just return a not found response since we don't persist document metadata
-    return JSONResponse(
-        status_code=404,
-        content={
-            "status": "error",
-            "error": "Document not found"
+    Returns immediately with job ID. Use status endpoint to track progress.
+    
+    - **file**: Document file to upload (PDF, CSV, XLSX, TXT, DOCX, PPTX)
+    - **profile**: Processing profile (general, technical, legal, medical, financial, railway)
+    
+    Returns HTTP 202 Accepted with job ID and status URL
+    """
+    
+    if not ASYNC_QUEUE_AVAILABLE:
+        raise HTTPException(
+            status_code=503,
+            detail="Async upload queue not available. Use /api/v1/documents/upload for synchronous upload."
+        )
+    
+    try:
+        # Validate inputs
+        if not file.filename:
+            raise HTTPException(status_code=400, detail="No file provided")
+        
+        if not validate_file_type(file.filename):
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid file type. Supported types: {', '.join(ALLOWED_EXTENSIONS)}"
+            )
+        
+        if profile not in ALLOWED_PROFILES:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid profile. Allowed profiles: {', '.join(ALLOWED_PROFILES)}"
+            )
+        
+        # Check file size
+        file.file.seek(0, 2)
+        file_size = file.file.tell()
+        file.file.seek(0)
+        
+        if file_size > MAX_FILE_SIZE:
+            raise HTTPException(
+                status_code=413,
+                detail=f"File size exceeds maximum limit of {MAX_FILE_SIZE // (1024*1024*1024)}GB"
+            )
+        
+        # Save uploaded file
+        file_path = save_upload_file(file)
+        
+        logger.info(f"📁 File uploaded for async processing: {file.filename} -> {file_path}")
+        
+        # Submit to queue
+        queue = get_upload_queue()
+        job_id = await queue.submit_job(
+            filename=file.filename,
+            file_path=file_path,
+            profile=profile
+        )
+        
+        # Build status URL
+        base_url = str(request.base_url).rstrip('/')
+        status_url = f"{base_url}/api/v1/documents/status/{job_id}"
+        
+        return UploadJobCreate(
+            job_id=job_id,
+            status="queued",
+            message=f"Document queued for processing. Check status at {status_url}",
+            status_url=status_url
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ Async upload error: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+
+@app.get("/api/v1/documents/status/{job_id}", response_model=UploadJobStatus)
+async def get_upload_status(job_id: str):
+    """
+    Get status of an async upload job
+    
+    - **job_id**: Job identifier returned from async upload endpoint
+    
+    Returns current processing status, progress, and results (when complete)
+    """
+    
+    if not ASYNC_QUEUE_AVAILABLE:
+        raise HTTPException(
+            status_code=503,
+            detail="Async upload queue not available"
+        )
+    
+    try:
+        queue = get_upload_queue()
+        job_status = queue.get_job_status(job_id)
+        
+        if not job_status:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Job {job_id} not found. Job may have expired or never existed."
+            )
+        
+        return job_status
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ Status check error: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+
+@app.get("/api/v1/documents/queue/stats")
+async def get_queue_stats():
+    """Get upload queue statistics"""
+    
+    if not ASYNC_QUEUE_AVAILABLE:
+        raise HTTPException(
+            status_code=503,
+            detail="Async upload queue not available"
+        )
+    
+    try:
+        queue = get_upload_queue()
+        stats = queue.get_queue_stats()
+        
+        return {
+            "status": "success",
+            "queue_stats": stats,
+            "timestamp": datetime.now().isoformat()
         }
-    )
+        
+    except Exception as e:
+        logger.error(f"❌ Queue stats error: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+
+@app.delete("/api/v1/documents/{document_id}", status_code=204)
+async def delete_document(document_id: str):
+    """
+    Delete a document and all associated chunks from Qdrant
+    
+    - **document_id**: Document identifier to delete
+    
+    Returns HTTP 204 No Content on success
+    
+    Note: For POC, no authentication required. Production should enforce admin-only access.
+    """
+    
+    try:
+        processor = get_processor()
+        
+        if not processor.qdrant_client:
+            raise HTTPException(status_code=503, detail="Qdrant service unavailable")
+        
+        # Delete document
+        result = processor.delete_document_by_id(document_id)
+        
+        if not result["success"]:
+            if result.get("error") == "Document not found":
+                raise HTTPException(status_code=404, detail=f"Document {document_id} not found")
+            else:
+                raise HTTPException(
+                    status_code=500,
+                    detail=f"Deletion failed: {result.get('error', 'Unknown error')}"
+                )
+        
+        # Log deletion for audit trail (basic logging for POC)
+        logger.info(f"🗑️ Document deleted: {document_id} ({result.get('document_name')}) - {result['deleted_count']} chunks")
+        
+        # Return 204 No Content (no response body)
+        return None
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ Delete endpoint error: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 @app.post("/api/v1/search/semantic")
 async def semantic_search(request: SearchRequest):

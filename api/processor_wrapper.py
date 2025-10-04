@@ -66,6 +66,8 @@ class ProcessingResult:
     features_extracted: List[str]
     metadata: Dict[str, Any]
     error: Optional[str] = None
+    replaced_existing: bool = False
+    deleted_chunks: int = 0
 
 class BMSDocumentProcessor:
     """
@@ -263,17 +265,134 @@ class BMSDocumentProcessor:
         
         return None
     
+    def delete_document_by_filename(self, filename: str) -> Dict[str, Any]:
+        """
+        Delete all chunks associated with a document by filename (destructive replacement)
+        Returns dict with deletion stats
+        """
+        if not self.qdrant_client:
+            return {"success": False, "error": "Qdrant client not available", "deleted_count": 0}
+        
+        try:
+            # Search for all points with this document_name
+            search_result = self.qdrant_client.scroll(
+                collection_name=self.collection_name,
+                scroll_filter={
+                    "must": [
+                        {
+                            "key": "document_name",
+                            "match": {"value": filename}
+                        }
+                    ]
+                },
+                limit=10000,  # Get all matching points
+                with_payload=False,
+                with_vectors=False
+            )
+            
+            points_to_delete = search_result[0]  # First element is the list of points
+            point_ids = [point.id for point in points_to_delete]
+            
+            if not point_ids:
+                logger.info(f"No existing document found with filename: {filename}")
+                return {"success": True, "deleted_count": 0, "message": "No existing document found"}
+            
+            # Delete all points
+            self.qdrant_client.delete(
+                collection_name=self.collection_name,
+                points_selector=point_ids
+            )
+            
+            logger.info(f"🗑️ Deleted {len(point_ids)} chunks for document: {filename}")
+            return {
+                "success": True,
+                "deleted_count": len(point_ids),
+                "message": f"Deleted {len(point_ids)} chunks from previous version"
+            }
+            
+        except Exception as e:
+            logger.error(f"Error deleting document {filename}: {e}")
+            return {"success": False, "error": str(e), "deleted_count": 0}
+    
+    def delete_document_by_id(self, document_id: str) -> Dict[str, Any]:
+        """
+        Delete all chunks associated with a document by document_id
+        Returns dict with deletion stats including document name
+        """
+        if not self.qdrant_client:
+            return {"success": False, "error": "Qdrant client not available", "deleted_count": 0}
+        
+        try:
+            # Search for all points with this document_id
+            search_result = self.qdrant_client.scroll(
+                collection_name=self.collection_name,
+                scroll_filter={
+                    "must": [
+                        {
+                            "key": "document_id",
+                            "match": {"value": document_id}
+                        }
+                    ]
+                },
+                limit=10000,  # Get all matching points
+                with_payload=True,  # Get payload to extract document name
+                with_vectors=False
+            )
+            
+            points_to_delete = search_result[0]  # First element is the list of points
+            
+            if not points_to_delete:
+                logger.info(f"No document found with ID: {document_id}")
+                return {"success": False, "error": "Document not found", "deleted_count": 0}
+            
+            # Extract document name from first point
+            document_name = points_to_delete[0].payload.get("document_name", "unknown")
+            
+            # Get point IDs
+            point_ids = [point.id for point in points_to_delete]
+            
+            # Delete all points
+            self.qdrant_client.delete(
+                collection_name=self.collection_name,
+                points_selector=point_ids
+            )
+            
+            logger.info(f"🗑️ Deleted document {document_id} ({document_name}): {len(point_ids)} chunks")
+            return {
+                "success": True,
+                "deleted_count": len(point_ids),
+                "document_name": document_name,
+                "message": f"Deleted document {document_name} ({len(point_ids)} chunks)"
+            }
+            
+        except Exception as e:
+            logger.error(f"Error deleting document {document_id}: {e}")
+            return {"success": False, "error": str(e), "deleted_count": 0}
+    
     def process_document(self, 
                         file_path: str, 
-                        processing_profile: str = "railway") -> ProcessingResult:
+                        processing_profile: str = "railway",
+                        replace_existing: bool = True) -> ProcessingResult:
         """
         Process document using Enhanced Document Processor v4.0 and store in Qdrant
+        
+        Args:
+            file_path: Path to document file
+            processing_profile: Processing profile to use
+            replace_existing: If True, delete existing document with same filename before processing
         """
         start_time = datetime.now()
         document_id = str(uuid.uuid4())
         file_name = Path(file_path).name
         
         logger.info(f"🚀 Processing document: {file_name} (ID: {document_id})")
+        
+        # Handle re-upload: delete existing document if replace_existing is True
+        deletion_result = None
+        if replace_existing:
+            deletion_result = self.delete_document_by_filename(file_name)
+            if deletion_result["deleted_count"] > 0:
+                logger.info(f"♻️ Re-upload detected: replaced existing document with {deletion_result['deleted_count']} chunks")
         
         try:
             # Validate processor availability
@@ -345,7 +464,7 @@ class BMSDocumentProcessor:
             # Calculate processing time
             processing_time = (datetime.now() - start_time).total_seconds() * 1000
             
-            # Create result
+            # Create result with deletion info
             result = ProcessingResult(
                 document_id=document_id,
                 file_name=file_name,
@@ -362,7 +481,9 @@ class BMSDocumentProcessor:
                     "quality_report": quality_report,
                     "statistics": statistics,
                     "enhanced_features": metadata
-                }
+                },
+                replaced_existing=deletion_result["deleted_count"] > 0 if deletion_result else False,
+                deleted_chunks=deletion_result["deleted_count"] if deletion_result else 0
             )
             
             logger.info(f"🎉 Document processing completed successfully")

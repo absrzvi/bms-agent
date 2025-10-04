@@ -171,6 +171,38 @@ tail -100 /workspace/logs/backup.log
 
 ## Monitoring
 
+### Prometheus & Grafana Setup
+
+**Prometheus Configuration:**
+```bash
+# Prometheus config location
+cat prometheus/prometheus.yml
+
+# Start Prometheus (if installed)
+prometheus --config.file=prometheus/prometheus.yml --storage.tsdb.path=/workspace/prometheus_data
+```
+
+**Grafana Dashboard:**
+- Dashboard JSON: `grafana/dashboards/bms-agent.json`
+- Import into Grafana UI: Configuration → Dashboards → Import
+- Panels included:
+  - API Latency (p50/p95/p99)
+  - Request Throughput
+  - Error Rate (4xx/5xx)
+  - Service Health (BMS API, Qdrant)
+  - Document Processing Stats
+
+**Alert Rules:**
+- Alert configuration: `prometheus/alerts.yml`
+- Alerts configured for:
+  - High API latency (>100ms p95)
+  - Critical API latency (>500ms p95)
+  - High error rate (>1%)
+  - Service downtime (Qdrant, Ollama)
+  - Document processing failures
+  - Low disk space
+  - High memory usage
+
 ### Health Checks
 ```bash
 # Manual health check
