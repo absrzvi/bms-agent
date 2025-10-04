@@ -1,0 +1,3 @@
+"""
+Cache tests module
+"""

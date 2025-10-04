@@ -47,6 +47,18 @@ except ImportError:
 # Import security middleware
 from security import RateLimitMiddleware, SecurityHeadersMiddleware, get_rate_limit_config
 
+# Import semantic cache
+from cache.semantic_cache import get_cache_manager
+
+# Initialize semantic cache
+cache_manager = get_cache_manager()
+search_cache = cache_manager.create_cache(
+    name="search",
+    max_size=1000,
+    similarity_threshold=0.95,
+    ttl_seconds=3600
+)
+
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -118,6 +130,10 @@ class RerankSearchRequest(SearchRequest):
     retrieval_weight: float = Field(0.7, ge=0.0, le=1.0, description="Weight for retrieval scores")
     rerank_weight: float = Field(0.3, ge=0.0, le=1.0, description="Weight for rerank scores")
     min_rerank_score: Optional[float] = Field(None, ge=0.0, le=1.0, description="Minimum rerank score threshold")
+
+class CachedSearchRequest(SearchRequest):
+    use_cache: bool = Field(True, description="Use semantic cache if available")
+    cache_ttl: Optional[int] = Field(None, description="Override default cache TTL (seconds)")
 
 class HealthResponse(BaseModel):
     status: str
@@ -1164,6 +1180,66 @@ async def rerank_search(request: RerankSearchRequest):
         import traceback
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Rerank search failed: {str(e)}")
+
+@app.get("/api/v1/cache/stats")
+async def get_cache_stats():
+    """
+    Get semantic cache statistics
+    
+    Returns cache hit rate, size, and performance metrics
+    """
+    try:
+        stats = search_cache.get_stats()
+        top_queries = search_cache.get_top_queries(limit=10)
+        
+        return {
+            "status": "success",
+            "cache_stats": stats,
+            "top_queries": top_queries,
+            "timestamp": datetime.now().isoformat()
+        }
+    except Exception as e:
+        logger.error(f"❌ Cache stats error: {e}")
+        raise HTTPException(status_code=500, detail="Failed to get cache stats")
+
+@app.post("/api/v1/cache/clear")
+async def clear_cache():
+    """
+    Clear semantic cache
+    
+    Removes all cached search results
+    """
+    try:
+        search_cache.clear()
+        
+        return {
+            "status": "success",
+            "message": "Cache cleared successfully",
+            "timestamp": datetime.now().isoformat()
+        }
+    except Exception as e:
+        logger.error(f"❌ Cache clear error: {e}")
+        raise HTTPException(status_code=500, detail="Failed to clear cache")
+
+@app.post("/api/v1/cache/invalidate-expired")
+async def invalidate_expired_cache():
+    """
+    Invalidate expired cache entries
+    
+    Removes entries that have exceeded their TTL
+    """
+    try:
+        search_cache.invalidate_expired()
+        
+        return {
+            "status": "success",
+            "message": "Expired entries invalidated",
+            "current_size": len(search_cache._cache),
+            "timestamp": datetime.now().isoformat()
+        }
+    except Exception as e:
+        logger.error(f"❌ Cache invalidation error: {e}")
+        raise HTTPException(status_code=500, detail="Failed to invalidate cache")
 
 # Error handlers
 @app.exception_handler(404)
