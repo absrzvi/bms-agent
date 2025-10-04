@@ -42,8 +42,14 @@ if [ -f "$INIT_MARKER" ]; then
         log "SSH keys restored"
     fi
     
-    # Set Ollama models directory
+    # Set environment variables for persistent data
     export OLLAMA_MODELS=/workspace/data/ollama_models
+    export NLTK_DATA=/workspace/nltk_data
+    
+    # Source environment config if exists
+    if [ -f /workspace/config/env.sh ]; then
+        source /workspace/config/env.sh
+    fi
     
     # Start services
     if [ -f "$PROJECT_DIR/scripts/start_all_services.sh" ]; then
@@ -105,6 +111,8 @@ mkdir -p /workspace/data/ollama_models
 mkdir -p /workspace/qdrant_storage
 mkdir -p /workspace/bms_data
 mkdir -p /workspace/backups
+mkdir -p /workspace/nltk_data
+mkdir -p /workspace/config
 
 # Install Ollama if not present (installed in /root for GPU compatibility)
 if [ ! -f /usr/local/bin/ollama ]; then
@@ -145,30 +153,43 @@ else
     log "WARNING: requirements.txt not found!"
 fi
 
-# Download required NLTK data
-log "Downloading NLTK data..."
+# Download required NLTK data to /workspace (persistent)
+log "Downloading NLTK data to /workspace/nltk_data..."
+mkdir -p /workspace/nltk_data
+export NLTK_DATA=/workspace/nltk_data
+
 python -c "
 import nltk
 import sys
+import os
+
+# Set NLTK data path to workspace (persistent)
+os.environ['NLTK_DATA'] = '/workspace/nltk_data'
+nltk.data.path.insert(0, '/workspace/nltk_data')
+
 try:
-    nltk.download('punkt_tab', quiet=True)
-    nltk.download('punkt', quiet=True)
-    nltk.download('wordnet', quiet=True)
-    nltk.download('stopwords', quiet=True)
-    nltk.download('averaged_perceptron_tagger', quiet=True)
-    nltk.download('maxent_ne_chunker', quiet=True)
-    nltk.download('words', quiet=True)
-    print('NLTK data downloaded successfully')
+    nltk.download('punkt_tab', download_dir='/workspace/nltk_data', quiet=True)
+    nltk.download('punkt', download_dir='/workspace/nltk_data', quiet=True)
+    nltk.download('wordnet', download_dir='/workspace/nltk_data', quiet=True)
+    nltk.download('stopwords', download_dir='/workspace/nltk_data', quiet=True)
+    nltk.download('averaged_perceptron_tagger', download_dir='/workspace/nltk_data', quiet=True)
+    nltk.download('maxent_ne_chunker', download_dir='/workspace/nltk_data', quiet=True)
+    nltk.download('words', download_dir='/workspace/nltk_data', quiet=True)
+    print('NLTK data downloaded successfully to /workspace/nltk_data')
 except Exception as e:
     print(f'Error downloading NLTK data: {e}', file=sys.stderr)
     sys.exit(1)
 " >> "$LOGFILE" 2>&1
 
 if [ $? -eq 0 ]; then
-    log "NLTK data downloaded successfully"
+    log "✅ NLTK data downloaded successfully to /workspace/nltk_data"
 else
     log "WARNING: NLTK data download failed"
 fi
+
+# Set NLTK_DATA environment variable for all future sessions
+echo "export NLTK_DATA=/workspace/nltk_data" >> /workspace/config/env.sh
+log "NLTK_DATA environment variable configured"
 
 deactivate
 

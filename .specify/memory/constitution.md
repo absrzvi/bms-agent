@@ -157,6 +157,8 @@ This constitution establishes the governing principles and technical standards f
     - Logs: `/workspace/logs`
     - Backups: `/workspace/backups`
     - Ollama models: `/workspace/data/ollama_models`
+    - NLTK data: `/workspace/nltk_data` (configured via `NLTK_DATA` environment variable)
+    - Configuration: `/workspace/config` (SSH keys, environment variables)
   - **Exception**: Ollama binary MUST be installed in `/root` (default location) for GPU compatibility
     - Ollama models configured via `OLLAMA_MODELS=/workspace/data/ollama_models` for persistence
     - Ollama binary reinstalled on each pod start (non-persistent location)

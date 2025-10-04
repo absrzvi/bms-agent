@@ -48,6 +48,10 @@ This document defines the installation architecture for the BMS Agent system run
 ├── qdrant_storage/             # Qdrant vector database
 ├── bms_data/                   # BMS document storage
 ├── backups/                    # System backups
+├── nltk_data/                  # NLTK data (persistent) ✨ NEW
+├── config/
+│   ├── authorized_keys         # SSH keys
+│   └── env.sh                  # Environment variables
 └── logs/                       # Application logs
     ├── api.log
     ├── qdrant.log
@@ -72,7 +76,7 @@ This document defines the installation architecture for the BMS Agent system run
 - **Ollama MUST be reinstalled** on each pod start (handled by `runpod_init.sh`)
 - **Ollama models are persistent** - stored in `/workspace/data/ollama_models` via `OLLAMA_MODELS` environment variable
 - **System packages are ephemeral** - reinstalled on each pod start (jq, etc.)
-- **NLTK data is ephemeral** - re-downloaded on each pod start
+- **NLTK data is NOW PERSISTENT** ✨ - stored in `/workspace/nltk_data` via `NLTK_DATA` environment variable
 
 ## Installation Locations
 
@@ -80,7 +84,7 @@ This document defines the installation architecture for the BMS Agent system run
 |-----------|----------|--------|------------|
 | Python venv | `/workspace/bms-api-venv` | Persist installed packages | ✅ Yes |
 | Python packages | `/workspace/bms-api-venv/lib/` | Avoid reinstalling on restart | ✅ Yes |
-| NLTK data | `/root/nltk_data` | Standard NLTK location | ❌ No (downloaded by init script) |
+| **NLTK data** | **`/workspace/nltk_data`** ✨ | **Persist NLTK resources** | **✅ Yes (NEW!)** |
 | Qdrant binary | `/workspace/qdrant` | Persist application | ✅ Yes |
 | Qdrant data | `/workspace/qdrant_storage` | Persist vector database | ✅ Yes |
 | Ollama binary | `/root/.ollama` or `/usr/local/bin/ollama` | GPU compatibility | ❌ No (reinstalled by init script) |
@@ -88,6 +92,7 @@ This document defines the installation architecture for the BMS Agent system run
 | BMS data | `/workspace/bms_data` | Persist documents | ✅ Yes |
 | Logs | `/workspace/logs` | Persist logs | ✅ Yes |
 | Backups | `/workspace/backups` | Persist backups | ✅ Yes |
+| Config | `/workspace/config` | Environment variables, SSH keys | ✅ Yes |
 
 ## Why Ollama in `/root`? (RunPod Pod Specific)
 

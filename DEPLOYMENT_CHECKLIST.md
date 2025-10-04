@@ -36,13 +36,13 @@
 - [ ] All packages from `requirements.txt` installed in venv (in `/workspace`)
 - [ ] Qdrant binary v1.7.4+ installed in `/workspace`
 - [ ] Ollama models pulled to `/workspace/data/ollama_models` (large files, persist)
+- [ ] **NLTK data downloaded to `/workspace/nltk_data`** ✨ (NEW - now persistent!)
 
 **Ephemeral (reinstalled on EVERY pod start):**
 - [ ] Ollama binary installed in `/root` with GPU support (reinstalled each start)
-- [ ] NLTK data downloaded to `/root/nltk_data` (re-downloaded each start)
 - [ ] System packages installed (jq, etc.) (reinstalled each start)
 
-**Note:** Ephemeral components are automatically reinstalled by `runpod_init.sh` on each pod start.
+**Note:** Only Ollama binary and system packages need reinstallation on pod restart. NLTK data now persists!
 
 ### Configuration Files
 - [ ] `.env` or `config/env.sh` configured with:

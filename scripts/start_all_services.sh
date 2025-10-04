@@ -3,8 +3,13 @@ set -e
 
 echo "🚀 Starting BMS Agent Services..."
 
+# Set persistent data paths
+export OLLAMA_MODELS=/workspace/data/ollama_models
+export NLTK_DATA=/workspace/nltk_data
+
 # Load environment
 source /workspace/scripts/env.sh 2>/dev/null || true
+source /workspace/config/env.sh 2>/dev/null || true
 
 # Start Qdrant
 if [ -f /workspace/apps/qdrant/qdrant ]; then
@@ -31,6 +36,8 @@ if [ -d /workspace/001-bms-agent ]; then
     echo "Starting BMS API..."
     cd /workspace/001-bms-agent
     source /workspace/bms-api-venv/bin/activate
+    # Set NLTK_DATA for API process
+    export NLTK_DATA=/workspace/nltk_data
     nohup uvicorn api.main:app --host 0.0.0.0 --port 8000 > /workspace/logs/api.log 2>&1 &
     sleep 3
     deactivate

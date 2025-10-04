@@ -102,6 +102,7 @@ cd /workspace/001-bms-agent && ./scripts/health_check.sh
 ✅ **No Loops:** Completion marker prevents full re-init  
 ✅ **Ollama:** Binary reinstalled each start (models persist in `/workspace`)  
 ✅ **Python Packages:** Persist in `/workspace/bms-api-venv` (not reinstalled)  
+✅ **NLTK Data:** ✨ NOW PERSISTENT in `/workspace/nltk_data` (not re-downloaded!)  
 
 ## Force Re-initialization (If Needed)
 
