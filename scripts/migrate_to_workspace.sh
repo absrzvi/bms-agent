@@ -168,9 +168,9 @@ fi
 # Start Ollama
 if [ -f /workspace/apps/ollama/ollama ]; then
     echo "Starting Ollama..."
-    export OLLAMA_MODELS=/workspace/data/ollama_models
-    /workspace/apps/ollama/ollama serve > /workspace/logs/ollama.log 2>&1 &
+    OLLAMA_MODELS=/workspace/data/ollama_models /workspace/apps/ollama/ollama serve > /workspace/logs/ollama.log 2>&1 &
     sleep 3
+    echo "Ollama started with OLLAMA_MODELS=/workspace/data/ollama_models"
 fi
 
 # Start BMS API

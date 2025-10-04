@@ -108,11 +108,11 @@ sleep 2
 
 # Start Ollama manually to see GPU detection
 log "Starting Ollama with GPU detection..."
-export OLLAMA_MODELS=/workspace/data/ollama_models
 export CUDA_VISIBLE_DEVICES=0
-ollama serve > /workspace/logs/ollama.log 2>&1 &
+OLLAMA_MODELS=/workspace/data/ollama_models ollama serve > /workspace/logs/ollama.log 2>&1 &
 OLLAMA_PID=$!
 log "Ollama started with PID: $OLLAMA_PID"
+log "Environment: OLLAMA_MODELS=/workspace/data/ollama_models CUDA_VISIBLE_DEVICES=0"
 
 # Wait for Ollama to start
 log "Waiting for Ollama to initialize..."

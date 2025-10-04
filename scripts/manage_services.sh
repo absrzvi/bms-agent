@@ -90,8 +90,7 @@ start_ollama() {
     fi
     
     if command -v ollama &> /dev/null; then
-        export OLLAMA_MODELS=/workspace/data/ollama_models
-        nohup ollama serve > "$LOG_DIR/ollama.log" 2>&1 &
+        OLLAMA_MODELS=/workspace/data/ollama_models nohup ollama serve > "$LOG_DIR/ollama.log" 2>&1 &
         sleep 3
         
         if pgrep -f "ollama serve" > /dev/null; then

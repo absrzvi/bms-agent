@@ -1,0 +1,73 @@
+🧪 BMS Agent Post-MVP Feature Testing
+======================================
+
+Creating test document...
+✅ Test document created: test_document.txt
+
+📤 Test 1: Initial Document Upload
+-----------------------------------
+Document ID: 6f917890-73ac-4f12-9a59-901e4c5df6e1
+Chunks created: 0
+Replaced existing: false
+
+✅ Test 1 PASSED: Initial upload successful, no replacement
+
+♻️  Test 2: Document Re-upload (T036)
+-------------------------------------
+New Document ID: d39acacd-eb34-49c0-abd1-712063097568
+Chunks created: 0
+Replaced existing: false
+Deleted chunks: 0
+
+❌ Test 2 FAILED: Replacement not working correctly
+   Expected deleted: 0, Got: 0
+
+⏳ Test 3: Async Upload Queue (T037)
+------------------------------------
+Job ID: null
+Status URL: null
+
+Checking initial status...
+Status: error
+
+Waiting 5 seconds for processing...
+Status: error
+Progress: null%
+
+Queue statistics:
+null
+
+❌ Test 3 FAILED: Async queue not processing
+
+🗑️  Test 4: Document Deletion (T039)
+------------------------------------
+Deleting document: d39acacd-eb34-49c0-abd1-712063097568
+HTTP Status Code: 404
+
+❌ Test 4a FAILED: Expected HTTP 204, got 404
+
+Attempting to delete again (should fail)...
+HTTP Status Code: 404
+
+✅ Test 4b PASSED: Second deletion returned 404 (not found)
+
+🔍 Test 5: Search with min_score Filter (T040)
+-----------------------------------------------
+Results returned: 0
+⚠️  Test 5: No results (may be expected if min_score too high)
+
+🧹 Cleanup
+----------
+✅ Test document removed
+
+======================================
+📊 Test Summary
+======================================
+✅ Test 1: Initial upload
+❌ Test 2: Document re-upload (T036)
+❌ Test 3: Async upload queue (T037)
+❌ Test 4a: Document deletion (T039)
+✅ Test 4b: Deletion idempotency
+⚠️  Test 5: Search with filters (T040)
+
+🎉 Post-MVP feature testing complete!

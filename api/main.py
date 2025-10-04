@@ -24,12 +24,16 @@ sys.path.append(str(Path(__file__).parent))
 from processor_wrapper import get_processor, ProcessingResult
 
 # Import async upload queue
+ASYNC_QUEUE_AVAILABLE = False
+UploadJobCreate = None
+UploadJobStatus = None
+get_upload_queue = None
+
 try:
-    from background_tasks import get_upload_queue
-    from models.upload_status import UploadJobCreate, UploadJobStatus
+    from api.background_tasks import get_upload_queue
+    from api.models.upload_status import UploadJobCreate, UploadJobStatus
     ASYNC_QUEUE_AVAILABLE = True
 except ImportError as e:
-    ASYNC_QUEUE_AVAILABLE = False
     logging.warning(f"Async upload queue not available: {e}")
 
 # Import Slack integration
@@ -280,146 +284,147 @@ async def upload_document(
         logger.error(f"❌ Upload endpoint error: {e}")
         raise HTTPException(status_code=500, detail="Internal server error")
 
-@app.post("/api/v1/documents/upload/async", response_model=UploadJobCreate)
-async def upload_document_async(
-    request: Request,
-    file: UploadFile = File(...),
-    profile: str = Form("general")
-):
-    """
-    Upload document for asynchronous processing (HTTP 202)
-    
-    Returns immediately with job ID. Use status endpoint to track progress.
-    
-    - **file**: Document file to upload (PDF, CSV, XLSX, TXT, DOCX, PPTX)
-    - **profile**: Processing profile (general, technical, legal, medical, financial, railway)
-    
-    Returns HTTP 202 Accepted with job ID and status URL
-    """
-    
-    if not ASYNC_QUEUE_AVAILABLE:
-        raise HTTPException(
-            status_code=503,
-            detail="Async upload queue not available. Use /api/v1/documents/upload for synchronous upload."
-        )
-    
-    try:
-        # Validate inputs
-        if not file.filename:
-            raise HTTPException(status_code=400, detail="No file provided")
+if ASYNC_QUEUE_AVAILABLE:
+    @app.post("/api/v1/documents/upload/async", response_model=UploadJobCreate)
+    async def upload_document_async(
+        request: Request,
+        file: UploadFile = File(...),
+        profile: str = Form("general")
+    ):
+        """
+        Upload document for asynchronous processing (HTTP 202)
         
-        if not validate_file_type(file.filename):
+        Returns immediately with job ID. Use status endpoint to track progress.
+        
+        - **file**: Document file to upload (PDF, CSV, XLSX, TXT, DOCX, PPTX)
+        - **profile**: Processing profile (general, technical, legal, medical, financial, railway)
+        
+        Returns HTTP 202 Accepted with job ID and status URL
+        """
+        
+        if not ASYNC_QUEUE_AVAILABLE:
             raise HTTPException(
-                status_code=400,
-                detail=f"Invalid file type. Supported types: {', '.join(ALLOWED_EXTENSIONS)}"
+                status_code=503,
+                detail="Async upload queue not available. Use /api/v1/documents/upload for synchronous upload."
             )
         
-        if profile not in ALLOWED_PROFILES:
+        try:
+            # Validate inputs
+            if not file.filename:
+                raise HTTPException(status_code=400, detail="No file provided")
+            
+            if not validate_file_type(file.filename):
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Invalid file type. Supported types: {', '.join(ALLOWED_EXTENSIONS)}"
+                )
+            
+            if profile not in ALLOWED_PROFILES:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Invalid profile. Allowed profiles: {', '.join(ALLOWED_PROFILES)}"
+                )
+            
+            # Check file size
+            file.file.seek(0, 2)
+            file_size = file.file.tell()
+            file.file.seek(0)
+            
+            if file_size > MAX_FILE_SIZE:
+                raise HTTPException(
+                    status_code=413,
+                    detail=f"File size exceeds maximum limit of {MAX_FILE_SIZE // (1024*1024*1024)}GB"
+                )
+            
+            # Save uploaded file
+            file_path = save_upload_file(file)
+            
+            logger.info(f"📁 File uploaded for async processing: {file.filename} -> {file_path}")
+            
+            # Submit to queue
+            queue = get_upload_queue()
+            job_id = await queue.submit_job(
+                filename=file.filename,
+                file_path=file_path,
+                profile=profile
+            )
+            
+            # Build status URL
+            base_url = str(request.base_url).rstrip('/')
+            status_url = f"{base_url}/api/v1/documents/status/{job_id}"
+            
+            return UploadJobCreate(
+                job_id=job_id,
+                status="queued",
+                message=f"Document queued for processing. Check status at {status_url}",
+                status_url=status_url
+            )
+            
+        except HTTPException:
+            raise
+        except Exception as e:
+            logger.error(f"❌ Async upload error: {e}")
+            raise HTTPException(status_code=500, detail="Internal server error")
+
+
+    @app.get("/api/v1/documents/status/{job_id}", response_model=UploadJobStatus)
+    async def get_upload_status(job_id: str):
+        """
+        Get status of an async upload job
+        
+        - **job_id**: Job identifier returned from async upload endpoint
+        
+        Returns current processing status, progress, and results (when complete)
+        """
+        
+        if not ASYNC_QUEUE_AVAILABLE:
             raise HTTPException(
-                status_code=400,
-                detail=f"Invalid profile. Allowed profiles: {', '.join(ALLOWED_PROFILES)}"
+                status_code=503,
+                detail="Async upload queue not available"
             )
         
-        # Check file size
-        file.file.seek(0, 2)
-        file_size = file.file.tell()
-        file.file.seek(0)
+        try:
+            queue = get_upload_queue()
+            job_status = queue.get_job_status(job_id)
+            
+            if not job_status:
+                raise HTTPException(
+                    status_code=404,
+                    detail=f"Job {job_id} not found. Job may have expired or never existed."
+                )
+            
+            return job_status
+            
+        except HTTPException:
+            raise
+        except Exception as e:
+            logger.error(f"❌ Status check error: {e}")
+            raise HTTPException(status_code=500, detail="Internal server error")
+
+
+    @app.get("/api/v1/documents/queue/stats")
+    async def get_queue_stats():
+        """Get upload queue statistics"""
         
-        if file_size > MAX_FILE_SIZE:
+        if not ASYNC_QUEUE_AVAILABLE:
             raise HTTPException(
-                status_code=413,
-                detail=f"File size exceeds maximum limit of {MAX_FILE_SIZE // (1024*1024*1024)}GB"
+                status_code=503,
+                detail="Async upload queue not available"
             )
         
-        # Save uploaded file
-        file_path = save_upload_file(file)
-        
-        logger.info(f"📁 File uploaded for async processing: {file.filename} -> {file_path}")
-        
-        # Submit to queue
-        queue = get_upload_queue()
-        job_id = await queue.submit_job(
-            filename=file.filename,
-            file_path=file_path,
-            profile=profile
-        )
-        
-        # Build status URL
-        base_url = str(request.base_url).rstrip('/')
-        status_url = f"{base_url}/api/v1/documents/status/{job_id}"
-        
-        return UploadJobCreate(
-            job_id=job_id,
-            status="queued",
-            message=f"Document queued for processing. Check status at {status_url}",
-            status_url=status_url
-        )
-        
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"❌ Async upload error: {e}")
-        raise HTTPException(status_code=500, detail="Internal server error")
-
-
-@app.get("/api/v1/documents/status/{job_id}", response_model=UploadJobStatus)
-async def get_upload_status(job_id: str):
-    """
-    Get status of an async upload job
-    
-    - **job_id**: Job identifier returned from async upload endpoint
-    
-    Returns current processing status, progress, and results (when complete)
-    """
-    
-    if not ASYNC_QUEUE_AVAILABLE:
-        raise HTTPException(
-            status_code=503,
-            detail="Async upload queue not available"
-        )
-    
-    try:
-        queue = get_upload_queue()
-        job_status = queue.get_job_status(job_id)
-        
-        if not job_status:
-            raise HTTPException(
-                status_code=404,
-                detail=f"Job {job_id} not found. Job may have expired or never existed."
-            )
-        
-        return job_status
-        
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"❌ Status check error: {e}")
-        raise HTTPException(status_code=500, detail="Internal server error")
-
-
-@app.get("/api/v1/documents/queue/stats")
-async def get_queue_stats():
-    """Get upload queue statistics"""
-    
-    if not ASYNC_QUEUE_AVAILABLE:
-        raise HTTPException(
-            status_code=503,
-            detail="Async upload queue not available"
-        )
-    
-    try:
-        queue = get_upload_queue()
-        stats = queue.get_queue_stats()
-        
-        return {
-            "status": "success",
-            "queue_stats": stats,
-            "timestamp": datetime.now().isoformat()
-        }
-        
-    except Exception as e:
-        logger.error(f"❌ Queue stats error: {e}")
-        raise HTTPException(status_code=500, detail="Internal server error")
+        try:
+            queue = get_upload_queue()
+            stats = queue.get_queue_stats()
+            
+            return {
+                "status": "success",
+                "queue_stats": stats,
+                "timestamp": datetime.now().isoformat()
+            }
+            
+        except Exception as e:
+            logger.error(f"❌ Queue stats error: {e}")
+            raise HTTPException(status_code=500, detail="Internal server error")
 
 
 @app.delete("/api/v1/documents/{document_id}", status_code=204)

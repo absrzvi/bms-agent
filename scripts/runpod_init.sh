@@ -209,21 +209,24 @@ export OLLAMA_MODELS=/workspace/data/ollama_models
 # Start Ollama service first
 if ! pgrep -x "ollama" > /dev/null; then
     log "Starting Ollama service..."
-    nohup ollama serve > /workspace/logs/ollama.log 2>&1 &
+    OLLAMA_MODELS=/workspace/data/ollama_models nohup ollama serve > /workspace/logs/ollama.log 2>&1 &
     sleep 5
+    log "Ollama started with OLLAMA_MODELS=/workspace/data/ollama_models"
+else
+    log "Ollama already running"
 fi
 
 # Pull embedding model if not present
 if [ ! -d "$OLLAMA_MODELS/manifests/registry.ollama.ai/library/nomic-embed-text" ]; then
     log "Pulling nomic-embed-text model..."
-    ollama pull nomic-embed-text >> "$LOGFILE" 2>&1
+    OLLAMA_MODELS=/workspace/data/ollama_models ollama pull nomic-embed-text >> "$LOGFILE" 2>&1
     log "nomic-embed-text model pulled"
 fi
 
 # Pull LLM model if not present
 if [ ! -d "$OLLAMA_MODELS/manifests/registry.ollama.ai/library/mistral" ]; then
     log "Pulling mistral model..."
-    ollama pull mistral >> "$LOGFILE" 2>&1
+    OLLAMA_MODELS=/workspace/data/ollama_models ollama pull mistral >> "$LOGFILE" 2>&1
     log "mistral model pulled"
 fi
 
