@@ -147,13 +147,22 @@ This constitution establishes the governing principles and technical standards f
   - Support for air-gapped deployment scenarios
   - Local embedding generation with versioned models
   - Documented data flow with clear boundaries
-- **Installation & Persistence** (RunPod/Cloud Deployment):
-  - All applications, libraries, and dependencies MUST be installed in `/workspace` (persistent storage)
-  - Python virtual environment MUST be in `/workspace/bms-api-venv`
-  - All data directories MUST be in `/workspace` (Qdrant, models, logs, backups)
-  - **Exception**: Ollama MUST be installed in `/root` (default location) for GPU compatibility
-  - Ollama models directory MUST be symlinked/configured to `/workspace/data/ollama_models` for persistence
-  - `requirements.txt` dependencies MUST be installed during initialization via `runpod_init.sh`
+- **Installation & Persistence** (RunPod Pod Deployment - NOT Docker):
+  - **Context**: System runs in RunPod pods where only `/workspace` is persistent across restarts
+  - **Critical**: All applications, libraries, and dependencies MUST be installed in `/workspace` to survive pod restarts
+  - Python virtual environment MUST be in `/workspace/bms-api-venv` (NOT system Python)
+  - All data directories MUST be in `/workspace`:
+    - Qdrant storage: `/workspace/qdrant_storage`
+    - BMS data: `/workspace/bms_data`
+    - Logs: `/workspace/logs`
+    - Backups: `/workspace/backups`
+    - Ollama models: `/workspace/data/ollama_models`
+  - **Exception**: Ollama binary MUST be installed in `/root` (default location) for GPU compatibility
+    - Ollama models configured via `OLLAMA_MODELS=/workspace/data/ollama_models` for persistence
+    - Ollama binary reinstalled on each pod start (non-persistent location)
+  - `requirements.txt` dependencies MUST be installed in `/workspace/bms-api-venv` during initialization
+  - Initialization script (`runpod_init.sh`) MUST handle both first-time setup and pod restarts
+  - Completion marker (`/workspace/.runpod_init_complete`) prevents redundant initialization on restarts
 
 ## 12. Vector Database (MUST)
 - **Implementation**:

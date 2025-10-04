@@ -1,16 +1,31 @@
 # BMS Agent Installation Architecture
 
-**Version:** 1.0  
+**Version:** 1.1  
 **Date:** 2025-10-04  
-**Constitution Reference:** §11 - AI/LLM Architecture
+**Constitution Reference:** §11 - AI/LLM Architecture  
+**Deployment Target:** RunPod Pods (NOT Docker containers)
 
 ## Overview
 
-This document defines the installation architecture for the BMS Agent system, ensuring proper persistence and GPU compatibility in RunPod/cloud environments.
+This document defines the installation architecture for the BMS Agent system running in **RunPod pods** (not Docker), ensuring proper persistence and GPU compatibility.
+
+## Critical Context: RunPod Pod Environment
+
+**Important:** This system runs in RunPod pods, NOT Docker containers:
+- RunPod pods are virtual machines with GPU access
+- Only `/workspace` directory persists across pod restarts
+- Everything outside `/workspace` is ephemeral (lost on restart)
+- System packages and `/root` are reset on each pod start
+- No Docker containerization - direct pod deployment
 
 ## Core Principle
 
 **All applications, libraries, and data MUST be installed in `/workspace` (persistent storage) to survive pod restarts, with ONE exception: Ollama binary.**
+
+**Why `/workspace` only?**
+- RunPod pods only persist the `/workspace` volume
+- All other directories (`/root`, `/usr`, `/opt`, etc.) are ephemeral
+- Pod restarts wipe everything except `/workspace`
 
 ## Directory Structure
 
@@ -41,15 +56,23 @@ This document defines the installation architecture for the BMS Agent system, en
     └── startup.log
 ```
 
-### Non-Persistent Storage (`/root`)
+### Non-Persistent Storage (`/root` and system directories)
 
 ```
 /root/
 └── .ollama/                    # Ollama installation (GPU compatibility)
-    └── (Ollama binary and runtime)
+    └── (Ollama binary and runtime - EPHEMERAL, reinstalled on each pod start)
+
+/usr/local/bin/
+└── ollama                      # Ollama binary (EPHEMERAL, reinstalled on each pod start)
 ```
 
-**Note:** Ollama models are stored in `/workspace/data/ollama_models` via `OLLAMA_MODELS` environment variable.
+**Critical Notes:**
+- **Ollama binary location is ephemeral** - wiped on pod restart
+- **Ollama MUST be reinstalled** on each pod start (handled by `runpod_init.sh`)
+- **Ollama models are persistent** - stored in `/workspace/data/ollama_models` via `OLLAMA_MODELS` environment variable
+- **System packages are ephemeral** - reinstalled on each pod start (jq, etc.)
+- **NLTK data is ephemeral** - re-downloaded on each pod start
 
 ## Installation Locations
 
@@ -66,18 +89,25 @@ This document defines the installation architecture for the BMS Agent system, en
 | Logs | `/workspace/logs` | Persist logs | ✅ Yes |
 | Backups | `/workspace/backups` | Persist backups | ✅ Yes |
 
-## Why Ollama in `/root`?
+## Why Ollama in `/root`? (RunPod Pod Specific)
 
-**GPU Compatibility Issue:**
+**GPU Compatibility Issue in RunPod Pods:**
 - Ollama requires specific system integration for GPU access
 - Default installation in `/root` ensures proper CUDA/GPU driver binding
 - Installing in `/workspace` can cause GPU detection failures
-- Models are still stored in `/workspace` for persistence
+- RunPod pods reset `/root` on each restart, so Ollama must be reinstalled
 
-**Solution:**
-- Ollama binary: `/root` (reinstalled on each pod start)
-- Ollama models: `/workspace/data/ollama_models` (persistent)
+**Solution for RunPod Pods:**
+- Ollama binary: `/root` or `/usr/local/bin` (EPHEMERAL - reinstalled on each pod start)
+- Ollama models: `/workspace/data/ollama_models` (PERSISTENT)
 - Environment variable: `OLLAMA_MODELS=/workspace/data/ollama_models`
+- Initialization script automatically reinstalls Ollama on each pod start
+- Models are NOT re-downloaded (already in `/workspace`)
+
+**Trade-off:**
+- Small overhead: ~30 seconds to reinstall Ollama on pod start
+- Benefit: GPU compatibility maintained
+- Models (large files) remain persistent, saving bandwidth and time
 
 ## Initialization Process
 

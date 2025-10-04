@@ -1,12 +1,15 @@
 # BMS Agent Deployment Checklist
 
+**Deployment Target:** RunPod Pods (NOT Docker)
+
 ## Pre-Deployment
 
 ### System Requirements
-- [ ] RunPod pod with 8-16 vCPUs, 32-64GB RAM, 200-500GB NVMe SSD
+- [ ] RunPod pod (NOT Docker container) with 8-16 vCPUs, 32-64GB RAM, 200-500GB NVMe SSD
 - [ ] GPU support enabled (for Ollama) - NVIDIA GPU recommended
-- [ ] `/workspace` directory with persistent storage
-- [ ] Internet connectivity for initial setup
+- [ ] `/workspace` volume with persistent storage (200+ GB)
+- [ ] Internet connectivity for initial setup and pod restarts
+- [ ] Understanding: Only `/workspace` persists across pod restarts
 
 ### RunPod Configuration
 - [ ] Copy `scripts/runpod_init.sh` to RunPod startup script field
@@ -14,26 +17,32 @@
 - [ ] Ollama models pre-downloaded to `/workspace/data/ollama_models`
 - [ ] Environment variables configured (if needed)
 
-### Installation Architecture (Constitution §11)
-**CRITICAL: Persistent Storage Requirements**
-- [ ] **All applications/libraries** → `/workspace` (persistent storage)
-- [ ] **Python virtual environment** → `/workspace/bms-api-venv`
+### Installation Architecture (Constitution §11 - RunPod Pod Specific)
+**CRITICAL: Persistent Storage Requirements (RunPod Pods Only Persist `/workspace`)**
+- [ ] **All applications/libraries** → `/workspace` (ONLY persistent location in RunPod pods)
+- [ ] **Python virtual environment** → `/workspace/bms-api-venv` (CRITICAL for persistence)
 - [ ] **Qdrant data** → `/workspace/qdrant_storage`
 - [ ] **BMS data** → `/workspace/bms_data`
-- [ ] **Ollama models** → `/workspace/data/ollama_models`
+- [ ] **Ollama models** → `/workspace/data/ollama_models` (models persist, binary does not)
 - [ ] **Logs** → `/workspace/logs`
 - [ ] **Backups** → `/workspace/backups`
-- [ ] **EXCEPTION: Ollama binary** → `/root` (default, for GPU compatibility)
+- [ ] **EXCEPTION: Ollama binary** → `/root` (EPHEMERAL - reinstalled on each pod start for GPU compatibility)
+- [ ] **Understanding:** Everything outside `/workspace` is wiped on pod restart
 
-### Dependencies (Auto-installed by runpod_init.sh)
-- [ ] Python 3.11+ installed (system)
+### Dependencies (Auto-installed by runpod_init.sh on EVERY pod start)
+
+**Persistent (installed once, survives restarts):**
 - [ ] Python virtual environment created in `/workspace/bms-api-venv`
-- [ ] All packages from `requirements.txt` installed in venv
-- [ ] NLTK data downloaded (punkt_tab, wordnet, stopwords, etc.)
+- [ ] All packages from `requirements.txt` installed in venv (in `/workspace`)
 - [ ] Qdrant binary v1.7.4+ installed in `/workspace`
-- [ ] Ollama installed in `/root` with GPU support
-- [ ] Ollama models pulled (nomic-embed-text, mistral)
-- [ ] System packages installed (jq, etc.)
+- [ ] Ollama models pulled to `/workspace/data/ollama_models` (large files, persist)
+
+**Ephemeral (reinstalled on EVERY pod start):**
+- [ ] Ollama binary installed in `/root` with GPU support (reinstalled each start)
+- [ ] NLTK data downloaded to `/root/nltk_data` (re-downloaded each start)
+- [ ] System packages installed (jq, etc.) (reinstalled each start)
+
+**Note:** Ephemeral components are automatically reinstalled by `runpod_init.sh` on each pod start.
 
 ### Configuration Files
 - [ ] `.env` or `config/env.sh` configured with:

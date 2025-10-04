@@ -1,14 +1,25 @@
 # RunPod Deployment Guide - Step by Step
 
-**Version:** 1.0  
+**Version:** 1.1  
 **Date:** 2025-10-04  
-**Purpose:** Deploy BMS Agent to RunPod with automatic initialization
+**Purpose:** Deploy BMS Agent to RunPod Pods (NOT Docker) with automatic initialization  
+**Deployment Type:** RunPod Pod (Virtual Machine with GPU, NOT Docker container)
+
+## Important: RunPod Pod vs Docker
+
+**This guide is for RunPod PODS, NOT Docker containers:**
+- RunPod pods are virtual machines with direct GPU access
+- Only `/workspace` directory persists across pod restarts
+- Everything outside `/workspace` is ephemeral (wiped on restart)
+- No Docker containerization - direct pod deployment
+- Ollama and system packages must be reinstalled on each pod start
 
 ## Prerequisites
 
 - RunPod account
 - SSH key pair (for secure access)
 - GitHub repository access to `absrzvi/bms-agent`
+- Understanding that only `/workspace` persists in RunPod pods
 
 ## Part 1: Prepare Your SSH Keys
 

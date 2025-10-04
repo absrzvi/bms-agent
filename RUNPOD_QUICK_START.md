@@ -1,5 +1,15 @@
 # RunPod Quick Start - Copy & Paste Guide
 
+**Deployment Type:** RunPod Pod (NOT Docker)  
+**Critical:** Only `/workspace` persists across pod restarts
+
+## Important: RunPod Pod Environment
+
+- This is a RunPod **POD** (virtual machine), NOT a Docker container
+- Only `/workspace` directory persists across pod restarts
+- Everything else (`/root`, `/usr`, system packages) is wiped on restart
+- Ollama binary reinstalled on each pod start (models persist in `/workspace`)
+
 ## Step 1: Save Your SSH Key (Do This First!)
 
 ```bash
@@ -84,11 +94,14 @@ cd /workspace/001-bms-agent && ./scripts/health_check.sh
 
 ## Important Notes
 
+✅ **Deployment:** RunPod Pod (NOT Docker container)  
+✅ **Persistence:** ONLY `/workspace` survives pod restarts  
 ✅ **First Start:** 10-20 minutes (full initialization)  
-✅ **Restarts:** 1-2 minutes (services only, no re-init)  
+✅ **Restarts:** 1-2 minutes (Ollama reinstall + services start)  
 ✅ **SSH Keys:** Automatically merged from `/workspace/config/authorized_keys`  
-✅ **No Loops:** Completion marker prevents re-running  
-✅ **Persistence:** Everything in `/workspace` survives restarts  
+✅ **No Loops:** Completion marker prevents full re-init  
+✅ **Ollama:** Binary reinstalled each start (models persist in `/workspace`)  
+✅ **Python Packages:** Persist in `/workspace/bms-api-venv` (not reinstalled)  
 
 ## Force Re-initialization (If Needed)
 
