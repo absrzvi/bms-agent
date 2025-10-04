@@ -324,20 +324,46 @@ curl http://localhost:6333/metrics
 
 ## Contact Matrix
 
-### On-Call Engineer
-- **Response Time:** Immediate
-- **Responsibilities:** First response, initial triage
-- **Escalation:** If issue unresolved in 30 minutes
+### Primary On-Call Engineer
+- **Contact:** oncall@example.com | Phone: +XX-XXX-XXX-XXXX
+- **Response Time:** Immediate (< 5 minutes)
+- **Responsibilities:** First response, initial triage, service restarts
+- **Escalation Path:** → Senior Engineer (if unresolved in 30 minutes)
+- **Handles:** API errors, performance degradation, service outages
+
+### Senior Engineer
+- **Contact:** senior-oncall@example.com | Phone: +XX-XXX-XXX-XXXX
+- **Response Time:** Within 15 minutes
+- **Responsibilities:** Complex debugging, architecture decisions
+- **Escalation Path:** → Engineering Lead (if unresolved in 1 hour)
+- **Handles:** Critical bugs, data integrity issues, complex failures
 
 ### Security Team
-- **Contact:** security@example.com
+- **Contact:** security@example.com | Phone: +XX-XXX-XXX-XXXX (24/7)
 - **Response Time:** Within 1 hour for security incidents
-- **Escalation:** For data breaches, unauthorized access
+- **Responsibilities:** Security incident response, access control
+- **Escalation Path:** → CISO (for critical security events)
+- **Handles:** Data breaches, unauthorized access, security vulnerabilities
 
 ### Infrastructure Team
-- **Contact:** infrastructure@example.com
+- **Contact:** infrastructure@example.com | Phone: +XX-XXX-XXX-XXXX
 - **Response Time:** Within 2 hours for infrastructure issues
-- **Escalation:** For RunPod pod issues, network problems
+- **Responsibilities:** RunPod pod management, network, storage
+- **Escalation Path:** → Infrastructure Lead (if unresolved in 4 hours)
+- **Handles:** Pod failures, network issues, storage problems, GPU issues
+
+### Engineering Lead
+- **Contact:** eng-lead@example.com | Phone: +XX-XXX-XXX-XXXX
+- **Response Time:** Within 1 hour for escalated issues
+- **Responsibilities:** Final technical escalation, go/no-go decisions
+- **Escalation Path:** → CTO (for business-critical decisions)
+- **Handles:** Major outages, architectural changes, production rollbacks
+
+### Business Stakeholders
+- **Contact:** product@example.com
+- **Response Time:** Next business day (non-critical)
+- **Responsibilities:** Impact assessment, user communication
+- **Handles:** User-facing issues, feature requests, SLA breaches
 
 ## Rollback Procedures
 

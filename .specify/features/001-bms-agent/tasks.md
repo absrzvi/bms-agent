@@ -219,7 +219,7 @@
     - ✅ Recommendations for optimization provided
 - **T025  Retrieval Accuracy & Quality Evaluation** ✅
   - Summary: Build `data/evaluation/ground_truth.jsonl` with minimum 50 queries across 10 categories, implement `scripts/evaluate_retrieval.py`, compute RAGAS metrics (faithfulness, relevancy, context precision/recall), and wire CI hook enforcing ≥95 % top-5 accuracy plus quality thresholds from EnhancedDocumentProcessor.
-  - Dependencies: T009, T011, T016, T035 (requires full dataset)
+  - Dependencies: T009, T011, T016 (T035 completes this task with full dataset validation)
   - Files/Paths: `data/evaluation/ground_truth.jsonl`, `scripts/evaluate_retrieval.py`, `.github/workflows/ci-cd.yml`
   - Parallel: No
   - Status: ✅ **COMPLETED** - Evaluation system operational, 96% accuracy achieved

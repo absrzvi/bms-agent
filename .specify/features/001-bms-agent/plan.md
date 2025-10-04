@@ -26,8 +26,12 @@ Single-pod deployment on RunPod.io with direct binary installations (no Docker) 
   - **CORRECTED**: All vectors are 768-dimensional (not 1024-d) to match sentence-transformers/all-mpnet-base-v2 model output
 
 - **Embedding Model**:
-  - Primary: sentence-transformers/all-mpnet-base-v2 (768 dimensions)
-  - LLM: qwen2.5:14b or llama3.1:8b via Ollama if needed
+  - Primary: sentence-transformers/all-mpnet-base-v2 (768 dimensions) for document embeddings and search
+  - LLM: qwen2.5:14b or llama3.1:8b via Ollama (for future answer generation and summarization; not required for MVP semantic search)
+  - **Model Size Guidelines** (per constitution §11):
+    - 32GB RAM: 7B-8B parameter models (e.g., llama3.1:8b, mistral:7b)
+    - 64GB RAM: 12B-14B parameter models (e.g., qwen2.5:14b, mistral-nemo:12b)
+    - GPU VRAM: Reserve 8-12GB for model inference, remainder for embeddings cache
 
 - **Python 3.11+**: Direct installation with venv
   - No containerization, runs as system process

@@ -50,7 +50,7 @@ Progressive performance requirements aligned with deployment phases:
 ### Document Processing
   - R1.1: Ingest PDF, DOCX, PPTX, CSV, XLSX, and TXT files up to 100 MB with rejection for unsupported types. **POC DECISION**: 100 MB limit for POC; 1 GB target for production.
     - *Acceptance*: Upload endpoint streams and processes 100 MB test fixtures without memory errors; returns HTTP 400/413 with descriptive errors for invalid types or oversize payloads.
-  - R1.2: Enhanced Document Processor v4.0 with optimized quality processing - Sentence-aware chunking (2000 chars, 400 overlap), quality validation (≥0.70 minimum score), contextual retrieval, perfect data cleaning, and BM25 keyword extraction. Store 768-dimensional embeddings (sentence-transformers/all-mpnet-base-v2) per chunk in Qdrant v1.7.4+ vector database with v4.0 multi-vector schema, collection `nomad_bms_documents`.
+  - R1.2: Enhanced Document Processor v4.0 with quality-validated processing (≥0.70 minimum score) - Sentence-aware chunking (2000 chars, 400 overlap), quality validation with measurable thresholds, contextual retrieval, perfect data cleaning, and BM25 keyword extraction. Store 768-dimensional embeddings (sentence-transformers/all-mpnet-base-v2) per chunk in Qdrant v1.7.4+ vector database with v4.0 multi-vector schema, collection `nomad_bms_documents`.
     - *Acceptance*: Quality score ≥0.70 minimum (actual: 0.72-0.85 by format) with 100% pass rate; zero data artifacts in XLSX/CSV processing; complete multi-format support covering all 6 formats (PDF, DOCX, PPTX, XLSX, CSV, TXT); 768-dim embeddings; test suite with 25+ validation scripts covering all formats and quality scenarios.
   - R1.3: **QUALITY ASSURANCE**: Achieve measurable processing quality with complete format support and data cleaning.
     - *Acceptance*: DOCX processing with python-docx (quality score 0.714-0.895); PPTX slide structure preservation with text extraction from all slide elements; XLSX perfect cleaning (zero NaN/Unnamed artifacts, 100% data integrity); CSV enhanced formatting with proper delimiter detection; multi-language support (German/English); business document intelligence (tables, lists, headers preserved).
@@ -93,7 +93,7 @@ Progressive performance requirements aligned with deployment phases:
 ### Workflow & Change Management
   - R6.1: Adopt Git flow branching for feature development (e.g., `feature/<name>`, `release/<version>`) with semantic commit messages.
   - R6.2: Implement semantic versioning for all releases with proper changelog maintenance and dependency management.
-  - R6.3: Produce container images for the API service, follow semantic versioning, and automate database migrations as part of the release workflow.
+  - R6.3: Produce container images for the API service, follow semantic versioning, and automate database migrations as part of the release workflow (for future SQL databases; not required for Qdrant NoSQL vector database).
 
 ### Observability & Operations
   - R7.1: **MVP REQUIREMENT**: Implement basic Prometheus/Grafana integration per constitution §8; configure `/metrics/uplink` endpoint and basic dashboards with manual alert runbooks for MVP.
