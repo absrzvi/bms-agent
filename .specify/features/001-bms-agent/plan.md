@@ -1,7 +1,7 @@
 # BMS Agent RunPod Deployment Plan
 
 ## Overview
-Single-pod deployment on RunPod.io with direct binary installations (no Docker) for maximum performance and simplicity.
+Single-pod deployment on RunPod.io with direct binary installations (no Docker/containers) for maximum performance, simplicity, and /workspace persistence per constitution §11. This deployment model ensures all data survives pod restarts by storing everything in /workspace.
 
 ## Priority Order
 1. Qdrant vector database setup
@@ -98,9 +98,10 @@ Single-pod deployment on RunPod.io with direct binary installations (no Docker) 
 3. Document security roadmap in `docs/security-notes.md` for production implementation (JWT + API key enforcement).
 
 ### Phase 5 – Documentation, Tooling & CI/CD (`T015`, `T016`, `T023`, `T024` – post-MVP optional)
-- Configure GitHub Actions (`.github/workflows/ci-cd.yml`) to run tests, coverage, basic security scans (Bandit, Safety - even for POC per constitution §5), pre-commit hooks (Black, Ruff, mypy), and provide deployment placeholders for RunPod automation.
-- Document required secrets (`BMS_API_KEY`, `DEPLOY_KEY`, optional `CODECOV_TOKEN`, `SAFETY_API_KEY`, future `RUNPOD_USER/HOST`, `REGISTRY_USERNAME/PASSWORD`).
+- Configure GitHub Actions (`.github/workflows/ci-cd.yml`) to run tests, coverage, basic security scans (Bandit, Safety - even for POC per constitution §5), pre-commit hooks (Black, Ruff, mypy), and provide deployment automation for RunPod binary releases.
+- Document required secrets (`BMS_API_KEY`, `DEPLOY_KEY`, optional `CODECOV_TOKEN`, `SAFETY_API_KEY`, future `RUNPOD_USER/HOST` for SSH deployment).
 - **Database Migration Note**: Alembic not required for Qdrant (NoSQL vector database). Manual schema changes tracked in `docs/migrations.md` per Phase 0. Future SQL databases (if added) will require Alembic implementation per constitution §9.
+- **Deployment Model**: Direct binary installation in /workspace (not containerized) per constitution §11 persistence requirements for RunPod pods.
 
 ### Phase 6 – Testing & Evaluation (`T010`, `T017`, `T019`, `T020`)
 1. Use `scripts/run_tests.sh` to orchestrate integration tests (processor, API smoke checks).
