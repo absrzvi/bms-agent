@@ -46,21 +46,15 @@
    - Document optional PDF libraries (reportlab/fpdf2) as deferred enhancements while ensuring current requirements list matches installed versions.
 7. **Status & Error Feedback**
    - Pipeline should emit progress updates via `event_emitter` when available so users see "creating document" statuses, aligning with best practices from `openwebui-doc-gen.md`.
-   - All tool responses must include success confirmation plus file path or actionable error detail.
-8. **Source Control Strategy**
-   - Maintain a dedicated `002-pipeline-server` branch in the BMS Agent fork of the OpenWebUI Pipelines repository; all deployments must checkout/pull from this branch to ensure reproducible testing.
-   - Update deployment scripts to fetch from this branch instead of the upstream `main` to avoid unexpected upstream changes during evaluation.
-
 ## 7. Data & Storage Considerations
 - Generated documents reside under `pipelines/output/` with timestamped filenames to avoid collisions.
-- Files older than 30 days are automatically removed to manage disk usage.
+- **Storage**: Ensure output directory exists with 755 permissions; automatically purge generated files older than 30 days via a weekly operator-run command (`find /workspace/001-bms-agent/pipelines/output -type f -mtime +30 -delete`).
 - No database persistence; OpenWebUI responses include local file paths for manual download.
 - Recommend manual archival or cleanup prior to MVP.
 
 ## 8. Operational Considerations
 - **Deployment**: Scripts handle cloning (if needed), dependency installation, server startup.
-- **Monitoring**: Manual health checks via `curl http://localhost:9099/health` and log tailing; Prometheus integration deferred.
-- **Backups**: Encourage optional copy to `/workspace/001-bms-agent/generated-documents/`; automated retention beyond the 30-day purge is out of scope.
+- **Backups**: Encourage optional copy to `/workspace/001-bms-agent/generated-documents/`; automated retention beyond the weekly 30-day purge command is out of scope.
 - **Failure Handling**: Document troubleshooting steps for dependency issues, port conflicts, and missing pipelines in README.
 
 ## 9. Risks & Mitigations
@@ -88,3 +82,8 @@
 - Should we pin a specific Pipelines repository commit to avoid upstream breaks?
 - Do we need an automated cleanup or retention policy for generated documents post-MVP?
 - Should PDF export be implemented within this pipeline or a dedicated future pipeline?
+
+## Clarifications
+### Session 2025-10-05
+- **Source control**: Maintain deployments from the dedicated `002-pipeline-server` branch of the BMS Agent Pipelines fork; do not pull upstream `main` during testing.
+- **Retention workflow**: Operators run `find /workspace/001-bms-agent/pipelines/output -type f -mtime +30 -delete` at least weekly to enforce the 30-day purge policy.

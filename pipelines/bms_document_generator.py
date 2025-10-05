@@ -51,7 +51,7 @@ class Pipeline:
     class Valves(BaseModel):
         """Admin-configurable settings"""
         OUTPUT_DIR: str = Field(
-            default="/app/pipelines/output",
+            default="/workspace/001-bms-agent/pipelines/output",
             description="Directory for generated documents"
         )
         MAX_FILE_SIZE_MB: int = Field(
@@ -93,11 +93,34 @@ class Pipeline:
 
     async def on_startup(self):
         """Initialize pipeline on startup"""
-        print(f"BMS Document Generator Pipeline starting...")
+        print("=" * 60)
+        print("BMS Document Generator Pipeline starting...")
         print(f"Output directory: {self.valves.OUTPUT_DIR}")
-        print(f"DOCX available: {DOCX_AVAILABLE}")
-        print(f"XLSX available: {XLSX_AVAILABLE}")
-        print(f"PPTX available: {PPTX_AVAILABLE}")
+
+        # Validate dependencies
+        issues = []
+        if not DOCX_AVAILABLE:
+            issues.append("python-docx not available")
+        if not XLSX_AVAILABLE:
+            issues.append("openpyxl not available")
+        if not PPTX_AVAILABLE:
+            issues.append("python-pptx not available")
+
+        if issues:
+            print(f"❌ Dependency issues: {', '.join(issues)}")
+        else:
+            print(f"✅ DOCX available: {DOCX_AVAILABLE}")
+            print(f"✅ XLSX available: {XLSX_AVAILABLE}")
+            print(f"✅ PPTX available: {PPTX_AVAILABLE}")
+
+        # Validate output directory
+        try:
+            os.makedirs(self.valves.OUTPUT_DIR, exist_ok=True)
+            print(f"✅ Output directory ready: {self.valves.OUTPUT_DIR}")
+        except Exception as e:
+            print(f"❌ Cannot create output directory: {e}")
+
+        print("=" * 60)
 
     async def on_shutdown(self):
         """Cleanup on shutdown"""

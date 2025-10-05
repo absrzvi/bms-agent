@@ -9,21 +9,60 @@ echo "OpenWebUI Pipelines Server Deployment (Pod)"
 echo "=================================================="
 echo ""
 
-PIPELINES_REPO="/tmp/pipelines-repo"
+# Use persistent storage for Pipelines repository (survives pod restarts)
+PIPELINES_REPO="/workspace/pipelines-repo"
 PIPELINES_DIR="/workspace/001-bms-agent/pipelines"
 OUTPUT_DIR="/workspace/001-bms-agent/pipelines/output"
 
+# Stop existing server if running
+if [ -f "$PIPELINES_DIR/server.pid" ]; then
+    OLD_PID=$(cat "$PIPELINES_DIR/server.pid")
+    if ps -p $OLD_PID > /dev/null 2>&1; then
+        echo "Stopping existing server (PID: $OLD_PID)..."
+        kill $OLD_PID
+        sleep 2
+        if ps -p $OLD_PID > /dev/null 2>&1; then
+            echo "Force killing..."
+            kill -9 $OLD_PID
+        fi
+        echo "✅ Existing server stopped"
+    else
+        echo "ℹ️  Stale PID file found (process not running)"
+        rm -f "$PIPELINES_DIR/server.pid"
+    fi
+fi
+
+echo ""
 echo "Step 1: Creating directories..."
 mkdir -p "$PIPELINES_DIR"
 mkdir -p "$OUTPUT_DIR"
 echo "✅ Directories created"
 
 echo ""
-echo "Step 2: Installing Pipelines server requirements..."
-cd "$PIPELINES_REPO"
-pip install -r requirements.txt --quiet
+echo "Step 1.5: Cloning Pipelines repository (if needed)..."
+if [ ! -d "$PIPELINES_REPO" ]; then
+    echo "Cloning OpenWebUI Pipelines repository to persistent storage..."
+    git clone https://github.com/open-webui/pipelines.git "$PIPELINES_REPO"
+    echo "✅ Repository cloned"
+else
+    echo "✅ Repository already exists at $PIPELINES_REPO"
+fi
 
-echo "✅ Pipelines dependencies installed"
+echo ""
+echo "Step 1.6: Validating pipeline file..."
+if [ ! -f "$PIPELINES_DIR/bms_document_generator.py" ]; then
+    echo "❌ Pipeline file not found at $PIPELINES_DIR/bms_document_generator.py"
+    exit 1
+fi
+echo "✅ Pipeline file validated"
+
+echo ""
+echo "Step 2: Installing minimal Pipelines server requirements..."
+cd "$PIPELINES_REPO"
+# Install only essential Pipelines dependencies (skip heavy ML/AI libs we don't need)
+pip install fastapi uvicorn pydantic python-multipart passlib PyJWT python-socketio aiohttp requests httpx python-dotenv --quiet
+
+echo "✅ Minimal Pipelines dependencies installed"
 
 echo ""
 echo "Step 3: Installing document generation dependencies..."
@@ -41,7 +80,7 @@ export PIPELINES_DIR="/workspace/001-bms-agent/pipelines"
 export PORT=9099
 export HOST=0.0.0.0
 
-cd /tmp/pipelines-repo
+cd /workspace/pipelines-repo
 
 echo "Starting Pipelines server on port $PORT..."
 echo "Pipelines directory: $PIPELINES_DIR"

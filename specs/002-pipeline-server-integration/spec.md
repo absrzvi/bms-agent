@@ -97,3 +97,8 @@
 - Should we pin a specific Pipelines repository commit to avoid upstream breaks?
 - Do we need an automated cleanup or retention policy for generated documents post-MVP?
 - Should PDF export be implemented within this pipeline or a dedicated future pipeline?
+
+## Clarifications
+### Session 2025-10-05
+- **Source control**: Maintain deployments from the dedicated `002-pipeline-server` branch of the BMS Agent Pipelines fork; do not pull upstream `main` during testing.
+- **Retention workflow**: Operators run `find /workspace/001-bms-agent/pipelines/output -type f -mtime +30 -delete` at least weekly to enforce the 30-day purge policy.
