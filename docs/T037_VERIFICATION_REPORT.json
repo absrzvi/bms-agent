@@ -1,0 +1,319 @@
+{
+  "timestamp": "2025-10-05T12:48:01.209044",
+  "qdrant_status": "healthy",
+  "primary_collection": {
+    "name": "nomad_bms_documents",
+    "exists": true,
+    "point_count": 1794,
+    "vector_config": null,
+    "details": {
+      "status": "green",
+      "optimizer_status": "ok",
+      "vectors_count": 7936,
+      "indexed_vectors_count": 0,
+      "points_count": 1794,
+      "segments_count": 8,
+      "config": {
+        "params": {
+          "vectors": {
+            "child_embedding": {
+              "size": 768,
+              "distance": "Cosine"
+            },
+            "chunk_embedding": {
+              "size": 768,
+              "distance": "Cosine"
+            },
+            "full_doc_embedding": {
+              "size": 768,
+              "distance": "Cosine",
+              "on_disk": true
+            },
+            "parent_embedding": {
+              "size": 768,
+              "distance": "Cosine",
+              "on_disk": false
+            }
+          },
+          "shard_number": 1,
+          "replication_factor": 1,
+          "write_consistency_factor": 1,
+          "on_disk_payload": true,
+          "sparse_vectors": {
+            "keyword_sparse": {}
+          }
+        },
+        "hnsw_config": {
+          "m": 16,
+          "ef_construct": 100,
+          "full_scan_threshold": 10000,
+          "max_indexing_threads": 0,
+          "on_disk": false
+        },
+        "optimizer_config": {
+          "deleted_threshold": 0.2,
+          "vacuum_min_vector_number": 1000,
+          "default_segment_number": 0,
+          "max_segment_size": 200000,
+          "memmap_threshold": null,
+          "indexing_threshold": 20000,
+          "flush_interval_sec": 5,
+          "max_optimization_threads": 1
+        },
+        "wal_config": {
+          "wal_capacity_mb": 32,
+          "wal_segments_ahead": 0
+        },
+        "quantization_config": null
+      },
+      "payload_schema": {
+        "processing_version": {
+          "data_type": "keyword",
+          "points": 1794
+        },
+        "has_context": {
+          "data_type": "bool",
+          "points": 1720
+        },
+        "document_id": {
+          "data_type": "keyword",
+          "points": 1794
+        },
+        "chunk_size": {
+          "data_type": "integer",
+          "points": 1720
+        },
+        "search_type": {
+          "data_type": "keyword",
+          "points": 1720
+        },
+        "processing_timestamp": {
+          "data_type": "keyword",
+          "points": 1794
+        },
+        "network_component": {
+          "data_type": "keyword",
+          "points": 1720
+        },
+        "standard_compliance": {
+          "data_type": "keyword",
+          "points": 1720
+        },
+        "document_version": {
+          "data_type": "float",
+          "points": 1720
+        },
+        "entities": {
+          "data_type": "text",
+          "params": {
+            "type": "text",
+            "tokenizer": "word",
+            "min_token_len": 2,
+            "max_token_len": 20,
+            "lowercase": true
+          },
+          "points": 1720
+        },
+        "hierarchy_level": {
+          "data_type": "keyword",
+          "points": 1720
+        },
+        "technical_terms": {
+          "data_type": "text",
+          "params": {
+            "type": "text",
+            "tokenizer": "word",
+            "min_token_len": 2,
+            "max_token_len": 20,
+            "lowercase": true
+          },
+          "points": 1720
+        },
+        "processing_profile": {
+          "data_type": "keyword",
+          "points": 1720
+        },
+        "context_type": {
+          "data_type": "keyword",
+          "points": 1720
+        },
+        "chunk_id": {
+          "data_type": "keyword",
+          "points": 1794
+        },
+        "quality_score": {
+          "data_type": "float",
+          "points": 1720
+        },
+        "surrounding_context": {
+          "data_type": "text",
+          "params": {
+            "type": "text",
+            "tokenizer": "word",
+            "min_token_len": 2,
+            "max_token_len": 20,
+            "lowercase": true
+          },
+          "points": 1720
+        },
+        "configuration_type": {
+          "data_type": "keyword",
+          "points": 1720
+        },
+        "train_id": {
+          "data_type": "keyword",
+          "points": 1720
+        },
+        "chunk_index": {
+          "data_type": "integer",
+          "points": 1794
+        },
+        "department": {
+          "data_type": "keyword",
+          "points": 1720
+        },
+        "is_child": {
+          "data_type": "bool",
+          "points": 1720
+        },
+        "chunk_type": {
+          "data_type": "keyword",
+          "points": 1720
+        },
+        "document_name": {
+          "data_type": "keyword",
+          "points": 1794
+        },
+        "fleet_type": {
+          "data_type": "keyword",
+          "points": 1720
+        },
+        "is_parent": {
+          "data_type": "bool",
+          "points": 1720
+        },
+        "content": {
+          "data_type": "text",
+          "params": {
+            "type": "text",
+            "tokenizer": "word",
+            "min_token_len": 2,
+            "max_token_len": 20,
+            "lowercase": true
+          },
+          "points": 1794
+        },
+        "parent_chunk_id": {
+          "data_type": "keyword",
+          "points": 60
+        },
+        "keywords": {
+          "data_type": "text",
+          "params": {
+            "type": "text",
+            "tokenizer": "word",
+            "min_token_len": 2,
+            "max_token_len": 20,
+            "lowercase": true
+          },
+          "points": 1720
+        },
+        "contextual_description": {
+          "data_type": "text",
+          "params": {
+            "type": "text",
+            "tokenizer": "word",
+            "min_token_len": 2,
+            "max_token_len": 20,
+            "lowercase": true
+          },
+          "points": 1720
+        },
+        "late_chunking_applied": {
+          "data_type": "bool",
+          "points": 1720
+        },
+        "document_type": {
+          "data_type": "keyword",
+          "points": 1794
+        }
+      }
+    },
+    "vector_size": "unknown",
+    "status": "green"
+  },
+  "low_quality_collection": {
+    "name": "nomad_bms_documents_low_quality",
+    "exists": true,
+    "point_count": 0,
+    "vector_config": null,
+    "details": {
+      "status": "green",
+      "optimizer_status": "ok",
+      "vectors_count": 0,
+      "indexed_vectors_count": 0,
+      "points_count": 0,
+      "segments_count": 8,
+      "config": {
+        "params": {
+          "vectors": {
+            "child_embedding": {
+              "size": 768,
+              "distance": "Cosine"
+            },
+            "chunk_embedding": {
+              "size": 768,
+              "distance": "Cosine"
+            },
+            "full_doc_embedding": {
+              "size": 768,
+              "distance": "Cosine",
+              "on_disk": true
+            },
+            "parent_embedding": {
+              "size": 768,
+              "distance": "Cosine",
+              "on_disk": false
+            }
+          },
+          "shard_number": 1,
+          "replication_factor": 1,
+          "write_consistency_factor": 1,
+          "on_disk_payload": true,
+          "sparse_vectors": {
+            "keyword_sparse": {}
+          }
+        },
+        "hnsw_config": {
+          "m": 16,
+          "ef_construct": 100,
+          "full_scan_threshold": 10000,
+          "max_indexing_threads": 0,
+          "on_disk": false
+        },
+        "optimizer_config": {
+          "deleted_threshold": 0.2,
+          "vacuum_min_vector_number": 1000,
+          "default_segment_number": 0,
+          "max_segment_size": null,
+          "memmap_threshold": null,
+          "indexing_threshold": 20000,
+          "flush_interval_sec": 5,
+          "max_optimization_threads": 1
+        },
+        "wal_config": {
+          "wal_capacity_mb": 32,
+          "wal_segments_ahead": 0
+        },
+        "quantization_config": null
+      },
+      "payload_schema": {}
+    },
+    "vector_size": "unknown",
+    "status": "green"
+  },
+  "dual_collection_status": "FULLY_IMPLEMENTED",
+  "recommendations": [
+    "Architecture verified - no action needed"
+  ]
+}

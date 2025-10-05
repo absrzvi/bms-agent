@@ -22,7 +22,11 @@ Single-pod deployment on RunPod.io with direct binary installations (no Docker) 
   - Multi-vector schema: `chunk_embedding`, `parent_embedding`, `child_embedding`, `full_doc_embedding` (768-d for sentence-transformers/all-mpnet-base-v2)
   - Sparse vectors for BM25 keyword search with complete hybrid search support
   - On-disk storage for memory efficiency and persistence under `/workspace/qdrant_storage`
-  - Collection: `nomad_bms_documents`
+  - **Dual-Collection Architecture** (R1.6, Q24, T037 verified 2025-10-05):
+    - Primary: `nomad_bms_documents` (high-quality chunks ≥0.70 quality score) - 1794 points
+    - Low-Quality: `nomad_bms_documents_low_quality` (low-quality chunks <0.70 for admin review) - 0 points
+    - Both collections use identical v4.0 schema with 768-dimensional multi-vector embeddings
+    - Future: `include_low_quality=true` parameter for admin access to low-quality chunks
   - **CORRECTED**: All vectors are 768-dimensional (not 1024-d) to match sentence-transformers/all-mpnet-base-v2 model output
 
 - **Embedding Model**:
@@ -205,6 +209,8 @@ See `spec.md` Performance Targets section for complete phase-specific requiremen
 
 **Summary**:
 - **POC**: p95 <500ms baseline (escalate if >1000ms), ≥5 docs/min, best-effort availability
+  - **⚠️ CRITICAL ESCALATION TRIGGER**: p95 >1000ms **BLOCKS MVP PROGRESSION** - requires optimization work before MVP phase can begin
+  - Baseline establishment: p95 <500ms acceptable for POC completion
 - **MVP**: p95 <200ms for 20-50 users, ≥10 docs/min, 99.9% availability
 - **Production**: p95 ≤100ms for 20-100 users, ≥20 docs/min, 99.99% availability
 - Storage efficiency: ≤100 GB for 10k documents using on-disk vectors/payloads
