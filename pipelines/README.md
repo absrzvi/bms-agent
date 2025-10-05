@@ -23,6 +23,8 @@ Enables BMS Agent to create:
 
 ### Phase 1: Deploy Pipelines Server (15 minutes)
 
+**Pod Environment** (No Docker):
+
 ```bash
 # Make scripts executable
 chmod +x pipelines/*.sh
@@ -32,21 +34,24 @@ bash pipelines/deploy-pipelines-server.sh
 ```
 
 **What this does**:
-- Pulls OpenWebUI Pipelines Docker image
-- Creates persistent volume for pipelines
-- Starts server on port 9099
+- Clones OpenWebUI Pipelines repository
+- Installs pipelines package with pip
+- Installs document generation dependencies
+- Creates startup script
+- Starts server on port 9099 in background
 - Configures with default API key `0p3n-w3bu!`
 
 **Verify**:
 ```bash
 # Check server is running
-docker ps | grep pipelines
+ps aux | grep pipelines
+cat pipelines/server.pid
 
 # Test health endpoint
 curl http://localhost:9099/health
 
 # View logs
-docker logs pipelines
+tail -f pipelines/server.log
 ```
 
 ---
@@ -59,21 +64,24 @@ bash pipelines/install-document-pipeline.sh
 ```
 
 **What this does**:
-- Copies `bms_document_generator.py` to Pipelines container
+- Verifies `bms_document_generator.py` exists
 - Installs Python libraries:
   - `python-docx >= 0.8.11` (Word documents)
   - `openpyxl >= 3.1.0` (Excel spreadsheets)
   - `python-pptx >= 0.6.21` (PowerPoint presentations)
-- Creates output directory
-- Restarts server to load pipeline
+- Creates output directory at `/workspace/001-bms-agent/pipelines/output`
+- Restarts Pipelines server to load pipeline
 
 **Verify**:
 ```bash
 # Check pipeline file exists
-docker exec pipelines ls -l /app/pipelines/bms_document_generator.py
+ls -l pipelines/bms_document_generator.py
 
 # Check dependencies installed
-docker exec pipelines pip list | grep -E "python-docx|openpyxl|python-pptx"
+pip list | grep -E "python-docx|openpyxl|python-pptx"
+
+# Check server running
+ps aux | grep pipelines
 ```
 
 ---
@@ -132,8 +140,11 @@ Prompt: "Create a PowerPoint presentation about railway safety procedures"
 
 **Download generated files**:
 ```bash
-# Copy from container to local machine
-docker cp pipelines:/app/pipelines/output/. ./generated-documents/
+# Files are already on your pod filesystem
+ls -lh /workspace/001-bms-agent/pipelines/output/
+
+# Copy to a different location if needed
+cp -r /workspace/001-bms-agent/pipelines/output ./generated-documents/
 
 # View files
 ls -lh ./generated-documents/
@@ -272,18 +283,21 @@ including:
 
 ### Issue 1: Pipelines Server Not Starting
 
-**Symptoms**: Container exits immediately or won't start
+**Symptoms**: Server process exits immediately or won't start
 
 **Solutions**:
 ```bash
 # Check logs
-docker logs pipelines
+tail -f pipelines/server.log
 
 # Check port availability
 lsof -i :9099
+# Or: netstat -tulpn | grep 9099
 
-# Remove and redeploy
-docker stop pipelines && docker rm pipelines
+# Stop existing process and restart
+if [ -f pipelines/server.pid ]; then
+    kill $(cat pipelines/server.pid)
+fi
 bash pipelines/deploy-pipelines-server.sh
 ```
 
@@ -296,13 +310,19 @@ bash pipelines/deploy-pipelines-server.sh
 **Solutions**:
 ```bash
 # Reinstall dependencies manually
-docker exec pipelines pip install --upgrade python-docx openpyxl python-pptx
+pip install --upgrade python-docx openpyxl python-pptx
 
 # Check installation
-docker exec pipelines pip list | grep -E "docx|openpyxl|pptx"
+pip list | grep -E "docx|openpyxl|pptx"
+
+# Verify imports work
+python3 -c "import docx, openpyxl, pptx; print('All imports OK')"
 
 # Restart server
-docker restart pipelines
+if [ -f pipelines/server.pid ]; then
+    kill $(cat pipelines/server.pid)
+fi
+bash pipelines/start-server.sh
 ```
 
 ---
@@ -314,16 +334,22 @@ docker restart pipelines
 **Solutions**:
 ```bash
 # Verify pipeline file exists
-docker exec pipelines ls -l /app/pipelines/
+ls -l pipelines/bms_document_generator.py
 
 # Check server logs for loading errors
-docker logs pipelines | grep -i error
+tail -50 pipelines/server.log | grep -i error
 
 # Verify connection in OpenWebUI
 # Admin → Settings → Connections → Check API URL and key
 
+# Check server is running
+ps aux | grep pipelines
+
 # Restart Pipelines server
-docker restart pipelines
+if [ -f pipelines/server.pid ]; then
+    kill $(cat pipelines/server.pid)
+fi
+bash pipelines/deploy-pipelines-server.sh
 ```
 
 ---
@@ -347,23 +373,26 @@ docker restart pipelines
 
 ---
 
-### Issue 5: Can't Download Generated Files
+### Issue 5: Can't Find Generated Files
 
-**Symptoms**: Documents created but can't access them
+**Symptoms**: Documents created but can't locate them
 
 **Solutions**:
 ```bash
 # List generated documents
-docker exec pipelines ls -lh /app/pipelines/output/
+ls -lh /workspace/001-bms-agent/pipelines/output/
 
-# Copy specific file to local machine
-docker cp pipelines:/app/pipelines/output/filename.docx ./
+# Check if output directory exists
+ls -ld /workspace/001-bms-agent/pipelines/output
 
-# Copy all files
-docker cp pipelines:/app/pipelines/output/. ./generated-documents/
+# Create if missing
+mkdir -p /workspace/001-bms-agent/pipelines/output
 
-# View file in container
-docker exec pipelines cat /app/pipelines/output/filename.txt
+# Search for recently created files
+find /workspace/001-bms-agent/pipelines -name "*.docx" -o -name "*.xlsx" -o -name "*.pptx"
+
+# Copy to another location
+cp /workspace/001-bms-agent/pipelines/output/*.docx ~/documents/
 ```
 
 ---
