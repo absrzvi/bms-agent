@@ -1245,6 +1245,64 @@ class Tools:
             # Content preview
             output.append(f"\n   📝 {content_preview}\n")
             
+            # === EXPLAINABILITY: Show detailed score breakdown and match analysis ===
+            if self.valves.ENABLE_EXPLAINABILITY:
+                output.append(f"   {'─' * 50}")
+                output.append(f"   📊 **EXPLANATION**:")
+                
+                # Score breakdown
+                output.append(f"   📈 Score Breakdown:")
+                output.append(f"      • Relevance Score: {score:.3f} ({self._score_to_percentage(score)})")
+                output.append(f"      • Quality Score: {quality:.3f} ({int(quality * 100)}%)")
+                
+                # Matched entities (if available)
+                entities = metadata.get("entities", [])
+                if entities:
+                    entity_strs = []
+                    for ent in entities[:3]:  # Show top 3 entities
+                        if isinstance(ent, dict):
+                            ent_type = ent.get("type", "unknown")
+                            ent_value = ent.get("value", ent.get("entity", ""))
+                            entity_strs.append(f"{ent_type}: {ent_value}")
+                        else:
+                            entity_strs.append(str(ent))
+                    
+                    if entity_strs:
+                        output.append(f"   🎯 Matched Entities: {', '.join(entity_strs)}")
+                
+                # Technical terms
+                technical_terms = metadata.get("technical_terms", [])
+                if technical_terms:
+                    terms_str = ", ".join(str(t) for t in technical_terms[:5])
+                    output.append(f"   🔬 Technical Terms: {terms_str}")
+                
+                # Metadata features that boosted this result
+                metadata_boosts = []
+                if metadata.get("is_form"):
+                    metadata_boosts.append("Form")
+                if metadata.get("is_template"):
+                    metadata_boosts.append("Template")
+                if metadata.get("is_process"):
+                    metadata_boosts.append("Process")
+                if metadata.get("has_context"):
+                    metadata_boosts.append("Rich Context")
+                
+                if metadata_boosts:
+                    output.append(f"   ⚡ Metadata Tags: {', '.join(metadata_boosts)}")
+                
+                # Chunk metadata
+                chunk_index = metadata.get("chunk_index")
+                hierarchy_level = metadata.get("hierarchy_level")
+                if chunk_index is not None or hierarchy_level is not None:
+                    chunk_info = []
+                    if chunk_index is not None:
+                        chunk_info.append(f"Chunk #{chunk_index}")
+                    if hierarchy_level:
+                        chunk_info.append(f"Level: {hierarchy_level}")
+                    output.append(f"   📍 Position: {' | '.join(chunk_info)}")
+                
+                output.append(f"   {'─' * 50}\n")
+            
             # Show boost info if smart search
             if search_type == "smart" and "boosts_applied" in result:
                 boosts = result.get("boosts_applied", [])
@@ -1300,6 +1358,22 @@ class Tools:
             icon = "⚠️"
         
         return f"{icon} Relevance: {percentage}% ({confidence})"
+    
+    def _score_to_percentage(self, score: float) -> str:
+        """Convert score to percentage string for explanation display."""
+        percentage = int(score * 100)
+        if percentage >= 90:
+            return f"{percentage}% - Excellent match"
+        elif percentage >= 80:
+            return f"{percentage}% - Very good match"
+        elif percentage >= 70:
+            return f"{percentage}% - Good match"
+        elif percentage >= 60:
+            return f"{percentage}% - Decent match"
+        elif percentage >= 50:
+            return f"{percentage}% - Fair match"
+        else:
+            return f"{percentage}% - Weak match"
     
     def _format_empty_results(self, query: str) -> str:
         """Format empty results with context-aware suggestions."""
