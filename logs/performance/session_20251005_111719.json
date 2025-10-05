@@ -1,0 +1,6591 @@
+{
+  "session_id": "20251005_111719",
+  "start_time": "2025-10-05T11:17:19.264844",
+  "end_time": "2025-10-05T11:20:17.980946",
+  "duration_seconds": 178.16,
+  "total_snapshots": 117,
+  "summary": {
+    "system": {
+      "cpu_avg": 27.958974358974373,
+      "cpu_max": 93.1,
+      "cpu_min": 0.4,
+      "memory_avg": 15.873504273504274,
+      "memory_max": 17.8,
+      "memory_min": 11.2
+    },
+    "processes": {
+      "openwebui": {
+        "cpu_avg": 0.7692307692307693,
+        "cpu_max": 10.0,
+        "memory_avg": 977.56640625,
+        "memory_max": 977.56640625
+      },
+      "ollama": {
+        "cpu_avg": 1.952136752136752,
+        "cpu_max": 149.8,
+        "memory_avg": 1060.6834268162393,
+        "memory_max": 1070.0390625
+      },
+      "qdrant": {
+        "cpu_avg": 0.5965811965811966,
+        "cpu_max": 10.0,
+        "memory_avg": 205.14423076923077,
+        "memory_max": 205.1953125
+      }
+    }
+  },
+  "metrics": [
+    {
+      "timestamp": "2025-10-05T11:17:19.264844",
+      "elapsed_seconds": 0,
+      "system": {
+        "cpu_percent": 62.6,
+        "memory_percent": 17.0,
+        "memory_available_gb": 836.4657249450684,
+        "disk_usage_percent": 21.1
+      },
+      "processes": {
+        "openwebui": {
+          "pid": 43656,
+          "cpu_percent": 0.0,
+          "memory_mb": 977.56640625,
+          "memory_percent": 0.09473890596989158
+        },
+        "ollama": {
+          "pid": 17210,
+          "cpu_percent": 0.0,
+          "memory_mb": 1070.0390625,
+          "memory_percent": 0.1037007097197377
+        },
+        "qdrant": {
+          "pid": 1712,
+          "cpu_percent": 0.0,
+          "memory_mb": 203.203125,
+          "memory_percent": 0.01969302712233328
+        },
+        "python": {
+          "pid": 53558,
+          "cpu_percent": 0.0,
+          "memory_mb": 25.8984375,
+          "memory_percent": 0.0025098956136307125
+        }
+      },
+      "services": {
+        "ollama": {
+          "status": "running",
+          "models": 4
+        },
+        "qdrant": {
+          "status": "unavailable"
+        },
+        "bms_api": {
+          "status": "running",
+          "health": {
+            "status": "healthy",
+            "timestamp": "2025-10-05T11:17:19.819855",
+            "services": {
+              "qdrant": "connected",
+              "ollama": "connected"
+            }
+          }
+        }
+      }
+    },
+    {
+      "timestamp": "2025-10-05T11:17:19.822706",
+      "elapsed_seconds": 0.0,
+      "system": {
+        "cpu_percent": 16.7,
+        "memory_percent": 17.0,
+        "memory_available_gb": 836.4387969970703,
+        "disk_usage_percent": 21.1
+      },
+      "processes": {
+        "openwebui": {
+          "pid": 43656,
+          "cpu_percent": 0.0,
+          "memory_mb": 977.56640625,
+          "memory_percent": 0.09473890596989158
+        },
+        "ollama": {
+          "pid": 17210,
+          "cpu_percent": 0.0,
+          "memory_mb": 1070.0390625,
+          "memory_percent": 0.1037007097197377
+        },
+        "qdrant": {
+          "pid": 1712,
+          "cpu_percent": 0.0,
+          "memory_mb": 203.203125,
+          "memory_percent": 0.01969302712233328
+        },
+        "python": {
+          "pid": 53558,
+          "cpu_percent": 0.0,
+          "memory_mb": 25.8984375,
+          "memory_percent": 0.0025098956136307125
+        }
+      },
+      "services": {
+        "ollama": {
+          "status": "running",
+          "models": 4
+        },
+        "qdrant": {
+          "status": "unavailable"
+        },
+        "bms_api": {
+          "status": "running",
+          "health": {
+            "status": "healthy",
+            "timestamp": "2025-10-05T11:17:20.365855",
+            "services": {
+              "qdrant": "connected",
+              "ollama": "connected"
+            }
+          }
+        }
+      }
+    },
+    {
+      "timestamp": "2025-10-05T11:17:21.367115",
+      "elapsed_seconds": 1.54,
+      "system": {
+        "cpu_percent": 13.8,
+        "memory_percent": 17.0,
+        "memory_available_gb": 836.2578086853027,
+        "disk_usage_percent": 21.1
+      },
+      "processes": {
+        "openwebui": {
+          "pid": 43656,
+          "cpu_percent": 10.0,
+          "memory_mb": 977.56640625,
+          "memory_percent": 0.09473890596989158
+        },
+        "ollama": {
+          "pid": 17210,
+          "cpu_percent": 0.0,
+          "memory_mb": 1070.0390625,
+          "memory_percent": 0.1037007097197377
+        },
+        "qdrant": {
+          "pid": 1712,
+          "cpu_percent": 0.0,
+          "memory_mb": 203.203125,
+          "memory_percent": 0.01969302712233328
+        },
+        "python": {
+          "pid": 53558,
+          "cpu_percent": 0.0,
+          "memory_mb": 25.8984375,
+          "memory_percent": 0.0025098956136307125
+        }
+      },
+      "services": {
+        "ollama": {
+          "status": "running",
+          "models": 4
+        },
+        "qdrant": {
+          "status": "unavailable"
+        },
+        "bms_api": {
+          "status": "running",
+          "health": {
+            "status": "healthy",
+            "timestamp": "2025-10-05T11:17:21.914294",
+            "services": {
+              "qdrant": "connected",
+              "ollama": "connected"
+            }
+          }
+        }
+      }
+    },
+    {
+      "timestamp": "2025-10-05T11:17:22.917264",
+      "elapsed_seconds": 3.09,
+      "system": {
+        "cpu_percent": 61.7,
+        "memory_percent": 17.0,
+        "memory_available_gb": 836.2774810791016,
+        "disk_usage_percent": 21.1
+      },
+      "processes": {
+        "openwebui": {
+          "pid": 43656,
+          "cpu_percent": 0.0,
+          "memory_mb": 977.56640625,
+          "memory_percent": 0.09473890596989158
+        },
+        "ollama": {
+          "pid": 17210,
+          "cpu_percent": 0.0,
+          "memory_mb": 1070.0390625,
+          "memory_percent": 0.1037007097197377
+        },
+        "qdrant": {
+          "pid": 1712,
+          "cpu_percent": 9.8,
+          "memory_mb": 205.1953125,
+          "memory_percent": 0.01988609601568949
+        },
+        "python": {
+          "pid": 53558,
+          "cpu_percent": 0.0,
+          "memory_mb": 25.8984375,
+          "memory_percent": 0.0025098956136307125
+        }
+      },
+      "services": {
+        "ollama": {
+          "status": "running",
+          "models": 4
+        },
+        "qdrant": {
+          "status": "unavailable"
+        },
+        "bms_api": {
+          "status": "running",
+          "health": {
+            "status": "healthy",
+            "timestamp": "2025-10-05T11:17:23.469598",
+            "services": {
+              "qdrant": "connected",
+              "ollama": "connected"
+            }
+          }
+        }
+      }
+    },
+    {
+      "timestamp": "2025-10-05T11:17:24.472172",
+      "elapsed_seconds": 4.65,
+      "system": {
+        "cpu_percent": 11.0,
+        "memory_percent": 17.0,
+        "memory_available_gb": 836.1773109436035,
+        "disk_usage_percent": 21.1
+      },
+      "processes": {
+        "openwebui": {
+          "pid": 43656,
+          "cpu_percent": 0.0,
+          "memory_mb": 977.56640625,
+          "memory_percent": 0.09473890596989158
+        },
+        "ollama": {
+          "pid": 17210,
+          "cpu_percent": 0.0,
+          "memory_mb": 1070.0390625,
+          "memory_percent": 0.1037007097197377
+        },
+        "qdrant": {
+          "pid": 1712,
+          "cpu_percent": 0.0,
+          "memory_mb": 205.1953125,
+          "memory_percent": 0.01988609601568949
+        },
+        "python": {
+          "pid": 53558,
+          "cpu_percent": 0.0,
+          "memory_mb": 25.8984375,
+          "memory_percent": 0.0025098956136307125
+        }
+      },
+      "services": {
+        "ollama": {
+          "status": "running",
+          "models": 4
+        },
+        "qdrant": {
+          "status": "unavailable"
+        },
+        "bms_api": {
+          "status": "running",
+          "health": {
+            "status": "healthy",
+            "timestamp": "2025-10-05T11:17:25.033938",
+            "services": {
+              "qdrant": "connected",
+              "ollama": "connected"
+            }
+          }
+        }
+      }
+    },
+    {
+      "timestamp": "2025-10-05T11:17:26.035237",
+      "elapsed_seconds": 6.21,
+      "system": {
+        "cpu_percent": 54.5,
+        "memory_percent": 17.0,
+        "memory_available_gb": 836.0699119567871,
+        "disk_usage_percent": 21.1
+      },
+      "processes": {
+        "openwebui": {
+          "pid": 43656,
+          "cpu_percent": 0.0,
+          "memory_mb": 977.56640625,
+          "memory_percent": 0.09473890596989158
+        },
+        "ollama": {
+          "pid": 17210,
+          "cpu_percent": 10.0,
+          "memory_mb": 1067.9140625,
+          "memory_percent": 0.10349476956682442
+        },
+        "qdrant": {
+          "pid": 1712,
+          "cpu_percent": 0.0,
+          "memory_mb": 205.1953125,
+          "memory_percent": 0.01988609601568949
+        },
+        "python": {
+          "pid": 53558,
+          "cpu_percent": 0.0,
+          "memory_mb": 25.8984375,
+          "memory_percent": 0.0025098956136307125
+        }
+      },
+      "services": {
+        "ollama": {
+          "status": "running",
+          "models": 4
+        },
+        "qdrant": {
+          "status": "unavailable"
+        },
+        "bms_api": {
+          "status": "running",
+          "health": {
+            "status": "healthy",
+            "timestamp": "2025-10-05T11:17:26.579177",
+            "services": {
+              "qdrant": "connected",
+              "ollama": "connected"
+            }
+          }
+        }
+      }
+    },
+    {
+      "timestamp": "2025-10-05T11:17:27.581793",
+      "elapsed_seconds": 7.76,
+      "system": {
+        "cpu_percent": 67.0,
+        "memory_percent": 17.0,
+        "memory_available_gb": 836.024528503418,
+        "disk_usage_percent": 21.1
+      },
+      "processes": {
+        "openwebui": {
+          "pid": 43656,
+          "cpu_percent": 10.0,
+          "memory_mb": 977.56640625,
+          "memory_percent": 0.09473890596989158
+        },
+        "ollama": {
+          "pid": 17210,
+          "cpu_percent": 0.0,
+          "memory_mb": 1067.9140625,
+          "memory_percent": 0.10349476956682442
+        },
+        "qdrant": {
+          "pid": 1712,
+          "cpu_percent": 0.0,
+          "memory_mb": 205.1953125,
+          "memory_percent": 0.01988609601568949
+        },
+        "python": {
+          "pid": 53558,
+          "cpu_percent": 0.0,
+          "memory_mb": 25.8984375,
+          "memory_percent": 0.0025098956136307125
+        }
+      },
+      "services": {
+        "ollama": {
+          "status": "running",
+          "models": 4
+        },
+        "qdrant": {
+          "status": "unavailable"
+        },
+        "bms_api": {
+          "status": "running",
+          "health": {
+            "status": "healthy",
+            "timestamp": "2025-10-05T11:17:28.129405",
+            "services": {
+              "qdrant": "connected",
+              "ollama": "connected"
+            }
+          }
+        }
+      }
+    },
+    {
+      "timestamp": "2025-10-05T11:17:29.130871",
+      "elapsed_seconds": 9.31,
+      "system": {
+        "cpu_percent": 53.8,
+        "memory_percent": 17.0,
+        "memory_available_gb": 835.9390029907227,
+        "disk_usage_percent": 21.1
+      },
+      "processes": {
+        "openwebui": {
+          "pid": 43656,
+          "cpu_percent": 10.0,
+          "memory_mb": 977.56640625,
+          "memory_percent": 0.09473890596989158
+        },
+        "ollama": {
+          "pid": 17210,
+          "cpu_percent": 0.0,
+          "memory_mb": 1067.9140625,
+          "memory_percent": 0.10349476956682442
+        },
+        "qdrant": {
+          "pid": 1712,
+          "cpu_percent": 0.0,
+          "memory_mb": 205.1953125,
+          "memory_percent": 0.01988609601568949
+        },
+        "python": {
+          "pid": 53558,
+          "cpu_percent": 0.0,
+          "memory_mb": 25.8984375,
+          "memory_percent": 0.0025098956136307125
+        }
+      },
+      "services": {
+        "ollama": {
+          "status": "running",
+          "models": 4
+        },
+        "qdrant": {
+          "status": "unavailable"
+        },
+        "bms_api": {
+          "status": "running",
+          "health": {
+            "status": "healthy",
+            "timestamp": "2025-10-05T11:17:29.678815",
+            "services": {
+              "qdrant": "connected",
+              "ollama": "connected"
+            }
+          }
+        }
+      }
+    },
+    {
+      "timestamp": "2025-10-05T11:17:30.680577",
+      "elapsed_seconds": 10.86,
+      "system": {
+        "cpu_percent": 39.4,
+        "memory_percent": 17.0,
+        "memory_available_gb": 835.8762245178223,
+        "disk_usage_percent": 21.1
+      },
+      "processes": {
+        "openwebui": {
+          "pid": 43656,
+          "cpu_percent": 10.0,
+          "memory_mb": 977.56640625,
+          "memory_percent": 0.09473890596989158
+        },
+        "ollama": {
+          "pid": 17210,
+          "cpu_percent": 0.0,
+          "memory_mb": 1067.9140625,
+          "memory_percent": 0.10349476956682442
+        },
+        "qdrant": {
+          "pid": 1712,
+          "cpu_percent": 0.0,
+          "memory_mb": 205.1953125,
+          "memory_percent": 0.01988609601568949
+        },
+        "python": {
+          "pid": 53558,
+          "cpu_percent": 0.0,
+          "memory_mb": 25.8984375,
+          "memory_percent": 0.0025098956136307125
+        }
+      },
+      "services": {
+        "ollama": {
+          "status": "running",
+          "models": 4
+        },
+        "qdrant": {
+          "status": "unavailable"
+        },
+        "bms_api": {
+          "status": "running",
+          "health": {
+            "status": "healthy",
+            "timestamp": "2025-10-05T11:17:31.223790",
+            "services": {
+              "qdrant": "connected",
+              "ollama": "connected"
+            }
+          }
+        }
+      }
+    },
+    {
+      "timestamp": "2025-10-05T11:17:32.225192",
+      "elapsed_seconds": 12.4,
+      "system": {
+        "cpu_percent": 69.6,
+        "memory_percent": 17.1,
+        "memory_available_gb": 835.756160736084,
+        "disk_usage_percent": 21.1
+      },
+      "processes": {
+        "openwebui": {
+          "pid": 43656,
+          "cpu_percent": 10.0,
+          "memory_mb": 977.56640625,
+          "memory_percent": 0.09473890596989158
+        },
+        "ollama": {
+          "pid": 17210,
+          "cpu_percent": 48.7,
+          "memory_mb": 1069.90625,
+          "memory_percent": 0.10368783846018063
+        },
+        "qdrant": {
+          "pid": 1712,
+          "cpu_percent": 0.0,
+          "memory_mb": 205.1953125,
+          "memory_percent": 0.01988609601568949
+        },
+        "python": {
+          "pid": 53558,
+          "cpu_percent": 0.0,
+          "memory_mb": 25.8984375,
+          "memory_percent": 0.0025098956136307125
+        }
+      },
+      "services": {
+        "ollama": {
+          "status": "running",
+          "models": 4
+        },
+        "qdrant": {
+          "status": "unavailable"
+        },
+        "bms_api": {
+          "status": "running",
+          "health": {
+            "status": "healthy",
+            "timestamp": "2025-10-05T11:17:32.771222",
+            "services": {
+              "qdrant": "connected",
+              "ollama": "connected"
+            }
+          }
+        }
+      }
+    },
+    {
+      "timestamp": "2025-10-05T11:17:33.772811",
+      "elapsed_seconds": 13.95,
+      "system": {
+        "cpu_percent": 31.5,
+        "memory_percent": 17.1,
+        "memory_available_gb": 835.6975021362305,
+        "disk_usage_percent": 21.1
+      },
+      "processes": {
+        "openwebui": {
+          "pid": 43656,
+          "cpu_percent": 10.0,
+          "memory_mb": 977.56640625,
+          "memory_percent": 0.09473890596989158
+        },
+        "ollama": {
+          "pid": 17210,
+          "cpu_percent": 149.8,
+          "memory_mb": 1069.90625,
+          "memory_percent": 0.10368783846018063
+        },
+        "qdrant": {
+          "pid": 1712,
+          "cpu_percent": 0.0,
+          "memory_mb": 205.1953125,
+          "memory_percent": 0.01988609601568949
+        },
+        "python": {
+          "pid": 53558,
+          "cpu_percent": 0.0,
+          "memory_mb": 25.8984375,
+          "memory_percent": 0.0025098956136307125
+        }
+      },
+      "services": {
+        "ollama": {
+          "status": "running",
+          "models": 4
+        },
+        "qdrant": {
+          "status": "unavailable"
+        },
+        "bms_api": {
+          "status": "running",
+          "health": {
+            "status": "healthy",
+            "timestamp": "2025-10-05T11:17:34.322930",
+            "services": {
+              "qdrant": "connected",
+              "ollama": "connected"
+            }
+          }
+        }
+      }
+    },
+    {
+      "timestamp": "2025-10-05T11:17:35.328392",
+      "elapsed_seconds": 15.51,
+      "system": {
+        "cpu_percent": 36.5,
+        "memory_percent": 17.1,
+        "memory_available_gb": 835.6112365722656,
+        "disk_usage_percent": 21.1
+      },
+      "processes": {
+        "openwebui": {
+          "pid": 43656,
+          "cpu_percent": 0.0,
+          "memory_mb": 977.56640625,
+          "memory_percent": 0.09473890596989158
+        },
+        "ollama": {
+          "pid": 17210,
+          "cpu_percent": 0.0,
+          "memory_mb": 1069.90625,
+          "memory_percent": 0.10368783846018063
+        },
+        "qdrant": {
+          "pid": 1712,
+          "cpu_percent": 0.0,
+          "memory_mb": 205.1953125,
+          "memory_percent": 0.01988609601568949
+        },
+        "python": {
+          "pid": 53558,
+          "cpu_percent": 0.0,
+          "memory_mb": 25.8984375,
+          "memory_percent": 0.0025098956136307125
+        }
+      },
+      "services": {
+        "ollama": {
+          "status": "running",
+          "models": 4
+        },
+        "qdrant": {
+          "status": "unavailable"
+        },
+        "bms_api": {
+          "status": "running",
+          "health": {
+            "status": "healthy",
+            "timestamp": "2025-10-05T11:17:35.897791",
+            "services": {
+              "qdrant": "connected",
+              "ollama": "connected"
+            }
+          }
+        }
+      }
+    },
+    {
+      "timestamp": "2025-10-05T11:17:36.899142",
+      "elapsed_seconds": 17.08,
+      "system": {
+        "cpu_percent": 87.8,
+        "memory_percent": 17.1,
+        "memory_available_gb": 835.4001655578613,
+        "disk_usage_percent": 21.1
+      },
+      "processes": {
+        "openwebui": {
+          "pid": 43656,
+          "cpu_percent": 0.0,
+          "memory_mb": 977.56640625,
+          "memory_percent": 0.09473890596989158
+        },
+        "ollama": {
+          "pid": 17210,
+          "cpu_percent": 0.0,
+          "memory_mb": 1069.90625,
+          "memory_percent": 0.10368783846018063
+        },
+        "qdrant": {
+          "pid": 1712,
+          "cpu_percent": 0.0,
+          "memory_mb": 205.1953125,
+          "memory_percent": 0.01988609601568949
+        },
+        "python": {
+          "pid": 53558,
+          "cpu_percent": 0.0,
+          "memory_mb": 25.8984375,
+          "memory_percent": 0.0025098956136307125
+        }
+      },
+      "services": {
+        "ollama": {
+          "status": "running",
+          "models": 4
+        },
+        "qdrant": {
+          "status": "unavailable"
+        },
+        "bms_api": {
+          "status": "running",
+          "health": {
+            "status": "healthy",
+            "timestamp": "2025-10-05T11:17:37.441784",
+            "services": {
+              "qdrant": "connected",
+              "ollama": "connected"
+            }
+          }
+        }
+      }
+    },
+    {
+      "timestamp": "2025-10-05T11:17:38.443151",
+      "elapsed_seconds": 18.62,
+      "system": {
+        "cpu_percent": 18.8,
+        "memory_percent": 17.1,
+        "memory_available_gb": 835.4118232727051,
+        "disk_usage_percent": 21.1
+      },
+      "processes": {
+        "openwebui": {
+          "pid": 43656,
+          "cpu_percent": 0.0,
+          "memory_mb": 977.56640625,
+          "memory_percent": 0.09473890596989158
+        },
+        "ollama": {
+          "pid": 17210,
+          "cpu_percent": 0.0,
+          "memory_mb": 1069.90625,
+          "memory_percent": 0.10368783846018063
+        },
+        "qdrant": {
+          "pid": 1712,
+          "cpu_percent": 0.0,
+          "memory_mb": 205.1953125,
+          "memory_percent": 0.01988609601568949
+        },
+        "python": {
+          "pid": 53558,
+          "cpu_percent": 0.0,
+          "memory_mb": 25.8984375,
+          "memory_percent": 0.0025098956136307125
+        }
+      },
+      "services": {
+        "ollama": {
+          "status": "running",
+          "models": 4
+        },
+        "qdrant": {
+          "status": "unavailable"
+        },
+        "bms_api": {
+          "status": "running",
+          "health": {
+            "status": "healthy",
+            "timestamp": "2025-10-05T11:17:38.982237",
+            "services": {
+              "qdrant": "connected",
+              "ollama": "connected"
+            }
+          }
+        }
+      }
+    },
+    {
+      "timestamp": "2025-10-05T11:17:39.983425",
+      "elapsed_seconds": 20.16,
+      "system": {
+        "cpu_percent": 39.5,
+        "memory_percent": 17.1,
+        "memory_available_gb": 835.2915077209473,
+        "disk_usage_percent": 21.1
+      },
+      "processes": {
+        "openwebui": {
+          "pid": 43656,
+          "cpu_percent": 0.0,
+          "memory_mb": 977.56640625,
+          "memory_percent": 0.09473890596989158
+        },
+        "ollama": {
+          "pid": 17210,
+          "cpu_percent": 0.0,
+          "memory_mb": 1069.90625,
+          "memory_percent": 0.10368783846018063
+        },
+        "qdrant": {
+          "pid": 1712,
+          "cpu_percent": 0.0,
+          "memory_mb": 205.1953125,
+          "memory_percent": 0.01988609601568949
+        },
+        "python": {
+          "pid": 53558,
+          "cpu_percent": 0.0,
+          "memory_mb": 25.8984375,
+          "memory_percent": 0.0025098956136307125
+        }
+      },
+      "services": {
+        "ollama": {
+          "status": "running",
+          "models": 4
+        },
+        "qdrant": {
+          "status": "unavailable"
+        },
+        "bms_api": {
+          "status": "running",
+          "health": {
+            "status": "healthy",
+            "timestamp": "2025-10-05T11:17:40.532464",
+            "services": {
+              "qdrant": "connected",
+              "ollama": "connected"
+            }
+          }
+        }
+      }
+    },
+    {
+      "timestamp": "2025-10-05T11:17:41.533878",
+      "elapsed_seconds": 21.71,
+      "system": {
+        "cpu_percent": 54.8,
+        "memory_percent": 17.1,
+        "memory_available_gb": 835.1203765869141,
+        "disk_usage_percent": 21.1
+      },
+      "processes": {
+        "openwebui": {
+          "pid": 43656,
+          "cpu_percent": 0.0,
+          "memory_mb": 977.56640625,
+          "memory_percent": 0.09473890596989158
+        },
+        "ollama": {
+          "pid": 17210,
+          "cpu_percent": 0.0,
+          "memory_mb": 1069.90625,
+          "memory_percent": 0.10368783846018063
+        },
+        "qdrant": {
+          "pid": 1712,
+          "cpu_percent": 0.0,
+          "memory_mb": 205.1953125,
+          "memory_percent": 0.01988609601568949
+        },
+        "python": {
+          "pid": 53558,
+          "cpu_percent": 0.0,
+          "memory_mb": 25.8984375,
+          "memory_percent": 0.0025098956136307125
+        }
+      },
+      "services": {
+        "ollama": {
+          "status": "running",
+          "models": 4
+        },
+        "qdrant": {
+          "status": "unavailable"
+        },
+        "bms_api": {
+          "status": "running",
+          "health": {
+            "status": "healthy",
+            "timestamp": "2025-10-05T11:17:42.077495",
+            "services": {
+              "qdrant": "connected",
+              "ollama": "connected"
+            }
+          }
+        }
+      }
+    },
+    {
+      "timestamp": "2025-10-05T11:17:43.078775",
+      "elapsed_seconds": 23.26,
+      "system": {
+        "cpu_percent": 38.5,
+        "memory_percent": 17.1,
+        "memory_available_gb": 835.1248054504395,
+        "disk_usage_percent": 21.1
+      },
+      "processes": {
+        "openwebui": {
+          "pid": 43656,
+          "cpu_percent": 0.0,
+          "memory_mb": 977.56640625,
+          "memory_percent": 0.09473890596989158
+        },
+        "ollama": {
+          "pid": 17210,
+          "cpu_percent": 0.0,
+          "memory_mb": 1069.90625,
+          "memory_percent": 0.10368783846018063
+        },
+        "qdrant": {
+          "pid": 1712,
+          "cpu_percent": 0.0,
+          "memory_mb": 205.1953125,
+          "memory_percent": 0.01988609601568949
+        },
+        "python": {
+          "pid": 53558,
+          "cpu_percent": 0.0,
+          "memory_mb": 25.8984375,
+          "memory_percent": 0.0025098956136307125
+        }
+      },
+      "services": {
+        "ollama": {
+          "status": "running",
+          "models": 4
+        },
+        "qdrant": {
+          "status": "unavailable"
+        },
+        "bms_api": {
+          "status": "running",
+          "health": {
+            "status": "healthy",
+            "timestamp": "2025-10-05T11:17:43.620632",
+            "services": {
+              "qdrant": "connected",
+              "ollama": "connected"
+            }
+          }
+        }
+      }
+    },
+    {
+      "timestamp": "2025-10-05T11:17:44.622074",
+      "elapsed_seconds": 24.8,
+      "system": {
+        "cpu_percent": 51.5,
+        "memory_percent": 17.1,
+        "memory_available_gb": 835.0891761779785,
+        "disk_usage_percent": 21.1
+      },
+      "processes": {
+        "openwebui": {
+          "pid": 43656,
+          "cpu_percent": 0.0,
+          "memory_mb": 977.56640625,
+          "memory_percent": 0.09473890596989158
+        },
+        "ollama": {
+          "pid": 17210,
+          "cpu_percent": 0.0,
+          "memory_mb": 1069.90625,
+          "memory_percent": 0.10368783846018063
+        },
+        "qdrant": {
+          "pid": 1712,
+          "cpu_percent": 0.0,
+          "memory_mb": 205.1953125,
+          "memory_percent": 0.01988609601568949
+        },
+        "python": {
+          "pid": 53558,
+          "cpu_percent": 0.0,
+          "memory_mb": 25.8984375,
+          "memory_percent": 0.0025098956136307125
+        }
+      },
+      "services": {
+        "ollama": {
+          "status": "running",
+          "models": 4
+        },
+        "qdrant": {
+          "status": "unavailable"
+        },
+        "bms_api": {
+          "status": "running",
+          "health": {
+            "status": "healthy",
+            "timestamp": "2025-10-05T11:17:45.162326",
+            "services": {
+              "qdrant": "connected",
+              "ollama": "connected"
+            }
+          }
+        }
+      }
+    },
+    {
+      "timestamp": "2025-10-05T11:17:46.166081",
+      "elapsed_seconds": 26.34,
+      "system": {
+        "cpu_percent": 40.4,
+        "memory_percent": 17.1,
+        "memory_available_gb": 834.9058418273926,
+        "disk_usage_percent": 21.1
+      },
+      "processes": {
+        "openwebui": {
+          "pid": 43656,
+          "cpu_percent": 0.0,
+          "memory_mb": 977.56640625,
+          "memory_percent": 0.09473890596989158
+        },
+        "ollama": {
+          "pid": 17210,
+          "cpu_percent": 0.0,
+          "memory_mb": 1069.90625,
+          "memory_percent": 0.10368783846018063
+        },
+        "qdrant": {
+          "pid": 1712,
+          "cpu_percent": 10.0,
+          "memory_mb": 205.1953125,
+          "memory_percent": 0.01988609601568949
+        },
+        "python": {
+          "pid": 53558,
+          "cpu_percent": 0.0,
+          "memory_mb": 25.8984375,
+          "memory_percent": 0.0025098956136307125
+        }
+      },
+      "services": {
+        "ollama": {
+          "status": "running",
+          "models": 4
+        },
+        "qdrant": {
+          "status": "unavailable"
+        },
+        "bms_api": {
+          "status": "running",
+          "health": {
+            "status": "healthy",
+            "timestamp": "2025-10-05T11:17:46.743013",
+            "services": {
+              "qdrant": "connected",
+              "ollama": "connected"
+            }
+          }
+        }
+      }
+    },
+    {
+      "timestamp": "2025-10-05T11:17:47.744470",
+      "elapsed_seconds": 27.92,
+      "system": {
+        "cpu_percent": 71.2,
+        "memory_percent": 17.1,
+        "memory_available_gb": 834.987663269043,
+        "disk_usage_percent": 21.1
+      },
+      "processes": {
+        "openwebui": {
+          "pid": 43656,
+          "cpu_percent": 0.0,
+          "memory_mb": 977.56640625,
+          "memory_percent": 0.09473890596989158
+        },
+        "ollama": {
+          "pid": 17210,
+          "cpu_percent": 0.0,
+          "memory_mb": 1069.90625,
+          "memory_percent": 0.10368783846018063
+        },
+        "qdrant": {
+          "pid": 1712,
+          "cpu_percent": 0.0,
+          "memory_mb": 205.1953125,
+          "memory_percent": 0.01988609601568949
+        },
+        "python": {
+          "pid": 53558,
+          "cpu_percent": 0.0,
+          "memory_mb": 25.8984375,
+          "memory_percent": 0.0025098956136307125
+        }
+      },
+      "services": {
+        "ollama": {
+          "status": "running",
+          "models": 4
+        },
+        "qdrant": {
+          "status": "unavailable"
+        },
+        "bms_api": {
+          "status": "running",
+          "health": {
+            "status": "healthy",
+            "timestamp": "2025-10-05T11:17:48.288717",
+            "services": {
+              "qdrant": "connected",
+              "ollama": "connected"
+            }
+          }
+        }
+      }
+    },
+    {
+      "timestamp": "2025-10-05T11:17:49.290882",
+      "elapsed_seconds": 29.47,
+      "system": {
+        "cpu_percent": 53.2,
+        "memory_percent": 17.2,
+        "memory_available_gb": 834.8403129577637,
+        "disk_usage_percent": 21.1
+      },
+      "processes": {
+        "openwebui": {
+          "pid": 43656,
+          "cpu_percent": 0.0,
+          "memory_mb": 977.56640625,
+          "memory_percent": 0.09473890596989158
+        },
+        "ollama": {
+          "pid": 17210,
+          "cpu_percent": 0.0,
+          "memory_mb": 1069.90625,
+          "memory_percent": 0.10368783846018063
+        },
+        "qdrant": {
+          "pid": 1712,
+          "cpu_percent": 0.0,
+          "memory_mb": 205.1953125,
+          "memory_percent": 0.01988609601568949
+        },
+        "python": {
+          "pid": 53558,
+          "cpu_percent": 0.0,
+          "memory_mb": 25.8984375,
+          "memory_percent": 0.0025098956136307125
+        }
+      },
+      "services": {
+        "ollama": {
+          "status": "running",
+          "models": 4
+        },
+        "qdrant": {
+          "status": "unavailable"
+        },
+        "bms_api": {
+          "status": "running",
+          "health": {
+            "status": "healthy",
+            "timestamp": "2025-10-05T11:17:49.835502",
+            "services": {
+              "qdrant": "connected",
+              "ollama": "connected"
+            }
+          }
+        }
+      }
+    },
+    {
+      "timestamp": "2025-10-05T11:17:50.836904",
+      "elapsed_seconds": 31.01,
+      "system": {
+        "cpu_percent": 49.6,
+        "memory_percent": 17.2,
+        "memory_available_gb": 834.6599807739258,
+        "disk_usage_percent": 21.1
+      },
+      "processes": {
+        "openwebui": {
+          "pid": 43656,
+          "cpu_percent": 0.0,
+          "memory_mb": 977.56640625,
+          "memory_percent": 0.09473890596989158
+        },
+        "ollama": {
+          "pid": 17210,
+          "cpu_percent": 0.0,
+          "memory_mb": 1069.90625,
+          "memory_percent": 0.10368783846018063
+        },
+        "qdrant": {
+          "pid": 1712,
+          "cpu_percent": 0.0,
+          "memory_mb": 205.1953125,
+          "memory_percent": 0.01988609601568949
+        },
+        "python": {
+          "pid": 53558,
+          "cpu_percent": 0.0,
+          "memory_mb": 25.8984375,
+          "memory_percent": 0.0025098956136307125
+        }
+      },
+      "services": {
+        "ollama": {
+          "status": "running",
+          "models": 4
+        },
+        "qdrant": {
+          "status": "unavailable"
+        },
+        "bms_api": {
+          "status": "running",
+          "health": {
+            "status": "healthy",
+            "timestamp": "2025-10-05T11:17:51.390068",
+            "services": {
+              "qdrant": "connected",
+              "ollama": "connected"
+            }
+          }
+        }
+      }
+    },
+    {
+      "timestamp": "2025-10-05T11:17:52.393375",
+      "elapsed_seconds": 32.57,
+      "system": {
+        "cpu_percent": 5.4,
+        "memory_percent": 17.2,
+        "memory_available_gb": 834.6852951049805,
+        "disk_usage_percent": 21.1
+      },
+      "processes": {
+        "openwebui": {
+          "pid": 43656,
+          "cpu_percent": 0.0,
+          "memory_mb": 977.56640625,
+          "memory_percent": 0.09473890596989158
+        },
+        "ollama": {
+          "pid": 17210,
+          "cpu_percent": 0.0,
+          "memory_mb": 1069.90625,
+          "memory_percent": 0.10368783846018063
+        },
+        "qdrant": {
+          "pid": 1712,
+          "cpu_percent": 0.0,
+          "memory_mb": 205.1953125,
+          "memory_percent": 0.01988609601568949
+        },
+        "python": {
+          "pid": 53558,
+          "cpu_percent": 0.0,
+          "memory_mb": 25.8984375,
+          "memory_percent": 0.0025098956136307125
+        }
+      },
+      "services": {
+        "ollama": {
+          "status": "running",
+          "models": 4
+        },
+        "qdrant": {
+          "status": "unavailable"
+        },
+        "bms_api": {
+          "status": "running",
+          "health": {
+            "status": "healthy",
+            "timestamp": "2025-10-05T11:17:52.933948",
+            "services": {
+              "qdrant": "connected",
+              "ollama": "connected"
+            }
+          }
+        }
+      }
+    },
+    {
+      "timestamp": "2025-10-05T11:17:53.935108",
+      "elapsed_seconds": 34.11,
+      "system": {
+        "cpu_percent": 19.6,
+        "memory_percent": 17.2,
+        "memory_available_gb": 834.5987548828125,
+        "disk_usage_percent": 21.1
+      },
+      "processes": {
+        "openwebui": {
+          "pid": 43656,
+          "cpu_percent": 0.0,
+          "memory_mb": 977.56640625,
+          "memory_percent": 0.09473890596989158
+        },
+        "ollama": {
+          "pid": 17210,
+          "cpu_percent": 0.0,
+          "memory_mb": 1069.90625,
+          "memory_percent": 0.10368783846018063
+        },
+        "qdrant": {
+          "pid": 1712,
+          "cpu_percent": 0.0,
+          "memory_mb": 205.1953125,
+          "memory_percent": 0.01988609601568949
+        },
+        "python": {
+          "pid": 53558,
+          "cpu_percent": 0.0,
+          "memory_mb": 25.8984375,
+          "memory_percent": 0.0025098956136307125
+        }
+      },
+      "services": {
+        "ollama": {
+          "status": "running",
+          "models": 4
+        },
+        "qdrant": {
+          "status": "unavailable"
+        },
+        "bms_api": {
+          "status": "running",
+          "health": {
+            "status": "healthy",
+            "timestamp": "2025-10-05T11:17:54.476824",
+            "services": {
+              "qdrant": "connected",
+              "ollama": "connected"
+            }
+          }
+        }
+      }
+    },
+    {
+      "timestamp": "2025-10-05T11:17:55.478946",
+      "elapsed_seconds": 35.66,
+      "system": {
+        "cpu_percent": 65.6,
+        "memory_percent": 17.2,
+        "memory_available_gb": 834.5261726379395,
+        "disk_usage_percent": 21.1
+      },
+      "processes": {
+        "openwebui": {
+          "pid": 43656,
+          "cpu_percent": 0.0,
+          "memory_mb": 977.56640625,
+          "memory_percent": 0.09473890596989158
+        },
+        "ollama": {
+          "pid": 17210,
+          "cpu_percent": 0.0,
+          "memory_mb": 1069.90625,
+          "memory_percent": 0.10368783846018063
+        },
+        "qdrant": {
+          "pid": 1712,
+          "cpu_percent": 0.0,
+          "memory_mb": 205.1953125,
+          "memory_percent": 0.01988609601568949
+        },
+        "python": {
+          "pid": 53558,
+          "cpu_percent": 0.0,
+          "memory_mb": 25.8984375,
+          "memory_percent": 0.0025098956136307125
+        }
+      },
+      "services": {
+        "ollama": {
+          "status": "running",
+          "models": 4
+        },
+        "qdrant": {
+          "status": "unavailable"
+        },
+        "bms_api": {
+          "status": "running",
+          "health": {
+            "status": "healthy",
+            "timestamp": "2025-10-05T11:17:56.023790",
+            "services": {
+              "qdrant": "connected",
+              "ollama": "connected"
+            }
+          }
+        }
+      }
+    },
+    {
+      "timestamp": "2025-10-05T11:17:57.025375",
+      "elapsed_seconds": 37.2,
+      "system": {
+        "cpu_percent": 54.0,
+        "memory_percent": 17.2,
+        "memory_available_gb": 834.430233001709,
+        "disk_usage_percent": 21.1
+      },
+      "processes": {
+        "openwebui": {
+          "pid": 43656,
+          "cpu_percent": 0.0,
+          "memory_mb": 977.56640625,
+          "memory_percent": 0.09473890596989158
+        },
+        "ollama": {
+          "pid": 17210,
+          "cpu_percent": 0.0,
+          "memory_mb": 1069.90625,
+          "memory_percent": 0.10368783846018063
+        },
+        "qdrant": {
+          "pid": 1712,
+          "cpu_percent": 0.0,
+          "memory_mb": 205.1953125,
+          "memory_percent": 0.01988609601568949
+        },
+        "python": {
+          "pid": 53558,
+          "cpu_percent": 0.0,
+          "memory_mb": 25.8984375,
+          "memory_percent": 0.0025098956136307125
+        }
+      },
+      "services": {
+        "ollama": {
+          "status": "running",
+          "models": 4
+        },
+        "qdrant": {
+          "status": "unavailable"
+        },
+        "bms_api": {
+          "status": "running",
+          "health": {
+            "status": "healthy",
+            "timestamp": "2025-10-05T11:17:57.566689",
+            "services": {
+              "qdrant": "connected",
+              "ollama": "connected"
+            }
+          }
+        }
+      }
+    },
+    {
+      "timestamp": "2025-10-05T11:17:58.567781",
+      "elapsed_seconds": 38.75,
+      "system": {
+        "cpu_percent": 21.0,
+        "memory_percent": 17.2,
+        "memory_available_gb": 834.3380088806152,
+        "disk_usage_percent": 21.1
+      },
+      "processes": {
+        "openwebui": {
+          "pid": 43656,
+          "cpu_percent": 0.0,
+          "memory_mb": 977.56640625,
+          "memory_percent": 0.09473890596989158
+        },
+        "ollama": {
+          "pid": 17210,
+          "cpu_percent": 0.0,
+          "memory_mb": 1069.90625,
+          "memory_percent": 0.10368783846018063
+        },
+        "qdrant": {
+          "pid": 1712,
+          "cpu_percent": 0.0,
+          "memory_mb": 205.1953125,
+          "memory_percent": 0.01988609601568949
+        },
+        "python": {
+          "pid": 53558,
+          "cpu_percent": 0.0,
+          "memory_mb": 25.8984375,
+          "memory_percent": 0.0025098956136307125
+        }
+      },
+      "services": {
+        "ollama": {
+          "status": "running",
+          "models": 4
+        },
+        "qdrant": {
+          "status": "unavailable"
+        },
+        "bms_api": {
+          "status": "running",
+          "health": {
+            "status": "healthy",
+            "timestamp": "2025-10-05T11:17:59.102972",
+            "services": {
+              "qdrant": "connected",
+              "ollama": "connected"
+            }
+          }
+        }
+      }
+    },
+    {
+      "timestamp": "2025-10-05T11:18:00.104129",
+      "elapsed_seconds": 40.28,
+      "system": {
+        "cpu_percent": 83.5,
+        "memory_percent": 17.2,
+        "memory_available_gb": 834.1888465881348,
+        "disk_usage_percent": 21.1
+      },
+      "processes": {
+        "openwebui": {
+          "pid": 43656,
+          "cpu_percent": 0.0,
+          "memory_mb": 977.56640625,
+          "memory_percent": 0.09473890596989158
+        },
+        "ollama": {
+          "pid": 17210,
+          "cpu_percent": 0.0,
+          "memory_mb": 1069.90625,
+          "memory_percent": 0.10368783846018063
+        },
+        "qdrant": {
+          "pid": 1712,
+          "cpu_percent": 10.0,
+          "memory_mb": 205.1953125,
+          "memory_percent": 0.01988609601568949
+        },
+        "python": {
+          "pid": 53558,
+          "cpu_percent": 0.0,
+          "memory_mb": 25.8984375,
+          "memory_percent": 0.0025098956136307125
+        }
+      },
+      "services": {
+        "ollama": {
+          "status": "running",
+          "models": 4
+        },
+        "qdrant": {
+          "status": "unavailable"
+        },
+        "bms_api": {
+          "status": "running",
+          "health": {
+            "status": "healthy",
+            "timestamp": "2025-10-05T11:18:00.643656",
+            "services": {
+              "qdrant": "connected",
+              "ollama": "connected"
+            }
+          }
+        }
+      }
+    },
+    {
+      "timestamp": "2025-10-05T11:18:01.645138",
+      "elapsed_seconds": 41.82,
+      "system": {
+        "cpu_percent": 29.0,
+        "memory_percent": 17.2,
+        "memory_available_gb": 834.1696319580078,
+        "disk_usage_percent": 21.1
+      },
+      "processes": {
+        "openwebui": {
+          "pid": 43656,
+          "cpu_percent": 0.0,
+          "memory_mb": 977.56640625,
+          "memory_percent": 0.09473890596989158
+        },
+        "ollama": {
+          "pid": 17210,
+          "cpu_percent": 0.0,
+          "memory_mb": 1069.90625,
+          "memory_percent": 0.10368783846018063
+        },
+        "qdrant": {
+          "pid": 1712,
+          "cpu_percent": 0.0,
+          "memory_mb": 205.1953125,
+          "memory_percent": 0.01988609601568949
+        },
+        "python": {
+          "pid": 53558,
+          "cpu_percent": 0.0,
+          "memory_mb": 25.8984375,
+          "memory_percent": 0.0025098956136307125
+        }
+      },
+      "services": {
+        "ollama": {
+          "status": "running",
+          "models": 4
+        },
+        "qdrant": {
+          "status": "unavailable"
+        },
+        "bms_api": {
+          "status": "running",
+          "health": {
+            "status": "healthy",
+            "timestamp": "2025-10-05T11:18:02.184789",
+            "services": {
+              "qdrant": "connected",
+              "ollama": "connected"
+            }
+          }
+        }
+      }
+    },
+    {
+      "timestamp": "2025-10-05T11:18:03.186258",
+      "elapsed_seconds": 43.36,
+      "system": {
+        "cpu_percent": 21.4,
+        "memory_percent": 17.2,
+        "memory_available_gb": 834.4146461486816,
+        "disk_usage_percent": 21.1
+      },
+      "processes": {
+        "openwebui": {
+          "pid": 43656,
+          "cpu_percent": 0.0,
+          "memory_mb": 977.56640625,
+          "memory_percent": 0.09473890596989158
+        },
+        "ollama": {
+          "pid": 17210,
+          "cpu_percent": 9.9,
+          "memory_mb": 1059.84375,
+          "memory_percent": 0.102712651265503
+        },
+        "qdrant": {
+          "pid": 1712,
+          "cpu_percent": 0.0,
+          "memory_mb": 205.1953125,
+          "memory_percent": 0.01988609601568949
+        },
+        "python": {
+          "pid": 53558,
+          "cpu_percent": 0.0,
+          "memory_mb": 25.8984375,
+          "memory_percent": 0.0025098956136307125
+        }
+      },
+      "services": {
+        "ollama": {
+          "status": "running",
+          "models": 4
+        },
+        "qdrant": {
+          "status": "unavailable"
+        },
+        "bms_api": {
+          "status": "running",
+          "health": {
+            "status": "healthy",
+            "timestamp": "2025-10-05T11:18:03.727781",
+            "services": {
+              "qdrant": "connected",
+              "ollama": "connected"
+            }
+          }
+        }
+      }
+    },
+    {
+      "timestamp": "2025-10-05T11:18:04.729066",
+      "elapsed_seconds": 44.91,
+      "system": {
+        "cpu_percent": 74.5,
+        "memory_percent": 17.2,
+        "memory_available_gb": 834.099006652832,
+        "disk_usage_percent": 21.1
+      },
+      "processes": {
+        "openwebui": {
+          "pid": 43656,
+          "cpu_percent": 0.0,
+          "memory_mb": 977.56640625,
+          "memory_percent": 0.09473890596989158
+        },
+        "ollama": {
+          "pid": 17210,
+          "cpu_percent": 0.0,
+          "memory_mb": 1059.84375,
+          "memory_percent": 0.102712651265503
+        },
+        "qdrant": {
+          "pid": 1712,
+          "cpu_percent": 0.0,
+          "memory_mb": 205.1953125,
+          "memory_percent": 0.01988609601568949
+        },
+        "python": {
+          "pid": 53558,
+          "cpu_percent": 0.0,
+          "memory_mb": 25.8984375,
+          "memory_percent": 0.0025098956136307125
+        }
+      },
+      "services": {
+        "ollama": {
+          "status": "running",
+          "models": 4
+        },
+        "qdrant": {
+          "status": "unavailable"
+        },
+        "bms_api": {
+          "status": "running",
+          "health": {
+            "status": "healthy",
+            "timestamp": "2025-10-05T11:18:05.274438",
+            "services": {
+              "qdrant": "connected",
+              "ollama": "connected"
+            }
+          }
+        }
+      }
+    },
+    {
+      "timestamp": "2025-10-05T11:18:06.282329",
+      "elapsed_seconds": 46.46,
+      "system": {
+        "cpu_percent": 41.8,
+        "memory_percent": 17.2,
+        "memory_available_gb": 834.0852699279785,
+        "disk_usage_percent": 21.1
+      },
+      "processes": {
+        "openwebui": {
+          "pid": 43656,
+          "cpu_percent": 0.0,
+          "memory_mb": 977.56640625,
+          "memory_percent": 0.09473890596989158
+        },
+        "ollama": {
+          "pid": 17210,
+          "cpu_percent": 0.0,
+          "memory_mb": 1059.84375,
+          "memory_percent": 0.102712651265503
+        },
+        "qdrant": {
+          "pid": 1712,
+          "cpu_percent": 0.0,
+          "memory_mb": 205.1953125,
+          "memory_percent": 0.01988609601568949
+        },
+        "python": {
+          "pid": 53558,
+          "cpu_percent": 0.0,
+          "memory_mb": 25.8984375,
+          "memory_percent": 0.0025098956136307125
+        }
+      },
+      "services": {
+        "ollama": {
+          "status": "running",
+          "models": 4
+        },
+        "qdrant": {
+          "status": "unavailable"
+        },
+        "bms_api": {
+          "status": "running",
+          "health": {
+            "status": "healthy",
+            "timestamp": "2025-10-05T11:18:06.825200",
+            "services": {
+              "qdrant": "connected",
+              "ollama": "connected"
+            }
+          }
+        }
+      }
+    },
+    {
+      "timestamp": "2025-10-05T11:18:07.827009",
+      "elapsed_seconds": 48.0,
+      "system": {
+        "cpu_percent": 51.9,
+        "memory_percent": 17.2,
+        "memory_available_gb": 833.9848937988281,
+        "disk_usage_percent": 21.1
+      },
+      "processes": {
+        "openwebui": {
+          "pid": 43656,
+          "cpu_percent": 0.0,
+          "memory_mb": 977.56640625,
+          "memory_percent": 0.09473890596989158
+        },
+        "ollama": {
+          "pid": 17210,
+          "cpu_percent": 0.0,
+          "memory_mb": 1059.84375,
+          "memory_percent": 0.102712651265503
+        },
+        "qdrant": {
+          "pid": 1712,
+          "cpu_percent": 0.0,
+          "memory_mb": 205.1953125,
+          "memory_percent": 0.01988609601568949
+        },
+        "python": {
+          "pid": 53558,
+          "cpu_percent": 0.0,
+          "memory_mb": 25.8984375,
+          "memory_percent": 0.0025098956136307125
+        }
+      },
+      "services": {
+        "ollama": {
+          "status": "running",
+          "models": 4
+        },
+        "qdrant": {
+          "status": "unavailable"
+        },
+        "bms_api": {
+          "status": "running",
+          "health": {
+            "status": "healthy",
+            "timestamp": "2025-10-05T11:18:08.367735",
+            "services": {
+              "qdrant": "connected",
+              "ollama": "connected"
+            }
+          }
+        }
+      }
+    },
+    {
+      "timestamp": "2025-10-05T11:18:09.369086",
+      "elapsed_seconds": 49.55,
+      "system": {
+        "cpu_percent": 23.5,
+        "memory_percent": 17.3,
+        "memory_available_gb": 833.8073120117188,
+        "disk_usage_percent": 21.1
+      },
+      "processes": {
+        "openwebui": {
+          "pid": 43656,
+          "cpu_percent": 0.0,
+          "memory_mb": 977.56640625,
+          "memory_percent": 0.09473890596989158
+        },
+        "ollama": {
+          "pid": 17210,
+          "cpu_percent": 0.0,
+          "memory_mb": 1065.8203125,
+          "memory_percent": 0.10329185794557161
+        },
+        "qdrant": {
+          "pid": 1712,
+          "cpu_percent": 0.0,
+          "memory_mb": 205.1953125,
+          "memory_percent": 0.01988609601568949
+        },
+        "python": {
+          "pid": 53558,
+          "cpu_percent": 0.0,
+          "memory_mb": 25.8984375,
+          "memory_percent": 0.0025098956136307125
+        }
+      },
+      "services": {
+        "ollama": {
+          "status": "running",
+          "models": 4
+        },
+        "qdrant": {
+          "status": "unavailable"
+        },
+        "bms_api": {
+          "status": "running",
+          "health": {
+            "status": "healthy",
+            "timestamp": "2025-10-05T11:18:09.911888",
+            "services": {
+              "qdrant": "connected",
+              "ollama": "connected"
+            }
+          }
+        }
+      }
+    },
+    {
+      "timestamp": "2025-10-05T11:18:10.913045",
+      "elapsed_seconds": 51.09,
+      "system": {
+        "cpu_percent": 54.0,
+        "memory_percent": 17.3,
+        "memory_available_gb": 833.7963829040527,
+        "disk_usage_percent": 21.1
+      },
+      "processes": {
+        "openwebui": {
+          "pid": 43656,
+          "cpu_percent": 0.0,
+          "memory_mb": 977.56640625,
+          "memory_percent": 0.09473890596989158
+        },
+        "ollama": {
+          "pid": 17210,
+          "cpu_percent": 10.0,
+          "memory_mb": 1065.8203125,
+          "memory_percent": 0.10329185794557161
+        },
+        "qdrant": {
+          "pid": 1712,
+          "cpu_percent": 0.0,
+          "memory_mb": 205.1953125,
+          "memory_percent": 0.01988609601568949
+        },
+        "python": {
+          "pid": 53558,
+          "cpu_percent": 0.0,
+          "memory_mb": 25.8984375,
+          "memory_percent": 0.0025098956136307125
+        }
+      },
+      "services": {
+        "ollama": {
+          "status": "running",
+          "models": 4
+        },
+        "qdrant": {
+          "status": "unavailable"
+        },
+        "bms_api": {
+          "status": "running",
+          "health": {
+            "status": "healthy",
+            "timestamp": "2025-10-05T11:18:11.456862",
+            "services": {
+              "qdrant": "connected",
+              "ollama": "connected"
+            }
+          }
+        }
+      }
+    },
+    {
+      "timestamp": "2025-10-05T11:18:12.458318",
+      "elapsed_seconds": 52.64,
+      "system": {
+        "cpu_percent": 23.9,
+        "memory_percent": 17.3,
+        "memory_available_gb": 833.7043533325195,
+        "disk_usage_percent": 21.1
+      },
+      "processes": {
+        "openwebui": {
+          "pid": 43656,
+          "cpu_percent": 0.0,
+          "memory_mb": 977.56640625,
+          "memory_percent": 0.09473890596989158
+        },
+        "ollama": {
+          "pid": 17210,
+          "cpu_percent": 0.0,
+          "memory_mb": 1065.8203125,
+          "memory_percent": 0.10329185794557161
+        },
+        "qdrant": {
+          "pid": 1712,
+          "cpu_percent": 0.0,
+          "memory_mb": 205.1953125,
+          "memory_percent": 0.01988609601568949
+        },
+        "python": {
+          "pid": 53558,
+          "cpu_percent": 0.0,
+          "memory_mb": 25.8984375,
+          "memory_percent": 0.0025098956136307125
+        }
+      },
+      "services": {
+        "ollama": {
+          "status": "running",
+          "models": 4
+        },
+        "qdrant": {
+          "status": "unavailable"
+        },
+        "bms_api": {
+          "status": "running",
+          "health": {
+            "status": "healthy",
+            "timestamp": "2025-10-05T11:18:12.999412",
+            "services": {
+              "qdrant": "connected",
+              "ollama": "connected"
+            }
+          }
+        }
+      }
+    },
+    {
+      "timestamp": "2025-10-05T11:18:14.000536",
+      "elapsed_seconds": 54.18,
+      "system": {
+        "cpu_percent": 1.3,
+        "memory_percent": 17.3,
+        "memory_available_gb": 833.6065788269043,
+        "disk_usage_percent": 21.1
+      },
+      "processes": {
+        "openwebui": {
+          "pid": 43656,
+          "cpu_percent": 0.0,
+          "memory_mb": 977.56640625,
+          "memory_percent": 0.09473890596989158
+        },
+        "ollama": {
+          "pid": 17210,
+          "cpu_percent": 0.0,
+          "memory_mb": 1065.8203125,
+          "memory_percent": 0.10329185794557161
+        },
+        "qdrant": {
+          "pid": 1712,
+          "cpu_percent": 0.0,
+          "memory_mb": 205.1953125,
+          "memory_percent": 0.01988609601568949
+        },
+        "python": {
+          "pid": 53558,
+          "cpu_percent": 0.0,
+          "memory_mb": 25.8984375,
+          "memory_percent": 0.0025098956136307125
+        }
+      },
+      "services": {
+        "ollama": {
+          "status": "running",
+          "models": 4
+        },
+        "qdrant": {
+          "status": "unavailable"
+        },
+        "bms_api": {
+          "status": "running",
+          "health": {
+            "status": "healthy",
+            "timestamp": "2025-10-05T11:18:14.539980",
+            "services": {
+              "qdrant": "connected",
+              "ollama": "connected"
+            }
+          }
+        }
+      }
+    },
+    {
+      "timestamp": "2025-10-05T11:18:15.541375",
+      "elapsed_seconds": 55.72,
+      "system": {
+        "cpu_percent": 53.0,
+        "memory_percent": 17.3,
+        "memory_available_gb": 833.5737419128418,
+        "disk_usage_percent": 21.1
+      },
+      "processes": {
+        "openwebui": {
+          "pid": 43656,
+          "cpu_percent": 10.0,
+          "memory_mb": 977.56640625,
+          "memory_percent": 0.09473890596989158
+        },
+        "ollama": {
+          "pid": 17210,
+          "cpu_percent": 0.0,
+          "memory_mb": 1065.8203125,
+          "memory_percent": 0.10329185794557161
+        },
+        "qdrant": {
+          "pid": 1712,
+          "cpu_percent": 0.0,
+          "memory_mb": 205.1953125,
+          "memory_percent": 0.01988609601568949
+        },
+        "python": {
+          "pid": 53558,
+          "cpu_percent": 0.0,
+          "memory_mb": 25.8984375,
+          "memory_percent": 0.0025098956136307125
+        }
+      },
+      "services": {
+        "ollama": {
+          "status": "running",
+          "models": 4
+        },
+        "qdrant": {
+          "status": "unavailable"
+        },
+        "bms_api": {
+          "status": "running",
+          "health": {
+            "status": "healthy",
+            "timestamp": "2025-10-05T11:18:16.084675",
+            "services": {
+              "qdrant": "connected",
+              "ollama": "connected"
+            }
+          }
+        }
+      }
+    },
+    {
+      "timestamp": "2025-10-05T11:18:17.086080",
+      "elapsed_seconds": 57.26,
+      "system": {
+        "cpu_percent": 53.8,
+        "memory_percent": 17.3,
+        "memory_available_gb": 833.4810562133789,
+        "disk_usage_percent": 21.1
+      },
+      "processes": {
+        "openwebui": {
+          "pid": 43656,
+          "cpu_percent": 0.0,
+          "memory_mb": 977.56640625,
+          "memory_percent": 0.09473890596989158
+        },
+        "ollama": {
+          "pid": 17210,
+          "cpu_percent": 0.0,
+          "memory_mb": 1065.8203125,
+          "memory_percent": 0.10329185794557161
+        },
+        "qdrant": {
+          "pid": 1712,
+          "cpu_percent": 0.0,
+          "memory_mb": 205.1953125,
+          "memory_percent": 0.01988609601568949
+        },
+        "python": {
+          "pid": 53558,
+          "cpu_percent": 0.0,
+          "memory_mb": 25.8984375,
+          "memory_percent": 0.0025098956136307125
+        }
+      },
+      "services": {
+        "ollama": {
+          "status": "running",
+          "models": 4
+        },
+        "qdrant": {
+          "status": "unavailable"
+        },
+        "bms_api": {
+          "status": "running",
+          "health": {
+            "status": "healthy",
+            "timestamp": "2025-10-05T11:18:17.646567",
+            "services": {
+              "qdrant": "connected",
+              "ollama": "connected"
+            }
+          }
+        }
+      }
+    },
+    {
+      "timestamp": "2025-10-05T11:18:18.648429",
+      "elapsed_seconds": 58.83,
+      "system": {
+        "cpu_percent": 66.3,
+        "memory_percent": 17.3,
+        "memory_available_gb": 833.3078994750977,
+        "disk_usage_percent": 21.1
+      },
+      "processes": {
+        "openwebui": {
+          "pid": 43656,
+          "cpu_percent": 0.0,
+          "memory_mb": 977.56640625,
+          "memory_percent": 0.09473890596989158
+        },
+        "ollama": {
+          "pid": 17210,
+          "cpu_percent": 0.0,
+          "memory_mb": 1065.8203125,
+          "memory_percent": 0.10329185794557161
+        },
+        "qdrant": {
+          "pid": 1712,
+          "cpu_percent": 0.0,
+          "memory_mb": 205.1953125,
+          "memory_percent": 0.01988609601568949
+        },
+        "python": {
+          "pid": 53558,
+          "cpu_percent": 0.0,
+          "memory_mb": 25.8984375,
+          "memory_percent": 0.0025098956136307125
+        }
+      },
+      "services": {
+        "ollama": {
+          "status": "running",
+          "models": 4
+        },
+        "qdrant": {
+          "status": "unavailable"
+        },
+        "bms_api": {
+          "status": "running",
+          "health": {
+            "status": "healthy",
+            "timestamp": "2025-10-05T11:18:19.190523",
+            "services": {
+              "qdrant": "connected",
+              "ollama": "connected"
+            }
+          }
+        }
+      }
+    },
+    {
+      "timestamp": "2025-10-05T11:18:20.191992",
+      "elapsed_seconds": 60.37,
+      "system": {
+        "cpu_percent": 38.6,
+        "memory_percent": 17.3,
+        "memory_available_gb": 833.3312950134277,
+        "disk_usage_percent": 21.1
+      },
+      "processes": {
+        "openwebui": {
+          "pid": 43656,
+          "cpu_percent": 10.0,
+          "memory_mb": 977.56640625,
+          "memory_percent": 0.09473890596989158
+        },
+        "ollama": {
+          "pid": 17210,
+          "cpu_percent": 0.0,
+          "memory_mb": 1065.8203125,
+          "memory_percent": 0.10329185794557161
+        },
+        "qdrant": {
+          "pid": 1712,
+          "cpu_percent": 0.0,
+          "memory_mb": 205.1953125,
+          "memory_percent": 0.01988609601568949
+        },
+        "python": {
+          "pid": 53558,
+          "cpu_percent": 0.0,
+          "memory_mb": 25.8984375,
+          "memory_percent": 0.0025098956136307125
+        }
+      },
+      "services": {
+        "ollama": {
+          "status": "running",
+          "models": 4
+        },
+        "qdrant": {
+          "status": "unavailable"
+        },
+        "bms_api": {
+          "status": "running",
+          "health": {
+            "status": "healthy",
+            "timestamp": "2025-10-05T11:18:20.733063",
+            "services": {
+              "qdrant": "connected",
+              "ollama": "connected"
+            }
+          }
+        }
+      }
+    },
+    {
+      "timestamp": "2025-10-05T11:18:21.734921",
+      "elapsed_seconds": 61.91,
+      "system": {
+        "cpu_percent": 48.9,
+        "memory_percent": 17.3,
+        "memory_available_gb": 833.3293724060059,
+        "disk_usage_percent": 21.1
+      },
+      "processes": {
+        "openwebui": {
+          "pid": 43656,
+          "cpu_percent": 0.0,
+          "memory_mb": 977.56640625,
+          "memory_percent": 0.09473890596989158
+        },
+        "ollama": {
+          "pid": 17210,
+          "cpu_percent": 0.0,
+          "memory_mb": 1065.8203125,
+          "memory_percent": 0.10329185794557161
+        },
+        "qdrant": {
+          "pid": 1712,
+          "cpu_percent": 0.0,
+          "memory_mb": 205.1953125,
+          "memory_percent": 0.01988609601568949
+        },
+        "python": {
+          "pid": 53558,
+          "cpu_percent": 0.0,
+          "memory_mb": 25.8984375,
+          "memory_percent": 0.0025098956136307125
+        }
+      },
+      "services": {
+        "ollama": {
+          "status": "running",
+          "models": 4
+        },
+        "qdrant": {
+          "status": "unavailable"
+        },
+        "bms_api": {
+          "status": "running",
+          "health": {
+            "status": "healthy",
+            "timestamp": "2025-10-05T11:18:22.276820",
+            "services": {
+              "qdrant": "connected",
+              "ollama": "connected"
+            }
+          }
+        }
+      }
+    },
+    {
+      "timestamp": "2025-10-05T11:18:23.278102",
+      "elapsed_seconds": 63.46,
+      "system": {
+        "cpu_percent": 59.9,
+        "memory_percent": 17.3,
+        "memory_available_gb": 833.2839241027832,
+        "disk_usage_percent": 21.1
+      },
+      "processes": {
+        "openwebui": {
+          "pid": 43656,
+          "cpu_percent": 0.0,
+          "memory_mb": 977.56640625,
+          "memory_percent": 0.09473890596989158
+        },
+        "ollama": {
+          "pid": 17210,
+          "cpu_percent": 0.0,
+          "memory_mb": 1065.8203125,
+          "memory_percent": 0.10329185794557161
+        },
+        "qdrant": {
+          "pid": 1712,
+          "cpu_percent": 0.0,
+          "memory_mb": 205.1953125,
+          "memory_percent": 0.01988609601568949
+        },
+        "python": {
+          "pid": 53558,
+          "cpu_percent": 0.0,
+          "memory_mb": 25.8984375,
+          "memory_percent": 0.0025098956136307125
+        }
+      },
+      "services": {
+        "ollama": {
+          "status": "running",
+          "models": 4
+        },
+        "qdrant": {
+          "status": "unavailable"
+        },
+        "bms_api": {
+          "status": "running",
+          "health": {
+            "status": "healthy",
+            "timestamp": "2025-10-05T11:18:23.854786",
+            "services": {
+              "qdrant": "connected",
+              "ollama": "connected"
+            }
+          }
+        }
+      }
+    },
+    {
+      "timestamp": "2025-10-05T11:18:24.856050",
+      "elapsed_seconds": 65.03,
+      "system": {
+        "cpu_percent": 51.7,
+        "memory_percent": 17.3,
+        "memory_available_gb": 833.134708404541,
+        "disk_usage_percent": 21.1
+      },
+      "processes": {
+        "openwebui": {
+          "pid": 43656,
+          "cpu_percent": 0.0,
+          "memory_mb": 977.56640625,
+          "memory_percent": 0.09473890596989158
+        },
+        "ollama": {
+          "pid": 17210,
+          "cpu_percent": 0.0,
+          "memory_mb": 1065.8203125,
+          "memory_percent": 0.10329185794557161
+        },
+        "qdrant": {
+          "pid": 1712,
+          "cpu_percent": 0.0,
+          "memory_mb": 205.1953125,
+          "memory_percent": 0.01988609601568949
+        },
+        "python": {
+          "pid": 53558,
+          "cpu_percent": 0.0,
+          "memory_mb": 25.8984375,
+          "memory_percent": 0.0025098956136307125
+        }
+      },
+      "services": {
+        "ollama": {
+          "status": "running",
+          "models": 4
+        },
+        "qdrant": {
+          "status": "unavailable"
+        },
+        "bms_api": {
+          "status": "running",
+          "health": {
+            "status": "healthy",
+            "timestamp": "2025-10-05T11:18:25.398899",
+            "services": {
+              "qdrant": "connected",
+              "ollama": "connected"
+            }
+          }
+        }
+      }
+    },
+    {
+      "timestamp": "2025-10-05T11:18:26.400405",
+      "elapsed_seconds": 66.58,
+      "system": {
+        "cpu_percent": 12.6,
+        "memory_percent": 17.3,
+        "memory_available_gb": 833.0633163452148,
+        "disk_usage_percent": 21.1
+      },
+      "processes": {
+        "openwebui": {
+          "pid": 43656,
+          "cpu_percent": 0.0,
+          "memory_mb": 977.56640625,
+          "memory_percent": 0.09473890596989158
+        },
+        "ollama": {
+          "pid": 17210,
+          "cpu_percent": 0.0,
+          "memory_mb": 1065.8203125,
+          "memory_percent": 0.10329185794557161
+        },
+        "qdrant": {
+          "pid": 1712,
+          "cpu_percent": 0.0,
+          "memory_mb": 205.1953125,
+          "memory_percent": 0.01988609601568949
+        },
+        "python": {
+          "pid": 53558,
+          "cpu_percent": 0.0,
+          "memory_mb": 25.8984375,
+          "memory_percent": 0.0025098956136307125
+        }
+      },
+      "services": {
+        "ollama": {
+          "status": "running",
+          "models": 4
+        },
+        "qdrant": {
+          "status": "unavailable"
+        },
+        "bms_api": {
+          "status": "running",
+          "health": {
+            "status": "healthy",
+            "timestamp": "2025-10-05T11:18:26.938557",
+            "services": {
+              "qdrant": "connected",
+              "ollama": "connected"
+            }
+          }
+        }
+      }
+    },
+    {
+      "timestamp": "2025-10-05T11:18:27.939800",
+      "elapsed_seconds": 68.12,
+      "system": {
+        "cpu_percent": 93.1,
+        "memory_percent": 17.3,
+        "memory_available_gb": 832.9080848693848,
+        "disk_usage_percent": 21.1
+      },
+      "processes": {
+        "openwebui": {
+          "pid": 43656,
+          "cpu_percent": 0.0,
+          "memory_mb": 977.56640625,
+          "memory_percent": 0.09473890596989158
+        },
+        "ollama": {
+          "pid": 17210,
+          "cpu_percent": 0.0,
+          "memory_mb": 1065.8203125,
+          "memory_percent": 0.10329185794557161
+        },
+        "qdrant": {
+          "pid": 1712,
+          "cpu_percent": 0.0,
+          "memory_mb": 205.1953125,
+          "memory_percent": 0.01988609601568949
+        },
+        "python": {
+          "pid": 53558,
+          "cpu_percent": 0.0,
+          "memory_mb": 25.8984375,
+          "memory_percent": 0.0025098956136307125
+        }
+      },
+      "services": {
+        "ollama": {
+          "status": "running",
+          "models": 4
+        },
+        "qdrant": {
+          "status": "unavailable"
+        },
+        "bms_api": {
+          "status": "running",
+          "health": {
+            "status": "healthy",
+            "timestamp": "2025-10-05T11:18:28.478320",
+            "services": {
+              "qdrant": "connected",
+              "ollama": "connected"
+            }
+          }
+        }
+      }
+    },
+    {
+      "timestamp": "2025-10-05T11:18:29.480079",
+      "elapsed_seconds": 69.66,
+      "system": {
+        "cpu_percent": 9.2,
+        "memory_percent": 17.3,
+        "memory_available_gb": 832.931812286377,
+        "disk_usage_percent": 21.1
+      },
+      "processes": {
+        "openwebui": {
+          "pid": 43656,
+          "cpu_percent": 0.0,
+          "memory_mb": 977.56640625,
+          "memory_percent": 0.09473890596989158
+        },
+        "ollama": {
+          "pid": 17210,
+          "cpu_percent": 0.0,
+          "memory_mb": 1065.8203125,
+          "memory_percent": 0.10329185794557161
+        },
+        "qdrant": {
+          "pid": 1712,
+          "cpu_percent": 0.0,
+          "memory_mb": 205.1953125,
+          "memory_percent": 0.01988609601568949
+        },
+        "python": {
+          "pid": 53558,
+          "cpu_percent": 0.0,
+          "memory_mb": 25.8984375,
+          "memory_percent": 0.0025098956136307125
+        }
+      },
+      "services": {
+        "ollama": {
+          "status": "running",
+          "models": 4
+        },
+        "qdrant": {
+          "status": "unavailable"
+        },
+        "bms_api": {
+          "status": "running",
+          "health": {
+            "status": "healthy",
+            "timestamp": "2025-10-05T11:18:30.020692",
+            "services": {
+              "qdrant": "connected",
+              "ollama": "connected"
+            }
+          }
+        }
+      }
+    },
+    {
+      "timestamp": "2025-10-05T11:18:31.022174",
+      "elapsed_seconds": 71.2,
+      "system": {
+        "cpu_percent": 51.1,
+        "memory_percent": 17.4,
+        "memory_available_gb": 832.8336944580078,
+        "disk_usage_percent": 21.1
+      },
+      "processes": {
+        "openwebui": {
+          "pid": 43656,
+          "cpu_percent": 0.0,
+          "memory_mb": 977.56640625,
+          "memory_percent": 0.09473890596989158
+        },
+        "ollama": {
+          "pid": 17210,
+          "cpu_percent": 0.0,
+          "memory_mb": 1065.8203125,
+          "memory_percent": 0.10329185794557161
+        },
+        "qdrant": {
+          "pid": 1712,
+          "cpu_percent": 0.0,
+          "memory_mb": 205.1953125,
+          "memory_percent": 0.01988609601568949
+        },
+        "python": {
+          "pid": 53558,
+          "cpu_percent": 0.0,
+          "memory_mb": 25.8984375,
+          "memory_percent": 0.0025098956136307125
+        }
+      },
+      "services": {
+        "ollama": {
+          "status": "running",
+          "models": 4
+        },
+        "qdrant": {
+          "status": "unavailable"
+        },
+        "bms_api": {
+          "status": "running",
+          "health": {
+            "status": "healthy",
+            "timestamp": "2025-10-05T11:18:31.565497",
+            "services": {
+              "qdrant": "connected",
+              "ollama": "connected"
+            }
+          }
+        }
+      }
+    },
+    {
+      "timestamp": "2025-10-05T11:18:32.567091",
+      "elapsed_seconds": 72.74,
+      "system": {
+        "cpu_percent": 32.1,
+        "memory_percent": 17.4,
+        "memory_available_gb": 832.6723861694336,
+        "disk_usage_percent": 21.1
+      },
+      "processes": {
+        "openwebui": {
+          "pid": 43656,
+          "cpu_percent": 0.0,
+          "memory_mb": 977.56640625,
+          "memory_percent": 0.09473890596989158
+        },
+        "ollama": {
+          "pid": 17210,
+          "cpu_percent": 0.0,
+          "memory_mb": 1065.8203125,
+          "memory_percent": 0.10329185794557161
+        },
+        "qdrant": {
+          "pid": 1712,
+          "cpu_percent": 0.0,
+          "memory_mb": 205.1953125,
+          "memory_percent": 0.01988609601568949
+        },
+        "python": {
+          "pid": 53558,
+          "cpu_percent": 0.0,
+          "memory_mb": 25.8984375,
+          "memory_percent": 0.0025098956136307125
+        }
+      },
+      "services": {
+        "ollama": {
+          "status": "running",
+          "models": 4
+        },
+        "qdrant": {
+          "status": "unavailable"
+        },
+        "bms_api": {
+          "status": "running",
+          "health": {
+            "status": "healthy",
+            "timestamp": "2025-10-05T11:18:33.134178",
+            "services": {
+              "qdrant": "connected",
+              "ollama": "connected"
+            }
+          }
+        }
+      }
+    },
+    {
+      "timestamp": "2025-10-05T11:18:34.135606",
+      "elapsed_seconds": 74.31,
+      "system": {
+        "cpu_percent": 55.9,
+        "memory_percent": 17.4,
+        "memory_available_gb": 832.6981315612793,
+        "disk_usage_percent": 21.1
+      },
+      "processes": {
+        "openwebui": {
+          "pid": 43656,
+          "cpu_percent": 0.0,
+          "memory_mb": 977.56640625,
+          "memory_percent": 0.09473890596989158
+        },
+        "ollama": {
+          "pid": 17210,
+          "cpu_percent": 0.0,
+          "memory_mb": 1065.8203125,
+          "memory_percent": 0.10329185794557161
+        },
+        "qdrant": {
+          "pid": 1712,
+          "cpu_percent": 0.0,
+          "memory_mb": 205.1953125,
+          "memory_percent": 0.01988609601568949
+        },
+        "python": {
+          "pid": 53558,
+          "cpu_percent": 0.0,
+          "memory_mb": 25.8984375,
+          "memory_percent": 0.0025098956136307125
+        }
+      },
+      "services": {
+        "ollama": {
+          "status": "running",
+          "models": 4
+        },
+        "qdrant": {
+          "status": "unavailable"
+        },
+        "bms_api": {
+          "status": "running",
+          "health": {
+            "status": "healthy",
+            "timestamp": "2025-10-05T11:18:34.681940",
+            "services": {
+              "qdrant": "connected",
+              "ollama": "connected"
+            }
+          }
+        }
+      }
+    },
+    {
+      "timestamp": "2025-10-05T11:18:35.683551",
+      "elapsed_seconds": 75.86,
+      "system": {
+        "cpu_percent": 15.3,
+        "memory_percent": 17.4,
+        "memory_available_gb": 832.6217346191406,
+        "disk_usage_percent": 21.1
+      },
+      "processes": {
+        "openwebui": {
+          "pid": 43656,
+          "cpu_percent": 0.0,
+          "memory_mb": 977.56640625,
+          "memory_percent": 0.09473890596989158
+        },
+        "ollama": {
+          "pid": 17210,
+          "cpu_percent": 0.0,
+          "memory_mb": 1065.8203125,
+          "memory_percent": 0.10329185794557161
+        },
+        "qdrant": {
+          "pid": 1712,
+          "cpu_percent": 10.0,
+          "memory_mb": 205.1953125,
+          "memory_percent": 0.01988609601568949
+        },
+        "python": {
+          "pid": 53558,
+          "cpu_percent": 0.0,
+          "memory_mb": 25.8984375,
+          "memory_percent": 0.0025098956136307125
+        }
+      },
+      "services": {
+        "ollama": {
+          "status": "running",
+          "models": 4
+        },
+        "qdrant": {
+          "status": "unavailable"
+        },
+        "bms_api": {
+          "status": "running",
+          "health": {
+            "status": "healthy",
+            "timestamp": "2025-10-05T11:18:36.238937",
+            "services": {
+              "qdrant": "connected",
+              "ollama": "connected"
+            }
+          }
+        }
+      }
+    },
+    {
+      "timestamp": "2025-10-05T11:18:37.240419",
+      "elapsed_seconds": 77.42,
+      "system": {
+        "cpu_percent": 12.9,
+        "memory_percent": 17.4,
+        "memory_available_gb": 832.462272644043,
+        "disk_usage_percent": 21.1
+      },
+      "processes": {
+        "openwebui": {
+          "pid": 43656,
+          "cpu_percent": 0.0,
+          "memory_mb": 977.56640625,
+          "memory_percent": 0.09473890596989158
+        },
+        "ollama": {
+          "pid": 17210,
+          "cpu_percent": 0.0,
+          "memory_mb": 1065.8203125,
+          "memory_percent": 0.10329185794557161
+        },
+        "qdrant": {
+          "pid": 1712,
+          "cpu_percent": 0.0,
+          "memory_mb": 205.1953125,
+          "memory_percent": 0.01988609601568949
+        },
+        "python": {
+          "pid": 53558,
+          "cpu_percent": 0.0,
+          "memory_mb": 25.8984375,
+          "memory_percent": 0.0025098956136307125
+        }
+      },
+      "services": {
+        "ollama": {
+          "status": "running",
+          "models": 4
+        },
+        "qdrant": {
+          "status": "unavailable"
+        },
+        "bms_api": {
+          "status": "running",
+          "health": {
+            "status": "healthy",
+            "timestamp": "2025-10-05T11:18:37.784838",
+            "services": {
+              "qdrant": "connected",
+              "ollama": "connected"
+            }
+          }
+        }
+      }
+    },
+    {
+      "timestamp": "2025-10-05T11:18:38.787130",
+      "elapsed_seconds": 78.96,
+      "system": {
+        "cpu_percent": 56.2,
+        "memory_percent": 17.4,
+        "memory_available_gb": 832.4451522827148,
+        "disk_usage_percent": 21.1
+      },
+      "processes": {
+        "openwebui": {
+          "pid": 43656,
+          "cpu_percent": 0.0,
+          "memory_mb": 977.56640625,
+          "memory_percent": 0.09473890596989158
+        },
+        "ollama": {
+          "pid": 17210,
+          "cpu_percent": 0.0,
+          "memory_mb": 1065.8203125,
+          "memory_percent": 0.10329185794557161
+        },
+        "qdrant": {
+          "pid": 1712,
+          "cpu_percent": 0.0,
+          "memory_mb": 205.1953125,
+          "memory_percent": 0.01988609601568949
+        },
+        "python": {
+          "pid": 53558,
+          "cpu_percent": 0.0,
+          "memory_mb": 25.8984375,
+          "memory_percent": 0.0025098956136307125
+        }
+      },
+      "services": {
+        "ollama": {
+          "status": "running",
+          "models": 4
+        },
+        "qdrant": {
+          "status": "unavailable"
+        },
+        "bms_api": {
+          "status": "running",
+          "health": {
+            "status": "healthy",
+            "timestamp": "2025-10-05T11:18:39.334923",
+            "services": {
+              "qdrant": "connected",
+              "ollama": "connected"
+            }
+          }
+        }
+      }
+    },
+    {
+      "timestamp": "2025-10-05T11:18:40.336474",
+      "elapsed_seconds": 80.51,
+      "system": {
+        "cpu_percent": 24.0,
+        "memory_percent": 17.4,
+        "memory_available_gb": 832.3648414611816,
+        "disk_usage_percent": 21.1
+      },
+      "processes": {
+        "openwebui": {
+          "pid": 43656,
+          "cpu_percent": 0.0,
+          "memory_mb": 977.56640625,
+          "memory_percent": 0.09473890596989158
+        },
+        "ollama": {
+          "pid": 17210,
+          "cpu_percent": 0.0,
+          "memory_mb": 1065.8203125,
+          "memory_percent": 0.10329185794557161
+        },
+        "qdrant": {
+          "pid": 1712,
+          "cpu_percent": 0.0,
+          "memory_mb": 205.1953125,
+          "memory_percent": 0.01988609601568949
+        },
+        "python": {
+          "pid": 53558,
+          "cpu_percent": 0.0,
+          "memory_mb": 25.8984375,
+          "memory_percent": 0.0025098956136307125
+        }
+      },
+      "services": {
+        "ollama": {
+          "status": "running",
+          "models": 4
+        },
+        "qdrant": {
+          "status": "unavailable"
+        },
+        "bms_api": {
+          "status": "running",
+          "health": {
+            "status": "healthy",
+            "timestamp": "2025-10-05T11:18:40.879299",
+            "services": {
+              "qdrant": "connected",
+              "ollama": "connected"
+            }
+          }
+        }
+      }
+    },
+    {
+      "timestamp": "2025-10-05T11:18:41.886888",
+      "elapsed_seconds": 82.06,
+      "system": {
+        "cpu_percent": 10.8,
+        "memory_percent": 17.4,
+        "memory_available_gb": 832.1520233154297,
+        "disk_usage_percent": 21.1
+      },
+      "processes": {
+        "openwebui": {
+          "pid": 43656,
+          "cpu_percent": 0.0,
+          "memory_mb": 977.56640625,
+          "memory_percent": 0.09473890596989158
+        },
+        "ollama": {
+          "pid": 17210,
+          "cpu_percent": 0.0,
+          "memory_mb": 1065.8203125,
+          "memory_percent": 0.10329185794557161
+        },
+        "qdrant": {
+          "pid": 1712,
+          "cpu_percent": 0.0,
+          "memory_mb": 205.1953125,
+          "memory_percent": 0.01988609601568949
+        },
+        "python": {
+          "pid": 53558,
+          "cpu_percent": 0.0,
+          "memory_mb": 25.8984375,
+          "memory_percent": 0.0025098956136307125
+        }
+      },
+      "services": {
+        "ollama": {
+          "status": "running",
+          "models": 4
+        },
+        "qdrant": {
+          "status": "unavailable"
+        },
+        "bms_api": {
+          "status": "running",
+          "health": {
+            "status": "healthy",
+            "timestamp": "2025-10-05T11:18:42.428521",
+            "services": {
+              "qdrant": "connected",
+              "ollama": "connected"
+            }
+          }
+        }
+      }
+    },
+    {
+      "timestamp": "2025-10-05T11:18:43.430881",
+      "elapsed_seconds": 83.61,
+      "system": {
+        "cpu_percent": 63.6,
+        "memory_percent": 17.4,
+        "memory_available_gb": 832.1975555419922,
+        "disk_usage_percent": 21.1
+      },
+      "processes": {
+        "openwebui": {
+          "pid": 43656,
+          "cpu_percent": 10.0,
+          "memory_mb": 977.56640625,
+          "memory_percent": 0.09473890596989158
+        },
+        "ollama": {
+          "pid": 17210,
+          "cpu_percent": 0.0,
+          "memory_mb": 1065.8203125,
+          "memory_percent": 0.10329185794557161
+        },
+        "qdrant": {
+          "pid": 1712,
+          "cpu_percent": 0.0,
+          "memory_mb": 205.1953125,
+          "memory_percent": 0.01988609601568949
+        },
+        "python": {
+          "pid": 53558,
+          "cpu_percent": 0.0,
+          "memory_mb": 25.8984375,
+          "memory_percent": 0.0025098956136307125
+        }
+      },
+      "services": {
+        "ollama": {
+          "status": "running",
+          "models": 4
+        },
+        "qdrant": {
+          "status": "unavailable"
+        },
+        "bms_api": {
+          "status": "running",
+          "health": {
+            "status": "healthy",
+            "timestamp": "2025-10-05T11:18:43.974446",
+            "services": {
+              "qdrant": "connected",
+              "ollama": "connected"
+            }
+          }
+        }
+      }
+    },
+    {
+      "timestamp": "2025-10-05T11:18:44.976806",
+      "elapsed_seconds": 85.15,
+      "system": {
+        "cpu_percent": 22.5,
+        "memory_percent": 17.4,
+        "memory_available_gb": 832.1177940368652,
+        "disk_usage_percent": 21.1
+      },
+      "processes": {
+        "openwebui": {
+          "pid": 43656,
+          "cpu_percent": 0.0,
+          "memory_mb": 977.56640625,
+          "memory_percent": 0.09473890596989158
+        },
+        "ollama": {
+          "pid": 17210,
+          "cpu_percent": 0.0,
+          "memory_mb": 1065.8203125,
+          "memory_percent": 0.10329185794557161
+        },
+        "qdrant": {
+          "pid": 1712,
+          "cpu_percent": 0.0,
+          "memory_mb": 205.1953125,
+          "memory_percent": 0.01988609601568949
+        },
+        "python": {
+          "pid": 53558,
+          "cpu_percent": 0.0,
+          "memory_mb": 25.8984375,
+          "memory_percent": 0.0025098956136307125
+        }
+      },
+      "services": {
+        "ollama": {
+          "status": "running",
+          "models": 4
+        },
+        "qdrant": {
+          "status": "unavailable"
+        },
+        "bms_api": {
+          "status": "running",
+          "health": {
+            "status": "healthy",
+            "timestamp": "2025-10-05T11:18:45.523450",
+            "services": {
+              "qdrant": "connected",
+              "ollama": "connected"
+            }
+          }
+        }
+      }
+    },
+    {
+      "timestamp": "2025-10-05T11:18:46.525160",
+      "elapsed_seconds": 86.7,
+      "system": {
+        "cpu_percent": 14.9,
+        "memory_percent": 17.4,
+        "memory_available_gb": 831.9366264343262,
+        "disk_usage_percent": 21.1
+      },
+      "processes": {
+        "openwebui": {
+          "pid": 43656,
+          "cpu_percent": 0.0,
+          "memory_mb": 977.56640625,
+          "memory_percent": 0.09473890596989158
+        },
+        "ollama": {
+          "pid": 17210,
+          "cpu_percent": 0.0,
+          "memory_mb": 1065.8203125,
+          "memory_percent": 0.10329185794557161
+        },
+        "qdrant": {
+          "pid": 1712,
+          "cpu_percent": 0.0,
+          "memory_mb": 205.1953125,
+          "memory_percent": 0.01988609601568949
+        },
+        "python": {
+          "pid": 53558,
+          "cpu_percent": 0.0,
+          "memory_mb": 25.8984375,
+          "memory_percent": 0.0025098956136307125
+        }
+      },
+      "services": {
+        "ollama": {
+          "status": "running",
+          "models": 4
+        },
+        "qdrant": {
+          "status": "unavailable"
+        },
+        "bms_api": {
+          "status": "running",
+          "health": {
+            "status": "healthy",
+            "timestamp": "2025-10-05T11:18:47.065858",
+            "services": {
+              "qdrant": "connected",
+              "ollama": "connected"
+            }
+          }
+        }
+      }
+    },
+    {
+      "timestamp": "2025-10-05T11:18:48.067462",
+      "elapsed_seconds": 88.24,
+      "system": {
+        "cpu_percent": 60.8,
+        "memory_percent": 17.4,
+        "memory_available_gb": 831.9586715698242,
+        "disk_usage_percent": 21.1
+      },
+      "processes": {
+        "openwebui": {
+          "pid": 43656,
+          "cpu_percent": 0.0,
+          "memory_mb": 977.56640625,
+          "memory_percent": 0.09473890596989158
+        },
+        "ollama": {
+          "pid": 17210,
+          "cpu_percent": 0.0,
+          "memory_mb": 1065.8203125,
+          "memory_percent": 0.10329185794557161
+        },
+        "qdrant": {
+          "pid": 1712,
+          "cpu_percent": 0.0,
+          "memory_mb": 205.1953125,
+          "memory_percent": 0.01988609601568949
+        },
+        "python": {
+          "pid": 53558,
+          "cpu_percent": 0.0,
+          "memory_mb": 25.8984375,
+          "memory_percent": 0.0025098956136307125
+        }
+      },
+      "services": {
+        "ollama": {
+          "status": "running",
+          "models": 4
+        },
+        "qdrant": {
+          "status": "unavailable"
+        },
+        "bms_api": {
+          "status": "running",
+          "health": {
+            "status": "healthy",
+            "timestamp": "2025-10-05T11:18:48.612308",
+            "services": {
+              "qdrant": "connected",
+              "ollama": "connected"
+            }
+          }
+        }
+      }
+    },
+    {
+      "timestamp": "2025-10-05T11:18:49.614601",
+      "elapsed_seconds": 89.79,
+      "system": {
+        "cpu_percent": 9.8,
+        "memory_percent": 17.4,
+        "memory_available_gb": 831.8586082458496,
+        "disk_usage_percent": 21.1
+      },
+      "processes": {
+        "openwebui": {
+          "pid": 43656,
+          "cpu_percent": 0.0,
+          "memory_mb": 977.56640625,
+          "memory_percent": 0.09473890596989158
+        },
+        "ollama": {
+          "pid": 17210,
+          "cpu_percent": 0.0,
+          "memory_mb": 1065.8203125,
+          "memory_percent": 0.10329185794557161
+        },
+        "qdrant": {
+          "pid": 1712,
+          "cpu_percent": 0.0,
+          "memory_mb": 205.1953125,
+          "memory_percent": 0.01988609601568949
+        },
+        "python": {
+          "pid": 53558,
+          "cpu_percent": 0.0,
+          "memory_mb": 25.8984375,
+          "memory_percent": 0.0025098956136307125
+        }
+      },
+      "services": {
+        "ollama": {
+          "status": "running",
+          "models": 4
+        },
+        "qdrant": {
+          "status": "unavailable"
+        },
+        "bms_api": {
+          "status": "running",
+          "health": {
+            "status": "healthy",
+            "timestamp": "2025-10-05T11:18:50.155640",
+            "services": {
+              "qdrant": "connected",
+              "ollama": "connected"
+            }
+          }
+        }
+      }
+    },
+    {
+      "timestamp": "2025-10-05T11:18:51.156886",
+      "elapsed_seconds": 91.33,
+      "system": {
+        "cpu_percent": 16.4,
+        "memory_percent": 17.5,
+        "memory_available_gb": 831.7096748352051,
+        "disk_usage_percent": 21.1
+      },
+      "processes": {
+        "openwebui": {
+          "pid": 43656,
+          "cpu_percent": 0.0,
+          "memory_mb": 977.56640625,
+          "memory_percent": 0.09473890596989158
+        },
+        "ollama": {
+          "pid": 17210,
+          "cpu_percent": 0.0,
+          "memory_mb": 1065.8203125,
+          "memory_percent": 0.10329185794557161
+        },
+        "qdrant": {
+          "pid": 1712,
+          "cpu_percent": 0.0,
+          "memory_mb": 205.1953125,
+          "memory_percent": 0.01988609601568949
+        },
+        "python": {
+          "pid": 53558,
+          "cpu_percent": 0.0,
+          "memory_mb": 25.8984375,
+          "memory_percent": 0.0025098956136307125
+        }
+      },
+      "services": {
+        "ollama": {
+          "status": "running",
+          "models": 4
+        },
+        "qdrant": {
+          "status": "unavailable"
+        },
+        "bms_api": {
+          "status": "running",
+          "health": {
+            "status": "healthy",
+            "timestamp": "2025-10-05T11:18:51.702645",
+            "services": {
+              "qdrant": "connected",
+              "ollama": "connected"
+            }
+          }
+        }
+      }
+    },
+    {
+      "timestamp": "2025-10-05T11:18:52.704741",
+      "elapsed_seconds": 92.88,
+      "system": {
+        "cpu_percent": 59.4,
+        "memory_percent": 17.5,
+        "memory_available_gb": 831.748348236084,
+        "disk_usage_percent": 21.1
+      },
+      "processes": {
+        "openwebui": {
+          "pid": 43656,
+          "cpu_percent": 0.0,
+          "memory_mb": 977.56640625,
+          "memory_percent": 0.09473890596989158
+        },
+        "ollama": {
+          "pid": 17210,
+          "cpu_percent": 0.0,
+          "memory_mb": 1065.8203125,
+          "memory_percent": 0.10329185794557161
+        },
+        "qdrant": {
+          "pid": 1712,
+          "cpu_percent": 0.0,
+          "memory_mb": 205.1953125,
+          "memory_percent": 0.01988609601568949
+        },
+        "python": {
+          "pid": 53558,
+          "cpu_percent": 0.0,
+          "memory_mb": 25.8984375,
+          "memory_percent": 0.0025098956136307125
+        }
+      },
+      "services": {
+        "ollama": {
+          "status": "running",
+          "models": 4
+        },
+        "qdrant": {
+          "status": "unavailable"
+        },
+        "bms_api": {
+          "status": "running",
+          "health": {
+            "status": "healthy",
+            "timestamp": "2025-10-05T11:18:53.250587",
+            "services": {
+              "qdrant": "connected",
+              "ollama": "connected"
+            }
+          }
+        }
+      }
+    },
+    {
+      "timestamp": "2025-10-05T11:18:54.252028",
+      "elapsed_seconds": 94.43,
+      "system": {
+        "cpu_percent": 23.6,
+        "memory_percent": 17.5,
+        "memory_available_gb": 831.6229438781738,
+        "disk_usage_percent": 21.1
+      },
+      "processes": {
+        "openwebui": {
+          "pid": 43656,
+          "cpu_percent": 0.0,
+          "memory_mb": 977.56640625,
+          "memory_percent": 0.09473890596989158
+        },
+        "ollama": {
+          "pid": 17210,
+          "cpu_percent": 0.0,
+          "memory_mb": 1065.8203125,
+          "memory_percent": 0.10329185794557161
+        },
+        "qdrant": {
+          "pid": 1712,
+          "cpu_percent": 0.0,
+          "memory_mb": 205.1953125,
+          "memory_percent": 0.01988609601568949
+        },
+        "python": {
+          "pid": 53558,
+          "cpu_percent": 0.0,
+          "memory_mb": 25.8984375,
+          "memory_percent": 0.0025098956136307125
+        }
+      },
+      "services": {
+        "ollama": {
+          "status": "running",
+          "models": 4
+        },
+        "qdrant": {
+          "status": "unavailable"
+        },
+        "bms_api": {
+          "status": "running",
+          "health": {
+            "status": "healthy",
+            "timestamp": "2025-10-05T11:18:54.793274",
+            "services": {
+              "qdrant": "connected",
+              "ollama": "connected"
+            }
+          }
+        }
+      }
+    },
+    {
+      "timestamp": "2025-10-05T11:18:55.795079",
+      "elapsed_seconds": 95.97,
+      "system": {
+        "cpu_percent": 52.1,
+        "memory_percent": 17.5,
+        "memory_available_gb": 831.5234642028809,
+        "disk_usage_percent": 21.1
+      },
+      "processes": {
+        "openwebui": {
+          "pid": 43656,
+          "cpu_percent": 0.0,
+          "memory_mb": 977.56640625,
+          "memory_percent": 0.09473890596989158
+        },
+        "ollama": {
+          "pid": 17210,
+          "cpu_percent": 0.0,
+          "memory_mb": 1065.8203125,
+          "memory_percent": 0.10329185794557161
+        },
+        "qdrant": {
+          "pid": 1712,
+          "cpu_percent": 0.0,
+          "memory_mb": 205.1953125,
+          "memory_percent": 0.01988609601568949
+        },
+        "python": {
+          "pid": 53558,
+          "cpu_percent": 0.0,
+          "memory_mb": 25.8984375,
+          "memory_percent": 0.0025098956136307125
+        }
+      },
+      "services": {
+        "ollama": {
+          "status": "running",
+          "models": 4
+        },
+        "qdrant": {
+          "status": "unavailable"
+        },
+        "bms_api": {
+          "status": "running",
+          "health": {
+            "status": "healthy",
+            "timestamp": "2025-10-05T11:18:56.341770",
+            "services": {
+              "qdrant": "connected",
+              "ollama": "connected"
+            }
+          }
+        }
+      }
+    },
+    {
+      "timestamp": "2025-10-05T11:18:57.344069",
+      "elapsed_seconds": 97.52,
+      "system": {
+        "cpu_percent": 68.4,
+        "memory_percent": 17.5,
+        "memory_available_gb": 831.4940147399902,
+        "disk_usage_percent": 21.1
+      },
+      "processes": {
+        "openwebui": {
+          "pid": 43656,
+          "cpu_percent": 0.0,
+          "memory_mb": 977.56640625,
+          "memory_percent": 0.09473890596989158
+        },
+        "ollama": {
+          "pid": 17210,
+          "cpu_percent": 0.0,
+          "memory_mb": 1065.8203125,
+          "memory_percent": 0.10329185794557161
+        },
+        "qdrant": {
+          "pid": 1712,
+          "cpu_percent": 0.0,
+          "memory_mb": 205.1953125,
+          "memory_percent": 0.01988609601568949
+        },
+        "python": {
+          "pid": 53558,
+          "cpu_percent": 0.0,
+          "memory_mb": 25.8984375,
+          "memory_percent": 0.0025098956136307125
+        }
+      },
+      "services": {
+        "ollama": {
+          "status": "running",
+          "models": 4
+        },
+        "qdrant": {
+          "status": "unavailable"
+        },
+        "bms_api": {
+          "status": "running",
+          "health": {
+            "status": "healthy",
+            "timestamp": "2025-10-05T11:18:57.892657",
+            "services": {
+              "qdrant": "connected",
+              "ollama": "connected"
+            }
+          }
+        }
+      }
+    },
+    {
+      "timestamp": "2025-10-05T11:18:58.894264",
+      "elapsed_seconds": 99.07,
+      "system": {
+        "cpu_percent": 51.3,
+        "memory_percent": 17.5,
+        "memory_available_gb": 831.397533416748,
+        "disk_usage_percent": 21.1
+      },
+      "processes": {
+        "openwebui": {
+          "pid": 43656,
+          "cpu_percent": 0.0,
+          "memory_mb": 977.56640625,
+          "memory_percent": 0.09473890596989158
+        },
+        "ollama": {
+          "pid": 17210,
+          "cpu_percent": 0.0,
+          "memory_mb": 1065.8203125,
+          "memory_percent": 0.10329185794557161
+        },
+        "qdrant": {
+          "pid": 1712,
+          "cpu_percent": 0.0,
+          "memory_mb": 205.1953125,
+          "memory_percent": 0.01988609601568949
+        },
+        "python": {
+          "pid": 53558,
+          "cpu_percent": 0.0,
+          "memory_mb": 25.8984375,
+          "memory_percent": 0.0025098956136307125
+        }
+      },
+      "services": {
+        "ollama": {
+          "status": "running",
+          "models": 4
+        },
+        "qdrant": {
+          "status": "unavailable"
+        },
+        "bms_api": {
+          "status": "running",
+          "health": {
+            "status": "healthy",
+            "timestamp": "2025-10-05T11:18:59.449651",
+            "services": {
+              "qdrant": "connected",
+              "ollama": "connected"
+            }
+          }
+        }
+      }
+    },
+    {
+      "timestamp": "2025-10-05T11:19:00.451055",
+      "elapsed_seconds": 100.63,
+      "system": {
+        "cpu_percent": 40.8,
+        "memory_percent": 17.5,
+        "memory_available_gb": 831.3227920532227,
+        "disk_usage_percent": 21.1
+      },
+      "processes": {
+        "openwebui": {
+          "pid": 43656,
+          "cpu_percent": 0.0,
+          "memory_mb": 977.56640625,
+          "memory_percent": 0.09473890596989158
+        },
+        "ollama": {
+          "pid": 17210,
+          "cpu_percent": 0.0,
+          "memory_mb": 1065.8203125,
+          "memory_percent": 0.10329185794557161
+        },
+        "qdrant": {
+          "pid": 1712,
+          "cpu_percent": 0.0,
+          "memory_mb": 205.1953125,
+          "memory_percent": 0.01988609601568949
+        },
+        "python": {
+          "pid": 53558,
+          "cpu_percent": 0.0,
+          "memory_mb": 25.8984375,
+          "memory_percent": 0.0025098956136307125
+        }
+      },
+      "services": {
+        "ollama": {
+          "status": "running",
+          "models": 4
+        },
+        "qdrant": {
+          "status": "unavailable"
+        },
+        "bms_api": {
+          "status": "running",
+          "health": {
+            "status": "healthy",
+            "timestamp": "2025-10-05T11:19:00.991215",
+            "services": {
+              "qdrant": "connected",
+              "ollama": "connected"
+            }
+          }
+        }
+      }
+    },
+    {
+      "timestamp": "2025-10-05T11:19:01.992453",
+      "elapsed_seconds": 102.17,
+      "system": {
+        "cpu_percent": 82.7,
+        "memory_percent": 17.5,
+        "memory_available_gb": 831.219482421875,
+        "disk_usage_percent": 21.1
+      },
+      "processes": {
+        "openwebui": {
+          "pid": 43656,
+          "cpu_percent": 0.0,
+          "memory_mb": 977.56640625,
+          "memory_percent": 0.09473890596989158
+        },
+        "ollama": {
+          "pid": 17210,
+          "cpu_percent": 0.0,
+          "memory_mb": 1065.8203125,
+          "memory_percent": 0.10329185794557161
+        },
+        "qdrant": {
+          "pid": 1712,
+          "cpu_percent": 0.0,
+          "memory_mb": 205.1953125,
+          "memory_percent": 0.01988609601568949
+        },
+        "python": {
+          "pid": 53558,
+          "cpu_percent": 0.0,
+          "memory_mb": 25.8984375,
+          "memory_percent": 0.0025098956136307125
+        }
+      },
+      "services": {
+        "ollama": {
+          "status": "running",
+          "models": 4
+        },
+        "qdrant": {
+          "status": "unavailable"
+        },
+        "bms_api": {
+          "status": "running",
+          "health": {
+            "status": "healthy",
+            "timestamp": "2025-10-05T11:19:02.543302",
+            "services": {
+              "qdrant": "connected",
+              "ollama": "connected"
+            }
+          }
+        }
+      }
+    },
+    {
+      "timestamp": "2025-10-05T11:19:03.544857",
+      "elapsed_seconds": 103.72,
+      "system": {
+        "cpu_percent": 19.3,
+        "memory_percent": 17.5,
+        "memory_available_gb": 831.2591819763184,
+        "disk_usage_percent": 21.1
+      },
+      "processes": {
+        "openwebui": {
+          "pid": 43656,
+          "cpu_percent": 0.0,
+          "memory_mb": 977.56640625,
+          "memory_percent": 0.09473890596989158
+        },
+        "ollama": {
+          "pid": 17210,
+          "cpu_percent": 0.0,
+          "memory_mb": 1053.0859375,
+          "memory_percent": 0.10205773129392214
+        },
+        "qdrant": {
+          "pid": 1712,
+          "cpu_percent": 0.0,
+          "memory_mb": 205.1953125,
+          "memory_percent": 0.01988609601568949
+        },
+        "python": {
+          "pid": 53558,
+          "cpu_percent": 0.0,
+          "memory_mb": 25.8984375,
+          "memory_percent": 0.0025098956136307125
+        }
+      },
+      "services": {
+        "ollama": {
+          "status": "running",
+          "models": 4
+        },
+        "qdrant": {
+          "status": "unavailable"
+        },
+        "bms_api": {
+          "status": "running",
+          "health": {
+            "status": "healthy",
+            "timestamp": "2025-10-05T11:19:04.087050",
+            "services": {
+              "qdrant": "connected",
+              "ollama": "connected"
+            }
+          }
+        }
+      }
+    },
+    {
+      "timestamp": "2025-10-05T11:19:05.088701",
+      "elapsed_seconds": 105.27,
+      "system": {
+        "cpu_percent": 28.1,
+        "memory_percent": 17.5,
+        "memory_available_gb": 831.1576995849609,
+        "disk_usage_percent": 21.1
+      },
+      "processes": {
+        "openwebui": {
+          "pid": 43656,
+          "cpu_percent": 0.0,
+          "memory_mb": 977.56640625,
+          "memory_percent": 0.09473890596989158
+        },
+        "ollama": {
+          "pid": 17210,
+          "cpu_percent": 0.0,
+          "memory_mb": 1053.0859375,
+          "memory_percent": 0.10205773129392214
+        },
+        "qdrant": {
+          "pid": 1712,
+          "cpu_percent": 0.0,
+          "memory_mb": 205.1953125,
+          "memory_percent": 0.01988609601568949
+        },
+        "python": {
+          "pid": 53558,
+          "cpu_percent": 0.0,
+          "memory_mb": 25.8984375,
+          "memory_percent": 0.0025098956136307125
+        }
+      },
+      "services": {
+        "ollama": {
+          "status": "running",
+          "models": 4
+        },
+        "qdrant": {
+          "status": "unavailable"
+        },
+        "bms_api": {
+          "status": "running",
+          "health": {
+            "status": "healthy",
+            "timestamp": "2025-10-05T11:19:05.628640",
+            "services": {
+              "qdrant": "connected",
+              "ollama": "connected"
+            }
+          }
+        }
+      }
+    },
+    {
+      "timestamp": "2025-10-05T11:19:06.630768",
+      "elapsed_seconds": 106.81,
+      "system": {
+        "cpu_percent": 89.3,
+        "memory_percent": 17.5,
+        "memory_available_gb": 830.981201171875,
+        "disk_usage_percent": 21.1
+      },
+      "processes": {
+        "openwebui": {
+          "pid": 43656,
+          "cpu_percent": 0.0,
+          "memory_mb": 977.56640625,
+          "memory_percent": 0.09473890596989158
+        },
+        "ollama": {
+          "pid": 17210,
+          "cpu_percent": 0.0,
+          "memory_mb": 1053.0859375,
+          "memory_percent": 0.10205773129392214
+        },
+        "qdrant": {
+          "pid": 1712,
+          "cpu_percent": 0.0,
+          "memory_mb": 205.1953125,
+          "memory_percent": 0.01988609601568949
+        },
+        "python": {
+          "pid": 53558,
+          "cpu_percent": 0.0,
+          "memory_mb": 25.8984375,
+          "memory_percent": 0.0025098956136307125
+        }
+      },
+      "services": {
+        "ollama": {
+          "status": "running",
+          "models": 4
+        },
+        "qdrant": {
+          "status": "unavailable"
+        },
+        "bms_api": {
+          "status": "running",
+          "health": {
+            "status": "healthy",
+            "timestamp": "2025-10-05T11:19:07.176926",
+            "services": {
+              "qdrant": "connected",
+              "ollama": "connected"
+            }
+          }
+        }
+      }
+    },
+    {
+      "timestamp": "2025-10-05T11:19:08.178509",
+      "elapsed_seconds": 108.36,
+      "system": {
+        "cpu_percent": 1.3,
+        "memory_percent": 17.8,
+        "memory_available_gb": 828.3478202819824,
+        "disk_usage_percent": 21.1
+      },
+      "processes": {
+        "openwebui": {
+          "pid": 43656,
+          "cpu_percent": 0.0,
+          "memory_mb": 977.56640625,
+          "memory_percent": 0.09473890596989158
+        },
+        "ollama": {
+          "pid": 17210,
+          "cpu_percent": 0.0,
+          "memory_mb": 1053.0859375,
+          "memory_percent": 0.10205773129392214
+        },
+        "qdrant": {
+          "pid": 1712,
+          "cpu_percent": 0.0,
+          "memory_mb": 205.1953125,
+          "memory_percent": 0.01988609601568949
+        },
+        "python": {
+          "pid": 53558,
+          "cpu_percent": 0.0,
+          "memory_mb": 25.8984375,
+          "memory_percent": 0.0025098956136307125
+        }
+      },
+      "services": {
+        "ollama": {
+          "status": "running",
+          "models": 4
+        },
+        "qdrant": {
+          "status": "unavailable"
+        },
+        "bms_api": {
+          "status": "running",
+          "health": {
+            "status": "healthy",
+            "timestamp": "2025-10-05T11:19:08.724806",
+            "services": {
+              "qdrant": "connected",
+              "ollama": "connected"
+            }
+          }
+        }
+      }
+    },
+    {
+      "timestamp": "2025-10-05T11:19:09.726243",
+      "elapsed_seconds": 109.9,
+      "system": {
+        "cpu_percent": 1.4,
+        "memory_percent": 17.6,
+        "memory_available_gb": 830.7773094177246,
+        "disk_usage_percent": 21.1
+      },
+      "processes": {
+        "openwebui": {
+          "pid": 43656,
+          "cpu_percent": 0.0,
+          "memory_mb": 977.56640625,
+          "memory_percent": 0.09473890596989158
+        },
+        "ollama": {
+          "pid": 17210,
+          "cpu_percent": 0.0,
+          "memory_mb": 1053.0859375,
+          "memory_percent": 0.10205773129392214
+        },
+        "qdrant": {
+          "pid": 1712,
+          "cpu_percent": 0.0,
+          "memory_mb": 205.1953125,
+          "memory_percent": 0.01988609601568949
+        },
+        "python": {
+          "pid": 53558,
+          "cpu_percent": 0.0,
+          "memory_mb": 25.8984375,
+          "memory_percent": 0.0025098956136307125
+        }
+      },
+      "services": {
+        "ollama": {
+          "status": "running",
+          "models": 4
+        },
+        "qdrant": {
+          "status": "unavailable"
+        },
+        "bms_api": {
+          "status": "running",
+          "health": {
+            "status": "healthy",
+            "timestamp": "2025-10-05T11:19:10.273086",
+            "services": {
+              "qdrant": "connected",
+              "ollama": "connected"
+            }
+          }
+        }
+      }
+    },
+    {
+      "timestamp": "2025-10-05T11:19:11.275122",
+      "elapsed_seconds": 111.45,
+      "system": {
+        "cpu_percent": 1.5,
+        "memory_percent": 17.6,
+        "memory_available_gb": 830.5584564208984,
+        "disk_usage_percent": 21.1
+      },
+      "processes": {
+        "openwebui": {
+          "pid": 43656,
+          "cpu_percent": 0.0,
+          "memory_mb": 977.56640625,
+          "memory_percent": 0.09473890596989158
+        },
+        "ollama": {
+          "pid": 17210,
+          "cpu_percent": 0.0,
+          "memory_mb": 1053.0859375,
+          "memory_percent": 0.10205773129392214
+        },
+        "qdrant": {
+          "pid": 1712,
+          "cpu_percent": 0.0,
+          "memory_mb": 205.1953125,
+          "memory_percent": 0.01988609601568949
+        },
+        "python": {
+          "pid": 53558,
+          "cpu_percent": 0.0,
+          "memory_mb": 25.8984375,
+          "memory_percent": 0.0025098956136307125
+        }
+      },
+      "services": {
+        "ollama": {
+          "status": "running",
+          "models": 4
+        },
+        "qdrant": {
+          "status": "unavailable"
+        },
+        "bms_api": {
+          "status": "running",
+          "health": {
+            "status": "healthy",
+            "timestamp": "2025-10-05T11:19:11.822620",
+            "services": {
+              "qdrant": "connected",
+              "ollama": "connected"
+            }
+          }
+        }
+      }
+    },
+    {
+      "timestamp": "2025-10-05T11:19:12.823837",
+      "elapsed_seconds": 113.0,
+      "system": {
+        "cpu_percent": 2.5,
+        "memory_percent": 17.6,
+        "memory_available_gb": 830.3420143127441,
+        "disk_usage_percent": 21.1
+      },
+      "processes": {
+        "openwebui": {
+          "pid": 43656,
+          "cpu_percent": 0.0,
+          "memory_mb": 977.56640625,
+          "memory_percent": 0.09473890596989158
+        },
+        "ollama": {
+          "pid": 17210,
+          "cpu_percent": 0.0,
+          "memory_mb": 1053.0859375,
+          "memory_percent": 0.10205773129392214
+        },
+        "qdrant": {
+          "pid": 1712,
+          "cpu_percent": 0.0,
+          "memory_mb": 205.1953125,
+          "memory_percent": 0.01988609601568949
+        },
+        "python": {
+          "pid": 53558,
+          "cpu_percent": 0.0,
+          "memory_mb": 25.8984375,
+          "memory_percent": 0.0025098956136307125
+        }
+      },
+      "services": {
+        "ollama": {
+          "status": "running",
+          "models": 4
+        },
+        "qdrant": {
+          "status": "unavailable"
+        },
+        "bms_api": {
+          "status": "running",
+          "health": {
+            "status": "healthy",
+            "timestamp": "2025-10-05T11:19:13.368163",
+            "services": {
+              "qdrant": "connected",
+              "ollama": "connected"
+            }
+          }
+        }
+      }
+    },
+    {
+      "timestamp": "2025-10-05T11:19:14.369838",
+      "elapsed_seconds": 114.55,
+      "system": {
+        "cpu_percent": 2.3,
+        "memory_percent": 17.6,
+        "memory_available_gb": 829.8586540222168,
+        "disk_usage_percent": 21.1
+      },
+      "processes": {
+        "openwebui": {
+          "pid": 43656,
+          "cpu_percent": 0.0,
+          "memory_mb": 977.56640625,
+          "memory_percent": 0.09473890596989158
+        },
+        "ollama": {
+          "pid": 17210,
+          "cpu_percent": 0.0,
+          "memory_mb": 1053.0859375,
+          "memory_percent": 0.10205773129392214
+        },
+        "qdrant": {
+          "pid": 1712,
+          "cpu_percent": 0.0,
+          "memory_mb": 205.1953125,
+          "memory_percent": 0.01988609601568949
+        },
+        "python": {
+          "pid": 53558,
+          "cpu_percent": 0.0,
+          "memory_mb": 25.8984375,
+          "memory_percent": 0.0025098956136307125
+        }
+      },
+      "services": {
+        "ollama": {
+          "status": "running",
+          "models": 4
+        },
+        "qdrant": {
+          "status": "unavailable"
+        },
+        "bms_api": {
+          "status": "running",
+          "health": {
+            "status": "healthy",
+            "timestamp": "2025-10-05T11:19:14.927306",
+            "services": {
+              "qdrant": "connected",
+              "ollama": "connected"
+            }
+          }
+        }
+      }
+    },
+    {
+      "timestamp": "2025-10-05T11:19:15.928856",
+      "elapsed_seconds": 116.11,
+      "system": {
+        "cpu_percent": 14.7,
+        "memory_percent": 17.7,
+        "memory_available_gb": 829.5352821350098,
+        "disk_usage_percent": 21.1
+      },
+      "processes": {
+        "openwebui": {
+          "pid": 43656,
+          "cpu_percent": 0.0,
+          "memory_mb": 977.56640625,
+          "memory_percent": 0.09473890596989158
+        },
+        "ollama": {
+          "pid": 17210,
+          "cpu_percent": 0.0,
+          "memory_mb": 1053.0859375,
+          "memory_percent": 0.10205773129392214
+        },
+        "qdrant": {
+          "pid": 1712,
+          "cpu_percent": 0.0,
+          "memory_mb": 205.1953125,
+          "memory_percent": 0.01988609601568949
+        },
+        "python": {
+          "pid": 53558,
+          "cpu_percent": 0.0,
+          "memory_mb": 25.8984375,
+          "memory_percent": 0.0025098956136307125
+        }
+      },
+      "services": {
+        "ollama": {
+          "status": "running",
+          "models": 4
+        },
+        "qdrant": {
+          "status": "unavailable"
+        },
+        "bms_api": {
+          "status": "running",
+          "health": {
+            "status": "healthy",
+            "timestamp": "2025-10-05T11:19:16.469674",
+            "services": {
+              "qdrant": "connected",
+              "ollama": "connected"
+            }
+          }
+        }
+      }
+    },
+    {
+      "timestamp": "2025-10-05T11:19:17.471442",
+      "elapsed_seconds": 117.65,
+      "system": {
+        "cpu_percent": 14.3,
+        "memory_percent": 17.7,
+        "memory_available_gb": 829.1170654296875,
+        "disk_usage_percent": 21.1
+      },
+      "processes": {
+        "openwebui": {
+          "pid": 43656,
+          "cpu_percent": 0.0,
+          "memory_mb": 977.56640625,
+          "memory_percent": 0.09473890596989158
+        },
+        "ollama": {
+          "pid": 17210,
+          "cpu_percent": 0.0,
+          "memory_mb": 1053.0859375,
+          "memory_percent": 0.10205773129392214
+        },
+        "qdrant": {
+          "pid": 1712,
+          "cpu_percent": 0.0,
+          "memory_mb": 205.1953125,
+          "memory_percent": 0.01988609601568949
+        },
+        "python": {
+          "pid": 53558,
+          "cpu_percent": 0.0,
+          "memory_mb": 25.8984375,
+          "memory_percent": 0.0025098956136307125
+        }
+      },
+      "services": {
+        "ollama": {
+          "status": "running",
+          "models": 4
+        },
+        "qdrant": {
+          "status": "unavailable"
+        },
+        "bms_api": {
+          "status": "running",
+          "health": {
+            "status": "healthy",
+            "timestamp": "2025-10-05T11:19:18.016643",
+            "services": {
+              "qdrant": "connected",
+              "ollama": "connected"
+            }
+          }
+        }
+      }
+    },
+    {
+      "timestamp": "2025-10-05T11:19:19.017728",
+      "elapsed_seconds": 119.2,
+      "system": {
+        "cpu_percent": 16.9,
+        "memory_percent": 17.8,
+        "memory_available_gb": 828.620792388916,
+        "disk_usage_percent": 21.1
+      },
+      "processes": {
+        "openwebui": {
+          "pid": 43656,
+          "cpu_percent": 0.0,
+          "memory_mb": 977.56640625,
+          "memory_percent": 0.09473890596989158
+        },
+        "ollama": {
+          "pid": 17210,
+          "cpu_percent": 0.0,
+          "memory_mb": 1053.0859375,
+          "memory_percent": 0.10205773129392214
+        },
+        "qdrant": {
+          "pid": 1712,
+          "cpu_percent": 0.0,
+          "memory_mb": 205.1953125,
+          "memory_percent": 0.01988609601568949
+        },
+        "python": {
+          "pid": 53558,
+          "cpu_percent": 0.0,
+          "memory_mb": 25.8984375,
+          "memory_percent": 0.0025098956136307125
+        }
+      },
+      "services": {
+        "ollama": {
+          "status": "running",
+          "models": 4
+        },
+        "qdrant": {
+          "status": "unavailable"
+        },
+        "bms_api": {
+          "status": "running",
+          "health": {
+            "status": "healthy",
+            "timestamp": "2025-10-05T11:19:19.557048",
+            "services": {
+              "qdrant": "connected",
+              "ollama": "connected"
+            }
+          }
+        }
+      }
+    },
+    {
+      "timestamp": "2025-10-05T11:19:20.558748",
+      "elapsed_seconds": 120.74,
+      "system": {
+        "cpu_percent": 13.3,
+        "memory_percent": 17.8,
+        "memory_available_gb": 828.0501098632812,
+        "disk_usage_percent": 21.1
+      },
+      "processes": {
+        "openwebui": {
+          "pid": 43656,
+          "cpu_percent": 0.0,
+          "memory_mb": 977.56640625,
+          "memory_percent": 0.09473890596989158
+        },
+        "ollama": {
+          "pid": 17210,
+          "cpu_percent": 0.0,
+          "memory_mb": 1053.0859375,
+          "memory_percent": 0.10205773129392214
+        },
+        "qdrant": {
+          "pid": 1712,
+          "cpu_percent": 0.0,
+          "memory_mb": 205.1953125,
+          "memory_percent": 0.01988609601568949
+        },
+        "python": {
+          "pid": 53558,
+          "cpu_percent": 0.0,
+          "memory_mb": 25.8984375,
+          "memory_percent": 0.0025098956136307125
+        }
+      },
+      "services": {
+        "ollama": {
+          "status": "running",
+          "models": 4
+        },
+        "qdrant": {
+          "status": "unavailable"
+        },
+        "bms_api": {
+          "status": "running",
+          "health": {
+            "status": "healthy",
+            "timestamp": "2025-10-05T11:19:21.097206",
+            "services": {
+              "qdrant": "connected",
+              "ollama": "connected"
+            }
+          }
+        }
+      }
+    },
+    {
+      "timestamp": "2025-10-05T11:19:22.098633",
+      "elapsed_seconds": 122.28,
+      "system": {
+        "cpu_percent": 14.2,
+        "memory_percent": 17.8,
+        "memory_available_gb": 827.9728927612305,
+        "disk_usage_percent": 21.1
+      },
+      "processes": {
+        "openwebui": {
+          "pid": 43656,
+          "cpu_percent": 0.0,
+          "memory_mb": 977.56640625,
+          "memory_percent": 0.09473890596989158
+        },
+        "ollama": {
+          "pid": 17210,
+          "cpu_percent": 0.0,
+          "memory_mb": 1053.0859375,
+          "memory_percent": 0.10205773129392214
+        },
+        "qdrant": {
+          "pid": 1712,
+          "cpu_percent": 0.0,
+          "memory_mb": 205.1953125,
+          "memory_percent": 0.01988609601568949
+        },
+        "python": {
+          "pid": 53558,
+          "cpu_percent": 0.0,
+          "memory_mb": 25.8984375,
+          "memory_percent": 0.0025098956136307125
+        }
+      },
+      "services": {
+        "ollama": {
+          "status": "running",
+          "models": 4
+        },
+        "qdrant": {
+          "status": "unavailable"
+        },
+        "bms_api": {
+          "status": "running",
+          "health": {
+            "status": "healthy",
+            "timestamp": "2025-10-05T11:19:22.636655",
+            "services": {
+              "qdrant": "connected",
+              "ollama": "connected"
+            }
+          }
+        }
+      }
+    },
+    {
+      "timestamp": "2025-10-05T11:19:23.638143",
+      "elapsed_seconds": 123.82,
+      "system": {
+        "cpu_percent": 9.4,
+        "memory_percent": 17.8,
+        "memory_available_gb": 827.994686126709,
+        "disk_usage_percent": 21.1
+      },
+      "processes": {
+        "openwebui": {
+          "pid": 43656,
+          "cpu_percent": 0.0,
+          "memory_mb": 977.56640625,
+          "memory_percent": 0.09473890596989158
+        },
+        "ollama": {
+          "pid": 17210,
+          "cpu_percent": 0.0,
+          "memory_mb": 1053.0859375,
+          "memory_percent": 0.10205773129392214
+        },
+        "qdrant": {
+          "pid": 1712,
+          "cpu_percent": 10.0,
+          "memory_mb": 205.1953125,
+          "memory_percent": 0.01988609601568949
+        },
+        "python": {
+          "pid": 53558,
+          "cpu_percent": 0.0,
+          "memory_mb": 25.8984375,
+          "memory_percent": 0.0025098956136307125
+        }
+      },
+      "services": {
+        "ollama": {
+          "status": "running",
+          "models": 4
+        },
+        "qdrant": {
+          "status": "unavailable"
+        },
+        "bms_api": {
+          "status": "running",
+          "health": {
+            "status": "healthy",
+            "timestamp": "2025-10-05T11:19:24.184865",
+            "services": {
+              "qdrant": "connected",
+              "ollama": "connected"
+            }
+          }
+        }
+      }
+    },
+    {
+      "timestamp": "2025-10-05T11:19:25.186439",
+      "elapsed_seconds": 125.36,
+      "system": {
+        "cpu_percent": 11.4,
+        "memory_percent": 17.8,
+        "memory_available_gb": 828.1378059387207,
+        "disk_usage_percent": 21.1
+      },
+      "processes": {
+        "openwebui": {
+          "pid": 43656,
+          "cpu_percent": 0.0,
+          "memory_mb": 977.56640625,
+          "memory_percent": 0.09473890596989158
+        },
+        "ollama": {
+          "pid": 17210,
+          "cpu_percent": 0.0,
+          "memory_mb": 1053.0859375,
+          "memory_percent": 0.10205773129392214
+        },
+        "qdrant": {
+          "pid": 1712,
+          "cpu_percent": 0.0,
+          "memory_mb": 205.1953125,
+          "memory_percent": 0.01988609601568949
+        },
+        "python": {
+          "pid": 53558,
+          "cpu_percent": 0.0,
+          "memory_mb": 25.8984375,
+          "memory_percent": 0.0025098956136307125
+        }
+      },
+      "services": {
+        "ollama": {
+          "status": "running",
+          "models": 4
+        },
+        "qdrant": {
+          "status": "unavailable"
+        },
+        "bms_api": {
+          "status": "running",
+          "health": {
+            "status": "healthy",
+            "timestamp": "2025-10-05T11:19:25.735427",
+            "services": {
+              "qdrant": "connected",
+              "ollama": "connected"
+            }
+          }
+        }
+      }
+    },
+    {
+      "timestamp": "2025-10-05T11:19:26.736713",
+      "elapsed_seconds": 126.91,
+      "system": {
+        "cpu_percent": 1.5,
+        "memory_percent": 17.5,
+        "memory_available_gb": 831.2723808288574,
+        "disk_usage_percent": 21.1
+      },
+      "processes": {
+        "openwebui": {
+          "pid": 43656,
+          "cpu_percent": 0.0,
+          "memory_mb": 977.56640625,
+          "memory_percent": 0.09473890596989158
+        },
+        "ollama": {
+          "pid": 17210,
+          "cpu_percent": 0.0,
+          "memory_mb": 1053.0859375,
+          "memory_percent": 0.10205773129392214
+        },
+        "qdrant": {
+          "pid": 1712,
+          "cpu_percent": 0.0,
+          "memory_mb": 205.1953125,
+          "memory_percent": 0.01988609601568949
+        },
+        "python": {
+          "pid": 53558,
+          "cpu_percent": 0.0,
+          "memory_mb": 25.8984375,
+          "memory_percent": 0.0025098956136307125
+        }
+      },
+      "services": {
+        "ollama": {
+          "status": "running",
+          "models": 4
+        },
+        "qdrant": {
+          "status": "unavailable"
+        },
+        "bms_api": {
+          "status": "running",
+          "health": {
+            "status": "healthy",
+            "timestamp": "2025-10-05T11:19:27.278734",
+            "services": {
+              "qdrant": "connected",
+              "ollama": "connected"
+            }
+          }
+        }
+      }
+    },
+    {
+      "timestamp": "2025-10-05T11:19:28.279995",
+      "elapsed_seconds": 128.46,
+      "system": {
+        "cpu_percent": 1.1,
+        "memory_percent": 17.5,
+        "memory_available_gb": 831.218017578125,
+        "disk_usage_percent": 21.1
+      },
+      "processes": {
+        "openwebui": {
+          "pid": 43656,
+          "cpu_percent": 0.0,
+          "memory_mb": 977.56640625,
+          "memory_percent": 0.09473890596989158
+        },
+        "ollama": {
+          "pid": 17210,
+          "cpu_percent": 0.0,
+          "memory_mb": 1053.0859375,
+          "memory_percent": 0.10205773129392214
+        },
+        "qdrant": {
+          "pid": 1712,
+          "cpu_percent": 0.0,
+          "memory_mb": 205.1953125,
+          "memory_percent": 0.01988609601568949
+        },
+        "python": {
+          "pid": 53558,
+          "cpu_percent": 0.0,
+          "memory_mb": 25.8984375,
+          "memory_percent": 0.0025098956136307125
+        }
+      },
+      "services": {
+        "ollama": {
+          "status": "running",
+          "models": 4
+        },
+        "qdrant": {
+          "status": "unavailable"
+        },
+        "bms_api": {
+          "status": "running",
+          "health": {
+            "status": "healthy",
+            "timestamp": "2025-10-05T11:19:28.838914",
+            "services": {
+              "qdrant": "connected",
+              "ollama": "connected"
+            }
+          }
+        }
+      }
+    },
+    {
+      "timestamp": "2025-10-05T11:19:29.840750",
+      "elapsed_seconds": 130.02,
+      "system": {
+        "cpu_percent": 1.3,
+        "memory_percent": 17.5,
+        "memory_available_gb": 831.2038230895996,
+        "disk_usage_percent": 21.1
+      },
+      "processes": {
+        "openwebui": {
+          "pid": 43656,
+          "cpu_percent": 0.0,
+          "memory_mb": 977.56640625,
+          "memory_percent": 0.09473890596989158
+        },
+        "ollama": {
+          "pid": 17210,
+          "cpu_percent": 0.0,
+          "memory_mb": 1053.0859375,
+          "memory_percent": 0.10205773129392214
+        },
+        "qdrant": {
+          "pid": 1712,
+          "cpu_percent": 0.0,
+          "memory_mb": 205.1953125,
+          "memory_percent": 0.01988609601568949
+        },
+        "python": {
+          "pid": 53558,
+          "cpu_percent": 0.0,
+          "memory_mb": 25.8984375,
+          "memory_percent": 0.0025098956136307125
+        }
+      },
+      "services": {
+        "ollama": {
+          "status": "running",
+          "models": 4
+        },
+        "qdrant": {
+          "status": "unavailable"
+        },
+        "bms_api": {
+          "status": "running",
+          "health": {
+            "status": "healthy",
+            "timestamp": "2025-10-05T11:19:30.400468",
+            "services": {
+              "qdrant": "connected",
+              "ollama": "connected"
+            }
+          }
+        }
+      }
+    },
+    {
+      "timestamp": "2025-10-05T11:19:31.402564",
+      "elapsed_seconds": 131.58,
+      "system": {
+        "cpu_percent": 1.8,
+        "memory_percent": 17.5,
+        "memory_available_gb": 831.4655075073242,
+        "disk_usage_percent": 21.1
+      },
+      "processes": {
+        "openwebui": {
+          "pid": 43656,
+          "cpu_percent": 0.0,
+          "memory_mb": 977.56640625,
+          "memory_percent": 0.09473890596989158
+        },
+        "ollama": {
+          "pid": 17210,
+          "cpu_percent": 0.0,
+          "memory_mb": 1053.0859375,
+          "memory_percent": 0.10205773129392214
+        },
+        "qdrant": {
+          "pid": 1712,
+          "cpu_percent": 0.0,
+          "memory_mb": 205.1953125,
+          "memory_percent": 0.01988609601568949
+        },
+        "python": {
+          "pid": 53558,
+          "cpu_percent": 0.0,
+          "memory_mb": 25.8984375,
+          "memory_percent": 0.0025098956136307125
+        }
+      },
+      "services": {
+        "ollama": {
+          "status": "running",
+          "models": 4
+        },
+        "qdrant": {
+          "status": "unavailable"
+        },
+        "bms_api": {
+          "status": "running",
+          "health": {
+            "status": "healthy",
+            "timestamp": "2025-10-05T11:19:31.961132",
+            "services": {
+              "qdrant": "connected",
+              "ollama": "connected"
+            }
+          }
+        }
+      }
+    },
+    {
+      "timestamp": "2025-10-05T11:19:32.963024",
+      "elapsed_seconds": 133.14,
+      "system": {
+        "cpu_percent": 1.5,
+        "memory_percent": 16.7,
+        "memory_available_gb": 839.6858940124512,
+        "disk_usage_percent": 21.1
+      },
+      "processes": {
+        "openwebui": {
+          "pid": 43656,
+          "cpu_percent": 0.0,
+          "memory_mb": 977.56640625,
+          "memory_percent": 0.09473890596989158
+        },
+        "ollama": {
+          "pid": 17210,
+          "cpu_percent": 0.0,
+          "memory_mb": 1053.0859375,
+          "memory_percent": 0.10205773129392214
+        },
+        "qdrant": {
+          "pid": 1712,
+          "cpu_percent": 0.0,
+          "memory_mb": 205.1953125,
+          "memory_percent": 0.01988609601568949
+        },
+        "python": {
+          "pid": 53558,
+          "cpu_percent": 0.0,
+          "memory_mb": 25.8984375,
+          "memory_percent": 0.0025098956136307125
+        }
+      },
+      "services": {
+        "ollama": {
+          "status": "running",
+          "models": 4
+        },
+        "qdrant": {
+          "status": "unavailable"
+        },
+        "bms_api": {
+          "status": "running",
+          "health": {
+            "status": "healthy",
+            "timestamp": "2025-10-05T11:19:33.510265",
+            "services": {
+              "qdrant": "connected",
+              "ollama": "connected"
+            }
+          }
+        }
+      }
+    },
+    {
+      "timestamp": "2025-10-05T11:19:34.511993",
+      "elapsed_seconds": 134.69,
+      "system": {
+        "cpu_percent": 1.3,
+        "memory_percent": 15.2,
+        "memory_available_gb": 854.5348777770996,
+        "disk_usage_percent": 21.1
+      },
+      "processes": {
+        "openwebui": {
+          "pid": 43656,
+          "cpu_percent": 0.0,
+          "memory_mb": 977.56640625,
+          "memory_percent": 0.09473890596989158
+        },
+        "ollama": {
+          "pid": 17210,
+          "cpu_percent": 0.0,
+          "memory_mb": 1053.0859375,
+          "memory_percent": 0.10205773129392214
+        },
+        "qdrant": {
+          "pid": 1712,
+          "cpu_percent": 0.0,
+          "memory_mb": 205.1953125,
+          "memory_percent": 0.01988609601568949
+        },
+        "python": {
+          "pid": 53558,
+          "cpu_percent": 0.0,
+          "memory_mb": 25.8984375,
+          "memory_percent": 0.0025098956136307125
+        }
+      },
+      "services": {
+        "ollama": {
+          "status": "running",
+          "models": 4
+        },
+        "qdrant": {
+          "status": "unavailable"
+        },
+        "bms_api": {
+          "status": "running",
+          "health": {
+            "status": "healthy",
+            "timestamp": "2025-10-05T11:19:35.059180",
+            "services": {
+              "qdrant": "connected",
+              "ollama": "connected"
+            }
+          }
+        }
+      }
+    },
+    {
+      "timestamp": "2025-10-05T11:19:36.060597",
+      "elapsed_seconds": 136.24,
+      "system": {
+        "cpu_percent": 1.0,
+        "memory_percent": 13.5,
+        "memory_available_gb": 871.1983985900879,
+        "disk_usage_percent": 21.1
+      },
+      "processes": {
+        "openwebui": {
+          "pid": 43656,
+          "cpu_percent": 0.0,
+          "memory_mb": 977.56640625,
+          "memory_percent": 0.09473890596989158
+        },
+        "ollama": {
+          "pid": 17210,
+          "cpu_percent": 0.0,
+          "memory_mb": 1053.0859375,
+          "memory_percent": 0.10205773129392214
+        },
+        "qdrant": {
+          "pid": 1712,
+          "cpu_percent": 0.0,
+          "memory_mb": 205.1953125,
+          "memory_percent": 0.01988609601568949
+        },
+        "python": {
+          "pid": 53558,
+          "cpu_percent": 0.0,
+          "memory_mb": 25.8984375,
+          "memory_percent": 0.0025098956136307125
+        }
+      },
+      "services": {
+        "ollama": {
+          "status": "running",
+          "models": 4
+        },
+        "qdrant": {
+          "status": "unavailable"
+        },
+        "bms_api": {
+          "status": "running",
+          "health": {
+            "status": "healthy",
+            "timestamp": "2025-10-05T11:19:36.612119",
+            "services": {
+              "qdrant": "connected",
+              "ollama": "connected"
+            }
+          }
+        }
+      }
+    },
+    {
+      "timestamp": "2025-10-05T11:19:37.613624",
+      "elapsed_seconds": 137.79,
+      "system": {
+        "cpu_percent": 13.9,
+        "memory_percent": 12.4,
+        "memory_available_gb": 883.0838394165039,
+        "disk_usage_percent": 21.1
+      },
+      "processes": {
+        "openwebui": {
+          "pid": 43656,
+          "cpu_percent": 0.0,
+          "memory_mb": 977.56640625,
+          "memory_percent": 0.09473890596989158
+        },
+        "ollama": {
+          "pid": 17210,
+          "cpu_percent": 0.0,
+          "memory_mb": 1053.0859375,
+          "memory_percent": 0.10205773129392214
+        },
+        "qdrant": {
+          "pid": 1712,
+          "cpu_percent": 0.0,
+          "memory_mb": 205.1953125,
+          "memory_percent": 0.01988609601568949
+        },
+        "python": {
+          "pid": 53558,
+          "cpu_percent": 0.0,
+          "memory_mb": 25.8984375,
+          "memory_percent": 0.0025098956136307125
+        }
+      },
+      "services": {
+        "ollama": {
+          "status": "running",
+          "models": 4
+        },
+        "qdrant": {
+          "status": "unavailable"
+        },
+        "bms_api": {
+          "status": "running",
+          "health": {
+            "status": "healthy",
+            "timestamp": "2025-10-05T11:19:38.152665",
+            "services": {
+              "qdrant": "connected",
+              "ollama": "connected"
+            }
+          }
+        }
+      }
+    },
+    {
+      "timestamp": "2025-10-05T11:19:39.154322",
+      "elapsed_seconds": 139.33,
+      "system": {
+        "cpu_percent": 0.9,
+        "memory_percent": 11.2,
+        "memory_available_gb": 894.5882415771484,
+        "disk_usage_percent": 21.1
+      },
+      "processes": {
+        "openwebui": {
+          "pid": 43656,
+          "cpu_percent": 0.0,
+          "memory_mb": 977.56640625,
+          "memory_percent": 0.09473890596989158
+        },
+        "ollama": {
+          "pid": 17210,
+          "cpu_percent": 0.0,
+          "memory_mb": 1053.0859375,
+          "memory_percent": 0.10205773129392214
+        },
+        "qdrant": {
+          "pid": 1712,
+          "cpu_percent": 10.0,
+          "memory_mb": 205.1953125,
+          "memory_percent": 0.01988609601568949
+        },
+        "python": {
+          "pid": 53558,
+          "cpu_percent": 0.0,
+          "memory_mb": 25.8984375,
+          "memory_percent": 0.0025098956136307125
+        }
+      },
+      "services": {
+        "ollama": {
+          "status": "running",
+          "models": 4
+        },
+        "qdrant": {
+          "status": "unavailable"
+        },
+        "bms_api": {
+          "status": "running",
+          "health": {
+            "status": "healthy",
+            "timestamp": "2025-10-05T11:19:39.717680",
+            "services": {
+              "qdrant": "connected",
+              "ollama": "connected"
+            }
+          }
+        }
+      }
+    },
+    {
+      "timestamp": "2025-10-05T11:19:40.719588",
+      "elapsed_seconds": 140.9,
+      "system": {
+        "cpu_percent": 0.7,
+        "memory_percent": 11.2,
+        "memory_available_gb": 894.9105644226074,
+        "disk_usage_percent": 21.1
+      },
+      "processes": {
+        "openwebui": {
+          "pid": 43656,
+          "cpu_percent": 0.0,
+          "memory_mb": 977.56640625,
+          "memory_percent": 0.09473890596989158
+        },
+        "ollama": {
+          "pid": 17210,
+          "cpu_percent": 0.0,
+          "memory_mb": 1053.0859375,
+          "memory_percent": 0.10205773129392214
+        },
+        "qdrant": {
+          "pid": 1712,
+          "cpu_percent": 0.0,
+          "memory_mb": 205.1953125,
+          "memory_percent": 0.01988609601568949
+        },
+        "python": {
+          "pid": 53558,
+          "cpu_percent": 0.0,
+          "memory_mb": 25.8984375,
+          "memory_percent": 0.0025098956136307125
+        }
+      },
+      "services": {
+        "ollama": {
+          "status": "running",
+          "models": 4
+        },
+        "qdrant": {
+          "status": "unavailable"
+        },
+        "bms_api": {
+          "status": "running",
+          "health": {
+            "status": "healthy",
+            "timestamp": "2025-10-05T11:19:41.271247",
+            "services": {
+              "qdrant": "connected",
+              "ollama": "connected"
+            }
+          }
+        }
+      }
+    },
+    {
+      "timestamp": "2025-10-05T11:19:42.272759",
+      "elapsed_seconds": 142.45,
+      "system": {
+        "cpu_percent": 6.1,
+        "memory_percent": 11.2,
+        "memory_available_gb": 894.8866806030273,
+        "disk_usage_percent": 21.1
+      },
+      "processes": {
+        "openwebui": {
+          "pid": 43656,
+          "cpu_percent": 0.0,
+          "memory_mb": 977.56640625,
+          "memory_percent": 0.09473890596989158
+        },
+        "ollama": {
+          "pid": 17210,
+          "cpu_percent": 0.0,
+          "memory_mb": 1053.0859375,
+          "memory_percent": 0.10205773129392214
+        },
+        "qdrant": {
+          "pid": 1712,
+          "cpu_percent": 0.0,
+          "memory_mb": 205.1953125,
+          "memory_percent": 0.01988609601568949
+        },
+        "python": {
+          "pid": 53558,
+          "cpu_percent": 0.0,
+          "memory_mb": 25.8984375,
+          "memory_percent": 0.0025098956136307125
+        }
+      },
+      "services": {
+        "ollama": {
+          "status": "running",
+          "models": 4
+        },
+        "qdrant": {
+          "status": "unavailable"
+        },
+        "bms_api": {
+          "status": "running",
+          "health": {
+            "status": "healthy",
+            "timestamp": "2025-10-05T11:19:42.815543",
+            "services": {
+              "qdrant": "connected",
+              "ollama": "connected"
+            }
+          }
+        }
+      }
+    },
+    {
+      "timestamp": "2025-10-05T11:19:43.816954",
+      "elapsed_seconds": 143.99,
+      "system": {
+        "cpu_percent": 12.0,
+        "memory_percent": 11.2,
+        "memory_available_gb": 894.8770866394043,
+        "disk_usage_percent": 21.1
+      },
+      "processes": {
+        "openwebui": {
+          "pid": 43656,
+          "cpu_percent": 0.0,
+          "memory_mb": 977.56640625,
+          "memory_percent": 0.09473890596989158
+        },
+        "ollama": {
+          "pid": 17210,
+          "cpu_percent": 0.0,
+          "memory_mb": 1053.0859375,
+          "memory_percent": 0.10205773129392214
+        },
+        "qdrant": {
+          "pid": 1712,
+          "cpu_percent": 0.0,
+          "memory_mb": 205.1953125,
+          "memory_percent": 0.01988609601568949
+        },
+        "python": {
+          "pid": 53558,
+          "cpu_percent": 0.0,
+          "memory_mb": 25.8984375,
+          "memory_percent": 0.0025098956136307125
+        }
+      },
+      "services": {
+        "ollama": {
+          "status": "running",
+          "models": 4
+        },
+        "qdrant": {
+          "status": "unavailable"
+        },
+        "bms_api": {
+          "status": "running",
+          "health": {
+            "status": "healthy",
+            "timestamp": "2025-10-05T11:19:44.356625",
+            "services": {
+              "qdrant": "connected",
+              "ollama": "connected"
+            }
+          }
+        }
+      }
+    },
+    {
+      "timestamp": "2025-10-05T11:19:45.359371",
+      "elapsed_seconds": 145.54,
+      "system": {
+        "cpu_percent": 17.4,
+        "memory_percent": 11.2,
+        "memory_available_gb": 894.8752136230469,
+        "disk_usage_percent": 21.1
+      },
+      "processes": {
+        "openwebui": {
+          "pid": 43656,
+          "cpu_percent": 0.0,
+          "memory_mb": 977.56640625,
+          "memory_percent": 0.09473890596989158
+        },
+        "ollama": {
+          "pid": 17210,
+          "cpu_percent": 0.0,
+          "memory_mb": 1053.0859375,
+          "memory_percent": 0.10205773129392214
+        },
+        "qdrant": {
+          "pid": 1712,
+          "cpu_percent": 0.0,
+          "memory_mb": 205.1953125,
+          "memory_percent": 0.01988609601568949
+        },
+        "python": {
+          "pid": 53558,
+          "cpu_percent": 0.0,
+          "memory_mb": 25.8984375,
+          "memory_percent": 0.0025098956136307125
+        }
+      },
+      "services": {
+        "ollama": {
+          "status": "running",
+          "models": 4
+        },
+        "qdrant": {
+          "status": "unavailable"
+        },
+        "bms_api": {
+          "status": "running",
+          "health": {
+            "status": "healthy",
+            "timestamp": "2025-10-05T11:19:45.898506",
+            "services": {
+              "qdrant": "connected",
+              "ollama": "connected"
+            }
+          }
+        }
+      }
+    },
+    {
+      "timestamp": "2025-10-05T11:19:46.899882",
+      "elapsed_seconds": 147.08,
+      "system": {
+        "cpu_percent": 0.5,
+        "memory_percent": 11.2,
+        "memory_available_gb": 894.8726043701172,
+        "disk_usage_percent": 21.1
+      },
+      "processes": {
+        "openwebui": {
+          "pid": 43656,
+          "cpu_percent": 0.0,
+          "memory_mb": 977.56640625,
+          "memory_percent": 0.09473890596989158
+        },
+        "ollama": {
+          "pid": 17210,
+          "cpu_percent": 0.0,
+          "memory_mb": 1053.0859375,
+          "memory_percent": 0.10205773129392214
+        },
+        "qdrant": {
+          "pid": 1712,
+          "cpu_percent": 0.0,
+          "memory_mb": 205.1953125,
+          "memory_percent": 0.01988609601568949
+        },
+        "python": {
+          "pid": 53558,
+          "cpu_percent": 0.0,
+          "memory_mb": 25.8984375,
+          "memory_percent": 0.0025098956136307125
+        }
+      },
+      "services": {
+        "ollama": {
+          "status": "running",
+          "models": 4
+        },
+        "qdrant": {
+          "status": "unavailable"
+        },
+        "bms_api": {
+          "status": "running",
+          "health": {
+            "status": "healthy",
+            "timestamp": "2025-10-05T11:19:47.441252",
+            "services": {
+              "qdrant": "connected",
+              "ollama": "connected"
+            }
+          }
+        }
+      }
+    },
+    {
+      "timestamp": "2025-10-05T11:19:48.442855",
+      "elapsed_seconds": 148.62,
+      "system": {
+        "cpu_percent": 1.1,
+        "memory_percent": 11.2,
+        "memory_available_gb": 894.813289642334,
+        "disk_usage_percent": 21.1
+      },
+      "processes": {
+        "openwebui": {
+          "pid": 43656,
+          "cpu_percent": 0.0,
+          "memory_mb": 977.56640625,
+          "memory_percent": 0.09473890596989158
+        },
+        "ollama": {
+          "pid": 17210,
+          "cpu_percent": 0.0,
+          "memory_mb": 1053.0859375,
+          "memory_percent": 0.10205773129392214
+        },
+        "qdrant": {
+          "pid": 1712,
+          "cpu_percent": 0.0,
+          "memory_mb": 205.1953125,
+          "memory_percent": 0.01988609601568949
+        },
+        "python": {
+          "pid": 53558,
+          "cpu_percent": 0.0,
+          "memory_mb": 25.8984375,
+          "memory_percent": 0.0025098956136307125
+        }
+      },
+      "services": {
+        "ollama": {
+          "status": "running",
+          "models": 4
+        },
+        "qdrant": {
+          "status": "unavailable"
+        },
+        "bms_api": {
+          "status": "running",
+          "health": {
+            "status": "healthy",
+            "timestamp": "2025-10-05T11:19:48.998983",
+            "services": {
+              "qdrant": "connected",
+              "ollama": "connected"
+            }
+          }
+        }
+      }
+    },
+    {
+      "timestamp": "2025-10-05T11:19:50.000854",
+      "elapsed_seconds": 150.18,
+      "system": {
+        "cpu_percent": 0.5,
+        "memory_percent": 11.2,
+        "memory_available_gb": 894.8039779663086,
+        "disk_usage_percent": 21.1
+      },
+      "processes": {
+        "openwebui": {
+          "pid": 43656,
+          "cpu_percent": 0.0,
+          "memory_mb": 977.56640625,
+          "memory_percent": 0.09473890596989158
+        },
+        "ollama": {
+          "pid": 17210,
+          "cpu_percent": 0.0,
+          "memory_mb": 1053.0859375,
+          "memory_percent": 0.10205773129392214
+        },
+        "qdrant": {
+          "pid": 1712,
+          "cpu_percent": 0.0,
+          "memory_mb": 205.1953125,
+          "memory_percent": 0.01988609601568949
+        },
+        "python": {
+          "pid": 53558,
+          "cpu_percent": 0.0,
+          "memory_mb": 25.8984375,
+          "memory_percent": 0.0025098956136307125
+        }
+      },
+      "services": {
+        "ollama": {
+          "status": "running",
+          "models": 4
+        },
+        "qdrant": {
+          "status": "unavailable"
+        },
+        "bms_api": {
+          "status": "running",
+          "health": {
+            "status": "healthy",
+            "timestamp": "2025-10-05T11:19:50.564769",
+            "services": {
+              "qdrant": "connected",
+              "ollama": "connected"
+            }
+          }
+        }
+      }
+    },
+    {
+      "timestamp": "2025-10-05T11:19:51.566537",
+      "elapsed_seconds": 151.74,
+      "system": {
+        "cpu_percent": 0.4,
+        "memory_percent": 11.2,
+        "memory_available_gb": 894.7968215942383,
+        "disk_usage_percent": 21.1
+      },
+      "processes": {
+        "openwebui": {
+          "pid": 43656,
+          "cpu_percent": 0.0,
+          "memory_mb": 977.56640625,
+          "memory_percent": 0.09473890596989158
+        },
+        "ollama": {
+          "pid": 17210,
+          "cpu_percent": 0.0,
+          "memory_mb": 1053.0859375,
+          "memory_percent": 0.10205773129392214
+        },
+        "qdrant": {
+          "pid": 1712,
+          "cpu_percent": 0.0,
+          "memory_mb": 205.1953125,
+          "memory_percent": 0.01988609601568949
+        },
+        "python": {
+          "pid": 53558,
+          "cpu_percent": 0.0,
+          "memory_mb": 25.8984375,
+          "memory_percent": 0.0025098956136307125
+        }
+      },
+      "services": {
+        "ollama": {
+          "status": "running",
+          "models": 4
+        },
+        "qdrant": {
+          "status": "unavailable"
+        },
+        "bms_api": {
+          "status": "running",
+          "health": {
+            "status": "healthy",
+            "timestamp": "2025-10-05T11:19:52.127278",
+            "services": {
+              "qdrant": "connected",
+              "ollama": "connected"
+            }
+          }
+        }
+      }
+    },
+    {
+      "timestamp": "2025-10-05T11:19:53.129219",
+      "elapsed_seconds": 153.31,
+      "system": {
+        "cpu_percent": 0.7,
+        "memory_percent": 11.2,
+        "memory_available_gb": 894.7889556884766,
+        "disk_usage_percent": 21.1
+      },
+      "processes": {
+        "openwebui": {
+          "pid": 43656,
+          "cpu_percent": 0.0,
+          "memory_mb": 977.56640625,
+          "memory_percent": 0.09473890596989158
+        },
+        "ollama": {
+          "pid": 17210,
+          "cpu_percent": 0.0,
+          "memory_mb": 1053.0859375,
+          "memory_percent": 0.10205773129392214
+        },
+        "qdrant": {
+          "pid": 1712,
+          "cpu_percent": 0.0,
+          "memory_mb": 205.1953125,
+          "memory_percent": 0.01988609601568949
+        },
+        "python": {
+          "pid": 53558,
+          "cpu_percent": 0.0,
+          "memory_mb": 25.8984375,
+          "memory_percent": 0.0025098956136307125
+        }
+      },
+      "services": {
+        "ollama": {
+          "status": "running",
+          "models": 4
+        },
+        "qdrant": {
+          "status": "unavailable"
+        },
+        "bms_api": {
+          "status": "running",
+          "health": {
+            "status": "healthy",
+            "timestamp": "2025-10-05T11:19:53.692967",
+            "services": {
+              "qdrant": "connected",
+              "ollama": "connected"
+            }
+          }
+        }
+      }
+    },
+    {
+      "timestamp": "2025-10-05T11:19:54.695305",
+      "elapsed_seconds": 154.87,
+      "system": {
+        "cpu_percent": 0.5,
+        "memory_percent": 11.2,
+        "memory_available_gb": 894.7759017944336,
+        "disk_usage_percent": 21.1
+      },
+      "processes": {
+        "openwebui": {
+          "pid": 43656,
+          "cpu_percent": 0.0,
+          "memory_mb": 977.56640625,
+          "memory_percent": 0.09473890596989158
+        },
+        "ollama": {
+          "pid": 17210,
+          "cpu_percent": 0.0,
+          "memory_mb": 1049.06640625,
+          "memory_percent": 0.10166818640909166
+        },
+        "qdrant": {
+          "pid": 1712,
+          "cpu_percent": 0.0,
+          "memory_mb": 205.1953125,
+          "memory_percent": 0.01988609601568949
+        },
+        "python": {
+          "pid": 53558,
+          "cpu_percent": 0.0,
+          "memory_mb": 25.8984375,
+          "memory_percent": 0.0025098956136307125
+        }
+      },
+      "services": {
+        "ollama": {
+          "status": "running",
+          "models": 4
+        },
+        "qdrant": {
+          "status": "unavailable"
+        },
+        "bms_api": {
+          "status": "running",
+          "health": {
+            "status": "healthy",
+            "timestamp": "2025-10-05T11:19:55.251366",
+            "services": {
+              "qdrant": "connected",
+              "ollama": "connected"
+            }
+          }
+        }
+      }
+    },
+    {
+      "timestamp": "2025-10-05T11:19:56.253590",
+      "elapsed_seconds": 156.43,
+      "system": {
+        "cpu_percent": 0.6,
+        "memory_percent": 11.2,
+        "memory_available_gb": 894.771614074707,
+        "disk_usage_percent": 21.1
+      },
+      "processes": {
+        "openwebui": {
+          "pid": 43656,
+          "cpu_percent": 0.0,
+          "memory_mb": 977.56640625,
+          "memory_percent": 0.09473890596989158
+        },
+        "ollama": {
+          "pid": 17210,
+          "cpu_percent": 0.0,
+          "memory_mb": 1049.06640625,
+          "memory_percent": 0.10166818640909166
+        },
+        "qdrant": {
+          "pid": 1712,
+          "cpu_percent": 0.0,
+          "memory_mb": 205.1953125,
+          "memory_percent": 0.01988609601568949
+        },
+        "python": {
+          "pid": 53558,
+          "cpu_percent": 0.0,
+          "memory_mb": 25.8984375,
+          "memory_percent": 0.0025098956136307125
+        }
+      },
+      "services": {
+        "ollama": {
+          "status": "running",
+          "models": 4
+        },
+        "qdrant": {
+          "status": "unavailable"
+        },
+        "bms_api": {
+          "status": "running",
+          "health": {
+            "status": "healthy",
+            "timestamp": "2025-10-05T11:19:56.818391",
+            "services": {
+              "qdrant": "connected",
+              "ollama": "connected"
+            }
+          }
+        }
+      }
+    },
+    {
+      "timestamp": "2025-10-05T11:19:57.820385",
+      "elapsed_seconds": 158.0,
+      "system": {
+        "cpu_percent": 0.5,
+        "memory_percent": 11.2,
+        "memory_available_gb": 894.782169342041,
+        "disk_usage_percent": 21.1
+      },
+      "processes": {
+        "openwebui": {
+          "pid": 43656,
+          "cpu_percent": 0.0,
+          "memory_mb": 977.56640625,
+          "memory_percent": 0.09473890596989158
+        },
+        "ollama": {
+          "pid": 17210,
+          "cpu_percent": 0.0,
+          "memory_mb": 1049.06640625,
+          "memory_percent": 0.10166818640909166
+        },
+        "qdrant": {
+          "pid": 1712,
+          "cpu_percent": 0.0,
+          "memory_mb": 205.1953125,
+          "memory_percent": 0.01988609601568949
+        },
+        "python": {
+          "pid": 53558,
+          "cpu_percent": 0.0,
+          "memory_mb": 25.8984375,
+          "memory_percent": 0.0025098956136307125
+        }
+      },
+      "services": {
+        "ollama": {
+          "status": "running",
+          "models": 4
+        },
+        "qdrant": {
+          "status": "unavailable"
+        },
+        "bms_api": {
+          "status": "running",
+          "health": {
+            "status": "healthy",
+            "timestamp": "2025-10-05T11:19:58.378628",
+            "services": {
+              "qdrant": "connected",
+              "ollama": "connected"
+            }
+          }
+        }
+      }
+    },
+    {
+      "timestamp": "2025-10-05T11:19:59.380584",
+      "elapsed_seconds": 159.56,
+      "system": {
+        "cpu_percent": 1.1,
+        "memory_percent": 11.2,
+        "memory_available_gb": 894.8335723876953,
+        "disk_usage_percent": 21.1
+      },
+      "processes": {
+        "openwebui": {
+          "pid": 43656,
+          "cpu_percent": 0.0,
+          "memory_mb": 977.56640625,
+          "memory_percent": 0.09473890596989158
+        },
+        "ollama": {
+          "pid": 17210,
+          "cpu_percent": 0.0,
+          "memory_mb": 1049.06640625,
+          "memory_percent": 0.10166818640909166
+        },
+        "qdrant": {
+          "pid": 1712,
+          "cpu_percent": 0.0,
+          "memory_mb": 205.1953125,
+          "memory_percent": 0.01988609601568949
+        },
+        "python": {
+          "pid": 53558,
+          "cpu_percent": 0.0,
+          "memory_mb": 25.8984375,
+          "memory_percent": 0.0025098956136307125
+        }
+      },
+      "services": {
+        "ollama": {
+          "status": "running",
+          "models": 4
+        },
+        "qdrant": {
+          "status": "unavailable"
+        },
+        "bms_api": {
+          "status": "running",
+          "health": {
+            "status": "healthy",
+            "timestamp": "2025-10-05T11:19:59.937855",
+            "services": {
+              "qdrant": "connected",
+              "ollama": "connected"
+            }
+          }
+        }
+      }
+    },
+    {
+      "timestamp": "2025-10-05T11:20:00.939803",
+      "elapsed_seconds": 161.12,
+      "system": {
+        "cpu_percent": 0.5,
+        "memory_percent": 11.2,
+        "memory_available_gb": 894.8322982788086,
+        "disk_usage_percent": 21.1
+      },
+      "processes": {
+        "openwebui": {
+          "pid": 43656,
+          "cpu_percent": 0.0,
+          "memory_mb": 977.56640625,
+          "memory_percent": 0.09473890596989158
+        },
+        "ollama": {
+          "pid": 17210,
+          "cpu_percent": 0.0,
+          "memory_mb": 1049.06640625,
+          "memory_percent": 0.10166818640909166
+        },
+        "qdrant": {
+          "pid": 1712,
+          "cpu_percent": 0.0,
+          "memory_mb": 205.1953125,
+          "memory_percent": 0.01988609601568949
+        },
+        "python": {
+          "pid": 53558,
+          "cpu_percent": 0.0,
+          "memory_mb": 25.8984375,
+          "memory_percent": 0.0025098956136307125
+        }
+      },
+      "services": {
+        "ollama": {
+          "status": "running",
+          "models": 4
+        },
+        "qdrant": {
+          "status": "unavailable"
+        },
+        "bms_api": {
+          "status": "running",
+          "health": {
+            "status": "healthy",
+            "timestamp": "2025-10-05T11:20:01.483999",
+            "services": {
+              "qdrant": "connected",
+              "ollama": "connected"
+            }
+          }
+        }
+      }
+    },
+    {
+      "timestamp": "2025-10-05T11:20:02.485470",
+      "elapsed_seconds": 162.66,
+      "system": {
+        "cpu_percent": 14.0,
+        "memory_percent": 11.2,
+        "memory_available_gb": 894.8268051147461,
+        "disk_usage_percent": 21.1
+      },
+      "processes": {
+        "openwebui": {
+          "pid": 43656,
+          "cpu_percent": 0.0,
+          "memory_mb": 977.56640625,
+          "memory_percent": 0.09473890596989158
+        },
+        "ollama": {
+          "pid": 17210,
+          "cpu_percent": 0.0,
+          "memory_mb": 1049.06640625,
+          "memory_percent": 0.10166818640909166
+        },
+        "qdrant": {
+          "pid": 1712,
+          "cpu_percent": 0.0,
+          "memory_mb": 205.1953125,
+          "memory_percent": 0.01988609601568949
+        },
+        "python": {
+          "pid": 53558,
+          "cpu_percent": 0.0,
+          "memory_mb": 25.8984375,
+          "memory_percent": 0.0025098956136307125
+        }
+      },
+      "services": {
+        "ollama": {
+          "status": "running",
+          "models": 4
+        },
+        "qdrant": {
+          "status": "unavailable"
+        },
+        "bms_api": {
+          "status": "running",
+          "health": {
+            "status": "healthy",
+            "timestamp": "2025-10-05T11:20:03.027613",
+            "services": {
+              "qdrant": "connected",
+              "ollama": "connected"
+            }
+          }
+        }
+      }
+    },
+    {
+      "timestamp": "2025-10-05T11:20:04.029170",
+      "elapsed_seconds": 164.21,
+      "system": {
+        "cpu_percent": 12.0,
+        "memory_percent": 11.2,
+        "memory_available_gb": 894.8148880004883,
+        "disk_usage_percent": 21.1
+      },
+      "processes": {
+        "openwebui": {
+          "pid": 43656,
+          "cpu_percent": 0.0,
+          "memory_mb": 977.56640625,
+          "memory_percent": 0.09473890596989158
+        },
+        "ollama": {
+          "pid": 17210,
+          "cpu_percent": 0.0,
+          "memory_mb": 1049.06640625,
+          "memory_percent": 0.10166818640909166
+        },
+        "qdrant": {
+          "pid": 1712,
+          "cpu_percent": 0.0,
+          "memory_mb": 205.1953125,
+          "memory_percent": 0.01988609601568949
+        },
+        "python": {
+          "pid": 53558,
+          "cpu_percent": 0.0,
+          "memory_mb": 25.8984375,
+          "memory_percent": 0.0025098956136307125
+        }
+      },
+      "services": {
+        "ollama": {
+          "status": "running",
+          "models": 4
+        },
+        "qdrant": {
+          "status": "unavailable"
+        },
+        "bms_api": {
+          "status": "running",
+          "health": {
+            "status": "healthy",
+            "timestamp": "2025-10-05T11:20:04.570686",
+            "services": {
+              "qdrant": "connected",
+              "ollama": "connected"
+            }
+          }
+        }
+      }
+    },
+    {
+      "timestamp": "2025-10-05T11:20:05.572142",
+      "elapsed_seconds": 165.75,
+      "system": {
+        "cpu_percent": 0.8,
+        "memory_percent": 11.2,
+        "memory_available_gb": 894.8113021850586,
+        "disk_usage_percent": 21.1
+      },
+      "processes": {
+        "openwebui": {
+          "pid": 43656,
+          "cpu_percent": 0.0,
+          "memory_mb": 977.56640625,
+          "memory_percent": 0.09473890596989158
+        },
+        "ollama": {
+          "pid": 17210,
+          "cpu_percent": 0.0,
+          "memory_mb": 1049.06640625,
+          "memory_percent": 0.10166818640909166
+        },
+        "qdrant": {
+          "pid": 1712,
+          "cpu_percent": 0.0,
+          "memory_mb": 205.1953125,
+          "memory_percent": 0.01988609601568949
+        },
+        "python": {
+          "pid": 53558,
+          "cpu_percent": 0.0,
+          "memory_mb": 25.8984375,
+          "memory_percent": 0.0025098956136307125
+        }
+      },
+      "services": {
+        "ollama": {
+          "status": "running",
+          "models": 4
+        },
+        "qdrant": {
+          "status": "unavailable"
+        },
+        "bms_api": {
+          "status": "running",
+          "health": {
+            "status": "healthy",
+            "timestamp": "2025-10-05T11:20:06.118311",
+            "services": {
+              "qdrant": "connected",
+              "ollama": "connected"
+            }
+          }
+        }
+      }
+    },
+    {
+      "timestamp": "2025-10-05T11:20:07.120004",
+      "elapsed_seconds": 167.3,
+      "system": {
+        "cpu_percent": 0.7,
+        "memory_percent": 11.2,
+        "memory_available_gb": 894.8100967407227,
+        "disk_usage_percent": 21.1
+      },
+      "processes": {
+        "openwebui": {
+          "pid": 43656,
+          "cpu_percent": 0.0,
+          "memory_mb": 977.56640625,
+          "memory_percent": 0.09473890596989158
+        },
+        "ollama": {
+          "pid": 17210,
+          "cpu_percent": 0.0,
+          "memory_mb": 1049.06640625,
+          "memory_percent": 0.10166818640909166
+        },
+        "qdrant": {
+          "pid": 1712,
+          "cpu_percent": 0.0,
+          "memory_mb": 205.1953125,
+          "memory_percent": 0.01988609601568949
+        },
+        "python": {
+          "pid": 53558,
+          "cpu_percent": 0.0,
+          "memory_mb": 25.8984375,
+          "memory_percent": 0.0025098956136307125
+        }
+      },
+      "services": {
+        "ollama": {
+          "status": "running",
+          "models": 4
+        },
+        "qdrant": {
+          "status": "unavailable"
+        },
+        "bms_api": {
+          "status": "running",
+          "health": {
+            "status": "healthy",
+            "timestamp": "2025-10-05T11:20:07.663191",
+            "services": {
+              "qdrant": "connected",
+              "ollama": "connected"
+            }
+          }
+        }
+      }
+    },
+    {
+      "timestamp": "2025-10-05T11:20:08.664388",
+      "elapsed_seconds": 168.84,
+      "system": {
+        "cpu_percent": 15.8,
+        "memory_percent": 11.2,
+        "memory_available_gb": 894.8116455078125,
+        "disk_usage_percent": 21.1
+      },
+      "processes": {
+        "openwebui": {
+          "pid": 43656,
+          "cpu_percent": 0.0,
+          "memory_mb": 977.56640625,
+          "memory_percent": 0.09473890596989158
+        },
+        "ollama": {
+          "pid": 17210,
+          "cpu_percent": 0.0,
+          "memory_mb": 1049.06640625,
+          "memory_percent": 0.10166818640909166
+        },
+        "qdrant": {
+          "pid": 1712,
+          "cpu_percent": 10.0,
+          "memory_mb": 205.1953125,
+          "memory_percent": 0.01988609601568949
+        },
+        "python": {
+          "pid": 53558,
+          "cpu_percent": 10.0,
+          "memory_mb": 25.8984375,
+          "memory_percent": 0.0025098956136307125
+        }
+      },
+      "services": {
+        "ollama": {
+          "status": "running",
+          "models": 4
+        },
+        "qdrant": {
+          "status": "unavailable"
+        },
+        "bms_api": {
+          "status": "running",
+          "health": {
+            "status": "healthy",
+            "timestamp": "2025-10-05T11:20:09.208310",
+            "services": {
+              "qdrant": "connected",
+              "ollama": "connected"
+            }
+          }
+        }
+      }
+    },
+    {
+      "timestamp": "2025-10-05T11:20:10.209637",
+      "elapsed_seconds": 170.39,
+      "system": {
+        "cpu_percent": 12.7,
+        "memory_percent": 11.2,
+        "memory_available_gb": 894.8057136535645,
+        "disk_usage_percent": 21.1
+      },
+      "processes": {
+        "openwebui": {
+          "pid": 43656,
+          "cpu_percent": 0.0,
+          "memory_mb": 977.56640625,
+          "memory_percent": 0.09473890596989158
+        },
+        "ollama": {
+          "pid": 17210,
+          "cpu_percent": 0.0,
+          "memory_mb": 1049.06640625,
+          "memory_percent": 0.10166818640909166
+        },
+        "qdrant": {
+          "pid": 1712,
+          "cpu_percent": 0.0,
+          "memory_mb": 205.1953125,
+          "memory_percent": 0.01988609601568949
+        },
+        "python": {
+          "pid": 53558,
+          "cpu_percent": 0.0,
+          "memory_mb": 25.8984375,
+          "memory_percent": 0.0025098956136307125
+        }
+      },
+      "services": {
+        "ollama": {
+          "status": "running",
+          "models": 4
+        },
+        "qdrant": {
+          "status": "unavailable"
+        },
+        "bms_api": {
+          "status": "running",
+          "health": {
+            "status": "healthy",
+            "timestamp": "2025-10-05T11:20:10.754485",
+            "services": {
+              "qdrant": "connected",
+              "ollama": "connected"
+            }
+          }
+        }
+      }
+    },
+    {
+      "timestamp": "2025-10-05T11:20:11.755839",
+      "elapsed_seconds": 171.93,
+      "system": {
+        "cpu_percent": 0.8,
+        "memory_percent": 11.2,
+        "memory_available_gb": 894.8033905029297,
+        "disk_usage_percent": 21.1
+      },
+      "processes": {
+        "openwebui": {
+          "pid": 43656,
+          "cpu_percent": 0.0,
+          "memory_mb": 977.56640625,
+          "memory_percent": 0.09473890596989158
+        },
+        "ollama": {
+          "pid": 17210,
+          "cpu_percent": 0.0,
+          "memory_mb": 1049.06640625,
+          "memory_percent": 0.10166818640909166
+        },
+        "qdrant": {
+          "pid": 1712,
+          "cpu_percent": 0.0,
+          "memory_mb": 205.1953125,
+          "memory_percent": 0.01988609601568949
+        },
+        "python": {
+          "pid": 53558,
+          "cpu_percent": 0.0,
+          "memory_mb": 25.8984375,
+          "memory_percent": 0.0025098956136307125
+        }
+      },
+      "services": {
+        "ollama": {
+          "status": "running",
+          "models": 4
+        },
+        "qdrant": {
+          "status": "unavailable"
+        },
+        "bms_api": {
+          "status": "running",
+          "health": {
+            "status": "healthy",
+            "timestamp": "2025-10-05T11:20:12.305428",
+            "services": {
+              "qdrant": "connected",
+              "ollama": "connected"
+            }
+          }
+        }
+      }
+    },
+    {
+      "timestamp": "2025-10-05T11:20:13.307011",
+      "elapsed_seconds": 173.48,
+      "system": {
+        "cpu_percent": 0.7,
+        "memory_percent": 11.2,
+        "memory_available_gb": 894.8030052185059,
+        "disk_usage_percent": 21.1
+      },
+      "processes": {
+        "openwebui": {
+          "pid": 43656,
+          "cpu_percent": 0.0,
+          "memory_mb": 977.56640625,
+          "memory_percent": 0.09473890596989158
+        },
+        "ollama": {
+          "pid": 17210,
+          "cpu_percent": 0.0,
+          "memory_mb": 1049.06640625,
+          "memory_percent": 0.10166818640909166
+        },
+        "qdrant": {
+          "pid": 1712,
+          "cpu_percent": 0.0,
+          "memory_mb": 205.1953125,
+          "memory_percent": 0.01988609601568949
+        },
+        "python": {
+          "pid": 53558,
+          "cpu_percent": 0.0,
+          "memory_mb": 25.8984375,
+          "memory_percent": 0.0025098956136307125
+        }
+      },
+      "services": {
+        "ollama": {
+          "status": "running",
+          "models": 4
+        },
+        "qdrant": {
+          "status": "unavailable"
+        },
+        "bms_api": {
+          "status": "running",
+          "health": {
+            "status": "healthy",
+            "timestamp": "2025-10-05T11:20:13.851995",
+            "services": {
+              "qdrant": "connected",
+              "ollama": "connected"
+            }
+          }
+        }
+      }
+    },
+    {
+      "timestamp": "2025-10-05T11:20:14.853294",
+      "elapsed_seconds": 175.03,
+      "system": {
+        "cpu_percent": 0.5,
+        "memory_percent": 11.2,
+        "memory_available_gb": 894.7818450927734,
+        "disk_usage_percent": 21.1
+      },
+      "processes": {
+        "openwebui": {
+          "pid": 43656,
+          "cpu_percent": 0.0,
+          "memory_mb": 977.56640625,
+          "memory_percent": 0.09473890596989158
+        },
+        "ollama": {
+          "pid": 17210,
+          "cpu_percent": 0.0,
+          "memory_mb": 1049.06640625,
+          "memory_percent": 0.10166818640909166
+        },
+        "qdrant": {
+          "pid": 1712,
+          "cpu_percent": 0.0,
+          "memory_mb": 205.1953125,
+          "memory_percent": 0.01988609601568949
+        },
+        "python": {
+          "pid": 53558,
+          "cpu_percent": 0.0,
+          "memory_mb": 25.8984375,
+          "memory_percent": 0.0025098956136307125
+        }
+      },
+      "services": {
+        "ollama": {
+          "status": "running",
+          "models": 4
+        },
+        "qdrant": {
+          "status": "unavailable"
+        },
+        "bms_api": {
+          "status": "running",
+          "health": {
+            "status": "healthy",
+            "timestamp": "2025-10-05T11:20:15.418719",
+            "services": {
+              "qdrant": "connected",
+              "ollama": "connected"
+            }
+          }
+        }
+      }
+    },
+    {
+      "timestamp": "2025-10-05T11:20:16.420682",
+      "elapsed_seconds": 176.6,
+      "system": {
+        "cpu_percent": 0.4,
+        "memory_percent": 11.2,
+        "memory_available_gb": 894.7716484069824,
+        "disk_usage_percent": 21.1
+      },
+      "processes": {
+        "openwebui": {
+          "pid": 43656,
+          "cpu_percent": 0.0,
+          "memory_mb": 977.56640625,
+          "memory_percent": 0.09473890596989158
+        },
+        "ollama": {
+          "pid": 17210,
+          "cpu_percent": 0.0,
+          "memory_mb": 1049.06640625,
+          "memory_percent": 0.10166818640909166
+        },
+        "qdrant": {
+          "pid": 1712,
+          "cpu_percent": 0.0,
+          "memory_mb": 205.1953125,
+          "memory_percent": 0.01988609601568949
+        },
+        "python": {
+          "pid": 53558,
+          "cpu_percent": 0.0,
+          "memory_mb": 25.8984375,
+          "memory_percent": 0.0025098956136307125
+        }
+      },
+      "services": {
+        "ollama": {
+          "status": "running",
+          "models": 4
+        },
+        "qdrant": {
+          "status": "unavailable"
+        },
+        "bms_api": {
+          "status": "running",
+          "health": {
+            "status": "healthy",
+            "timestamp": "2025-10-05T11:20:16.978857",
+            "services": {
+              "qdrant": "connected",
+              "ollama": "connected"
+            }
+          }
+        }
+      }
+    },
+    {
+      "timestamp": "2025-10-05T11:20:17.980946",
+      "elapsed_seconds": 178.16,
+      "system": {
+        "cpu_percent": 0.5,
+        "memory_percent": 11.2,
+        "memory_available_gb": 894.769962310791,
+        "disk_usage_percent": 21.1
+      },
+      "processes": {
+        "openwebui": {
+          "pid": 43656,
+          "cpu_percent": 0.0,
+          "memory_mb": 977.56640625,
+          "memory_percent": 0.09473890596989158
+        },
+        "ollama": {
+          "pid": 17210,
+          "cpu_percent": 0.0,
+          "memory_mb": 1049.06640625,
+          "memory_percent": 0.10166818640909166
+        },
+        "qdrant": {
+          "pid": 1712,
+          "cpu_percent": 0.0,
+          "memory_mb": 205.1953125,
+          "memory_percent": 0.01988609601568949
+        },
+        "python": {
+          "pid": 53558,
+          "cpu_percent": 0.0,
+          "memory_mb": 25.8984375,
+          "memory_percent": 0.0025098956136307125
+        }
+      },
+      "services": {
+        "ollama": {
+          "status": "running",
+          "models": 4
+        },
+        "qdrant": {
+          "status": "unavailable"
+        },
+        "bms_api": {
+          "status": "running",
+          "health": {
+            "status": "healthy",
+            "timestamp": "2025-10-05T11:20:18.532001",
+            "services": {
+              "qdrant": "connected",
+              "ollama": "connected"
+            }
+          }
+        }
+      }
+    }
+  ]
+}

@@ -1,8 +1,12 @@
 # BMS Agent - Agentic Capabilities Demo Guide
 
-**Purpose**: Showcase BMS Agent as an intelligent AI assistant, not just a search tool  
+⚠️ **NOTE**: HTML artifact generation (v4.0) is experimental and not working reliably. This guide shows agentic capabilities through **chat responses** instead. HTML artifacts can be added in MVP phase.
+
+**Purpose**: Showcase BMS Agent as an intelligent assistant, not just a search tool  
 **Focus**: Document creation, analysis, workflow guidance, and intelligent assistance  
 **Demo Length**: 15-20 minutes (comprehensive) or 8-10 minutes (highlights)
+
+**System Prompt**: Use **v3.1** (not v4.0) for POC demo
 
 ---
 

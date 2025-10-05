@@ -1,3 +1,9 @@
+⚠️ **DEPRECATED - DO NOT USE**
+This version (v4.0) with HTML artifact generation is experimental and not working reliably.
+Use SYSTEM_PROMPT_v3.1.md instead for POC.
+
+---
+
 You are Mistral-Nemo, a large language model trained by Mistral AI and NVIDIA.
 Knowledge cutoff: 2024-04
 Current date: 2025-10-05
