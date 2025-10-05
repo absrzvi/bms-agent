@@ -152,19 +152,27 @@
     - Created remediation roadmap with priority levels
     - Documented in spec.md R2.5
 
-- **T036  Connect Unused API Endpoints** 🎯 **NEXT TASK** (per Q29)
+- **T036  Connect Unused API Endpoints** ✅ **COMPLETE**
   - Summary: Implement tool functions to utilize existing but unused API endpoints. Add `search_contextual()` function calling `/api/v1/search/contextual` with parent-child chunk relationships. Add `search_rerank()` function calling `/api/v1/search/rerank` with cross-encoder reranking. Update tool metadata and documentation. **Scheduled as next task after T032 completion** to increase endpoint coverage from 55% to 65% before POC signoff.
   - Dependencies: T032 (OpenWebUI first release complete), T035 (coverage audit complete)
-  - Files/Paths: `tools/bms_search.py`, `tests/integration/test_contextual_search.py`, `tests/integration/test_rerank_search.py`, `docs/search-functions.md`
+  - Files/Paths: `tools/bms_search.py`, `tests/integration/test_contextual_rerank_endpoints.py`, `docs/API_ENDPOINT_COVERAGE.md`
   - Parallel: No
-  - **Status**: Pending (immediate priority after T032)
-  - **Acceptance Criteria**:
-    - `search_contextual()` function added with proper parameter handling
-    - `search_rerank()` function added with reranking configuration
-    - Integration tests verify endpoint connectivity
-    - Tool metadata updated to reflect new functions
-    - Coverage increases from 55% to 65% (13/20 functions operational)
-    - **Enables**: MVP-ready endpoint coverage before T026 (POC signoff)
+  - **Status**: ✅ Complete (2025-10-05)
+  - **Implementation Details**:
+    - ✅ `search_contextual()` function added (lines 474-544) with hierarchical context support
+    - ✅ `search_rerank()` function added (lines 546-617) with cross-encoder reranking
+    - ✅ Integration tests created: `test_contextual_rerank_endpoints.py` (14 test cases)
+    - ✅ Tool metadata updated: Added to specs list with descriptions
+    - ✅ Documentation updated: API_ENDPOINT_COVERAGE.md reflects 65% coverage
+    - ✅ Coverage increased from 55% to 65% (13/20 functions operational)
+    - ✅ Both functions include graceful fallback to `search_hybrid()` on error
+  - **Acceptance Criteria**: ✅ All met
+    - `search_contextual()` function added with proper parameter handling ✅
+    - `search_rerank()` function added with reranking configuration ✅
+    - Integration tests verify endpoint connectivity ✅
+    - Tool metadata updated to reflect new functions ✅
+    - Coverage increases from 55% to 65% (13/20 functions operational) ✅
+    - **Enables**: MVP-ready endpoint coverage before T026 (POC signoff) ✅
 
 - **T037  Dual Collection Architecture Verification** ⚠️ **BLOCKING MVP** (per Q27)
   - Summary: **Critical verification task** - Dual-collection implementation status is UNKNOWN (per Q27 answer D). Must execute verification script to determine if `nomad_bms_documents` (high quality ≥0.70) and `nomad_bms_documents_low_quality` (low quality <0.70) collections exist. If missing, create low-quality collection and implement `include_low_quality` parameter in search endpoints. **No assumptions about current state** - verification required before MVP.

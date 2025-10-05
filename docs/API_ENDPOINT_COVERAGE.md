@@ -9,8 +9,11 @@
 | **✅ Fully Working** | 2 | `search_semantic`, `search_hybrid` |
 | **🔧 Working (Filtered)** | 8 | Use base endpoints with filters |
 | **✅ Tool Logic Only** | 1 | `search_smart` (client-side metadata boosting) |
+| **✅ Connected Endpoints (T036)** | 2 | `search_contextual`, `search_rerank` **NEW** |
 | **⚠️ Placeholders** | 8 | Return fallback to hybrid search |
-| **❌ API Exists, Tool Missing** | 2 | `contextual`, `rerank` endpoints unused |
+
+**Updated**: 2025-10-05 (T036 Complete)  
+**Coverage**: **65% (13/20 functions operational)** ⬆️ from 55%
 
 ---
 
@@ -27,7 +30,38 @@ These have dedicated API endpoints and working tool implementations:
 
 ---
 
-## 2. 🔧 Filtered Search (Uses Base Endpoints)
+## 2. ✅ Connected Endpoints (T036 - NEW)
+
+**Status**: ✅ **IMPLEMENTED** (2025-10-05)
+
+These endpoints existed in the API but were unused by the tool. T036 connected them to increase coverage from 55% to 65%.
+
+| Tool Function | API Endpoint | Status | Added |
+|---------------|--------------|--------|-------|
+| `search_contextual()` | `/api/v1/search/contextual` | ✅ Connected | T036 |
+| `search_rerank()` | `/api/v1/search/rerank` | ✅ Connected | T036 |
+
+**Implementation Details**:
+
+### `search_contextual()`
+- **Purpose**: Hierarchical search with parent-child chunk relationships
+- **Parameters**: `query`, `limit`, `include_context`, `expand_parents`, `expand_children`
+- **Use Case**: Complex queries needing surrounding context, multi-part documents
+- **Example**: "What are the requirements for safety assessments?" (gets full procedure context)
+- **Fallback**: Gracefully falls back to `search_hybrid()` on error
+
+### `search_rerank()`
+- **Purpose**: Two-stage retrieval with cross-encoder reranking for improved relevance
+- **Parameters**: `query`, `limit`, `rerank_top_k`, `use_cross_encoder`
+- **Use Case**: High-precision queries where top result accuracy is critical
+- **Example**: "What is the exact process for vendor approval?" (ensures most relevant is first)
+- **Fallback**: Gracefully falls back to `search_hybrid()` on error
+
+**Tests**: `/workspace/001-bms-agent/tests/integration/test_contextual_rerank_endpoints.py`
+
+---
+
+## 3. 🔧 Filtered Search (Uses Base Endpoints)
 
 These use `search_semantic` or `search_hybrid` with filter parameters:
 

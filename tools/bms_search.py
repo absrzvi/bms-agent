@@ -469,6 +469,153 @@ class Tools:
         filters = {"quality_score_min": min_quality}
         return self.search_documents(query, limit=limit, search_type="hybrid", filters=filters)
     
+    # ==================== CONNECTED API ENDPOINTS (T036) ====================
+    
+    def search_contextual(
+        self,
+        query: str,
+        limit: int = 5,
+        include_context: bool = True,
+        expand_parents: bool = True,
+        expand_children: bool = False
+    ) -> str:
+        """
+        🔗 CONTEXTUAL SEARCH with parent-child chunk relationships.
+        
+        Uses hierarchical embeddings to provide richer context by including:
+        - Parent chunks (broader context)
+        - Child chunks (detailed specifics)
+        - Full document embeddings (document-level relevance)
+        
+        Best for: Complex queries needing surrounding context, multi-part documents
+        Example: "What are the requirements for safety assessments?" (gets full procedure context)
+        
+        Args:
+            query: Search query
+            limit: Maximum results to return
+            include_context: Include parent/child context in results
+            expand_parents: Retrieve parent chunks for additional context
+            expand_children: Retrieve child chunks for detailed information
+        
+        Returns:
+            Search results with contextual information
+        """
+        endpoint = f"{self.valves.BMS_API_URL}/api/v1/search/contextual"
+        
+        payload = {
+            "query": query,
+            "limit": limit,
+            "include_context": include_context,
+            "expand_parents": expand_parents,
+            "expand_children": expand_children,
+            "parent_weight": 0.3,
+            "child_weight": 0.2,
+            "full_doc_weight": 0.1
+        }
+        
+        try:
+            response = requests.post(endpoint, json=payload, timeout=self.valves.TIMEOUT)
+            
+            if response.status_code != 200:
+                # Fallback to hybrid search if contextual search fails
+                return self.search_hybrid(query, limit=limit)
+            
+            data = response.json()
+            results = data.get("results", [])
+            
+            if not results:
+                return f"🔍 No contextual results found for: '{query}'\n\nTry broadening your search or using hybrid search."
+            
+            output = [
+                f"🔍 **Contextual Search** for: '{query}'",
+                f"📊 Found {len(results)} results with hierarchical context\n"
+            ]
+            
+            # Format results
+            output.append(self._format_results(results, query, "contextual"))
+            
+            # Add contextual search info
+            output.append(f"\n💡 **Context Strategy**: Parent chunks {'✅' if expand_parents else '❌'} | Child chunks {'✅' if expand_children else '❌'}")
+            
+            return "\n".join(output)
+            
+        except Exception as e:
+            # Fallback to hybrid search on error
+            return self.search_hybrid(query, limit=limit)
+    
+    def search_rerank(
+        self,
+        query: str,
+        limit: int = 5,
+        rerank_top_k: int = 20,
+        use_cross_encoder: bool = True
+    ) -> str:
+        """
+        ⚡ RERANKED SEARCH with cross-encoder for improved relevance.
+        
+        Two-stage retrieval:
+        1. Initial retrieval: Get top K candidates (semantic + keyword)
+        2. Reranking: Use cross-encoder model to reorder by query-document relevance
+        
+        Cross-encoders jointly encode query and document for better relevance scoring
+        than bi-encoders (used in standard semantic search).
+        
+        Best for: High-precision queries, when top result accuracy is critical
+        Example: "What is the exact process for vendor approval?" (ensures most relevant is first)
+        
+        Args:
+            query: Search query
+            limit: Final number of results to return
+            rerank_top_k: Number of candidates to retrieve before reranking (default: 20)
+            use_cross_encoder: Enable cross-encoder reranking (default: True)
+        
+        Returns:
+            Reranked search results with improved relevance ordering
+        """
+        endpoint = f"{self.valves.BMS_API_URL}/api/v1/search/rerank"
+        
+        payload = {
+            "query": query,
+            "limit": limit,
+            "rerank": use_cross_encoder,
+            "rerank_top_k": rerank_top_k,
+            "retrieval_weight": 0.7,
+            "rerank_weight": 0.3
+        }
+        
+        try:
+            response = requests.post(endpoint, json=payload, timeout=self.valves.TIMEOUT)
+            
+            if response.status_code != 200:
+                # Fallback to hybrid search if rerank search fails
+                return self.search_hybrid(query, limit=limit)
+            
+            data = response.json()
+            results = data.get("results", [])
+            
+            if not results:
+                return f"🔍 No reranked results found for: '{query}'\n\nTry broadening your search or using hybrid search."
+            
+            output = [
+                f"🔍 **Reranked Search** for: '{query}'",
+                f"📊 Found {len(results)} results (reranked from top {rerank_top_k})\n"
+            ]
+            
+            # Format results
+            output.append(self._format_results(results, query, "rerank"))
+            
+            # Add reranking info
+            if use_cross_encoder:
+                output.append(f"\n⚡ **Reranking**: Cross-encoder applied to top {rerank_top_k} candidates for improved relevance")
+            else:
+                output.append(f"\n⚡ **Reranking**: Standard scoring used")
+            
+            return "\n".join(output)
+            
+        except Exception as e:
+            # Fallback to hybrid search on error
+            return self.search_hybrid(query, limit=limit)
+    
     # ==================== ADVANCED SEARCH FUNCTIONS (NEW v3.0) ====================
     
     def search_with_session(
@@ -1220,6 +1367,10 @@ TOOL_METADATA = {
         {"name": "search_by_department", "description": "Filter by department"},
         {"name": "search_with_context", "description": "Prioritize contextual chunks"},
         {"name": "search_high_quality", "description": "Filter by quality score"},
+        
+        # Connected API Endpoints (T036 - NEW)
+        {"name": "search_contextual", "description": "🔗 Hierarchical search with parent-child context"},
+        {"name": "search_rerank", "description": "⚡ Cross-encoder reranking for precision"},
         
         # Advanced Search (NEW v3.0)
         {"name": "search_with_session", "description": "Conversational context tracking"},
