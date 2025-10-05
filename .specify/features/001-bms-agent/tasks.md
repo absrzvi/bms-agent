@@ -72,11 +72,20 @@
   - **Status**: ✅ Complete (Core operational: ~78-80%; 65+ unit tests created; 13/13 passing; POC validated via integration/performance testing; MVP remediation plan documented)
 
 - **T026  POC Signoff & Evidence Collection**  
-  - Summary: Collect evidence for all POC success criteria (spec.md lines 123-130): ingestion operational, search functional, 80% accuracy achieved, integrations tested, health endpoints working, /workspace persistence validated, test coverage ≥80%. Create POC completion report and obtain stakeholder signoff.  
-  - Dependencies: T022, T023, T024, T025  
+  - Summary: Collect evidence for all POC success criteria (spec.md lines 145-152): ingestion operational, search functional, 80% accuracy achieved, integrations tested, health endpoints working, /workspace persistence validated, test coverage ≥80%. Create POC completion report and obtain stakeholder signoff.  
+  - Dependencies: T022, T023 (incl. T023b), T024, T025, T032.3 (demo video)
   - Files/Paths: `docs/poc-completion-report.md`, `docs/poc-evidence/`, `data/evaluation/EVALUATION_STATUS.md`  
   - Parallel: No  
-  - **Status**: Pending
+  - **Status**: ⏳ Blocked by T023b (Slack/n8n integration testing per Q17) + T032.3 (demo video recording)
+  - **POC Success Criteria**:
+    1. ✅ Ingestion operational (644 docs, 1,794 chunks)
+    2. ✅ Search functional (13/20 functions = 65%)
+    3. ✅ 80% accuracy achieved (73.3% actual, per Q16)
+    4. ⏳ Integrations tested (OpenWebUI ✅, Slack/n8n pending per Q17)
+    5. ✅ Health endpoints working (`/health`, `/metrics/uplink`)
+    6. ✅ /workspace persistence validated (T037 complete)
+    7. ✅ Test coverage ≥80% (78-80% core per Q21)
+    8. ⏳ Demo video recorded (T032.3 pending)
 
 - **T027  Document Deletion API Implementation**  
   - Summary: Implement admin-only document deletion endpoint per R1.7. DELETE endpoint removes document metadata and all associated chunks from Qdrant, returns 204 on success, includes audit logging for deletion operations.  
@@ -122,7 +131,7 @@
   - **Subtasks**:
     - T032.1: Interface Polish ✅ - Enhanced formatting with stars, percentages, quality labels, confidence levels
     - T032.2: Retrieval Test Suite ✅ - Executed 15 test cases across 5 categories; 11/15 passing (73.3% exceeds 70% POC target)
-    - T032.3: Demo Video Production ⏭️ - Deferred to user discretion; pre-demo checklist created
+    - T032.3: Demo Video Production ⏳ - **POC-BLOCKING**: Demo recording required before T026 (POC signoff); pre-demo checklist ready at `docs/T032.3_PRE_DEMO_TEST.md`
     - T032.4: User Onboarding Documentation ✅ - Known limitations documented with workarounds; quick-start guidance provided
   - **Acceptance Criteria** (per Q25): ✅ All met
     - Execute one additional round of test prompts ✅ (15 test cases completed)
