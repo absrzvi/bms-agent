@@ -81,8 +81,11 @@ Progressive performance requirements aligned with deployment phases:
   - R2.4: **CLARIFIED**: Configurable relevance filtering - Search endpoints accept optional `min_score` query parameter to filter results below specified similarity threshold (default: no filtering, return all top-k).
     - *Acceptance*: `/api/v1/search/semantic?min_score=0.7` filters results; parameter validated (0.0-1.0 range); documented in OpenAPI spec; default behavior returns all top-k results regardless of score.
   - R2.5: **DOCUMENTED** (2025-10-05, T035): API Endpoint Coverage - Tool advertises 20 search functions with 11 functional (55% coverage), 2 unused API endpoints, 8 placeholder functions. Maintain accurate tool metadata reflecting actual capabilities to prevent user confusion.
-    - *Acceptance*: Coverage analysis documented in `docs/API_ENDPOINT_COVERAGE.md`; tool metadata accurately reflects working vs placeholder functions; unused endpoints (`/api/v1/search/contextual`, `/api/v1/search/rerank`) either connected or documented as future work; placeholder functions either implemented or removed before production.
-    - *Current Status*: ✅ Working (semantic, hybrid, smart + 8 filtered searches); ⚠️ Unused API endpoints exist; ❌ 8 placeholders need implementation/removal.
+    - *Acceptance*: 
+      - **POC**: Coverage analysis documented in `docs/API_ENDPOINT_COVERAGE.md`; 55% functional coverage acceptable ✅
+      - **MVP**: Connect unused endpoints (T036) → 65% coverage (13/20 functions)
+      - **Production** (per Q28): Implement all 8 placeholders (query expansion, session, synthesis, facets, explanation, latest versions, date range, multi-query) → 100% coverage (20/20 functions); no partial implementations allowed
+    - *Current Status*: ✅ Working (semantic, hybrid, smart + 8 filtered searches); ⚠️ Unused API endpoints exist; ❌ 8 placeholders become production requirements
   - R2.6: **IMPLEMENTED** (2025-10-05, T034): SharePoint URL Integration - Return real SharePoint document URLs in search results for direct document access, enabling users to navigate from search results to source documents.
     - *Acceptance*: ≥565 documents with verified SharePoint URLs (87.7% coverage of 644 total documents); API returns `document_url` field in metadata; OpenWebUI tool displays URLs with 🔗 icon; system prompt uses real URL examples (not hallucinated); URL format: `https://nomadrail.sharepoint.com/qms/...`; documents without URLs removed from search index for quality.
     - *Implementation*: Parsed 983 URLs from `bms-docs-urls.md`, matched to documents, added `document_url` field to Qdrant payloads, updated API endpoints (`/api/v1/search/semantic`, `/api/v1/search/hybrid`) to return URLs, updated tool formatting, revised system prompt with real examples.
@@ -280,3 +283,24 @@ Progressive performance requirements aligned with deployment phases:
 - **Security Simplification**: Rate limiting removed from POC/MVP scope, reducing implementation complexity and allowing unrestricted development/testing; Production will enforce 60 req/min per IP limits
 - **Data Quality Strategy**: Dual-collection architecture separates high-quality (≥0.70) chunks for normal search from low-quality (<0.70) chunks for admin review; improves search result quality while preserving all data for debugging
 - **Task Impact**: New MVP monitoring task required (metrics + dashboard); T015 (rate limiting) downgraded to Production-only; Qdrant initialization must create two collections
+
+### Session 7 - 2025-10-05 12:29 UTC
+**Context**: POC Completion & MVP Readiness Planning  
+**Trigger**: `/clarify` workflow after `/analyze` remediation and T032 (OpenWebUI first release) active work  
+**Questions Resolved**: 5 completion criteria and MVP scope clarifications
+
+| ID | Category | Question | Decision | Impact |
+|----|----------|----------|----------|--------|
+| Q25 | Task Completion | What specific criteria define T032 (OpenWebUI First User Release) as complete? | **Custom**: Complete when one more round of test prompts has been tested | T032 acceptance: Execute one additional test round covering diverse use cases; document results; completion enables T026 (POC signoff) |
+| Q26 | Performance Optimization | When p95 >1000ms encountered (T024: 15-23s), what is the approval/remediation process? | **B**: GPU optimization can be MVP work - Document issue + root cause, continue to POC | T024 p95 15-23s does NOT block T026 (POC signoff); GPU contention documented; optimization scheduled for MVP phase; pragmatic gate vs strict blocking |
+| Q27 | Architecture Verification | Is dual-collection architecture (`nomad_bms_documents` + `nomad_bms_documents_low_quality`) currently implemented? | **D**: Unknown - requires verification script (T037 must run) | T037 elevated to verification task; must confirm collection existence before MVP; uncertainty acknowledged rather than assumed |
+| Q28 | Feature Completeness | For 8 placeholder search functions (R2.5), what is the production strategy? | **A**: Implement all 8 before production (complete feature parity) | Production requirement: All 8 placeholders (query expansion, session, synthesis, facets, explanation, latest versions, date range, multi-query) must be functional; no partial implementations allowed; sets clear R2.5 acceptance bar |
+| Q29 | MVP Prioritization | When should T036 (Connect Unused API Endpoints - contextual/rerank) be completed? | **Custom**: Scheduled as next task after T032 | T036 prioritized immediately after T032 completion; endpoint coverage increases from 55% to 65%; connects existing infrastructure before new development |
+
+**Impact**:
+- **T032 Completion**: Clear, measurable criteria - one more test round executed and documented; removes ambiguity from active work
+- **POC Gate Relaxation**: Performance optimization (p95 15-23s) does NOT block T026 (POC signoff); GPU issue documented with MVP remediation plan; enables POC completion despite escalation trigger exceeded
+- **Architecture Verification**: T037 must execute before MVP to confirm dual-collection exists; no assumptions about implementation state
+- **Production Feature Scope**: All 8 placeholder functions become production requirements; R2.5 acceptance criteria strengthened; MVP may have 55% coverage but production requires 100%
+- **Task Sequencing**: T032 → T036 (connect endpoints) → T037 (verify collections) → T026 (POC signoff) → T033 (MVP monitoring); clear execution path established
+- **MVP Boundary**: 65% endpoint coverage acceptable for MVP (after T036); full feature parity (100%) required for production

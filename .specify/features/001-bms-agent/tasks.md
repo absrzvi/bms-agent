@@ -4,6 +4,21 @@
 **POC Objective**: Validate core functionality with 80% retrieval accuracy, functional integrations, and baseline performance  
 **Production Objective**: Deliver full constitution compliance and production readiness by **2025-12-04**
 
+## Task Execution Sequence (per Q25-Q29 clarifications)
+
+**Immediate Priority** (POC Completion Path):
+1. **T032** - OpenWebUI First User Release (IN PROGRESS) → Execute one more test round
+2. **T036** - Connect Unused API Endpoints (NEXT TASK per Q29) → 55% to 65% coverage
+3. **T037** - Dual Collection Verification (BLOCKING MVP per Q27) → Verify architecture exists
+4. **T023b** - Slack & n8n Integration Testing (if not complete)
+5. **T026** - POC Signoff & Evidence Collection → Gate to MVP
+
+**MVP Phase**:
+6. **T033** - Prometheus/Grafana Monitoring Dashboard
+7. **GPU Optimization** (per Q26) - P95 latency improvement to <200ms target
+
+**Production Phase**: T001-T020 (deferred until POC/MVP complete)
+
 ## Parallel Execution Guidance
 - **[P] POC Integration Tests**: `task run T023 & task run T024`
 - **[P] Tests Batch 1**: `task run T003 & task run T004`
@@ -108,6 +123,7 @@
     - T032.2: Retrieval Test Suite (2-3 hours) - Execute 10-15 manual retrieval tests covering technical specs, safety docs, procurement forms, quality procedures; document results and edge cases
     - T032.3: Demo Video Production (1-2 hours) - Script demonstration scenarios, record screen capture showing 3-5 successful use cases, add voiceover or captions, export as shareable MP4
     - T032.4: User Onboarding Documentation (1 hour) - Create quick-start guide for first users, document known limitations, prepare feedback collection template
+  - **Acceptance Criteria** (per Q25): Execute one additional round of test prompts covering diverse use cases; document test results; completion enables T026 (POC signoff)
   - **Status**: In Progress (2025-10-05)
 
 - **T034  SharePoint URL Integration** ✅ **COMPLETE**
@@ -136,30 +152,35 @@
     - Created remediation roadmap with priority levels
     - Documented in spec.md R2.5
 
-- **T036  Connect Unused API Endpoints**
-  - Summary: Implement tool functions to utilize existing but unused API endpoints. Add `search_contextual()` function calling `/api/v1/search/contextual` with parent-child chunk relationships. Add `search_rerank()` function calling `/api/v1/search/rerank` with cross-encoder reranking. Update tool metadata and documentation.
-  - Dependencies: T035 (coverage audit complete)
+- **T036  Connect Unused API Endpoints** 🎯 **NEXT TASK** (per Q29)
+  - Summary: Implement tool functions to utilize existing but unused API endpoints. Add `search_contextual()` function calling `/api/v1/search/contextual` with parent-child chunk relationships. Add `search_rerank()` function calling `/api/v1/search/rerank` with cross-encoder reranking. Update tool metadata and documentation. **Scheduled as next task after T032 completion** to increase endpoint coverage from 55% to 65% before POC signoff.
+  - Dependencies: T032 (OpenWebUI first release complete), T035 (coverage audit complete)
   - Files/Paths: `tools/bms_search.py`, `tests/integration/test_contextual_search.py`, `tests/integration/test_rerank_search.py`, `docs/search-functions.md`
   - Parallel: No
-  - **Status**: Pending (MVP phase)
+  - **Status**: Pending (immediate priority after T032)
   - **Acceptance Criteria**:
     - `search_contextual()` function added with proper parameter handling
     - `search_rerank()` function added with reranking configuration
     - Integration tests verify endpoint connectivity
     - Tool metadata updated to reflect new functions
-    - Coverage increases from 55% to 65%
+    - Coverage increases from 55% to 65% (13/20 functions operational)
+    - **Enables**: MVP-ready endpoint coverage before T026 (POC signoff)
 
-- **T037  Dual Collection Architecture Verification**
-  - Summary: Verify implementation of dual-collection strategy per R1.6 and Q24 clarification. Confirm `nomad_bms_documents` (high quality ≥0.70) and `nomad_bms_documents_low_quality` (low quality <0.70) collections exist. If missing, create low-quality collection and implement `include_low_quality` parameter in search endpoints.
-  - Dependencies: None
-  - Files/Paths: `scripts/init_qdrant.py`, `api/main.py`, `scripts/verify_collections.py`, `plan.md` (line 25)
+- **T037  Dual Collection Architecture Verification** ⚠️ **BLOCKING MVP** (per Q27)
+  - Summary: **Critical verification task** - Dual-collection implementation status is UNKNOWN (per Q27 answer D). Must execute verification script to determine if `nomad_bms_documents` (high quality ≥0.70) and `nomad_bms_documents_low_quality` (low quality <0.70) collections exist. If missing, create low-quality collection and implement `include_low_quality` parameter in search endpoints. **No assumptions about current state** - verification required before MVP.
+  - Dependencies: T036 (connect endpoints complete)
+  - Files/Paths: `scripts/verify_qdrant_collections.py` (create), `scripts/init_qdrant.py`, `api/main.py`, `plan.md` (line 25)
   - Parallel: No
-  - **Status**: Pending (verification needed)
+  - **Status**: Pending (verification script must execute)
   - **Acceptance Criteria**:
-    - Both Qdrant collections verified/created
-    - Search endpoints support `include_low_quality=true` parameter
-    - Plan.md updated with dual-collection documentation
-    - Monitoring dashboard tracks low-quality chunk rate
+    - Create verification script to check collection existence
+    - Execute verification and document findings
+    - IF both collections exist: Document confirmation, verify `include_low_quality` parameter works
+    - IF only primary exists: Create `nomad_bms_documents_low_quality` collection, implement parameter
+    - IF neither exists: Critical issue - investigate and remediate
+    - Plan.md updated with actual dual-collection status
+    - Monitoring dashboard tracks low-quality chunk rate (if collections exist)
+  - **Blocks**: T026 (POC signoff), T033 (MVP monitoring) - architecture must be verified before proceeding
 
 ---
 
