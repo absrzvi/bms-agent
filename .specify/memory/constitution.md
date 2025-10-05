@@ -1,7 +1,7 @@
 # BMS Agent Project Constitution
 
 ## Preamble
-This constitution establishes the governing principles and technical standards for the BMS (Building Management System) Agent project, a Proof of Concept (POC) for RAG (Retrieval-Augmented Generation) implementation focused on railway connectivity infrastructure. This document ensures consistency, quality, and maintainability across all aspects of the project.
+This constitution establishes the governing principles and technical standards for the BMS (Business Management System) Agent project - a railway documentation RAG system providing Retrieval-Augmented Generation for internal documentation and technical specifications. This document ensures consistency, quality, and maintainability across all aspects of the project.
 
 **POC/MVP Exception Framework**: Requirements marked as MUST may be relaxed or deferred for POC and MVP phases when explicitly documented with "POC DECISION" or "MVP DECISION" markers in specifications. Production deployment must satisfy all MUST requirements.
 

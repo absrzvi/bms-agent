@@ -597,14 +597,25 @@ async def semantic_search(request: SearchRequest):
                 "chunk_id": payload.get("chunk_id"),
                 "document_id": payload.get("document_id"),
                 "document_name": payload.get("document_name"),
-                "document_type": payload.get("document_type", "unknown"),  # FIX 1: Add document_type
-                "content": payload.get("content", "")[:1500],  # Increased for better context
+                "document_type": payload.get("document_type", "unknown"),
+                "content": payload.get("content", "")[:1500],
                 "score": float(result.score),
                 "metadata": {
                     "chunk_index": payload.get("chunk_index"),
                     "hierarchy_level": payload.get("hierarchy_level"),
                     "quality_score": payload.get("quality_score", 0.0),
                     "has_context": payload.get("has_context"),
+                    "contextual_description": payload.get("contextual_description"),
+                    "keywords": payload.get("keywords"),
+                    "entities": payload.get("entities"),
+                    "technical_terms": payload.get("technical_terms"),
+                    "department": payload.get("department"),
+                    "fleet_type": payload.get("fleet_type"),
+                    "standard_compliance": payload.get("standard_compliance"),
+                    "is_form": payload.get("is_form"),
+                    "is_template": payload.get("is_template"),
+                    "is_process": payload.get("is_process"),
+                    "document_url": payload.get("document_url"),  # CRITICAL: Include document URL
                     "processing_version": payload.get("processing_version")
                 }
             })
@@ -795,8 +806,12 @@ async def hybrid_search(request: HybridSearchRequest):
                     "standard_compliance": payload.get("standard_compliance", ""),
                     "network_component": payload.get("network_component", ""),
                     "department": payload.get("department", ""),
+                    "document_url": payload.get("document_url"),  # CRITICAL: Include document URL
                     "parent_chunk_id": payload.get("parent_chunk_id"),
                     "is_parent": payload.get("is_parent", False),
+                    "is_form": payload.get("is_form", False),
+                    "is_template": payload.get("is_template", False),
+                    "is_process": payload.get("is_process", False),
                     "late_chunking_applied": payload.get("late_chunking_applied", False)
                 }
             })

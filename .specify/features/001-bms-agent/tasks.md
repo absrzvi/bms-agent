@@ -63,9 +63,126 @@
   - Parallel: No  
   - **Status**: Pending
 
+- **T027  Document Deletion API Implementation**  
+  - Summary: Implement admin-only document deletion endpoint per R1.7. DELETE endpoint removes document metadata and all associated chunks from Qdrant, returns 204 on success, includes audit logging for deletion operations.  
+  - Dependencies: None  
+  - Files/Paths: `api/main.py` (lines 477-510), `tests/integration/test_document_deletion.py`  
+  - Parallel: No  
+  - **Status**: ✅ Complete (implemented at api/main.py:477)
+
+- **T028  Configurable Relevance Filtering Implementation**  
+  - Summary: Implement min_score query parameter for all search endpoints per R2.4. Parameter accepts 0.0-1.0 range, filters results below specified similarity threshold, documented in OpenAPI spec with default behavior returning all top-k results.  
+  - Dependencies: None  
+  - Files/Paths: `api/main.py` (lines 119, 152, 527, 591, 625, 769, 917, 1043, 1103, 1255), `api/models/search.py`, `tests/integration/test_min_score_filtering.py`  
+  - Parallel: No  
+  - **Status**: ✅ Complete (implemented across all search endpoints)
+
+- **T029  Backup System Implementation**  
+  - Summary: Implement daily automated backup system per R7.4. Backup script covers /workspace/qdrant_storage and /workspace/bms_data with 30-day log retention and 90-day data retention. Includes cron scheduling, verification scripts, and restore procedures.  
+  - Dependencies: None  
+  - Files/Paths: `scripts/backup_system.sh`, `scripts/restore_backup.sh`, `scripts/verify_backup.sh`, `scripts/setup_backup_cron.sh`, `DEPLOYMENT_CHECKLIST.md`  
+  - Parallel: No  
+  - **Status**: ✅ Complete (full backup infrastructure implemented)
+
+- **T030  SharePoint Document Sync Implementation**  
+  - Summary: Implement automated SharePoint document download and synchronization per R8.1. Download script authenticates with cookie-based auth, filters by modification date (post-2023), supports parallel downloads (≥10 workers), handles errors with retry logic, logs statistics.  
+  - Dependencies: None  
+  - Files/Paths: `scripts/sharepoint_sync_manager.py`, `scripts/download_sharepoint_server.py`, `scripts/download_sharepoint_parallel.py`, `scripts/download_sharepoint_direct.py`, `scripts/setup_daily_sync.sh`  
+  - Parallel: No  
+  - **Status**: ✅ Complete (multiple SharePoint sync scripts implemented)
+
+- **T031  SharePoint Batch Processing Implementation**  
+  - Summary: Implement batch processing for downloaded SharePoint documents per R8.2. Batch processor handles variable document loads, achieves ≥95% success rate, maintains ≥0.70 quality score threshold, processes ≥10 documents/minute, logs processing statistics.  
+  - Dependencies: T030  
+  - Files/Paths: `scripts/batch_process_incoming.py`, `scripts/sharepoint_sync_manager.py`, `api/processor_wrapper.py`  
+  - Parallel: No  
+  - **Status**: ✅ Complete (batch processing integrated with SharePoint sync)
+
+- **T032  OpenWebUI First User Release - Production Polish & Demo** 🎯 **TODAY**  
+  - Summary: Prepare OpenWebUI for first batch of key users. Current state: bms_search tool functional, custom retrieval model operational, Qdrant integration working. Focus areas: (1) Interface polish - refine user experience, response formatting, error handling; (2) Comprehensive retrieval testing - validate 10-15 diverse use cases across document types; (3) Demo video creation - record 3-5 minute walkthrough demonstrating successful retrieval workflows for stakeholder presentation.  
+  - Dependencies: T023 (OpenWebUI integration complete)  
+  - Files/Paths: `tools/bms_search.py`, `docs/openwebui-first-user-guide.md`, `docs/openwebui-demo-script.md`, `videos/openwebui-demo-v1.mp4`, `tests/manual/retrieval-test-cases.md`  
+  - Parallel: No  
+  - **Subtasks**:
+    - T032.1: Interface Polish (1-2 hours) - Review and enhance response formatting, add helpful error messages, optimize prompt templates for clarity
+    - T032.2: Retrieval Test Suite (2-3 hours) - Execute 10-15 manual retrieval tests covering technical specs, safety docs, procurement forms, quality procedures; document results and edge cases
+    - T032.3: Demo Video Production (1-2 hours) - Script demonstration scenarios, record screen capture showing 3-5 successful use cases, add voiceover or captions, export as shareable MP4
+    - T032.4: User Onboarding Documentation (1 hour) - Create quick-start guide for first users, document known limitations, prepare feedback collection template
+  - **Status**: In Progress (2025-10-05)
+
+- **T034  SharePoint URL Integration** ✅ **COMPLETE**
+  - Summary: Implement real SharePoint document URLs in search results for direct document access. Parse URLs from `bms-docs-urls.md`, add `document_url` field to Qdrant metadata, update API to return URLs, enhance tool to display URLs, update system prompt with real URL examples.
+  - Dependencies: None
+  - Files/Paths: `scripts/add_urls_to_qdrant.py`, `scripts/remove_docs_without_urls.py`, `api/main.py` (lines 603-620, 795-816), `tools/bms_search.py` (lines 1093-1096), `docs/SYSTEM_PROMPT_v3.1.md` (lines 93-108), `bms-docs-urls.md`
+  - Parallel: No
+  - **Status**: ✅ Complete (2025-10-05)
+    - Parsed 983 URLs from source document
+    - Matched and added URLs to 565/644 documents (87.7% coverage)
+    - Removed 79 documents without URLs from search index
+    - Updated API endpoints to return `document_url` in metadata
+    - Enhanced tool to display URLs with 🔗 icon
+    - Revised system prompt with real URL examples
+    - Documented in spec.md R2.6
+
+- **T035  API Endpoint Coverage Audit** ✅ **COMPLETE**
+  - Summary: Analyze and document actual vs advertised search functionality. Identify working functions (11), unused API endpoints (2), and placeholder functions (8). Create comprehensive coverage report for gap analysis and remediation planning.
+  - Dependencies: None
+  - Files/Paths: `docs/API_ENDPOINT_COVERAGE.md`, `tools/bms_search.py`, `api/main.py`
+  - Parallel: No
+  - **Status**: ✅ Complete (2025-10-05)
+    - Coverage analysis: 55% functional (11/20 advertised functions)
+    - Identified unused endpoints: `/api/v1/search/contextual`, `/api/v1/search/rerank`
+    - Documented 8 placeholder functions returning fallback
+    - Created remediation roadmap with priority levels
+    - Documented in spec.md R2.5
+
+- **T036  Connect Unused API Endpoints**
+  - Summary: Implement tool functions to utilize existing but unused API endpoints. Add `search_contextual()` function calling `/api/v1/search/contextual` with parent-child chunk relationships. Add `search_rerank()` function calling `/api/v1/search/rerank` with cross-encoder reranking. Update tool metadata and documentation.
+  - Dependencies: T035 (coverage audit complete)
+  - Files/Paths: `tools/bms_search.py`, `tests/integration/test_contextual_search.py`, `tests/integration/test_rerank_search.py`, `docs/search-functions.md`
+  - Parallel: No
+  - **Status**: Pending (MVP phase)
+  - **Acceptance Criteria**:
+    - `search_contextual()` function added with proper parameter handling
+    - `search_rerank()` function added with reranking configuration
+    - Integration tests verify endpoint connectivity
+    - Tool metadata updated to reflect new functions
+    - Coverage increases from 55% to 65%
+
+- **T037  Dual Collection Architecture Verification**
+  - Summary: Verify implementation of dual-collection strategy per R1.6 and Q24 clarification. Confirm `nomad_bms_documents` (high quality ≥0.70) and `nomad_bms_documents_low_quality` (low quality <0.70) collections exist. If missing, create low-quality collection and implement `include_low_quality` parameter in search endpoints.
+  - Dependencies: None
+  - Files/Paths: `scripts/init_qdrant.py`, `api/main.py`, `scripts/verify_collections.py`, `plan.md` (line 25)
+  - Parallel: No
+  - **Status**: Pending (verification needed)
+  - **Acceptance Criteria**:
+    - Both Qdrant collections verified/created
+    - Search endpoints support `include_low_quality=true` parameter
+    - Plan.md updated with dual-collection documentation
+    - Monitoring dashboard tracks low-quality chunk rate
+
 ---
 
-## Production Compliance Tasks (Post-POC Sprint)
+## MVP Phase Tasks (Post-POC, Pre-Production)
+
+**Note**: These tasks bridge POC completion and Production compliance, implementing MVP-specific requirements per spec.md clarifications.
+
+- **T033  MVP Monitoring Dashboard Implementation**  
+  - Summary: **MVP REQUIREMENT** per Q22 clarification and constitution §8. Implement basic Prometheus/Grafana integration: metrics collection + single dashboard (no automated alerting). Configure `/metrics/uplink` endpoint with Prometheus scraping. Create single Grafana dashboard with 4-6 panels: p50/p95 latency, request rate (req/sec), error rate (%), Qdrant collection size. Document alert thresholds in manual runbooks (no automation). Provides foundation for Production automated alerting (T012).  
+  - Dependencies: Prometheus scraping operational, BMS API `/metrics/uplink` endpoint functional  
+  - Files/Paths: `prometheus/prometheus.yml`, `grafana/dashboards/bms-mvp-dashboard.json`, `docs/monitoring/manual-alert-runbooks.md`, `docs/monitoring/threshold-definitions.md`  
+  - Parallel: No  
+  - Acceptance Criteria:
+    - Prometheus successfully scraping metrics from BMS API `/metrics/uplink` endpoint
+    - Single Grafana dashboard created with 4-6 panels (latency, throughput, errors, storage)
+    - Manual alert runbooks documented with threshold values (e.g., p95 >200ms, error rate >1%, Qdrant >80% capacity)
+    - Dashboard accessible via Grafana UI and validates against test data
+    - No automated alerting configured (deferred to Production T012)
+  - **Status**: Pending (MVP phase)
+
+---
+
+## Production Compliance Tasks (Post-MVP Sprint)
 
 **Note**: These tasks are deferred until POC completion per spec.md Session 3 clarification.
 

@@ -338,9 +338,10 @@ class Tools:
             intent["is_process_query"] = True
             intent["boosts"].append("Processes (1.5x)")
         
-        # Document code detection (BMS-XXXX-XXX-XXX pattern)
+        # Document code detection (BMS-XXXX-XXX-XXX pattern or XXXX-XXX-XXX)
         import re
-        if re.search(r'BMS-[A-Z]{4}-[A-Z]{3}-\d{3}', query, re.IGNORECASE):
+        # Match both "BMS-HUMR-FOR-005" and "HUMR-FOR-005" patterns
+        if re.search(r'(?:BMS-)?[A-Z]{4}-[A-Z]{3}-\d{3}', query, re.IGNORECASE):
             intent["has_document_code"] = True
             intent["boosts"].append("Exact Code Match (2.5x)")
         
@@ -408,8 +409,10 @@ class Tools:
             if intent["has_document_code"]:
                 # Check if document name contains the code from query
                 import re
-                query_codes = re.findall(r'BMS-[A-Z]{4}-[A-Z]{3}-\d{3}', query, re.IGNORECASE)
+                # Extract codes with or without BMS- prefix
+                query_codes = re.findall(r'(?:BMS-)?([A-Z]{4}-[A-Z]{3}-\d{3})', query, re.IGNORECASE)
                 for code in query_codes:
+                    # Match against full document name (which includes BMS- prefix)
                     if code.upper() in doc_name.upper():
                         boosted_score *= 2.5
                         boosts_applied.append("exact_code")
@@ -1006,15 +1009,15 @@ class Tools:
         query: str,
         search_type: str
     ) -> str:
-        """Format search results for display."""
+        """Format search results for display with improved UX."""
         if not results:
-            return f"🔍 No results found for query: '{query}'"
+            return self._format_empty_results(query)
         
-        output = [f"🔍 **Found {len(results)} results for:** '{query}'\n"]
+        output = [f"📚 **Found {len(results)} documents for**: '{query}'\n"]
         
         for i, result in enumerate(results, 1):
             score = result.get("score", 0.0)
-            doc_name = result.get("document_name") or result.get("payload", {}).get("document_name", "Unknown")
+            doc_name_raw = result.get("document_name") or result.get("payload", {}).get("document_name", "Unknown")
             doc_type = result.get("document_type") or result.get("payload", {}).get("document_type", "unknown")
             metadata = result.get("metadata", {})
             quality = metadata.get("quality_score", 0.0) or result.get("quality_score", 0.0)
@@ -1022,37 +1025,174 @@ class Tools:
             
             # Extract enhanced metadata
             keywords = metadata.get("keywords", [])
-            entities = metadata.get("entities", [])
             department = metadata.get("department", "")
             fleet_type = metadata.get("fleet_type", "")
             standard = metadata.get("standard_compliance", "")
             
-            # Truncate content
-            content_preview = content[:800] + "..." if len(content) > 800 else content
+            # Parse document name and ID
+            import re
+            doc_id = ""
+            doc_title = doc_name_raw
             
-            output.append(f"\n**{i}. {doc_name}**")
+            # Try to extract document ID pattern (BMS-XXXX-XXX-XXX)
+            id_match = re.search(r'(BMS-[A-Z]{4}-[A-Z]{3}-\d{3})', doc_name_raw)
+            if id_match:
+                doc_id = id_match.group(1)
+                # Remove ID and file extension from title
+                doc_title = re.sub(r'BMS-[A-Z]{4}-[A-Z]{3}-\d{3}\s*', '', doc_name_raw)
+                doc_title = re.sub(r'\.(xlsx?|docx?|pdf|pptx?|csv|txt)$', '', doc_title, flags=re.IGNORECASE)
+                doc_title = doc_title.strip()
             
-            # Build metadata line
-            meta_parts = [f"Type: {doc_type}", f"Quality: {quality:.2f}", f"Relevance: {score:.3f}"]
+            # Format document type nicely
+            type_display = {
+                "xlsx": "Excel", "xls": "Excel",
+                "docx": "Word", "doc": "Word",
+                "pdf": "PDF",
+                "pptx": "PowerPoint", "ppt": "PowerPoint",
+                "csv": "CSV", "txt": "Text"
+            }.get(doc_type.lower(), doc_type.upper())
+            
+            # Truncate content intelligently
+            content_preview = content[:600]
+            if len(content) > 600:
+                last_period = content_preview.rfind('.')
+                if last_period > 400:
+                    content_preview = content_preview[:last_period + 1]
+                content_preview += "..."
+            
+            # === BUILD OUTPUT ===
+            output.append(f"\n**{i}. {doc_title}**")
+            
+            if doc_id:
+                output.append(f"   📋 ID: {doc_id}")
+            
+            # Quality and relevance with visual indicators
+            quality_display = self._format_quality_score(quality)
+            relevance_display = self._format_relevance_score(score)
+            
+            output.append(f"   📄 Type: {type_display}")
+            output.append(f"   ✨ Quality: {quality_display}")
+            output.append(f"   {relevance_display}")
+            
+            # Metadata badges
+            badges = []
             if department:
-                meta_parts.append(f"Dept: {department}")
+                badges.append(f"🏢 {department}")
             if fleet_type:
-                meta_parts.append(f"Fleet: {fleet_type}")
+                badges.append(f"🚆 {fleet_type}")
             if standard:
-                meta_parts.append(f"Standard: {standard}")
+                badges.append(f"📜 {standard}")
+            if badges:
+                output.append(f"   {' | '.join(badges)}")
             
-            output.append(f"   📄 {' | '.join(meta_parts)}")
-            
-            # Add keywords if available
+            # Keywords (top 5)
             if keywords:
                 keywords_str = ", ".join(str(k) for k in keywords[:5])
-                output.append(f"   🔑 Keywords: {keywords_str}")
+                output.append(f"   🔑 {keywords_str}")
             
-            output.append(f"   📝 {content_preview}\n")
+            # Document URL (if available)
+            document_url = metadata.get("document_url") or result.get("payload", {}).get("document_url")
+            if document_url:
+                output.append(f"   🔗 URL: {document_url}")
+            
+            # Content preview
+            output.append(f"\n   📝 {content_preview}\n")
+            
+            # Show boost info if smart search
+            if search_type == "smart" and "boosts_applied" in result:
+                boosts = result.get("boosts_applied", [])
+                if boosts:
+                    boost_str = ", ".join(boosts)
+                    original_score = result.get("original_score", score)
+                    boost_factor = score / original_score if original_score > 0 else 1.0
+                    output.append(f"   🚀 Boosted: {boost_str} (×{boost_factor:.1f})\n")
         
-        output.append(f"\n---")
-        output.append(f"Search Type: {search_type.title()}")
-        output.append(f"API: {self.valves.BMS_API_URL}")
+        # Footer
+        output.append(f"\n{'─' * 60}")
+        output.append(f"🔍 {search_type.title()} Search | {len(results)} results")
+        
+        return "\n".join(output)
+    
+    def _format_quality_score(self, score: float) -> str:
+        """Convert quality score to user-friendly format with stars."""
+        percentage = int(score * 100)
+        stars = min(5, max(1, int((score * 5) + 0.5)))
+        star_display = "⭐" * stars + "☆" * (5 - stars)
+        
+        if score >= 0.90:
+            label = "Excellent"
+        elif score >= 0.80:
+            label = "Very Good"
+        elif score >= 0.70:
+            label = "Good"
+        elif score >= 0.60:
+            label = "Fair"
+        else:
+            label = "Low"
+        
+        return f"{star_display} {percentage}% ({label})"
+    
+    def _format_relevance_score(self, score: float) -> str:
+        """Format relevance score as percentage with confidence level."""
+        percentage = int(score * 100)
+        
+        if percentage >= 80:
+            confidence = "Very High"
+            icon = "🎯"
+        elif percentage >= 60:
+            confidence = "High"
+            icon = "📊"
+        elif percentage >= 40:
+            confidence = "Medium"
+            icon = "📈"
+        elif percentage >= 20:
+            confidence = "Low"
+            icon = "📉"
+        else:
+            confidence = "Very Low"
+            icon = "⚠️"
+        
+        return f"{icon} Relevance: {percentage}% ({confidence})"
+    
+    def _format_empty_results(self, query: str) -> str:
+        """Format empty results with context-aware suggestions."""
+        import re
+        query_lower = query.lower()
+        
+        # Detect query patterns
+        is_code_query = bool(re.search(r'(?:BMS-)?[A-Z]{4}-[A-Z]{3}-\d{3}', query, re.IGNORECASE))
+        is_form_query = any(w in query_lower for w in ["form", "template", "checklist"])
+        is_technical = any(w in query_lower for w in ["technical", "specification", "architecture", "network"])
+        
+        output = [f"🔍 **No results found for**: '{query}'\n"]
+        output.append("**💡 Suggestions:**\n")
+        
+        if is_code_query:
+            output.append("✓ **Document Code Detected**")
+            output.append("  • Try the full document name instead of just the code")
+            output.append("  • Example: Instead of 'HUMR-FOR-005', try 'employee onboarding form'")
+            output.append("  • Check the code format (DEPT-TYPE-###)\n")
+        elif is_form_query:
+            output.append("✓ **Looking for forms?**")
+            output.append("  • Try: 'HUMR forms' for HR forms")
+            output.append("  • Try: 'procurement checklist'")
+            output.append("  • Try: 'forms' to browse all forms\n")
+        elif is_technical:
+            output.append("✓ **Technical documentation:**")
+            output.append("  • Try: 'BMS system overview'")
+            output.append("  • Try: 'technical requirements'")
+            output.append("  • Try: 'engineering specifications'\n")
+        else:
+            output.append("**General tips:**")
+            output.append("  • Use 2-4 keywords")
+            output.append("  • Try synonyms")
+            output.append("  • Check spelling")
+            output.append("  • Start broad, then refine\n")
+        
+        output.append("**📂 Browse by category:**")
+        output.append("  • 'forms' - all forms")
+        output.append("  • 'safety' - safety docs")
+        output.append("  • 'procurement' - business docs")
         
         return "\n".join(output)
 
