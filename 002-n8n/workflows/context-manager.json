@@ -1,0 +1,283 @@
+{
+  "name": "MS Teams Bot - Context Manager",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "context-manager",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-trigger",
+      "name": "Context Manager Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        250,
+        300
+      ],
+      "webhookId": "context-manager-webhook"
+    },
+    {
+      "parameters": {
+        "functionCode": "// Parse action and parameters\nconst action = $json.body?.action || $json.action || 'get';\nconst conversationId = $json.body?.conversationId || $json.conversationId || '';\nconst userMessage = $json.body?.userMessage || $json.userMessage || '';\nconst botResponse = $json.body?.botResponse || $json.botResponse || '';\nconst intent = $json.body?.intent || $json.intent || '';\n\nreturn {\n  json: {\n    action,\n    conversationId,\n    userMessage,\n    botResponse,\n    intent,\n    timestamp: new Date().toISOString()\n  }\n};"
+      },
+      "id": "parse-input",
+      "name": "Parse Action",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [
+        450,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "chooseBranch",
+        "output": "={{ $json.action }}"
+      },
+      "id": "action-router",
+      "name": "Action Router",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 1,
+      "position": [
+        650,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "url": "http://localhost:6379",
+        "method": "GET",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "key",
+              "value": "conversation:={{ $json.conversationId }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 500
+        }
+      },
+      "id": "redis-get",
+      "name": "Redis GET",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [
+        850,
+        200
+      ],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "functionCode": "// Parse Redis response or create new conversation\nconst conversationId = $node['Parse Action'].json.conversationId;\nlet context = null;\n\ntry {\n  const redisData = $json.data || $json.body || null;\n  if (redisData) {\n    context = typeof redisData === 'string' ? JSON.parse(redisData) : redisData;\n  }\n} catch (e) {\n  // Redis failed or no data\n}\n\nif (!context) {\n  // Create new conversation\n  const now = new Date();\n  const expiresAt = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000); // 7 days\n  \n  context = {\n    conversation_id: conversationId,\n    created_at: now.toISOString(),\n    last_message_at: now.toISOString(),\n    expires_at: expiresAt.toISOString(),\n    messages: [],\n    context_summary: ''\n  };\n}\n\nreturn { json: { context } };"
+      },
+      "id": "parse-context",
+      "name": "Parse or Create Context",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [
+        1050,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "url": "http://localhost:6379",
+        "method": "GET",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "key",
+              "value": "conversation:={{ $json.conversationId }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 500
+        }
+      },
+      "id": "redis-get-for-store",
+      "name": "Redis GET for Store",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [
+        850,
+        300
+      ],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "functionCode": "// Load existing context and add new messages\nconst inputData = $node['Parse Action'].json;\nconst conversationId = inputData.conversationId;\n\nlet context = null;\n\ntry {\n  const redisData = $json.data || $json.body || null;\n  if (redisData) {\n    context = typeof redisData === 'string' ? JSON.parse(redisData) : redisData;\n  }\n} catch (e) {\n  // Redis failed or no data\n}\n\nif (!context) {\n  // Create new conversation\n  const now = new Date();\n  const expiresAt = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000); // 7 days\n  \n  context = {\n    conversation_id: conversationId,\n    created_at: now.toISOString(),\n    last_message_at: now.toISOString(),\n    expires_at: expiresAt.toISOString(),\n    messages: [],\n    context_summary: ''\n  };\n}\n\n// Add user message\nif (inputData.userMessage) {\n  context.messages.push({\n    message_id: `msg-${Date.now()}-user`,\n    sender: 'user',\n    content: inputData.userMessage,\n    timestamp: inputData.timestamp,\n    message_type: 'question'\n  });\n}\n\n// Add bot response\nif (inputData.botResponse) {\n  context.messages.push({\n    message_id: `msg-${Date.now()}-bot`,\n    sender: 'bot',\n    content: inputData.botResponse,\n    timestamp: new Date().toISOString(),\n    message_type: 'answer'\n  });\n}\n\n// Update metadata\ncontext.last_message_at = new Date().toISOString();\n\n// Prune old messages (keep last 10 for context)\nif (context.messages.length > 10) {\n  context.messages = context.messages.slice(-10);\n}\n\n// Update context summary (last 5 messages)\nconst recentMessages = context.messages.slice(-5);\ncontext.context_summary = recentMessages.map(m => `${m.sender}: ${m.content.substring(0, 100)}`).join('\\n');\n\n// Check for similar queries (FR-015a)\nconst currentQuery = inputData.userMessage.toLowerCase();\nconst similarQuery = context.messages\n  .filter(m => m.sender === 'user' && m.message_type === 'question')\n  .find(m => {\n    const prevQuery = m.content.toLowerCase();\n    // Simple similarity check (can be enhanced with embeddings)\n    const words1 = new Set(currentQuery.split(/\\s+/));\n    const words2 = new Set(prevQuery.split(/\\s+/));\n    const intersection = new Set([...words1].filter(x => words2.has(x)));\n    const similarity = intersection.size / Math.max(words1.size, words2.size);\n    return similarity > 0.5 && m.content !== inputData.userMessage;\n  });\n\nreturn {\n  json: {\n    context,\n    similarQuery: similarQuery || null\n  }\n};"
+      },
+      "id": "update-context",
+      "name": "Update Context",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [
+        1050,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "url": "http://localhost:6379",
+        "method": "POST",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "key",
+              "value": "conversation:={{ $json.context.conversation_id }}"
+            },
+            {
+              "name": "value",
+              "value": "={{ JSON.stringify($json.context) }}"
+            },
+            {
+              "name": "ex",
+              "value": "604800"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 500
+        }
+      },
+      "id": "redis-set",
+      "name": "Redis SET with TTL",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [
+        1250,
+        300
+      ],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}"
+      },
+      "id": "webhook-response",
+      "name": "Return Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        1450,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Context Manager Webhook": {
+      "main": [
+        [
+          {
+            "node": "Parse Action",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Action": {
+      "main": [
+        [
+          {
+            "node": "Action Router",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Action Router": {
+      "main": [
+        [
+          {
+            "node": "Redis GET",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Redis GET for Store",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Redis GET": {
+      "main": [
+        [
+          {
+            "node": "Parse or Create Context",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse or Create Context": {
+      "main": [
+        [
+          {
+            "node": "Return Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Redis GET for Store": {
+      "main": [
+        [
+          {
+            "node": "Update Context",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Context": {
+      "main": [
+        [
+          {
+            "node": "Redis SET with TTL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Redis SET with TTL": {
+      "main": [
+        [
+          {
+            "node": "Return Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 0,
+  "updatedAt": "2025-10-06T00:00:00.000Z",
+  "versionId": "1",
+  "active": true
+}

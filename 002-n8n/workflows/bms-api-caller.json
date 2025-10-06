@@ -1,0 +1,295 @@
+{
+  "name": "MS Teams Bot - BMS API Caller",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "bms-api-caller",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-trigger",
+      "name": "BMS API Caller Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        250,
+        300
+      ],
+      "webhookId": "bms-api-caller-webhook"
+    },
+    {
+      "parameters": {
+        "functionCode": "// Extract parameters\nconst query = $json.body?.query || $json.query || '';\nconst intent = $json.body?.intent || $json.intent || 'ASK';\nconst conversationId = $json.body?.conversationId || $json.conversationId || '';\nconst confidence = $json.body?.confidence || $json.confidence || 0.7;\n\nreturn {\n  json: {\n    query,\n    intent,\n    conversationId,\n    confidence\n  }\n};"
+      },
+      "id": "parse-input",
+      "name": "Parse Input",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [
+        450,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.intent }}",
+              "value2": "ASK"
+            }
+          ]
+        }
+      },
+      "id": "intent-router",
+      "name": "Intent Router",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        650,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "url": "http://localhost:8000/api/v1/ask",
+        "method": "POST",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { \"query\": $json.query, \"max_chunks\": 5, \"include_citations\": true } }}",
+        "options": {
+          "timeout": 2500,
+          "retry": {
+            "enabled": true,
+            "maxRetries": 2,
+            "retryInterval": 500
+          }
+        }
+      },
+      "id": "call-ask-endpoint",
+      "name": "Call BMS Ask Endpoint",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [
+        850,
+        250
+      ],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "url": "http://localhost:8000/api/v1/search/semantic",
+        "method": "POST",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { \"query\": $json.query, \"limit\": 5, \"min_score\": 0.7 } }}",
+        "options": {
+          "timeout": 2500,
+          "retry": {
+            "enabled": true,
+            "maxRetries": 2,
+            "retryInterval": 500
+          }
+        }
+      },
+      "id": "call-search-endpoint",
+      "name": "Call BMS Search Endpoint",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [
+        850,
+        350
+      ],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "filePath": "/workspace/002-n8n/config/response-templates.json"
+      },
+      "id": "load-templates",
+      "name": "Load Response Templates",
+      "type": "n8n-nodes-base.readBinaryFile",
+      "typeVersion": 1,
+      "position": [
+        1050,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Check for errors and format response\nconst templates = JSON.parse($node['Load Response Templates'].json.data);\nconst apiResponse = $json;\nconst inputData = $node['Parse Input'].json;\n\nlet responseText = '';\nlet success = true;\n\n// Check if API call failed\nif ($json.error || $json.statusCode >= 400) {\n  success = false;\n  \n  if ($json.statusCode === 503 || $json.code === 'ECONNREFUSED') {\n    responseText = templates.errors.bms_unavailable;\n  } else if ($json.statusCode === 404) {\n    responseText = templates.errors.no_results;\n  } else {\n    responseText = templates.errors.invalid_query;\n  }\n} else {\n  // Format successful response\n  const intent = inputData.intent;\n  \n  if (intent === 'ASK') {\n    // Format ASK response with citations\n    const answer = apiResponse.answer || apiResponse.response || 'No answer available';\n    const citations = apiResponse.citations || [];\n    \n    responseText = answer;\n    \n    if (citations.length > 0) {\n      responseText += '\\n\\n**Sources:**\\n';\n      citations.forEach((cit, idx) => {\n        const docName = cit.document_name || cit.source || `Document ${idx + 1}`;\n        const score = cit.relevance_score || cit.score || 0;\n        responseText += `${idx + 1}. ${docName} (relevance: ${(score * 100).toFixed(0)}%)\\n`;\n      });\n    }\n  } else {\n    // Format SEARCH response with document list\n    const results = apiResponse.results || [];\n    \n    if (results.length === 0) {\n      responseText = templates.errors.no_results;\n      success = false;\n    } else {\n      responseText = `Found ${results.length} relevant document(s):\\n\\n`;\n      results.forEach((result, idx) => {\n        const docName = result.metadata?.file_name || `Document ${idx + 1}`;\n        const excerpt = result.text?.substring(0, 150) || '';\n        const score = result.score || 0;\n        responseText += `**${idx + 1}. ${docName}** (${(score * 100).toFixed(0)}%)\\n${excerpt}...\\n\\n`;\n      });\n    }\n  }\n}\n\nreturn {\n  json: {\n    responseText,\n    success,\n    intent: inputData.intent,\n    conversationId: inputData.conversationId,\n    query: inputData.query\n  }\n};"
+      },
+      "id": "format-response",
+      "name": "Format Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [
+        1250,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "url": "http://localhost:5678/webhook/context-manager",
+        "method": "POST",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "action",
+              "value": "store"
+            },
+            {
+              "name": "conversationId",
+              "value": "={{ $json.conversationId }}"
+            },
+            {
+              "name": "userMessage",
+              "value": "={{ $json.query }}"
+            },
+            {
+              "name": "botResponse",
+              "value": "={{ $json.responseText }}"
+            },
+            {
+              "name": "intent",
+              "value": "={{ $json.intent }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 1000
+        }
+      },
+      "id": "store-context",
+      "name": "Store in Context",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [
+        1450,
+        300
+      ],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { \"responseText\": $json.responseText, \"success\": $json.success } }}"
+      },
+      "id": "webhook-response",
+      "name": "Return Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        1650,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "BMS API Caller Webhook": {
+      "main": [
+        [
+          {
+            "node": "Parse Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Input": {
+      "main": [
+        [
+          {
+            "node": "Intent Router",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Intent Router": {
+      "main": [
+        [
+          {
+            "node": "Call BMS Ask Endpoint",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Call BMS Search Endpoint",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call BMS Ask Endpoint": {
+      "main": [
+        [
+          {
+            "node": "Load Response Templates",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call BMS Search Endpoint": {
+      "main": [
+        [
+          {
+            "node": "Load Response Templates",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Load Response Templates": {
+      "main": [
+        [
+          {
+            "node": "Format Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Response": {
+      "main": [
+        [
+          {
+            "node": "Store in Context",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Store in Context": {
+      "main": [
+        [
+          {
+            "node": "Return Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 0,
+  "updatedAt": "2025-10-06T00:00:00.000Z",
+  "versionId": "1",
+  "active": true
+}

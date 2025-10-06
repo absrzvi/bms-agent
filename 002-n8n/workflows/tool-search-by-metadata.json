@@ -1,0 +1,83 @@
+{
+  "name": "Tool: Search by Metadata Filters",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "tool-search-metadata",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-trigger",
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [250, 300],
+      "webhookId": "tool-search-metadata"
+    },
+    {
+      "parameters": {
+        "functionCode": "// Parse metadata filter search\n// Supports filtering by:\n// - department: QHSE, Engineering, Operations\n// - document_type_category: process, form, template, policy\n// - document_type: pdf, docx, xlsx\n// - is_process, is_form, is_template: boolean\n// - fleet_type, train_id, network_component: railway-specific\n// - standard_compliance: ISO standards\n// - processing_profile: railway, technical, general\n\nconst query = $json.query || $json.body?.query || '';\nconst filters = $json.filters || $json.body?.filters || {};\nconst limit = $json.limit || $json.body?.limit || 20;\n\n// Build Qdrant filter structure\nconst qdrantFilters = {\n  must: []\n};\n\n// Department filter\nif (filters.department) {\n  qdrantFilters.must.push({\n    key: 'department',\n    match: { value: filters.department }\n  });\n}\n\n// Document type category\nif (filters.document_type_category) {\n  qdrantFilters.must.push({\n    key: 'document_type_category',\n    match: { value: filters.document_type_category }\n  });\n}\n\n// Boolean flags\nif (filters.is_process !== undefined) {\n  qdrantFilters.must.push({\n    key: 'is_process',\n    match: { value: filters.is_process }\n  });\n}\n\nif (filters.is_form !== undefined) {\n  qdrantFilters.must.push({\n    key: 'is_form',\n    match: { value: filters.is_form }\n  });\n}\n\nif (filters.is_template !== undefined) {\n  qdrantFilters.must.push({\n    key: 'is_template',\n    match: { value: filters.is_template }\n  });\n}\n\n// Railway-specific filters\nif (filters.fleet_type) {\n  qdrantFilters.must.push({\n    key: 'fleet_type',\n    match: { value: filters.fleet_type }\n  });\n}\n\nif (filters.train_id) {\n  qdrantFilters.must.push({\n    key: 'train_id',\n    match: { value: filters.train_id }\n  });\n}\n\nif (filters.network_component) {\n  qdrantFilters.must.push({\n    key: 'network_component',\n    match: { value: filters.network_component }\n  });\n}\n\nreturn {\n  json: {\n    query,\n    limit,\n    filters: qdrantFilters.must.length > 0 ? qdrantFilters : {},\n    min_score: filters.min_score || 0.6\n  }\n};"
+      },
+      "id": "build-metadata-filters",
+      "name": "Build Metadata Filters",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "url": "http://localhost:8000/api/v1/search/semantic",
+        "method": "POST",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json) }}",
+        "options": {
+          "timeout": 15000
+        }
+      },
+      "id": "search-with-filters",
+      "name": "Search with Filters",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [650, 300]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Format filtered results\nconst response = $json;\n\nif (response.status === 'error') {\n  return {\n    json: {\n      success: false,\n      error: response.message,\n      results: []\n    }\n  };\n}\n\nconst results = (response.results || []).map(result => ({\n  document_id: result.document_id,\n  document_name: result.metadata?.document_name,\n  department: result.metadata?.department,\n  document_type_category: result.metadata?.document_type_category,\n  content_preview: (result.text || '').substring(0, 200),\n  relevance_score: result.score,\n  is_process: result.metadata?.is_process,\n  is_form: result.metadata?.is_form,\n  is_template: result.metadata?.is_template,\n  fleet_type: result.metadata?.fleet_type,\n  train_id: result.metadata?.train_id,\n  standard_compliance: result.metadata?.standard_compliance,\n  document_url: result.metadata?.document_url\n}));\n\nreturn {\n  json: {\n    success: true,\n    results,\n    filters_applied: $('Build Metadata Filters').item.json.filters,\n    total_results: results.length\n  }\n};"
+      },
+      "id": "format-filtered-results",
+      "name": "Format Filtered Results",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [850, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify($json) }}"
+      },
+      "id": "respond",
+      "name": "Respond",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1050, 300]
+    }
+  ],
+  "connections": {
+    "Webhook Trigger": {
+      "main": [[{"node": "Build Metadata Filters", "type": "main", "index": 0}]]
+    },
+    "Build Metadata Filters": {
+      "main": [[{"node": "Search with Filters", "type": "main", "index": 0}]]
+    },
+    "Search with Filters": {
+      "main": [[{"node": "Format Filtered Results", "type": "main", "index": 0}]]
+    },
+    "Format Filtered Results": {
+      "main": [[{"node": "Respond", "type": "main", "index": 0}]]
+    }
+  },
+  "settings": {},
+  "active": true
+}

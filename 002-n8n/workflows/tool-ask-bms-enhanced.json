@@ -1,0 +1,83 @@
+{
+  "name": "Tool: Ask BMS (Enhanced)",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "tool-ask-bms",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-trigger",
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [250, 300],
+      "webhookId": "tool-ask-bms"
+    },
+    {
+      "parameters": {
+        "functionCode": "// Parse input parameters\nconst query = $json.query || $json.body?.query || '';\nconst maxChunks = $json.max_chunks || $json.body?.max_chunks || 5;\nconst temperature = $json.temperature || $json.body?.temperature || 0.7;\nconst filters = $json.filters || $json.body?.filters || {};\nconst minScore = $json.min_score || $json.body?.min_score || 0.7;\n\nreturn {\n  json: {\n    query,\n    max_chunks: maxChunks,\n    include_citations: true,\n    temperature,\n    filters,\n    min_score: minScore\n  }\n};"
+      },
+      "id": "parse-input",
+      "name": "Parse Input",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "url": "http://localhost:8000/api/v1/ask",
+        "method": "POST",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json) }}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "call-bms-ask",
+      "name": "Call BMS Ask API",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [650, 300]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Format response with enhanced metadata\nconst response = $json;\n\nif (response.status === 'error') {\n  return {\n    json: {\n      success: false,\n      error: response.message || 'BMS API error',\n      answer: null,\n      citations: []\n    }\n  };\n}\n\nconst answer = response.answer || response.response || '';\nconst citations = (response.citations || []).map(cit => ({\n  document_name: cit.document_name || cit.source,\n  document_type: cit.document_type || 'unknown',\n  department: cit.department || 'unknown',\n  relevance_score: cit.relevance_score || cit.score || 0,\n  chunk_index: cit.chunk_index,\n  content_preview: (cit.content || '').substring(0, 200),\n  document_url: cit.document_url || null,\n  processing_profile: cit.processing_profile || 'railway',\n  quality_score: cit.quality_score || 0\n}));\n\nreturn {\n  json: {\n    success: true,\n    answer,\n    citations,\n    metadata: {\n      query: response.query,\n      confidence: response.confidence || 0,\n      chunks_used: response.chunks_used || citations.length,\n      generation_time_ms: response.generation_time_ms || 0,\n      search_type: 'ask'\n    }\n  }\n};"
+      },
+      "id": "format-response",
+      "name": "Format Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [850, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify($json) }}"
+      },
+      "id": "respond",
+      "name": "Respond",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1050, 300]
+    }
+  ],
+  "connections": {
+    "Webhook Trigger": {
+      "main": [[{"node": "Parse Input", "type": "main", "index": 0}]]
+    },
+    "Parse Input": {
+      "main": [[{"node": "Call BMS Ask API", "type": "main", "index": 0}]]
+    },
+    "Call BMS Ask API": {
+      "main": [[{"node": "Format Response", "type": "main", "index": 0}]]
+    },
+    "Format Response": {
+      "main": [[{"node": "Respond", "type": "main", "index": 0}]]
+    }
+  },
+  "settings": {},
+  "active": true
+}

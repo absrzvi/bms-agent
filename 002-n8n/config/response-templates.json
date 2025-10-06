@@ -1,0 +1,103 @@
+{
+  "errors": {
+    "bms_unavailable": "BMS-search tool cannot be accessed at this time. Please try again later.",
+    "no_results": "No results found for your query. Try rephrasing or using different keywords.",
+    "storage_unavailable": "Conversation history is temporarily unavailable. Your question will still be answered.",
+    "storage_restored": "✓ Conversation history has been restored.",
+    "invalid_query": "I couldn't understand your query. Please try rephrasing with more specific keywords.",
+    "access_denied": "This bot is currently in POC phase. Contact your admin to request access.",
+    "unauthorized_admin": "You don't have admin permissions to execute this command.",
+    "file_type_invalid": "Invalid file type. Supported formats: PDF, CSV, XLSX, XLS, TXT, MD, DOCX, PPTX",
+    "query_too_long": "Query too long. Please limit to 1000 characters.",
+    "upload_failed": "Document upload failed. Please try again or contact support.",
+    "document_not_found": "Document not found. Please check the document ID and try again."
+  },
+  "success": {
+    "upload_queued": "✓ Document uploaded successfully!\nDocument ID: {{document_id}}\nStatus: Processing\nUse `/status {{document_id}}` to check progress.",
+    "upload_complete": "✓ Document processing complete!\nDocument ID: {{document_id}}\nIndexed chunks: {{chunks_count}}\nYou can now search this document.",
+    "whitelist_added": "✓ Access granted to {{channel_name}}",
+    "whitelist_revoked": "✓ Access revoked for {{channel_name}}",
+    "context_cleared": "✓ Conversation history cleared."
+  },
+  "help": {
+    "title": "🤖 BMS Teams Bot - Available Commands",
+    "description": "I help you search railway documentation and answer questions about procedures, technical specs, and safety guidelines.",
+    "commands": [
+      {
+        "command": "/ask [question]",
+        "description": "Get a direct answer to your question with source citations",
+        "example": "/ask What are the emergency brake procedures for Class 395?"
+      },
+      {
+        "command": "/search [query]",
+        "description": "Search for relevant documents without generating an answer",
+        "example": "/search VLAN configuration emergency systems"
+      },
+      {
+        "command": "/upload",
+        "description": "Upload a document for indexing (or attach file directly to message)",
+        "example": "/upload\n[Then attach PDF, DOCX, XLSX, etc.]"
+      },
+      {
+        "command": "/status [document_id]",
+        "description": "Check the processing status of an uploaded document",
+        "example": "/status abc123-def456-789"
+      },
+      {
+        "command": "/history",
+        "description": "View your search history from the last 7 days",
+        "example": "/history"
+      },
+      {
+        "command": "/help",
+        "description": "Show this help message",
+        "example": "/help"
+      },
+      {
+        "command": "/admin [action] [target]",
+        "description": "Admin commands to manage channel whitelist (admins only)",
+        "examples": [
+          "/admin allow #operations-team",
+          "/admin revoke #test-channel",
+          "/admin list"
+        ]
+      }
+    ],
+    "tips": [
+      "💡 You can ask questions in natural language - no need for exact keywords",
+      "💡 The bot remembers conversation context for 7 days",
+      "💡 All answers include citations showing which documents were used",
+      "💡 Upload documents by attaching files directly to your message"
+    ],
+    "footer": "Response time: <3 seconds | Context retention: 7 days | Supported formats: PDF, CSV, XLSX, XLS, TXT, MD, DOCX, PPTX"
+  },
+  "suggestions": {
+    "query_tips": [
+      "Try using specific technical terms (e.g., 'Class 395 brake system' instead of 'brakes')",
+      "Include document type if known (e.g., 'safety procedure', 'technical manual')",
+      "Break complex questions into simpler parts",
+      "Use /search for exploratory queries, /ask for specific questions"
+    ],
+    "similar_query": "💡 You asked something similar on {{date}}: \"{{previous_query}}\"\nWould you like to see that response again?",
+    "no_context": "💡 Tip: I work better when you provide context. Try rephrasing with more details about what you're looking for."
+  },
+  "status": {
+    "queued": "⏳ Status: Queued for processing",
+    "processing": "⚙️ Status: Processing document... ({{progress}}%)",
+    "completed": "✅ Status: Complete | Indexed chunks: {{chunks_count}}",
+    "failed": "❌ Status: Failed | Error: {{error_message}}"
+  },
+  "admin": {
+    "list_header": "📋 Channel Whitelist ({{count}} channels)",
+    "list_item": "• {{channel_name}} (added by {{admin_name}} on {{date}})",
+    "list_empty": "No channels currently whitelisted. Use `/admin allow #channel-name` to add channels.",
+    "admins_header": "👤 Administrators ({{count}})",
+    "admin_item": "• {{admin_name}} ({{admin_id}})"
+  },
+  "history": {
+    "header": "📜 Your Search History (Last 7 Days)",
+    "item": "• {{date}} - {{query}} ({{result_count}} results)",
+    "empty": "No search history found. Start asking questions to build your history!",
+    "footer": "History retention: 7 days | Auto-purged after expiration"
+  }
+}

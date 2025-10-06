@@ -1,0 +1,83 @@
+{
+  "name": "Tool: Search Semantic",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "tool-search-semantic",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-trigger",
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [250, 300],
+      "webhookId": "tool-search-semantic"
+    },
+    {
+      "parameters": {
+        "functionCode": "// Parse search parameters with metadata filters\nconst query = $json.query || $json.body?.query || '';\nconst limit = $json.limit || $json.body?.limit || 10;\nconst minScore = $json.min_score || $json.body?.min_score || 0.7;\nconst minQuality = $json.min_quality || $json.body?.min_quality || 0.0;\n\n// Enhanced filters from Qdrant metadata\nconst filters = $json.filters || $json.body?.filters || {};\n\n// Available filter fields:\n// - department: QHSE, Engineering, Operations, etc.\n// - document_type_category: process, form, template, policy, procedure\n// - is_process, is_form, is_template: boolean flags\n// - processing_profile: railway, technical, general\n// - fleet_type, train_id, network_component: railway-specific\n// - standard_compliance: ISO standards\n\nreturn {\n  json: {\n    query,\n    limit,\n    min_score: minScore,\n    min_quality: minQuality,\n    filters,\n    include_metadata: true\n  }\n};"
+      },
+      "id": "parse-input",
+      "name": "Parse Search Parameters",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "url": "http://localhost:8000/api/v1/search/semantic",
+        "method": "POST",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json) }}",
+        "options": {
+          "timeout": 15000
+        }
+      },
+      "id": "call-semantic-search",
+      "name": "Call Semantic Search",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [650, 300]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Format search results with rich metadata\nconst response = $json;\n\nif (response.status === 'error') {\n  return {\n    json: {\n      success: false,\n      error: response.message,\n      results: []\n    }\n  };\n}\n\nconst results = (response.results || []).map(result => ({\n  document_id: result.document_id,\n  document_name: result.metadata?.document_name || result.document_name,\n  document_type: result.metadata?.document_type || 'unknown',\n  department: result.metadata?.department || 'unknown',\n  document_type_category: result.metadata?.document_type_category || 'unknown',\n  \n  // Content\n  content: result.text || result.content,\n  content_preview: (result.text || result.content || '').substring(0, 300) + '...',\n  \n  // Scores\n  relevance_score: result.score || 0,\n  quality_score: result.metadata?.quality_score || 0,\n  \n  // Context\n  chunk_index: result.chunk_key || result.metadata?.chunk_index,\n  chunk_type: result.metadata?.chunk_type || 'unknown',\n  hierarchy_level: result.metadata?.hierarchy_level || 'unknown',\n  has_context: result.metadata?.has_context || false,\n  \n  // Railway-specific metadata\n  fleet_type: result.metadata?.fleet_type || null,\n  train_id: result.metadata?.train_id || null,\n  network_component: result.metadata?.network_component || null,\n  configuration_type: result.metadata?.configuration_type || null,\n  \n  // Document properties\n  is_process: result.metadata?.is_process || false,\n  is_form: result.metadata?.is_form || false,\n  is_template: result.metadata?.is_template || false,\n  \n  // Standards\n  standard_compliance: result.metadata?.standard_compliance || null,\n  \n  // URLs\n  document_url: result.metadata?.document_url || result.source_url || null,\n  \n  // Processing info\n  processing_profile: result.metadata?.processing_profile || 'railway',\n  processing_version: result.metadata?.processing_version || 'unknown',\n  \n  // Entities and keywords\n  entities: result.metadata?.entities ? JSON.parse(result.metadata.entities) : [],\n  keywords: result.metadata?.keywords ? JSON.parse(result.metadata.keywords) : [],\n  technical_terms: result.metadata?.technical_terms ? JSON.parse(result.metadata.technical_terms) : []\n}));\n\nreturn {\n  json: {\n    success: true,\n    results,\n    metadata: {\n      query: response.query,\n      total_results: results.length,\n      search_type: 'semantic',\n      min_score_applied: response.min_score || 0.7,\n      min_quality_applied: response.min_quality || 0.0\n    }\n  }\n};"
+      },
+      "id": "format-results",
+      "name": "Format Results with Metadata",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [850, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify($json) }}"
+      },
+      "id": "respond",
+      "name": "Respond",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1050, 300]
+    }
+  ],
+  "connections": {
+    "Webhook Trigger": {
+      "main": [[{"node": "Parse Search Parameters", "type": "main", "index": 0}]]
+    },
+    "Parse Search Parameters": {
+      "main": [[{"node": "Call Semantic Search", "type": "main", "index": 0}]]
+    },
+    "Call Semantic Search": {
+      "main": [[{"node": "Format Results with Metadata", "type": "main", "index": 0}]]
+    },
+    "Format Results with Metadata": {
+      "main": [[{"node": "Respond", "type": "main", "index": 0}]]
+    }
+  },
+  "settings": {},
+  "active": true
+}

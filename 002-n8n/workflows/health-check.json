@@ -1,0 +1,188 @@
+{
+  "name": "Health Check",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "GET",
+        "path": "health",
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "id": "webhook-trigger",
+      "name": "Webhook (GET /health)",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        250,
+        300
+      ],
+      "webhookId": "health-check"
+    },
+    {
+      "parameters": {
+        "functionCode": "return {\n  service: 'health-check',\n  timestamp: new Date().toISOString(),\n  components: []\n};"
+      },
+      "id": "init-response",
+      "name": "Initialize Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [
+        450,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "url": "http://localhost:6379",
+        "command": "PING",
+        "options": {
+          "timeout": 2000
+        }
+      },
+      "id": "check-redis",
+      "name": "Check Redis",
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        650,
+        200
+      ],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "url": "http://localhost:8000/health",
+        "method": "GET",
+        "options": {
+          "timeout": 2000
+        }
+      },
+      "id": "check-bms-api",
+      "name": "Check BMS API",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [
+        650,
+        300
+      ],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "url": "http://localhost:11434/api/tags",
+        "method": "GET",
+        "options": {
+          "timeout": 2000
+        }
+      },
+      "id": "check-ollama",
+      "name": "Check Ollama",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [
+        650,
+        400
+      ],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "functionCode": "// Aggregate health check results\nconst items = $input.all();\n\nconst components = {\n  redis: {\n    status: 'unknown',\n    message: 'Not checked',\n    responseTime: null\n  },\n  bms_api: {\n    status: 'unknown',\n    message: 'Not checked',\n    responseTime: null\n  },\n  ollama: {\n    status: 'unknown',\n    message: 'Not checked',\n    responseTime: null\n  }\n};\n\n// Process Redis check\nconst redisItem = items.find(item => item.json.service === 'redis' || item.json.reply === 'PONG');\nif (redisItem) {\n  if (redisItem.json.reply === 'PONG' || redisItem.json === 'PONG') {\n    components.redis.status = 'healthy';\n    components.redis.message = 'Redis is responsive';\n  } else {\n    components.redis.status = 'unhealthy';\n    components.redis.message = redisItem.json.error || 'Redis ping failed';\n  }\n}\n\n// Process BMS API check\nconst bmsItem = items.find(item => item.json.status || item.json.version);\nif (bmsItem) {\n  if (bmsItem.json.status === 'healthy') {\n    components.bms_api.status = 'healthy';\n    components.bms_api.message = `BMS API v${bmsItem.json.version || '1.0.0'}`;\n  } else {\n    components.bms_api.status = 'unhealthy';\n    components.bms_api.message = bmsItem.json.error || 'BMS API unreachable';\n  }\n}\n\n// Process Ollama check\nconst ollamaItem = items.find(item => item.json.models || item.json.error);\nif (ollamaItem) {\n  if (ollamaItem.json.models) {\n    components.ollama.status = 'healthy';\n    components.ollama.message = `Ollama running with ${ollamaItem.json.models.length} models`;\n  } else {\n    components.ollama.status = 'unhealthy';\n    components.ollama.message = ollamaItem.json.error || 'Ollama unreachable';\n  }\n}\n\n// Determine overall health\nconst allHealthy = Object.values(components).every(c => c.status === 'healthy');\nconst anyUnhealthy = Object.values(components).some(c => c.status === 'unhealthy');\n\nlet overallStatus = 'unknown';\nif (allHealthy) {\n  overallStatus = 'healthy';\n} else if (anyUnhealthy) {\n  overallStatus = 'degraded';\n} else {\n  overallStatus = 'unknown';\n}\n\nreturn {\n  status: overallStatus,\n  timestamp: new Date().toISOString(),\n  components: components,\n  version: '1.0.0',\n  environment: 'POC'\n};"
+      },
+      "id": "aggregate-results",
+      "name": "Aggregate Health Results",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [
+        850,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{$json}}",
+        "options": {
+          "responseCode": "={{$json.status === 'healthy' ? 200 : 503}}"
+        }
+      },
+      "id": "respond-webhook",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        1050,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook (GET /health)": {
+      "main": [
+        [
+          {
+            "node": "Initialize Response"
+          }
+        ]
+      ]
+    },
+    "Initialize Response": {
+      "main": [
+        [
+          {
+            "node": "Check Redis"
+          },
+          {
+            "node": "Check BMS API"
+          },
+          {
+            "node": "Check Ollama"
+          }
+        ]
+      ]
+    },
+    "Check Redis": {
+      "main": [
+        [
+          {
+            "node": "Aggregate Health Results"
+          }
+        ]
+      ]
+    },
+    "Check BMS API": {
+      "main": [
+        [
+          {
+            "node": "Aggregate Health Results"
+          }
+        ]
+      ]
+    },
+    "Check Ollama": {
+      "main": [
+        [
+          {
+            "node": "Aggregate Health Results"
+          }
+        ]
+      ]
+    },
+    "Aggregate Health Results": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook"
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {},
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 1,
+  "updatedAt": "2025-10-06T00:00:00.000Z",
+  "versionId": "1",
+  "active": true
+}

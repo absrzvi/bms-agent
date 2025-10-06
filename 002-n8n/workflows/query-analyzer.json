@@ -1,0 +1,250 @@
+{
+  "name": "MS Teams Bot - Query Analyzer",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "query-analyzer",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-trigger",
+      "name": "Query Analyzer Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        250,
+        300
+      ],
+      "webhookId": "query-analyzer-webhook"
+    },
+    {
+      "parameters": {
+        "functionCode": "// Extract query and context\nconst query = $json.body.query || $json.query || '';\nconst conversationId = $json.body.conversationId || $json.conversationId || '';\n\nreturn {\n  json: {\n    query,\n    conversationId\n  }\n};"
+      },
+      "id": "parse-input",
+      "name": "Parse Input",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [
+        450,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "url": "http://localhost:5678/webhook/context-manager",
+        "method": "POST",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "action",
+              "value": "get"
+            },
+            {
+              "name": "conversationId",
+              "value": "={{ $json.conversationId }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 1000
+        }
+      },
+      "id": "get-context",
+      "name": "Get Conversation Context",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [
+        650,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Build prompt for intent classification\nconst query = $json.query;\nconst context = $node['Get Conversation Context'].json.context || {};\nconst recentQueries = context.messages?.slice(-3).map(m => m.text).join('\\n') || 'None';\n\nconst prompt = `You are an intent classifier for a railway documentation chatbot. Analyze the user query and classify it into one of these intents:\n\n**ASK**: User wants a direct answer to a specific question (e.g., \"What are the brake procedures?\", \"How do I configure VLAN?\")\n**SEARCH**: User wants to find relevant documents without a generated answer (e.g., \"Find documents about safety\", \"Show me Class 395 manuals\")\n\nRecent conversation context:\n${recentQueries}\n\nCurrent query: \"${query}\"\n\nRespond ONLY with a JSON object in this exact format:\n{\n  \"intent\": \"ASK\" or \"SEARCH\",\n  \"confidence\": 0.0 to 1.0,\n  \"reasoning\": \"Brief explanation\"\n}\n\nJSON response:`;\n\nreturn {\n  json: {\n    prompt,\n    query,\n    conversationId: $json.conversationId\n  }\n};"
+      },
+      "id": "build-prompt",
+      "name": "Build Classification Prompt",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [
+        850,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "url": "http://localhost:11434/api/generate",
+        "method": "POST",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { \"model\": \"mistral-nemo:12b-instruct\", \"prompt\": $json.prompt, \"stream\": false, \"options\": { \"temperature\": 0.1, \"num_predict\": 200 } } }}",
+        "options": {
+          "timeout": 10000
+        }
+      },
+      "id": "ollama-classify",
+      "name": "Ollama Intent Classification",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [
+        1050,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Parse Ollama response and extract intent\nconst ollamaResponse = $json.response || '';\nlet intent = 'ASK'; // default\nlet confidence = 0.7;\nlet reasoning = 'Default classification';\n\ntry {\n  // Try to extract JSON from response\n  const jsonMatch = ollamaResponse.match(/\\{[\\s\\S]*\\}/);\n  if (jsonMatch) {\n    const parsed = JSON.parse(jsonMatch[0]);\n    intent = parsed.intent || 'ASK';\n    confidence = parsed.confidence || 0.7;\n    reasoning = parsed.reasoning || 'LLM classification';\n  } else {\n    // Fallback: simple keyword detection\n    const queryLower = $node['Parse Input'].json.query.toLowerCase();\n    if (queryLower.includes('find') || queryLower.includes('search') || queryLower.includes('show me') || queryLower.includes('list')) {\n      intent = 'SEARCH';\n      confidence = 0.6;\n      reasoning = 'Keyword-based fallback';\n    }\n  }\n} catch (e) {\n  // Use fallback\n  const queryLower = $node['Parse Input'].json.query.toLowerCase();\n  if (queryLower.includes('find') || queryLower.includes('search') || queryLower.includes('show me') || queryLower.includes('list')) {\n    intent = 'SEARCH';\n  }\n  confidence = 0.5;\n  reasoning = 'Parsing error, using fallback';\n}\n\nreturn {\n  json: {\n    query: $node['Parse Input'].json.query,\n    conversationId: $node['Parse Input'].json.conversationId,\n    intent,\n    confidence,\n    reasoning\n  }\n};"
+      },
+      "id": "parse-intent",
+      "name": "Parse Intent",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [
+        1250,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "url": "http://localhost:5678/webhook/bms-api-caller",
+        "method": "POST",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "query",
+              "value": "={{ $json.query }}"
+            },
+            {
+              "name": "intent",
+              "value": "={{ $json.intent }}"
+            },
+            {
+              "name": "conversationId",
+              "value": "={{ $json.conversationId }}"
+            },
+            {
+              "name": "confidence",
+              "value": "={{ $json.confidence }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 3000
+        }
+      },
+      "id": "call-bms-api",
+      "name": "Call BMS API Caller",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [
+        1450,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}"
+      },
+      "id": "webhook-response",
+      "name": "Return Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        1650,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Query Analyzer Webhook": {
+      "main": [
+        [
+          {
+            "node": "Parse Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Input": {
+      "main": [
+        [
+          {
+            "node": "Get Conversation Context",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Conversation Context": {
+      "main": [
+        [
+          {
+            "node": "Build Classification Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Classification Prompt": {
+      "main": [
+        [
+          {
+            "node": "Ollama Intent Classification",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ollama Intent Classification": {
+      "main": [
+        [
+          {
+            "node": "Parse Intent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Intent": {
+      "main": [
+        [
+          {
+            "node": "Call BMS API Caller",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call BMS API Caller": {
+      "main": [
+        [
+          {
+            "node": "Return Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 0,
+  "updatedAt": "2025-10-06T00:00:00.000Z",
+  "versionId": "1",
+  "active": true
+}

@@ -1,0 +1,420 @@
+{
+  "name": "LangChain Agent Orchestrator",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "teams",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "ms-teams-trigger",
+      "name": "MS Teams Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [250, 300],
+      "webhookId": "teams-langchain-agent"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.body.type }}",
+              "value2": "message"
+            }
+          ]
+        }
+      },
+      "id": "filter-messages",
+      "name": "Filter Messages Only",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Extract message from Teams webhook\nconst body = $input.item.json.body;\nconst message = {\n  text: body.text || '',\n  from: {\n    id: body.from?.id || '',\n    name: body.from?.name || '',\n    aadObjectId: body.from?.aadObjectId || ''\n  },\n  conversation: {\n    id: body.conversation?.id || '',\n    conversationType: body.conversation?.conversationType || 'personal'\n  },\n  channelId: body.channelData?.channel?.id || '',\n  serviceUrl: body.serviceUrl || '',\n  timestamp: new Date().toISOString()\n};\n\nreturn { json: message };"
+      },
+      "id": "parse-teams-message",
+      "name": "Parse Teams Message",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [650, 300]
+    },
+    {
+      "parameters": {
+        "model": "mistral-nemo:12b-instruct",
+        "options": {
+          "baseURL": "http://localhost:11434",
+          "temperature": 0.7,
+          "maxTokens": 2000
+        }
+      },
+      "id": "ollama-llm",
+      "name": "Ollama Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOllama",
+      "typeVersion": 1,
+      "position": [850, 200]
+    },
+    {
+      "parameters": {
+        "name": "query_bms_api",
+        "description": "Query the BMS (Brake Management System) API to get answers about railway documentation, brake systems, procedures, and technical information. Use this when the user asks questions about railway systems, brake procedures, safety protocols, or technical specifications.",
+        "workflowId": "={{ $('Get BMS Caller Workflow ID').item.json.workflowId }}",
+        "fields": {
+          "values": [
+            {
+              "name": "query",
+              "stringValue": "={{ $json.userQuery }}"
+            },
+            {
+              "name": "intent",
+              "stringValue": "ASK"
+            }
+          ]
+        }
+      },
+      "id": "tool-query-bms",
+      "name": "Tool: Query BMS API",
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 1.1,
+      "position": [850, 350]
+    },
+    {
+      "parameters": {
+        "name": "search_documents",
+        "description": "Search for relevant documents in the BMS knowledge base. Use this when the user wants to find specific documents, manuals, or references rather than getting a direct answer. Returns a list of matching documents with relevance scores.",
+        "workflowId": "={{ $('Get BMS Caller Workflow ID').item.json.workflowId }}",
+        "fields": {
+          "values": [
+            {
+              "name": "query",
+              "stringValue": "={{ $json.userQuery }}"
+            },
+            {
+              "name": "intent",
+              "stringValue": "SEARCH"
+            }
+          ]
+        }
+      },
+      "id": "tool-search-docs",
+      "name": "Tool: Search Documents",
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 1.1,
+      "position": [850, 500]
+    },
+    {
+      "parameters": {
+        "name": "get_conversation_history",
+        "description": "Retrieve conversation history for the current user. Use this when you need context from previous messages in the conversation. Returns the last 10 messages with timestamps.",
+        "workflowId": "={{ $('Get Context Manager Workflow ID').item.json.workflowId }}",
+        "fields": {
+          "values": [
+            {
+              "name": "action",
+              "stringValue": "get"
+            },
+            {
+              "name": "conversationId",
+              "stringValue": "={{ $json.conversationId }}"
+            }
+          ]
+        }
+      },
+      "id": "tool-get-context",
+      "name": "Tool: Get Conversation History",
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 1.1,
+      "position": [850, 650]
+    },
+    {
+      "parameters": {
+        "name": "check_similar_queries",
+        "description": "Check if the user has asked a similar question before. Use this to provide context about previous similar queries and potentially save time by referencing previous answers. Returns similarity score and previous query details if found.",
+        "workflowId": "={{ $('Get Similar Query Workflow ID').item.json.workflowId }}",
+        "fields": {
+          "values": [
+            {
+              "name": "query",
+              "stringValue": "={{ $json.userQuery }}"
+            },
+            {
+              "name": "user_id",
+              "stringValue": "={{ $json.userId }}"
+            }
+          ]
+        }
+      },
+      "id": "tool-similar-queries",
+      "name": "Tool: Check Similar Queries",
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 1.1,
+      "position": [850, 800]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are a helpful railway system assistant with access to the BMS (Brake Management System) knowledge base. Your role is to help railway staff with questions about brake systems, procedures, documentation, and technical information.\n\n**Current User Query:** {{ $json.text }}\n**User:** {{ $json.from.name }} ({{ $json.from.id }})\n**Conversation ID:** {{ $json.conversation.id }}\n\n**Your capabilities:**\n1. Query the BMS API for direct answers to technical questions\n2. Search for relevant documents in the knowledge base\n3. Retrieve conversation history for context\n4. Check for similar previous queries\n\n**Guidelines:**\n- Always provide accurate, citation-backed information\n- Use the query_bms_api tool for specific technical questions\n- Use search_documents when users want to find reference materials\n- Check conversation history for context when needed\n- If you find similar previous queries, mention them to the user\n- Be concise but thorough in your responses\n- Include source citations when available\n- If you're unsure, say so and suggest searching for documents\n\nRespond to the user's query now."
+      },
+      "id": "agent-prompt",
+      "name": "Agent Prompt",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.4,
+      "position": [1050, 300]
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $json.conversation.id }}"
+      },
+      "id": "memory",
+      "name": "Conversation Memory",
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.2,
+      "position": [1050, 450]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { \"type\": \"message\", \"text\": $json.output } }}"
+      },
+      "id": "respond-to-teams",
+      "name": "Respond to Teams",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1450, 300]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Get workflow IDs for tools\nconst workflows = await this.helpers.request({\n  method: 'GET',\n  url: 'http://localhost:5678/api/v1/workflows',\n  headers: {\n    'Accept': 'application/json'\n  }\n});\n\nconst workflowMap = {};\nworkflows.data.forEach(wf => {\n  if (wf.name === 'MS Teams Bot - BMS API Caller') {\n    workflowMap.bmsCallerId = wf.id;\n  } else if (wf.name === 'MS Teams Bot - Context Manager') {\n    workflowMap.contextManagerId = wf.id;\n  } else if (wf.name === 'Similar Query Detector') {\n    workflowMap.similarQueryId = wf.id;\n  }\n});\n\nreturn { json: workflowMap };"
+      },
+      "id": "get-workflow-ids",
+      "name": "Get Workflow IDs",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [650, 100],
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "functionCode": "// Store workflow IDs in global context\nconst workflowMap = $input.item.json;\nreturn [\n  { json: { workflowId: workflowMap.bmsCallerId } },\n  { json: { workflowId: workflowMap.contextManagerId } },\n  { json: { workflowId: workflowMap.similarQueryId } }\n];"
+      },
+      "id": "split-workflow-ids",
+      "name": "Split Workflow IDs",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [850, 100]
+    },
+    {
+      "parameters": {
+        "functionCode": "return { json: { workflowId: $input.first().json.workflowId } };"
+      },
+      "id": "get-bms-caller-id",
+      "name": "Get BMS Caller Workflow ID",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [1050, 50]
+    },
+    {
+      "parameters": {
+        "functionCode": "return { json: { workflowId: $input.all()[1].json.workflowId } };"
+      },
+      "id": "get-context-manager-id",
+      "name": "Get Context Manager Workflow ID",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [1050, 150]
+    },
+    {
+      "parameters": {
+        "functionCode": "return { json: { workflowId: $input.last().json.workflowId } };"
+      },
+      "id": "get-similar-query-id",
+      "name": "Get Similar Query Workflow ID",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [1050, 250]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Store conversation after agent response\nconst userMessage = $('Parse Teams Message').item.json.text;\nconst agentResponse = $json.output;\nconst conversationId = $('Parse Teams Message').item.json.conversation.id;\n\nawait this.helpers.httpRequest({\n  method: 'POST',\n  url: 'http://localhost:5678/webhook/context-manager',\n  body: {\n    action: 'store',\n    conversationId: conversationId,\n    userMessage: userMessage,\n    botResponse: agentResponse\n  },\n  json: true\n});\n\nreturn $input.all();"
+      },
+      "id": "store-conversation",
+      "name": "Store Conversation",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [1250, 300]
+    }
+  ],
+  "connections": {
+    "MS Teams Webhook": {
+      "main": [
+        [
+          {
+            "node": "Filter Messages Only",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter Messages Only": {
+      "main": [
+        [
+          {
+            "node": "Parse Teams Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Teams Message": {
+      "main": [
+        [
+          {
+            "node": "Get Workflow IDs",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Agent Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Workflow IDs": {
+      "main": [
+        [
+          {
+            "node": "Split Workflow IDs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Workflow IDs": {
+      "main": [
+        [
+          {
+            "node": "Get BMS Caller Workflow ID",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Get Context Manager Workflow ID",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Get Similar Query Workflow ID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ollama Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Agent Prompt",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tool: Query BMS API": {
+      "ai_tool": [
+        [
+          {
+            "node": "Agent Prompt",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tool: Search Documents": {
+      "ai_tool": [
+        [
+          {
+            "node": "Agent Prompt",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tool: Get Conversation History": {
+      "ai_tool": [
+        [
+          {
+            "node": "Agent Prompt",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tool: Check Similar Queries": {
+      "ai_tool": [
+        [
+          {
+            "node": "Agent Prompt",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Conversation Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "Agent Prompt",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agent Prompt": {
+      "main": [
+        [
+          {
+            "node": "Store Conversation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Store Conversation": {
+      "main": [
+        [
+          {
+            "node": "Respond to Teams",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 1,
+  "updatedAt": "2025-10-06T00:00:00.000Z",
+  "versionId": "1",
+  "active": true
+}

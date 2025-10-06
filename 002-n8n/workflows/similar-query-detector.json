@@ -1,0 +1,346 @@
+{
+  "name": "Similar Query Detector",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "webhook-trigger",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        250,
+        300
+      ],
+      "webhookId": "similar-query-check"
+    },
+    {
+      "parameters": {
+        "functionCode": "// Extract user query and user_id from input\nconst query = $input.item.json.query;\nconst userId = $input.item.json.user_id;\nconst conversationId = $input.item.json.conversation_id;\n\nreturn {\n  query,\n  userId,\n  conversationId,\n  timestamp: new Date().toISOString()\n};"
+      },
+      "id": "extract-params",
+      "name": "Extract Parameters",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [
+        450,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "url": "http://localhost:6379",
+        "command": "GET",
+        "key": "=user:{{$json.userId}}:history"
+      },
+      "id": "get-user-history",
+      "name": "Get User Query History",
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        650,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{$json.history}}",
+              "operation": "isNotEmpty"
+            }
+          ]
+        }
+      },
+      "id": "check-history-exists",
+      "name": "History Exists?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        850,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "url": "http://localhost:8000/api/v1/embeddings",
+        "method": "POST",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "text",
+              "value": "={{$json.query}}"
+            }
+          ]
+        }
+      },
+      "id": "generate-query-embedding",
+      "name": "Generate Query Embedding",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [
+        1050,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Parse user history and current query embedding\nconst history = JSON.parse($input.first().json.history || '[]');\nconst currentEmbedding = $input.last().json.embedding;\nconst currentQuery = $input.last().json.query;\n\n// Calculate cosine similarity with previous queries\nfunction cosineSimilarity(a, b) {\n  const dotProduct = a.reduce((sum, val, i) => sum + val * b[i], 0);\n  const magA = Math.sqrt(a.reduce((sum, val) => sum + val * val, 0));\n  const magB = Math.sqrt(b.reduce((sum, val) => sum + val * val, 0));\n  return dotProduct / (magA * magB);\n}\n\nlet bestMatch = null;\nlet highestSimilarity = 0;\n\nfor (const historyItem of history) {\n  if (historyItem.embedding && historyItem.embedding.length === currentEmbedding.length) {\n    const similarity = cosineSimilarity(currentEmbedding, historyItem.embedding);\n    \n    if (similarity >= 0.85 && similarity > highestSimilarity) {\n      highestSimilarity = similarity;\n      bestMatch = {\n        query: historyItem.query,\n        timestamp: historyItem.timestamp,\n        result_id: historyItem.result_id,\n        similarity: similarity\n      };\n    }\n  }\n}\n\nreturn {\n  hasSimilarQuery: bestMatch !== null,\n  similarQuery: bestMatch,\n  currentQuery: currentQuery,\n  currentEmbedding: currentEmbedding\n};"
+      },
+      "id": "compute-similarity",
+      "name": "Compute Similarity",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [
+        1250,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{$json.hasSimilarQuery}}",
+              "value2": true
+            }
+          ]
+        }
+      },
+      "id": "check-similarity-threshold",
+      "name": "Similar Query Found?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        1450,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "url": "=/workspace/002-n8n/config/response-templates.json",
+        "method": "GET"
+      },
+      "id": "load-templates",
+      "name": "Load Response Templates",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [
+        1650,
+        100
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Format similar query suggestion using template\nconst templates = $input.first().json;\nconst similarQuery = $input.last().json.similarQuery;\n\nconst template = templates.suggestions.similar_query;\nconst suggestion = template\n  .replace('{{date}}', new Date(similarQuery.timestamp).toLocaleDateString())\n  .replace('{{previous_query}}', similarQuery.query);\n\nreturn {\n  suggestion,\n  similarity: similarQuery.similarity,\n  result_id: similarQuery.result_id\n};"
+      },
+      "id": "format-suggestion",
+      "name": "Format Suggestion",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [
+        1850,
+        100
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Store new query with embedding in user history\nconst userId = $input.item.json.userId;\nconst query = $input.item.json.currentQuery;\nconst embedding = $input.item.json.currentEmbedding;\nconst timestamp = new Date().toISOString();\n\n// Get existing history\nconst existingHistory = JSON.parse($input.item.json.existingHistory || '[]');\n\n// Add new query\nconst newEntry = {\n  query,\n  embedding,\n  timestamp,\n  result_id: null  // Will be updated when result is available\n};\n\nexistingHistory.push(newEntry);\n\n// Keep only last 50 queries\nconst trimmedHistory = existingHistory.slice(-50);\n\nreturn {\n  key: `user:${userId}:history`,\n  value: JSON.stringify(trimmedHistory),\n  ttl: 604800  // 7 days\n};"
+      },
+      "id": "update-history",
+      "name": "Update User History",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [
+        1650,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "url": "http://localhost:6379",
+        "command": "SETEX",
+        "key": "={{$json.key}}",
+        "value": "={{$json.value}}",
+        "ttl": "={{$json.ttl}}"
+      },
+      "id": "save-to-redis",
+      "name": "Save to Redis",
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        1850,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Return final response\nconst hasSuggestion = $input.item.json.suggestion !== undefined;\n\nif (hasSuggestion) {\n  return {\n    hasSimilarQuery: true,\n    suggestion: $input.item.json.suggestion,\n    similarity: $input.item.json.similarity,\n    result_id: $input.item.json.result_id\n  };\n} else {\n  return {\n    hasSimilarQuery: false,\n    suggestion: null\n  };\n}"
+      },
+      "id": "prepare-response",
+      "name": "Prepare Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [
+        2050,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{$json}}"
+      },
+      "id": "respond-webhook",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        2250,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\"hasSimilarQuery\": false, \"suggestion\": null}"
+      },
+      "id": "respond-no-history",
+      "name": "Respond (No History)",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        1050,
+        400
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Extract Parameters"
+          }
+        ]
+      ]
+    },
+    "Extract Parameters": {
+      "main": [
+        [
+          {
+            "node": "Get User Query History"
+          }
+        ]
+      ]
+    },
+    "Get User Query History": {
+      "main": [
+        [
+          {
+            "node": "History Exists?"
+          }
+        ]
+      ]
+    },
+    "History Exists?": {
+      "main": [
+        [
+          {
+            "node": "Generate Query Embedding"
+          }
+        ],
+        [
+          {
+            "node": "Respond (No History)"
+          }
+        ]
+      ]
+    },
+    "Generate Query Embedding": {
+      "main": [
+        [
+          {
+            "node": "Compute Similarity"
+          }
+        ]
+      ]
+    },
+    "Compute Similarity": {
+      "main": [
+        [
+          {
+            "node": "Similar Query Found?"
+          }
+        ]
+      ]
+    },
+    "Similar Query Found?": {
+      "main": [
+        [
+          {
+            "node": "Load Response Templates"
+          }
+        ],
+        [
+          {
+            "node": "Update User History"
+          }
+        ]
+      ]
+    },
+    "Load Response Templates": {
+      "main": [
+        [
+          {
+            "node": "Format Suggestion"
+          }
+        ]
+      ]
+    },
+    "Format Suggestion": {
+      "main": [
+        [
+          {
+            "node": "Prepare Response"
+          }
+        ]
+      ]
+    },
+    "Update User History": {
+      "main": [
+        [
+          {
+            "node": "Save to Redis"
+          }
+        ]
+      ]
+    },
+    "Save to Redis": {
+      "main": [
+        [
+          {
+            "node": "Prepare Response"
+          }
+        ]
+      ]
+    },
+    "Prepare Response": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook"
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {},
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 1,
+  "updatedAt": "2025-10-06T00:00:00.000Z",
+  "versionId": "1",
+  "active": true
+}

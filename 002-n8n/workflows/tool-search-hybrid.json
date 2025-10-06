@@ -1,0 +1,83 @@
+{
+  "name": "Tool: Search Hybrid",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "tool-search-hybrid",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-trigger",
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [250, 300],
+      "webhookId": "tool-search-hybrid"
+    },
+    {
+      "parameters": {
+        "functionCode": "// Parse hybrid search parameters\nconst query = $json.query || $json.body?.query || '';\nconst limit = $json.limit || $json.body?.limit || 10;\nconst vectorWeight = $json.vector_weight || $json.body?.vector_weight || 0.7;\nconst keywordWeight = $json.keyword_weight || $json.body?.keyword_weight || 0.3;\nconst candidateMultiplier = $json.candidate_multiplier || $json.body?.candidate_multiplier || 3;\nconst filters = $json.filters || $json.body?.filters || {};\n\nreturn {\n  json: {\n    query,\n    limit,\n    vector_weight: vectorWeight,\n    keyword_weight: keywordWeight,\n    candidate_multiplier: candidateMultiplier,\n    filters\n  }\n};"
+      },
+      "id": "parse-input",
+      "name": "Parse Hybrid Parameters",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "url": "http://localhost:8000/api/v1/search/hybrid",
+        "method": "POST",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json) }}",
+        "options": {
+          "timeout": 20000
+        }
+      },
+      "id": "call-hybrid-search",
+      "name": "Call Hybrid Search",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [650, 300]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Format hybrid search results\nconst response = $json;\n\nif (response.status === 'error') {\n  return {\n    json: {\n      success: false,\n      error: response.message,\n      results: []\n    }\n  };\n}\n\nconst results = (response.results || []).map(result => ({\n  document_id: result.document_id,\n  document_name: result.metadata?.document_name || result.document_name,\n  content_preview: (result.text || '').substring(0, 250),\n  relevance_score: result.score || 0,\n  vector_score: result.vector_score || 0,\n  keyword_score: result.keyword_score || 0,\n  department: result.metadata?.department,\n  document_type: result.metadata?.document_type,\n  document_url: result.metadata?.document_url,\n  chunk_type: result.metadata?.chunk_type,\n  keywords: result.metadata?.keywords ? JSON.parse(result.metadata.keywords) : []\n}));\n\nreturn {\n  json: {\n    success: true,\n    results,\n    metadata: {\n      query: response.query,\n      search_type: 'hybrid',\n      vector_weight: response.vector_weight,\n      keyword_weight: response.keyword_weight,\n      total_results: results.length\n    }\n  }\n};"
+      },
+      "id": "format-results",
+      "name": "Format Hybrid Results",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [850, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify($json) }}"
+      },
+      "id": "respond",
+      "name": "Respond",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1050, 300]
+    }
+  ],
+  "connections": {
+    "Webhook Trigger": {
+      "main": [[{"node": "Parse Hybrid Parameters", "type": "main", "index": 0}]]
+    },
+    "Parse Hybrid Parameters": {
+      "main": [[{"node": "Call Hybrid Search", "type": "main", "index": 0}]]
+    },
+    "Call Hybrid Search": {
+      "main": [[{"node": "Format Hybrid Results", "type": "main", "index": 0}]]
+    },
+    "Format Hybrid Results": {
+      "main": [[{"node": "Respond", "type": "main", "index": 0}]]
+    }
+  },
+  "settings": {},
+  "active": true
+}

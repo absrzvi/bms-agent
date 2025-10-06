@@ -1,0 +1,466 @@
+{
+  "name": "MS Teams Bot - Main Handler",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "teams",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-trigger",
+      "name": "MS Teams Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        250,
+        300
+      ],
+      "webhookId": "teams-bot-webhook"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.body.type }}",
+              "value2": "message"
+            }
+          ]
+        }
+      },
+      "id": "filter-messages",
+      "name": "Filter Messages Only",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        450,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Extract message components\nconst body = $input.item.json.body;\nconst message = {\n  text: body.text || '',\n  from: {\n    id: body.from?.id || '',\n    name: body.from?.name || '',\n    aadObjectId: body.from?.aadObjectId || ''\n  },\n  conversation: {\n    id: body.conversation?.id || '',\n    conversationType: body.conversation?.conversationType || 'personal'\n  },\n  channelId: body.channelData?.channel?.id || '',\n  teamsChannelId: body.channelData?.teamsChannelId || '',\n  serviceUrl: body.serviceUrl || '',\n  timestamp: new Date().toISOString(),\n  attachments: body.attachments || []\n};\n\nreturn { json: message };"
+      },
+      "id": "parse-message",
+      "name": "Parse Teams Message",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [
+        650,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "filePath": "/workspace/002-n8n/config/whitelist.json"
+      },
+      "id": "load-whitelist",
+      "name": "Load Whitelist",
+      "type": "n8n-nodes-base.readBinaryFile",
+      "typeVersion": 1,
+      "position": [
+        850,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Check if channel is whitelisted\nconst message = $input.item.json;\nconst whitelistData = JSON.parse($node['Load Whitelist'].json.data);\n\nconst isChannelAllowed = whitelistData.channels.some(ch => \n  ch.id === message.channelId || ch.id === message.teamsChannelId\n);\n\nconst isAdmin = whitelistData.admins.some(admin => \n  admin.id === message.from.aadObjectId || admin.id === message.from.id\n);\n\nreturn {\n  json: {\n    ...message,\n    isChannelAllowed,\n    isAdmin\n  }\n};"
+      },
+      "id": "check-whitelist",
+      "name": "Check Whitelist",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [
+        1050,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{ $json.isChannelAllowed }}",
+              "value2": true
+            }
+          ]
+        }
+      },
+      "id": "whitelist-gate",
+      "name": "Whitelist Gate",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        1250,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "responseText",
+              "value": "={{ $json('response-templates').errors.access_denied }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "access-denied",
+      "name": "Access Denied Response",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [
+        1450,
+        450
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Route based on message content\nconst text = $json.text.trim();\nconst isAdmin = $json.isAdmin;\n\nlet route = 'natural';\nlet command = null;\nlet args = [];\n\nif (text.startsWith('/')) {\n  const parts = text.slice(1).split(/\\s+/);\n  command = parts[0].toLowerCase();\n  args = parts.slice(1);\n  \n  if (command === 'help') {\n    route = 'help';\n  } else if (command === 'status') {\n    route = 'status';\n  } else if (command === 'history') {\n    route = 'history';\n  } else if (command === 'ask') {\n    route = 'ask';\n  } else if (command === 'search') {\n    route = 'search';\n  } else if (command === 'upload') {\n    route = 'upload';\n  } else if (command === 'admin' && isAdmin) {\n    route = 'admin';\n  } else if (command === 'admin' && !isAdmin) {\n    route = 'admin-unauthorized';\n  } else {\n    route = 'unknown-command';\n  }\n}\n\n// Check for file attachments\nif ($json.attachments && $json.attachments.length > 0) {\n  route = 'file-upload';\n}\n\nreturn {\n  json: {\n    ...$json,\n    route,\n    command,\n    args,\n    query: args.join(' ') || text\n  }\n};"
+      },
+      "id": "route-message",
+      "name": "Route Message",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [
+        1450,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "chooseBranch",
+        "output": "={{ $json.route }}"
+      },
+      "id": "command-switch",
+      "name": "Command Router",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 1,
+      "position": [
+        1650,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "filePath": "/workspace/002-n8n/config/response-templates.json"
+      },
+      "id": "load-response-templates",
+      "name": "Load Response Templates",
+      "type": "n8n-nodes-base.readBinaryFile",
+      "typeVersion": 1,
+      "position": [
+        1850,
+        150
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Format help response\nconst templates = JSON.parse($node['Load Response Templates'].json.data);\nconst help = templates.help;\n\nlet helpText = `${help.title}\\n\\n${help.description}\\n\\n**Commands:**\\n`;\n\nhelp.commands.forEach(cmd => {\n  helpText += `\\n**${cmd.command}**\\n${cmd.description}\\nExample: \\`${cmd.example || cmd.examples[0]}\\`\\n`;\n});\n\nhelpText += `\\n\\n**Tips:**\\n`;\nhelp.tips.forEach(tip => {\n  helpText += `${tip}\\n`;\n});\n\nhelpText += `\\n${help.footer}`;\n\nreturn { json: { responseText: helpText } };"
+      },
+      "id": "help-response",
+      "name": "Help Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [
+        2050,
+        150
+      ]
+    },
+    {
+      "parameters": {
+        "url": "http://localhost:5678/webhook/query-analyzer",
+        "method": "POST",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "query",
+              "value": "={{ $json.query }}"
+            },
+            {
+              "name": "conversationId",
+              "value": "={{ $json.conversation.id }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 2500
+        }
+      },
+      "id": "call-query-analyzer",
+      "name": "Call Query Analyzer",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [
+        2050,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "url": "http://localhost:5678/webhook/admin-commands",
+        "method": "POST",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "command",
+              "value": "={{ $json.command }}"
+            },
+            {
+              "name": "args",
+              "value": "={{ $json.args }}"
+            },
+            {
+              "name": "userId",
+              "value": "={{ $json.from.aadObjectId }}"
+            }
+          ]
+        }
+      },
+      "id": "call-admin-commands",
+      "name": "Call Admin Commands",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [
+        2050,
+        450
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "={{ $json.serviceUrl }}/v3/conversations/{{ $json.conversation.id }}/activities",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "type",
+              "value": "message"
+            },
+            {
+              "name": "text",
+              "value": "={{ $json.responseText }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 5000
+        }
+      },
+      "id": "send-response",
+      "name": "Send Teams Response",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [
+        2250,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { \"status\": \"ok\", \"timestamp\": new Date().toISOString() } }}"
+      },
+      "id": "webhook-response",
+      "name": "Webhook Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        2450,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "MS Teams Webhook": {
+      "main": [
+        [
+          {
+            "node": "Filter Messages Only",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter Messages Only": {
+      "main": [
+        [
+          {
+            "node": "Parse Teams Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Teams Message": {
+      "main": [
+        [
+          {
+            "node": "Load Whitelist",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Load Whitelist": {
+      "main": [
+        [
+          {
+            "node": "Check Whitelist",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Whitelist": {
+      "main": [
+        [
+          {
+            "node": "Whitelist Gate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Whitelist Gate": {
+      "main": [
+        [
+          {
+            "node": "Route Message",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Access Denied Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Access Denied Response": {
+      "main": [
+        [
+          {
+            "node": "Send Teams Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route Message": {
+      "main": [
+        [
+          {
+            "node": "Command Router",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Command Router": {
+      "main": [
+        [
+          {
+            "node": "Load Response Templates",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Call Query Analyzer",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Call Admin Commands",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Load Response Templates": {
+      "main": [
+        [
+          {
+            "node": "Help Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Help Response": {
+      "main": [
+        [
+          {
+            "node": "Send Teams Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call Query Analyzer": {
+      "main": [
+        [
+          {
+            "node": "Send Teams Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call Admin Commands": {
+      "main": [
+        [
+          {
+            "node": "Send Teams Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Teams Response": {
+      "main": [
+        [
+          {
+            "node": "Webhook Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 0,
+  "updatedAt": "2025-10-06T00:00:00.000Z",
+  "versionId": "1",
+  "active": true
+}

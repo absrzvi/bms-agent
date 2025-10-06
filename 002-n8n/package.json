@@ -1,0 +1,47 @@
+{
+  "name": "bms-teams-bot",
+  "version": "1.0.0",
+  "description": "MS Teams chat bot integration for BMS Agent API via n8n",
+  "main": "index.js",
+  "scripts": {
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "test:contract": "jest tests/contract",
+    "test:integration": "jest tests/integration",
+    "test:unit": "jest tests/unit",
+    "test:load": "node tests/performance/load-test.js"
+  },
+  "keywords": [
+    "ms-teams",
+    "chatbot",
+    "n8n",
+    "bms-agent",
+    "railway"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "axios": "^1.6.0",
+    "redis": "^4.6.0"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "@types/jest": "^29.5.0"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "coverageDirectory": "coverage",
+    "collectCoverageFrom": [
+      "lib/**/*.js",
+      "!lib/**/*.test.js"
+    ],
+    "testMatch": [
+      "**/tests/**/*.js"
+    ],
+    "testTimeout": 10000,
+    "maxWorkers": 1,
+    "forceExit": true,
+    "detectOpenHandles": false
+  }
+}

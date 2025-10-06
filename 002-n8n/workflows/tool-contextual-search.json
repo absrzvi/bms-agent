@@ -1,0 +1,83 @@
+{
+  "name": "Tool: Contextual Search",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "tool-contextual-search",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-trigger",
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [250, 300],
+      "webhookId": "tool-contextual-search"
+    },
+    {
+      "parameters": {
+        "functionCode": "// Parse contextual search - uses parent-child hierarchy in Qdrant\nconst query = $json.query || $json.body?.query || '';\nconst contextWindow = $json.context_window || $json.body?.context_window || 2;\nconst limit = $json.limit || $json.body?.limit || 5;\n\nreturn {\n  json: {\n    query,\n    context_window: contextWindow,\n    limit\n  }\n};"
+      },
+      "id": "parse-input",
+      "name": "Parse Contextual Params",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "url": "http://localhost:8000/api/v1/search/contextual",
+        "method": "POST",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json) }}",
+        "options": {
+          "timeout": 20000
+        }
+      },
+      "id": "call-contextual-search",
+      "name": "Call Contextual Search",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [650, 300]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Format contextual results with parent-child relationships\nconst response = $json;\n\nif (response.status === 'error') {\n  return {\n    json: {\n      success: false,\n      error: response.message,\n      results: []\n    }\n  };\n}\n\nconst results = (response.results || []).map(result => ({\n  document_id: result.document_id,\n  document_name: result.metadata?.document_name,\n  \n  // Main content\n  content: result.text || result.content,\n  \n  // Hierarchical context\n  chunk_type: result.metadata?.chunk_type,\n  hierarchy_level: result.metadata?.hierarchy_level,\n  parent_chunk_id: result.metadata?.parent_chunk_id,\n  chunk_index: result.metadata?.chunk_index,\n  \n  // Context fields\n  contextual_description: result.metadata?.contextual_description,\n  surrounding_context: result.metadata?.surrounding_context,\n  has_context: result.metadata?.has_context,\n  \n  // Scores\n  relevance_score: result.score,\n  quality_score: result.metadata?.quality_score,\n  \n  // Metadata\n  department: result.metadata?.department,\n  document_type: result.metadata?.document_type,\n  document_url: result.metadata?.document_url,\n  \n  // Context window info\n  context_window: result.context_window || 0\n}));\n\nreturn {\n  json: {\n    success: true,\n    results,\n    metadata: {\n      search_type: 'contextual',\n      context_window: response.context_window,\n      total_results: results.length\n    }\n  }\n};"
+      },
+      "id": "format-contextual-results",
+      "name": "Format Contextual Results",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [850, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify($json) }}"
+      },
+      "id": "respond",
+      "name": "Respond",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1050, 300]
+    }
+  ],
+  "connections": {
+    "Webhook Trigger": {
+      "main": [[{"node": "Parse Contextual Params", "type": "main", "index": 0}]]
+    },
+    "Parse Contextual Params": {
+      "main": [[{"node": "Call Contextual Search", "type": "main", "index": 0}]]
+    },
+    "Call Contextual Search": {
+      "main": [[{"node": "Format Contextual Results", "type": "main", "index": 0}]]
+    },
+    "Format Contextual Results": {
+      "main": [[{"node": "Respond", "type": "main", "index": 0}]]
+    }
+  },
+  "settings": {},
+  "active": true
+}

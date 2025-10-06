@@ -1,0 +1,399 @@
+{
+  "name": "MS Teams Bot - Admin Commands",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "admin-commands",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-trigger",
+      "name": "Admin Commands Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        250,
+        300
+      ],
+      "webhookId": "admin-commands-webhook"
+    },
+    {
+      "parameters": {
+        "functionCode": "// Parse admin command\nconst command = $json.body?.command || $json.command || '';\nconst args = $json.body?.args || $json.args || [];\nconst userId = $json.body?.userId || $json.userId || '';\n\nlet action = 'list'; // default\nlet target = '';\n\nif (args.length > 0) {\n  action = args[0].toLowerCase(); // allow, revoke, list\n  if (args.length > 1) {\n    target = args[1]; // channel name or ID\n  }\n}\n\nreturn {\n  json: {\n    command,\n    action,\n    target,\n    userId,\n    timestamp: new Date().toISOString()\n  }\n};"
+      },
+      "id": "parse-command",
+      "name": "Parse Command",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [
+        450,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "filePath": "/workspace/002-n8n/config/whitelist.json"
+      },
+      "id": "load-whitelist",
+      "name": "Load Whitelist",
+      "type": "n8n-nodes-base.readBinaryFile",
+      "typeVersion": 1,
+      "position": [
+        650,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Verify user is admin\nconst userId = $node['Parse Command'].json.userId;\nconst whitelistData = JSON.parse($node['Load Whitelist'].json.data);\n\nconst isAdmin = whitelistData.admins.some(admin => \n  admin.id === userId || admin.aadObjectId === userId\n);\n\nreturn {\n  json: {\n    isAdmin,\n    whitelistData,\n    commandData: $node['Parse Command'].json\n  }\n};"
+      },
+      "id": "verify-admin",
+      "name": "Verify Admin",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [
+        850,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{ $json.isAdmin }}",
+              "value2": true
+            }
+          ]
+        }
+      },
+      "id": "admin-gate",
+      "name": "Admin Gate",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        1050,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "filePath": "/workspace/002-n8n/config/response-templates.json"
+      },
+      "id": "load-templates",
+      "name": "Load Templates",
+      "type": "n8n-nodes-base.readBinaryFile",
+      "typeVersion": 1,
+      "position": [
+        1250,
+        450
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Unauthorized response\nconst templates = JSON.parse($node['Load Templates'].json.data);\n\nreturn {\n  json: {\n    responseText: templates.errors.unauthorized_admin\n  }\n};"
+      },
+      "id": "unauthorized-response",
+      "name": "Unauthorized Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [
+        1450,
+        450
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "chooseBranch",
+        "output": "={{ $json.commandData.action }}"
+      },
+      "id": "action-router",
+      "name": "Action Router",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 1,
+      "position": [
+        1250,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Add channel to whitelist\nconst whitelist = $node['Verify Admin'].json.whitelistData;\nconst target = $node['Verify Admin'].json.commandData.target;\nconst userId = $node['Verify Admin'].json.commandData.userId;\nconst timestamp = $node['Verify Admin'].json.commandData.timestamp;\n\nif (!target) {\n  return {\n    json: {\n      success: false,\n      responseText: 'Please specify a channel. Usage: /admin allow #channel-name'\n    }\n  };\n}\n\n// Check if already exists\nconst exists = whitelist.channels.some(ch => ch.name === target || ch.id === target);\n\nif (exists) {\n  return {\n    json: {\n      success: false,\n      responseText: `Channel ${target} is already whitelisted.`,\n      whitelist\n    }\n  };\n}\n\n// Add new channel\nwhitelist.channels.push({\n  id: target,\n  name: target,\n  added_by: userId,\n  added_at: timestamp\n});\n\nreturn {\n  json: {\n    success: true,\n    whitelist,\n    channelName: target\n  }\n};"
+      },
+      "id": "add-channel",
+      "name": "Add Channel",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [
+        1450,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Remove channel from whitelist\nconst whitelist = $node['Verify Admin'].json.whitelistData;\nconst target = $node['Verify Admin'].json.commandData.target;\n\nif (!target) {\n  return {\n    json: {\n      success: false,\n      responseText: 'Please specify a channel. Usage: /admin revoke #channel-name'\n    }\n  };\n}\n\n// Find and remove channel\nconst initialLength = whitelist.channels.length;\nwhitelist.channels = whitelist.channels.filter(ch => \n  ch.name !== target && ch.id !== target\n);\n\nconst removed = whitelist.channels.length < initialLength;\n\nif (!removed) {\n  return {\n    json: {\n      success: false,\n      responseText: `Channel ${target} was not found in whitelist.`,\n      whitelist\n    }\n  };\n}\n\nreturn {\n  json: {\n    success: true,\n    whitelist,\n    channelName: target\n  }\n};"
+      },
+      "id": "remove-channel",
+      "name": "Remove Channel",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [
+        1450,
+        270
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "// List all channels and admins\nconst whitelist = $node['Verify Admin'].json.whitelistData;\nconst templates = JSON.parse($node['Load Templates'].json.data);\n\nlet responseText = templates.admin.list_header.replace('{{count}}', whitelist.channels.length) + '\\n';\n\nif (whitelist.channels.length === 0) {\n  responseText += templates.admin.list_empty + '\\n';\n} else {\n  whitelist.channels.forEach(ch => {\n    const date = new Date(ch.added_at).toLocaleDateString();\n    responseText += templates.admin.list_item\n      .replace('{{channel_name}}', ch.name)\n      .replace('{{admin_name}}', ch.added_by)\n      .replace('{{date}}', date) + '\\n';\n  });\n}\n\nresponseText += '\\n' + templates.admin.admins_header.replace('{{count}}', whitelist.admins.length) + '\\n';\n\nwhitelist.admins.forEach(admin => {\n  responseText += templates.admin.admin_item\n    .replace('{{admin_name}}', admin.name)\n    .replace('{{admin_id}}', admin.id) + '\\n';\n});\n\nreturn {\n  json: {\n    success: true,\n    responseText,\n    whitelist\n  }\n};"
+      },
+      "id": "list-whitelist",
+      "name": "List Whitelist",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [
+        1450,
+        340
+      ]
+    },
+    {
+      "parameters": {
+        "filePath": "/workspace/002-n8n/config/whitelist.json",
+        "fileContent": "={{ JSON.stringify($json.whitelist, null, 2) }}"
+      },
+      "id": "save-whitelist",
+      "name": "Save Whitelist",
+      "type": "n8n-nodes-base.writeFile",
+      "typeVersion": 1,
+      "position": [
+        1650,
+        250
+      ]
+    },
+    {
+      "parameters": {
+        "filePath": "/workspace/002-n8n/config/response-templates.json"
+      },
+      "id": "load-templates-for-response",
+      "name": "Load Templates for Response",
+      "type": "n8n-nodes-base.readBinaryFile",
+      "typeVersion": 1,
+      "position": [
+        1850,
+        250
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Format success response\nconst templates = JSON.parse($node['Load Templates for Response'].json.data);\nconst success = $json.success;\nconst action = $node['Verify Admin'].json.commandData.action;\nconst channelName = $json.channelName || '';\n\nlet responseText = '';\n\nif (action === 'list') {\n  responseText = $json.responseText;\n} else if (action === 'allow' && success) {\n  responseText = templates.success.whitelist_added.replace('{{channel_name}}', channelName);\n} else if (action === 'revoke' && success) {\n  responseText = templates.success.whitelist_revoked.replace('{{channel_name}}', channelName);\n} else {\n  responseText = $json.responseText || 'Unknown error occurred.';\n}\n\nreturn {\n  json: {\n    responseText\n  }\n};"
+      },
+      "id": "format-response",
+      "name": "Format Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [
+        2050,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { \"responseText\": $json.responseText } }}"
+      },
+      "id": "webhook-response",
+      "name": "Return Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        2250,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Admin Commands Webhook": {
+      "main": [
+        [
+          {
+            "node": "Parse Command",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Command": {
+      "main": [
+        [
+          {
+            "node": "Load Whitelist",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Load Whitelist": {
+      "main": [
+        [
+          {
+            "node": "Verify Admin",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verify Admin": {
+      "main": [
+        [
+          {
+            "node": "Admin Gate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Admin Gate": {
+      "main": [
+        [
+          {
+            "node": "Action Router",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Load Templates",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Load Templates": {
+      "main": [
+        [
+          {
+            "node": "Unauthorized Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Unauthorized Response": {
+      "main": [
+        [
+          {
+            "node": "Return Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Action Router": {
+      "main": [
+        [
+          {
+            "node": "Add Channel",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Remove Channel",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "List Whitelist",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Add Channel": {
+      "main": [
+        [
+          {
+            "node": "Save Whitelist",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Remove Channel": {
+      "main": [
+        [
+          {
+            "node": "Save Whitelist",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "List Whitelist": {
+      "main": [
+        [
+          {
+            "node": "Format Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Whitelist": {
+      "main": [
+        [
+          {
+            "node": "Load Templates for Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Load Templates for Response": {
+      "main": [
+        [
+          {
+            "node": "Format Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Response": {
+      "main": [
+        [
+          {
+            "node": "Return Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 0,
+  "updatedAt": "2025-10-06T00:00:00.000Z",
+  "versionId": "1",
+  "active": true
+}
