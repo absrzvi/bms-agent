@@ -71,7 +71,34 @@ No changes needed to the agent workflow! It already accepts:
 
 #### Step 2: Modify teams-webhook-bot-handler.json
 
-Add an "Execute Workflow" node after whitelist check:
+**Current Workflow Structure** (as of 2025-10-07):
+```
+Teams Message Webhook
+    ↓
+Parse Teams Activity
+    ↓
+Is Valid Message? (IF node)
+    ↓ (true branch)
+Get Bot Framework Token
+    ↓
+Combine Token with Message
+    ↓
+Prepare Typing Indicator
+    ↓
+Send Typing Indicator
+    ↓
+Query BMS Agent (direct BMS API call)
+    ↓
+Format Response
+    ↓
+Send Reply to Teams
+    ↓
+Respond to Bot Framework
+```
+
+**⚠️ Note**: The current workflow does NOT have whitelist validation. To add it, insert a whitelist check node between "Is Valid Message?" and "Get Bot Framework Token".
+
+**Modification**: Replace "Query BMS Agent" node with "Execute Workflow" to call bms-ai-agent:
 
 **Node Configuration**:
 ```json

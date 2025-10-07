@@ -49,15 +49,23 @@
 │  └──────────┬─────────────────────────┘    │
 │             ↓                                │
 │  ┌────────────────────────────────────┐    │
-│  │ 3. Whitelist Validation            │    │
-│  │    - Check channel allowed         │    │
-│  │    - If not → send rejection       │    │
+│  │ 3. Is Valid Message? (IF check)    │    │
+│  │    - Filter non-message activities │    │
+│  │    ⚠️ NO WHITELIST CHECK (yet)      │    │
 │  └──────────┬─────────────────────────┘    │
 │             ↓                                │
 │  ┌────────────────────────────────────┐    │
-│  │ 4. Execute Workflow:               │    │
-│  │    bms-ai-agent.json               │────┼─┐
-│  └────────────────────────────────────┘    │ │
+│  │ 4. Get Bot Framework OAuth Token   │    │
+│  └──────────┬─────────────────────────┘    │
+│             ↓                                │
+│  ┌────────────────────────────────────┐    │
+│  │ 5. Send Typing Indicator           │    │
+│  └──────────┬─────────────────────────┘    │
+│             ↓                                │
+│  ┌────────────────────────────────────┐    │
+│  │ 6. Query BMS Agent (direct API)    │    │
+│  │    OR Execute Workflow (ai-agent)  │────┼─┐
+│  └──────────┬─────────────────────────┘    │ │
 │             ↓                                │ │
 │  ┌────────────────────────────────────┐    │ │
 │  │ 7. Format Response for Teams       │    │ │
@@ -200,23 +208,56 @@ open http://localhost:5678
 # 3. Verify green status indicator
 ```
 
-### 4. Whitelist Configuration
+### 4. Whitelist Configuration (Optional - Not Currently Implemented)
 
-Add allowed channels to `/workspace/002-n8n/config/whitelist.json`:
+**⚠️ IMPORTANT**: The current `teams-webhook-bot-handler.json` workflow **does NOT include whitelist validation**.
 
-```json
-{
-  "admins": ["user-id-001"],
-  "channels": [
-    "19:channel-id-001@thread.tacv2",
-    "19:channel-id-002@thread.tacv2"
-  ]
-}
-```
+**Current Behavior**: All messages from any channel are processed (no access control).
 
-**First User Admin**:
-- First user to interact with bot automatically becomes admin
-- Admin can whitelist additional channels via `/admin allow #channel-name`
+**To Add Whitelist Functionality** (optional enhancement):
+
+1. **Create whitelist configuration** at `/workspace/002-n8n/config/whitelist.json`:
+   ```json
+   {
+     "admins": ["user-id-001"],
+     "channels": [
+       "19:channel-id-001@thread.tacv2",
+       "19:channel-id-002@thread.tacv2"
+     ]
+   }
+   ```
+
+2. **Add whitelist check node** in n8n workflow:
+   - Position: Between "Is Valid Message?" and "Get Bot Framework Token"
+   - Type: Code node or HTTP Request to whitelist validation service
+   - Uses: `/workspace/002-n8n/lib/whitelist.js` module (already exists)
+   - Logic:
+     ```javascript
+     const { getWhitelistManager } = require('/workspace/002-n8n/lib/whitelist');
+     const whitelist = getWhitelistManager();
+
+     const channelId = $json.conversationId;
+     const isAllowed = whitelist.isChannelAllowed(channelId);
+
+     if (!isAllowed) {
+       // Send rejection message
+       return {
+         json: {
+           ...$json,
+           rejected: true,
+           rejectReason: 'Channel not whitelisted'
+         }
+       };
+     }
+
+     return { json: $json };
+     ```
+
+3. **Add rejection response branch**:
+   - If `rejected: true`, send "This bot is currently in POC phase. Contact your admin to request access."
+   - Skip agent execution
+
+**Note**: The whitelist module (`lib/whitelist.js`) and documentation exist, but the workflow integration is not implemented. This is an optional security enhancement for POC phase access control.
 
 ---
 
@@ -254,23 +295,40 @@ const conversationId = activity.conversation.id;
 const serviceUrl = activity.serviceUrl;
 ```
 
-#### 2. Whitelist Validation
+#### 2. Message Validation
 
-**Check**: Is `conversationId` in whitelist.json?
+**Check**: Is activity type "message" with non-empty text?
 
-**If NOT whitelisted**:
+**If NOT valid message**:
 ```javascript
-// Response sent to Teams
+// Response sent to Bot Framework
 {
-  "type": "message",
-  "text": "This bot is currently in POC phase. Contact your admin to request access."
+  "status": "ok",
+  "processed": false,
+  "reason": "not a message"
 }
 // STOP - Do not proceed to agent
 ```
 
-**If whitelisted**: Continue to agent execution
+**If valid message**: Continue to token acquisition
 
-#### 3. Agent Invocation (Execute Workflow node)
+**⚠️ Note**: Current workflow does NOT perform whitelist validation. All messages from any channel are processed.
+
+#### 3. OAuth Token Acquisition
+
+**Get Bot Framework OAuth token** from Azure AD:
+```javascript
+POST https://login.microsoftonline.com/botframework.com/oauth2/v2.0/token
+Body:
+  grant_type=client_credentials
+  client_id={BOT_APP_ID}
+  client_secret={BOT_APP_PASSWORD}
+  scope=https://api.botframework.com/.default
+```
+
+**Token cached** for later use in sending reply.
+
+#### 4. Agent Invocation (Execute Workflow node or Direct API)
 
 **Data Mapping**:
 ```javascript
@@ -285,9 +343,9 @@ const serviceUrl = activity.serviceUrl;
 }
 ```
 
-#### 4. Agent Processing (bms-ai-agent workflow)
+#### 5. Agent Processing (bms-ai-agent workflow)
 
-**Step 4a: Agent Analysis**
+**Step 5a: Agent Analysis**
 
 Agent receives input and analyzes query:
 ```
@@ -301,7 +359,7 @@ Selected Tool: semantic_search
 Reason: Need to find multiple documents about safety procedures
 ```
 
-**Step 4b: Tool Execution**
+**Step 5b: Tool Execution**
 
 Agent calls `semantic_search` tool:
 ```javascript
@@ -326,7 +384,7 @@ POST http://localhost:8000/api/v1/search/semantic
 }
 ```
 
-**Step 4c: Agent Response Formatting**
+**Step 5c: Agent Response Formatting**
 
 Agent receives tool results and formats response:
 ```
@@ -359,7 +417,7 @@ Sources:
 }
 ```
 
-#### 5. Response Formatting for MS Teams
+#### 6. Response Formatting for MS Teams
 
 **Format agent output** as Bot Framework activity:
 ```javascript
@@ -377,7 +435,7 @@ const replyActivity = {
 };
 ```
 
-#### 6. Send Reply to MS Teams
+#### 7. Send Reply to MS Teams
 
 **HTTP POST** to Bot Framework API:
 ```javascript
@@ -388,9 +446,9 @@ Headers:
 Body: {replyActivity}
 ```
 
-#### 7. Store Conversation Context
+#### 8. Store Conversation Context (Optional)
 
-**Redis storage** (for context continuity):
+**Redis storage** (for context continuity - if implemented):
 ```javascript
 // Key: conversation:{conversationId}:history
 // Value: List of message objects
