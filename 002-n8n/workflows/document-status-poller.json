@@ -1,0 +1,174 @@
+{
+  "name": "Document Status Poller",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "seconds",
+              "secondsInterval": 30
+            }
+          ]
+        }
+      },
+      "id": "schedule-trigger",
+      "name": "Schedule Every 30s",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Query Redis for pending upload jobs\nconst redis = require('redis');\nconst { getRedisClient } = require('/workspace/002-n8n/lib/redis-client');\n\nconst redisClient = getRedisClient();\n\n// Connect if not already connected\nconst connectResult = await redisClient.connect();\n\nif (!connectResult.success) {\n  console.log('Redis unavailable, skipping poll cycle');\n  return [];\n}\n\n// Get all pending jobs from sorted set\n// ZRANGE returns jobs sorted by timestamp (score)\nconst result = await redisClient.execute(\n  async (client) => {\n    // Get jobs with status 'processing' (up to 50 at a time)\n    return await client.zRange('upload_jobs:pending', 0, 49, {\n      REV: false // oldest first\n    });\n  },\n  [] // fallback to empty array\n);\n\nif (!result.success || result.data.length === 0) {\n  console.log(`No pending jobs found (stateless: ${result.stateless})`);\n  return [];\n}\n\nconst jobIds = result.data;\nconsole.log(`Found ${jobIds.length} pending upload jobs`);\n\n// Fetch job details from Redis\nconst jobs = [];\nfor (const jobId of jobIds) {\n  const jobResult = await redisClient.execute(\n    async (client) => {\n      const jobData = await client.get(`upload_job:${jobId}`);\n      return jobData ? JSON.parse(jobData) : null;\n    },\n    null\n  );\n\n  if (jobResult.success && jobResult.data) {\n    jobs.push({\n      job_id: jobId,\n      ...jobResult.data\n    });\n  }\n}\n\nreturn jobs.map(job => ({ json: job }));"
+      },
+      "id": "query-redis",
+      "name": "Query Pending Jobs",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "url": "=http://localhost:8000/api/v1/documents/status/{{ $json.job_id }}",
+        "method": "GET",
+        "options": {
+          "timeout": 10000
+        },
+        "retry": {
+          "enabled": true,
+          "maxRetries": 3,
+          "retryDelayType": "exponential",
+          "retryDelayInitial": 100,
+          "retryDelayMax": 2000
+        }
+      },
+      "id": "check-status",
+      "name": "Check Job Status",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [650, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.status }}",
+              "operation": "equals",
+              "value2": "completed"
+            }
+          ]
+        }
+      },
+      "id": "if-completed",
+      "name": "If Completed",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [850, 200]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.status }}",
+              "operation": "equals",
+              "value2": "failed"
+            }
+          ]
+        }
+      },
+      "id": "if-failed",
+      "name": "If Failed",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [850, 400]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Format completion notification for MS Teams\nconst jobData = $input.first().json;\nconst status = jobData.status;\nconst jobId = jobData.job_id || $json.job_id;\nconst fileName = jobData.file_name || jobData.document_name || 'document';\nconst documentId = jobData.document_id;\n\nlet message = '';\nlet conversationId = jobData.conversation_id;\nlet userId = jobData.user_id;\n\nif (status === 'completed') {\n  message = `✅ **Document Upload Complete**\\n\\n`;\n  message += `📄 **File:** ${fileName}\\n`;\n  message += `🆔 **Document ID:** ${documentId}\\n\\n`;\n  message += `Your document has been successfully processed and indexed. `;\n  message += `You can now search for information from this document using natural language queries.\\n\\n`;\n  message += `*Powered by BMS Agent*`;\n} else if (status === 'failed') {\n  message = `❌ **Document Upload Failed**\\n\\n`;\n  message += `📄 **File:** ${fileName}\\n`;\n  message += `⚠️ **Error:** ${jobData.error || 'Unknown error occurred during processing'}\\n\\n`;\n  message += `Please try uploading the document again. If the problem persists, contact support.\\n\\n`;\n  message += `*Powered by BMS Agent*`;\n}\n\nreturn {\n  json: {\n    message,\n    conversationId,\n    userId,\n    jobId,\n    status,\n    fileName,\n    documentId: documentId || null\n  }\n};"
+      },
+      "id": "format-notification",
+      "name": "Format Notification",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1050, 300]
+    },
+    {
+      "parameters": {
+        "url": "=https://smba.trafficmanager.net/apis/v3/conversations/{{ $json.conversationId }}/activities",
+        "method": "POST",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"type\": \"message\",\n  \"from\": {\n    \"id\": \"{{ $env.BOT_APP_ID }}\",\n    \"name\": \"BMS Teams Bot\"\n  },\n  \"text\": \"{{ $json.message }}\"\n}",
+        "options": {
+          "timeout": 10000
+        }
+      },
+      "id": "send-notification",
+      "name": "Send Proactive Message",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1250, 300]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Remove completed/failed job from Redis\nconst { getRedisClient } = require('/workspace/002-n8n/lib/redis-client');\nconst redisClient = getRedisClient();\n\nconst jobId = $json.jobId;\nconst status = $json.status;\n\nconsole.log(`Removing job ${jobId} with status ${status} from pending queue`);\n\n// Remove from sorted set\nawait redisClient.execute(\n  async (client) => {\n    // Remove from pending queue\n    await client.zRem('upload_jobs:pending', jobId);\n    \n    // Update job record with final status\n    const jobKey = `upload_job:${jobId}`;\n    const jobData = await client.get(jobKey);\n    \n    if (jobData) {\n      const job = JSON.parse(jobData);\n      job.status = status;\n      job.completed_at = new Date().toISOString();\n      \n      // Store with 7-day TTL for audit trail\n      await client.setEx(jobKey, 7 * 24 * 60 * 60, JSON.stringify(job));\n    }\n    \n    return true;\n  },\n  false\n);\n\nconsole.log(`✓ Job ${jobId} cleanup complete`);\n\nreturn {\n  json: {\n    jobId,\n    status,\n    action: 'removed_from_queue',\n    timestamp: new Date().toISOString()\n  }\n};"
+      },
+      "id": "cleanup-job",
+      "name": "Cleanup Job",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1450, 300]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Log processing summary\nconst items = $input.all();\n\nif (items.length === 0) {\n  console.log('✓ Poll cycle complete - no pending jobs');\n  return [{ json: { status: 'no_jobs', timestamp: new Date().toISOString() } }];\n}\n\nconst completed = items.filter(item => item.json.status === 'completed').length;\nconst failed = items.filter(item => item.json.status === 'failed').length;\nconst processing = items.filter(item => item.json.status === 'processing').length;\n\nconsole.log(`✓ Poll cycle complete:`);\nconsole.log(`  - Completed: ${completed}`);\nconsole.log(`  - Failed: ${failed}`);\nconsole.log(`  - Still processing: ${processing}`);\n\nreturn [{\n  json: {\n    status: 'cycle_complete',\n    completed,\n    failed,\n    processing,\n    timestamp: new Date().toISOString()\n  }\n}];"
+      },
+      "id": "log-summary",
+      "name": "Log Summary",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1650, 300]
+    }
+  ],
+  "connections": {
+    "Schedule Every 30s": {
+      "main": [[{ "node": "Query Pending Jobs", "type": "main", "index": 0 }]]
+    },
+    "Query Pending Jobs": {
+      "main": [[{ "node": "Check Job Status", "type": "main", "index": 0 }]]
+    },
+    "Check Job Status": {
+      "main": [[
+        { "node": "If Completed", "type": "main", "index": 0 },
+        { "node": "If Failed", "type": "main", "index": 0 }
+      ]]
+    },
+    "If Completed": {
+      "main": [[{ "node": "Format Notification", "type": "main", "index": 0 }]]
+    },
+    "If Failed": {
+      "main": [[{ "node": "Format Notification", "type": "main", "index": 0 }]]
+    },
+    "Format Notification": {
+      "main": [[{ "node": "Send Proactive Message", "type": "main", "index": 0 }]]
+    },
+    "Send Proactive Message": {
+      "main": [[{ "node": "Cleanup Job", "type": "main", "index": 0 }]]
+    },
+    "Cleanup Job": {
+      "main": [[{ "node": "Log Summary", "type": "main", "index": 0 }]]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 0,
+  "updatedAt": "2025-10-07T00:00:00.000Z",
+  "versionId": "1",
+  "active": true
+}
