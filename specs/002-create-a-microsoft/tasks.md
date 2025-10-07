@@ -415,7 +415,7 @@ Project structure from plan.md:
     5. Add error handling and validation (query length, encoding)
   - **Rationale**: Clarification from Session 2025-10-07 - implement endpoint as part of this project
 
-- [ ] **T027b** Create enhanced search workflows for new BMS API endpoints
+- [x] **T027b** Create enhanced search workflows for new BMS API endpoints
   - Path: Create 4 new workflow files in `/workspace/002-n8n/workflows/`
   - **New Workflows**:
     1. `batch-search.json` - Multi-query batch search workflow
