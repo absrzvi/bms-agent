@@ -1,0 +1,310 @@
+{
+  "name": "BMS AI Agent - Railway Documentation RAG",
+  "nodes": [
+    {
+      "parameters": {
+        "public": true,
+        "options": {}
+      },
+      "id": "chat-trigger",
+      "name": "When chat message received",
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.1,
+      "position": [240, 300],
+      "webhookId": "bms-ai-agent-chat"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "query-field",
+              "name": "query",
+              "value": "={{ $json?.chatInput || $json.body?.chatInput || $json.query }}",
+              "type": "string"
+            },
+            {
+              "id": "session-field",
+              "name": "sessionId",
+              "value": "={{ $json?.sessionId || $json.body?.sessionId || 'default-session' }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "parse-input",
+      "name": "Parse Input",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "model": "mistral-nemo:12b-instruct",
+        "options": {
+          "baseURL": "http://localhost:11434"
+        }
+      },
+      "id": "ollama-model",
+      "name": "Ollama Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOllama",
+      "typeVersion": 1,
+      "position": [880, 80],
+      "credentials": {}
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $json.sessionId }}",
+        "contextWindowLength": 10
+      },
+      "id": "redis-memory",
+      "name": "Window Buffer Memory",
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.2,
+      "position": [1060, 80]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.query }}",
+        "options": {
+          "systemMessage": "You are a DATABASE-ONLY assistant for BMS railway operations and maintenance documentation.\n\n**CRITICAL RULES - YOU MUST FOLLOW THESE:**\n\n1. **ONLY USE TOOL RESULTS**: You can ONLY provide information that comes directly from the tools. You have NO other knowledge.\n\n2. **NO HALLUCINATION**: If the tools return empty results or no relevant information, you MUST say:\n   \"I could not find information about [topic] in the BMS documentation database.\"\n\n3. **NO EXTERNAL KNOWLEDGE**: Do NOT use your general knowledge, training data, or internet. ONLY use what the tools return.\n\n4. **NO GENERIC ANSWERS**: Do NOT provide generic advice, best practices, or common knowledge. ONLY database content.\n\n5. **ALWAYS CITE SOURCES**: Every fact MUST include the document name (e.g., \"According to BMS-HUMR-PRO-010...\")\n\n6. **CHECK TOOL RESULTS**: If a tool returns {\"results\": []} or {\"status\": \"no results\"}, that means NO DATA EXISTS. Tell the user.\n\n**Your Tools:**\n\n1. **Ask BMS** (PRIMARY): Use first for all questions. Returns answers from database with citations.\n\n2. **Semantic Search BMS**: Use when Ask BMS returns no results or you need more document chunks.\n\n3. **Hybrid Search BMS**: Use for specific technical terms, codes, IDs (like \"VLAN 100\", \"BMS-QHSE-PRO-007\").\n\n4. **Contextual Search BMS**: Use when you need full document sections with surrounding context.\n\n**Response Format:**\n\nIF TOOL RETURNS DATA:\n- State the information from the database\n- Include document names for EVERY fact\n- Use direct quotes when possible\n- List source documents at the end\n\nIF TOOL RETURNS NO DATA:\n- Say: \"I could not find information about [topic] in the BMS documentation database.\"\n- Suggest trying different search terms\n- DO NOT provide any information from outside the database\n\n**Example - CORRECT Response:**\n\"According to BMS-HUMR-PRO-010 Maternity Notification and Risk Assessment.pdf, the process requires...\n\nSource: BMS-HUMR-PRO-010 Maternity Notification and Risk Assessment.pdf\"\n\n**Example - INCORRECT Response (NEVER DO THIS):**\n\"Maternity notification generally involves informing HR and completing forms. This is a common practice...\"\n(This is WRONG because it's generic knowledge, not from the database)\n\n**Remember: You are a DATABASE QUERY INTERFACE, not a general knowledge assistant. If it's not in the database, say so clearly.**"
+        }
+      },
+      "id": "ai-agent",
+      "name": "BMS AI Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.6,
+      "position": [700, 300]
+    },
+    {
+      "parameters": {
+        "name": "Ask BMS",
+        "description": "Use this to get direct answers to questions about railway procedures, safety, or technical topics. Returns a comprehensive answer with source citations. This is the PRIMARY tool - use it first for most questions.",
+        "workflowId": {
+          "__rl": true,
+          "mode": "list",
+          "value": ""
+        },
+        "fields": {
+          "values": [
+            {
+              "name": "question",
+              "description": "The question to ask"
+            }
+          ]
+        }
+      },
+      "id": "tool-ask-bms",
+      "name": "Ask BMS",
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 1.1,
+      "position": [880, 300]
+    },
+    {
+      "parameters": {
+        "name": "Semantic Search BMS",
+        "description": "Search the railway documentation by meaning/concept. Use when Ask BMS needs more context or you want to see multiple relevant chunks. Returns document chunks with relevance scores.",
+        "workflowId": {
+          "__rl": true,
+          "mode": "list",
+          "value": ""
+        },
+        "fields": {
+          "values": [
+            {
+              "name": "search_query",
+              "description": "The search query"
+            }
+          ]
+        }
+      },
+      "id": "tool-semantic-search",
+      "name": "Semantic Search BMS",
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 1.1,
+      "position": [880, 460]
+    },
+    {
+      "parameters": {
+        "name": "Hybrid Search BMS",
+        "description": "Search using both semantic meaning and specific keywords. Best for technical terms, equipment names, VLAN IDs, or specific identifiers. Combines vector and keyword matching.",
+        "workflowId": {
+          "__rl": true,
+          "mode": "list",
+          "value": ""
+        },
+        "fields": {
+          "values": [
+            {
+              "name": "search_query",
+              "description": "The search query"
+            }
+          ]
+        }
+      },
+      "id": "tool-hybrid-search",
+      "name": "Hybrid Search BMS",
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 1.1,
+      "position": [880, 620]
+    },
+    {
+      "parameters": {
+        "name": "Contextual Search BMS",
+        "description": "Search with full document context including parent sections and related content. Use when you need comprehensive information about a topic with surrounding context.",
+        "workflowId": {
+          "__rl": true,
+          "mode": "list",
+          "value": ""
+        },
+        "fields": {
+          "values": [
+            {
+              "name": "search_query",
+              "description": "The search query"
+            }
+          ]
+        }
+      },
+      "id": "tool-contextual-search",
+      "name": "Contextual Search BMS",
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 1.1,
+      "position": [880, 780]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "respond-to-webhook",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1240, 300]
+    },
+    {
+      "parameters": {
+        "content": "## BMS AI Agent - Railway Documentation RAG\n\nAdapted from Agentic RAG pattern for BMS environment.\n\n**Architecture:**\n- Uses Call n8n Workflow Tools (not HTTP Request tools)\n- Each tool is a separate sub-workflow\n- Avoids $fromAI() limitations with toolHttpRequest\n\n**Features:**\n- Ollama Mistral Nemo for local LLM\n- Multiple search tools (Ask, Semantic, Hybrid, Contextual)\n- Agent decides which tool to use based on query\n- Conversation memory (Window Buffer)\n- Source citations in responses\n\n**Tools:**\n1. Ask BMS (PRIMARY) - Direct Q&A with citations\n2. Semantic Search - Concept-based search\n3. Hybrid Search - Semantic + keywords\n4. Contextual Search - Full document context\n\n**Setup:**\n1. Import all 4 sub-workflows first (bms-tool-*.json)\n2. Import this main workflow\n3. Connect each tool to its sub-workflow in the UI\n\n**Usage:**\nChat interface at: /webhook-test/bms-ai-agent-chat\nOr integrate with MS Teams Bot Main Handler",
+        "height": 520,
+        "width": 420,
+        "color": 4
+      },
+      "id": "sticky-note",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [180, 60]
+    }
+  ],
+  "connections": {
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "Parse Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Input": {
+      "main": [
+        [
+          {
+            "node": "BMS AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ollama Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "BMS AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Window Buffer Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "BMS AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "BMS AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ask BMS": {
+      "ai_tool": [
+        [
+          {
+            "node": "BMS AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Semantic Search BMS": {
+      "ai_tool": [
+        [
+          {
+            "node": "BMS AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Hybrid Search BMS": {
+      "ai_tool": [
+        [
+          {
+            "node": "BMS AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Contextual Search BMS": {
+      "ai_tool": [
+        [
+          {
+            "node": "BMS AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 0,
+  "active": false
+}

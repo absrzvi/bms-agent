@@ -1,0 +1,57 @@
+{
+  "name": "BMS Tool - Document Lookup",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "workflow-trigger",
+      "name": "Execute Workflow Trigger",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// Get the document ID from input\nconst docId = $input.item.json.document_id || $input.item.json.query || '';\n\n// Search Qdrant directly by document_name metadata\nconst qdrantUrl = 'http://localhost:6333/collections/nomad_bms_documents/points/scroll';\n\nconst searchBody = {\n  limit: 10,\n  with_payload: true,\n  with_vector: false,\n  filter: {\n    must: [\n      {\n        key: \"document_name\",\n        match: { text: docId }\n      }\n    ]\n  }\n};\n\nconst response = await fetch(qdrantUrl, {\n  method: 'POST',\n  headers: { 'Content-Type': 'application/json' },\n  body: JSON.stringify(searchBody)\n});\n\nconst data = await response.json();\n\n// Format results\nif (data.result && data.result.points && data.result.points.length > 0) {\n  const points = data.result.points;\n  const docName = points[0].payload.document_name;\n  \n  // Group content by document\n  let fullContent = '';\n  points.forEach(point => {\n    fullContent += point.payload.content + '\\n\\n';\n  });\n  \n  const formattedResponse = `**Document Found:** ${docName}\\n\\n${fullContent}\\n\\n**Sources:**\\n[1] ${docName} (Found ${points.length} sections)`;\n  \n  return {\n    json: {\n      response: formattedResponse,\n      document_name: docName,\n      chunks_found: points.length,\n      status: 'found'\n    }\n  };\n} else {\n  return {\n    json: {\n      response: `Document ID \"${docId}\" not found in the BMS database. Try searching by document title or topic instead.`,\n      status: 'not_found'\n    }\n  };\n}"
+      },
+      "id": "document-lookup-code",
+      "name": "Lookup Document by ID",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "content": "## BMS Tool - Document Lookup\n\nDirect Qdrant lookup for document IDs.\n\n**Input Parameters:**\n- document_id or query: Document ID (e.g., BMS-SERV-INS-004)\n\n**How it Works:**\n- Queries Qdrant directly with document_name filter\n- Returns all chunks from matching document\n- Bypasses semantic/hybrid search limitations\n\n**Use When:**\n- User provides exact document ID (BMS-XXX-XXX-XXX)\n- Hybrid search fails to find document\n\n**Called by:** BMS AI Agent main workflow",
+        "height": 380,
+        "width": 360,
+        "color": 5
+      },
+      "id": "sticky-note",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [180, 60]
+    }
+  ],
+  "connections": {
+    "Execute Workflow Trigger": {
+      "main": [
+        [
+          {
+            "node": "Lookup Document by ID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 0,
+  "active": false
+}

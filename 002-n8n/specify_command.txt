@@ -1,0 +1,97 @@
+/specify
+
+Create a Microsoft Teams chat bot integration for the BMS Agent API using n8n workflow automation.
+
+## Context
+- BMS API Reference: See BMS_API_REFERENCE.md in this directory
+- BMS API Base URL: http://localhost:8000
+- All services run on same RunPod instance in /workspace for persistence
+
+## Architecture
+**Integration Method:** n8n workflow exposing BMS API endpoints to Mistral Nemo LLM (running on Ollama)
+- n8n acts as orchestration layer between MS Teams and BMS API
+- Mistral Nemo LLM provides intelligent query understanding and response formatting
+- All components deployed on same RunPod pod
+
+## User Experience
+**Interaction Model:**
+- Personal chat bot (1:1 conversations)
+- Group chat participation (users can add bot to team discussions)
+- Results visible to entire channel/conversation
+
+**Command Structure:**
+- Natural language queries: "What are emergency brake procedures?"
+- Slash commands: /search, /ask, /upload, /help
+- Both supported for flexibility
+
+**Response Format:**
+- POC: Text responses with citations and source references
+- Future phases: Adaptive cards, file attachments, quick reply buttons
+
+## Core Features (Priority Order)
+1. Ask questions (Q&A with citations) - PRIMARY USE CASE
+2. Search documents (semantic/hybrid)
+3. Help/guidance
+4. View search history (last 7 days)
+5. Upload documents
+6. Document status/management
+
+**Search Behavior:**
+- Intelligent routing based on query type and available endpoints
+- Question queries → /api/v1/ask
+- Keyword/document search → /api/v1/search/semantic or /api/v1/search/hybrid
+- LLM determines best endpoint based on user intent
+
+## Security & Access
+**Authentication:**
+- POC: Specific teams/channels only (whitelist approach)
+- Future: Expand to full tenant with role-based access
+
+**Data Privacy:**
+- Conversation history stored for 7 days maximum
+- Results visible to entire channel (no private results in POC)
+- No special compliance requirements for POC
+
+## Technical Requirements
+**Performance Targets (POC):**
+- Users: 20
+- Expected queries per day: 50-100
+- Response time: <3 seconds end-to-end (MS Teams → n8n → BMS API → response)
+- No additional rate limiting beyond BMS API's 60 req/min
+
+**Error Handling:**
+1. BMS API unavailable: Bot replies "BMS-search tool cannot be accessed at this time. Please try again later."
+2. No results found: Bot replies "No results found for your query. Try rephrasing or using different keywords."
+3. Invalid/unclear query: Bot suggests better query formats with examples
+
+## MS Teams Features (All Required)
+- Typing indicators while processing requests
+- Proactive messages/notifications (for document processing completion)
+- File sharing (upload documents to BMS API)
+- Multi-turn conversations with context memory (track conversation history)
+
+## Monitoring (POC)
+- None required for POC
+- Future: Query analytics, user engagement metrics, error tracking
+
+## n8n Workflow Requirements
+**Key Integration Points:**
+1. MS Teams Webhook/Trigger → Receives user messages
+2. LLM Query Analysis (Mistral Nemo via Ollama) → Determines intent and best endpoint
+3. BMS API Request → Calls appropriate endpoint with optimized parameters
+4. Response Formatting (Mistral Nemo) → Formats results with citations
+5. MS Teams Response → Sends formatted message back to user
+
+**Workflow Features:**
+- Context management for multi-turn conversations (7-day retention)
+- Error handling with user-friendly messages
+- Typing indicators during processing
+- Intelligent endpoint routing logic
+- Citation extraction and formatting
+
+## Success Criteria
+- Users can ask questions and receive answers with source citations within 3 seconds
+- Bot correctly routes queries to appropriate BMS API endpoints
+- Conversation context maintained across multiple turns
+- Error states handled gracefully with helpful guidance
+- 20 concurrent users supported without performance degradation

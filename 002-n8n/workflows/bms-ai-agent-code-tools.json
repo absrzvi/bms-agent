@@ -1,0 +1,122 @@
+{
+  "name": "BMS AI Agent - Code Tools",
+  "nodes": [
+    {
+      "parameters": {
+        "public": true,
+        "options": {}
+      },
+      "id": "chat-trigger",
+      "name": "When chat message received",
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.1,
+      "position": [240, 300],
+      "webhookId": "bms-ai-code-tools"
+    },
+    {
+      "parameters": {
+        "model": "mistral-nemo:12b-instruct",
+        "options": {
+          "baseURL": "http://localhost:11434"
+        }
+      },
+      "id": "ollama-model",
+      "name": "Ollama Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOllama",
+      "typeVersion": 1,
+      "position": [700, 80]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.chatInput }}",
+        "options": {
+          "systemMessage": "You are a knowledgeable assistant for railway operations and maintenance documentation.\n\nYou help users find information about:\n- Railway safety procedures\n- Emergency brake systems (EBS)\n- Network configurations (VLAN, switching, routing)\n- Equipment manuals and technical specifications\n\nYou have access to a tool called 'ask_bms' that searches the knowledge base. Use it to answer questions with source citations."
+        }
+      },
+      "id": "ai-agent",
+      "name": "BMS AI Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.6,
+      "position": [500, 300]
+    },
+    {
+      "parameters": {
+        "name": "ask_bms",
+        "description": "Search the railway documentation knowledge base for information about procedures, safety, technical specs, and regulations. Returns answers with source citations.",
+        "workflowId": "={{ $workflow.id }}",
+        "specifyInputSchema": true,
+        "jsonSchemaExample": "{\n  \"question\": \"What are the emergency brake procedures?\"\n}",
+        "jsCode": "// Call BMS API with the question from AI\nconst question = $input.item.json.question;\n\nconst response = await fetch('http://localhost:8000/api/v1/ask', {\n  method: 'POST',\n  headers: { 'Content-Type': 'application/json' },\n  body: JSON.stringify({\n    query: question,\n    max_chunks: 5,\n    include_citations: true\n  })\n});\n\nconst data = await response.json();\n\nreturn {\n  answer: data.answer || 'No answer found',\n  citations: data.citations || [],\n  confidence: data.confidence || 0\n};"
+      },
+      "id": "tool-ask-bms-code",
+      "name": "Ask BMS Tool",
+      "type": "@n8n/n8n-nodes-langchain.toolCode",
+      "typeVersion": 1.1,
+      "position": [700, 300]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "respond-to-webhook",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [900, 300]
+    }
+  ],
+  "connections": {
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "BMS AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ollama Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "BMS AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "BMS AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ask BMS Tool": {
+      "ai_tool": [
+        [
+          {
+            "node": "BMS AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 0,
+  "active": false
+}

@@ -1,0 +1,173 @@
+{
+  "name": "BMS AI Agent - Direct API (Simplified)",
+  "nodes": [
+    {
+      "parameters": {
+        "public": true,
+        "options": {}
+      },
+      "id": "chat-trigger",
+      "name": "When chat message received",
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.1,
+      "position": [240, 300],
+      "webhookId": "bms-ai-direct"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "query-field",
+              "name": "query",
+              "value": "={{ $json?.chatInput || $json.body?.chatInput || $json.query }}",
+              "type": "string"
+            },
+            {
+              "id": "session-field",
+              "name": "sessionId",
+              "value": "={{ $json?.sessionId || $json.body?.sessionId || 'default-session' }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "parse-input",
+      "name": "Parse Input",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://localhost:8000/api/v1/ask",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ query: $json.query, max_chunks: 5, include_citations: true }) }}",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true,
+              "responseFormat": "autodetect"
+            }
+          }
+        }
+      },
+      "id": "call-bms-api",
+      "name": "Call BMS API",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "format-response",
+              "name": "response",
+              "value": "={{ $json.answer || 'No answer found' }}",
+              "type": "string"
+            },
+            {
+              "id": "add-citations",
+              "name": "citations",
+              "value": "={{ $json.citations || [] }}",
+              "type": "array"
+            },
+            {
+              "id": "add-confidence",
+              "name": "confidence",
+              "value": "={{ $json.confidence || 0 }}",
+              "type": "number"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "format-output",
+      "name": "Format Output",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [900, 300]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "respond-to-webhook",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1120, 300]
+    },
+    {
+      "parameters": {
+        "content": "## BMS AI Agent - Direct API (Simplified)\n\n**WHY THIS APPROACH:**\nThe legacy toolHttpRequest node in n8n 1.113.3 has compatibility issues with $fromAI() expressions.\nThis simplified workflow directly calls the BMS API /api/v1/ask endpoint without AI Agent complexity.\n\n**ARCHITECTURE:**\n1. Chat Trigger receives user question\n2. Parse Input extracts query and sessionId\n3. Call BMS API directly with the question\n4. Format Output structures the response\n5. Respond to Webhook sends back to user\n\n**ADVANTAGES:**\n- No AI Agent tool initialization errors\n- Direct, reliable API calls\n- Simpler to debug and maintain\n- Works with n8n 1.113.3\n\n**USAGE:**\nChat interface at: /webhook-test/bms-ai-direct\n\n**FOR MS TEAMS INTEGRATION:**\nThis webhook can be called from the MS Teams Bot Main Handler workflow",
+        "height": 520,
+        "width": 420,
+        "color": 4
+      },
+      "id": "sticky-note",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [180, 60]
+    }
+  ],
+  "connections": {
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "Parse Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Input": {
+      "main": [
+        [
+          {
+            "node": "Call BMS API",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call BMS API": {
+      "main": [
+        [
+          {
+            "node": "Format Output",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Output": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 0,
+  "active": false
+}

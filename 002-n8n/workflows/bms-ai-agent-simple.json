@@ -1,0 +1,137 @@
+{
+  "name": "BMS AI Agent - Simple Tools",
+  "nodes": [
+    {
+      "parameters": {
+        "public": true,
+        "options": {}
+      },
+      "id": "chat-trigger",
+      "name": "When chat message received",
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.1,
+      "position": [240, 300],
+      "webhookId": "bms-ai-agent-simple"
+    },
+    {
+      "parameters": {
+        "model": "mistral-nemo:12b-instruct",
+        "options": {
+          "baseURL": "http://localhost:11434"
+        }
+      },
+      "id": "ollama-model",
+      "name": "Ollama Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOllama",
+      "typeVersion": 1,
+      "position": [700, 80]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.chatInput }}",
+        "options": {
+          "systemMessage": "You are a helpful assistant for railway documentation. You have access to a tool called 'Ask BMS' that can search railway safety procedures, emergency brake systems, and technical specifications. Use this tool to answer questions accurately."
+        }
+      },
+      "id": "ai-agent",
+      "name": "BMS AI Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.6,
+      "position": [500, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://localhost:8000/api/v1/ask",
+        "sendBody": true,
+        "contentType": "application/json",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "query",
+              "value": "={{ $json.chatInput }}"
+            },
+            {
+              "name": "max_chunks",
+              "value": 5
+            },
+            {
+              "name": "include_citations",
+              "value": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "ask-bms-http",
+      "name": "Call BMS API",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [700, 300]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "respond-to-webhook",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [900, 300]
+    }
+  ],
+  "connections": {
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "BMS AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ollama Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "BMS AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "BMS AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Call BMS API",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call BMS API": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 0,
+  "active": false
+}
