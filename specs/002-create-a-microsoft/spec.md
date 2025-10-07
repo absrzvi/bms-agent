@@ -52,6 +52,9 @@
 - Q: What does the "3 seconds" response time measure from/to? → A: End-to-end user experience - From user sends message in MS Teams to user sees bot's response appear in chat
 - Q: Where should the `/status` command retrieve document upload status from? → A: Hybrid approach - Check Redis first for recent uploads, fall back to BMS API for older/missing records
 - Q: How should the system handle admin access if the initial admin becomes unavailable with no other admins designated? → A: Reset mechanism - Support special `/admin reset [secret_key]` command that grants admin using pre-configured secret
+- Q: Where should the 3-second response time be measured and logged for POC validation? → A: Manual stopwatch testing during UAT - No automated instrumentation for POC phase
+- Q: What is the maximum acceptable delay for notifying users after document processing completes? → A: Best effort, no SLA for POC phase
+- Q: What conversation context should be stored for multi-turn conversations? → A: Message summaries - Condensed summary of conversation with key entities extracted
 
 ---
 
@@ -117,8 +120,11 @@ Railway staff members need quick access to technical documentation and safety pr
 - **FR-003**: System MUST respond to all user interactions (natural language questions and commands) within 3 seconds end-to-end (measured from when user sends message in MS Teams to when bot's response appears in chat)
   - **Response Time Breakdown**: <500ms webhook receipt & routing → <2000ms BMS API processing → <500ms response formatting & delivery
   - **Performance Target**: p95 latency <3000ms, p50 latency <1500ms
+  - **POC DECISION**: Performance validation via manual stopwatch testing during UAT; automated instrumentation deferred to production
 - **FR-004**: System MUST include source citations in all answers showing which documents were used
 - **FR-005**: System MUST maintain conversation context for up to 7 days to support multi-turn conversations
+  - **Context Storage**: Condensed message summaries with key entities extracted (not full message history)
+  - **Rationale**: Optimizes storage, reduces retrieval latency, and provides focused context for LLM processing
 - **FR-006**: System MUST intelligently determine whether to provide a generated answer or return document search results based on query type
 
 **Command Support**
@@ -133,6 +139,7 @@ Railway staff members need quick access to technical documentation and safety pr
 - **FR-012**: System MUST accept document uploads in the following formats: PDF, CSV, XLSX, XLS, TXT, MD, DOCX, PPTX
 - **FR-013**: System MUST confirm successful document processing with a document ID
 - **FR-014**: System MUST send proactive notification when document processing completes
+  - **POC DECISION**: Best-effort delivery with no guaranteed SLA; production deployment will establish notification SLA based on POC performance data
 - **FR-015**: Users MUST be able to view document upload status via `/status [document_id]` command (command listed in Command Support section)
   - **Retrieval Strategy**: Hybrid approach - Query Redis DocumentUploadJob entity first; if not found or expired, fall back to BMS API GET /api/v1/documents/status/{job_id} endpoint
 
@@ -212,9 +219,10 @@ Railway staff members need quick access to technical documentation and safety pr
 ### Key Entities *(mandatory)*
 
 - **Conversation**: Represents an ongoing chat session between user(s) and bot
-  - Attributes: conversation_id, participants (array supporting single user in POC; multi-user post-POC), created_at, last_message_at, expires_at (7 days)
+  - Attributes: conversation_id, participants (array supporting single user in POC; multi-user post-POC), created_at, last_message_at, expires_at (7 days), context_summary (condensed text with key entities)
   - Relationships: Contains multiple Messages
   - **POC Scope**: Participants array contains single user_id; group chat context is per-channel but history is per-user
+  - **Context Storage**: context_summary field stores condensed summary generated from recent messages with extracted entities (topics, document references, user intent)
 
 - **Message**: Individual message in a conversation
   - Attributes: message_id, conversation_id, sender (user/bot), content, timestamp, message_type (question/answer/command)

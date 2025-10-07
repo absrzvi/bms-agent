@@ -325,7 +325,7 @@ Project structure from plan.md:
     1. GET /context/{conversation_id} from Redis
     2. If not found → create new Conversation
     3. POST message to conversation
-    4. Update context_summary (last 5 messages)
+    4. Update context_summary (condensed summary with key entities extracted via LLM - topics, document references, user intent)
     5. Set 7-day TTL (604800s)
     6. **Restoration Detection (NFR-003)**: Track Redis availability state
        - If previous request failed (503) and current request succeeds → set flag `storage_restored=true`
@@ -340,7 +340,7 @@ Project structure from plan.md:
   - [ ] Exported as JSON to `/workspace/002-n8n/workflows/context-manager.json`
   - [ ] GET /context retrieves conversation from Redis
   - [ ] POST /context stores message with 7-day TTL
-  - [ ] Context summary updated (last 5 messages)
+  - [ ] Context summary updated (condensed summary with extracted entities, not full message history)
   - [ ] Restoration detection working (storage_restored flag returned)
   - [ ] Integration test T014 passes with this workflow
 
