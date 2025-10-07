@@ -437,15 +437,16 @@ Project structure from plan.md:
        - Default mode for production queries
   - Export as JSON for n8n import
 
-- [ ] **T027c** [P] Add command handlers for enhanced search features
-  - Path: Extend `/workspace/002-n8n/workflows/main-bot-handler.json`
-  - **New Commands**:
-    1. `/search-batch [query1] | [query2] | ...` → Route to batch-search workflow
-    2. `/search-facets [query]` → Route to faceted-search workflow
-    3. `/search-explain [query]` → Route to explained-search workflow (admin/debug)
-    4. `/search-latest [query]` → Route to latest-versions-search workflow
-  - Add help text entries for new commands in response-templates.json
-  - **POC Decision**: /search-explain restricted to admins only
+- [x] **T027c** [P] Add command handlers for enhanced search features
+  - Path: Created 4 tool workflows for integration with bms-ai-agent.json
+  - **Tool Workflows Created**:
+    1. `bms-tool-batch-search.json` - Multi-query batch search
+    2. `bms-tool-faceted-search.json` - Faceted search with metadata grouping
+    3. `bms-tool-explained-search.json` - Search with score explanations
+    4. `bms-tool-latest-search.json` - Latest document versions only
+  - **Setup Guide**: See `/workspace/002-n8n/workflows/ENHANCED_SEARCH_SETUP.md`
+  - **Manual Step Required**: Import workflows and add tools to bms-ai-agent.json in n8n UI
+  - **Note**: These integrate as LangChain tools, not slash commands (agent decides when to use them)
 
 - [ ] **T027d** [P] Update integration tests for new search capabilities
   - Path: `/workspace/002-n8n/tests/integration/test-enhanced-search.js`
