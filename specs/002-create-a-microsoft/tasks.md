@@ -358,7 +358,7 @@ Project structure from plan.md:
     - Never log the actual secret key value
   - Export as JSON
 
-- [ ] **T020b** Update bms-ai-agent workflow to accept MS Teams webhook triggers ⚠️ NEW - USER REQUEST
+- [x] **T020b** Update bms-ai-agent workflow to accept MS Teams webhook triggers ⚠️ NEW - USER REQUEST ✅
   - Path: `/workspace/002-n8n/workflows/bms-ai-agent.json`
   - **Objective**: Replace existing trigger with MS Teams webhook to enable chat message integration
   - **Prerequisites**:
@@ -390,7 +390,7 @@ Project structure from plan.md:
     - **Recommendation**: Option B for modularity
   - Export as JSON
 
-- [ ] **T020c** Create integration tests for MS Teams → BMS AI Agent flow ⚠️ NEW - USER REQUEST
+- [x] **T020c** Create integration tests for MS Teams → BMS AI Agent flow ⚠️ NEW - USER REQUEST ✅
   - Path: `/workspace/002-n8n/tests/integration/test-teams-ai-agent-integration.js`
   - **Prerequisites**: T020b complete
   - Test scenarios:
@@ -421,7 +421,7 @@ Project structure from plan.md:
   - Run: `npm test tests/integration/test-teams-ai-agent-integration.js`
   - Expected: All 5 scenarios passing
 
-- [ ] **T020d** Document MS Teams + BMS AI Agent integration architecture ⚠️ NEW - USER REQUEST
+- [x] **T020d** Document MS Teams + BMS AI Agent integration architecture ⚠️ NEW - USER REQUEST ✅
   - Path: `/workspace/002-n8n/docs/teams-ai-agent-integration.md`
   - Content:
     1. **Architecture Overview**
