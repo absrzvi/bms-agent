@@ -46,34 +46,27 @@
     },
     {
       "parameters": {
-        "url": "http://localhost:6379",
-        "method": "GET",
-        "sendQuery": true,
-        "queryParameters": {
-          "parameters": [
-            {
-              "name": "key",
-              "value": "conversation:={{ $json.conversationId }}"
-            }
-          ]
-        },
-        "options": {
-          "timeout": 500
-        }
+        "operation": "get",
+        "key": "={{ 'conversation:' + $json.conversationId }}"
       },
       "id": "redis-get",
       "name": "Redis GET",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 3,
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
       "position": [
         850,
         200
       ],
-      "continueOnFail": true
+      "continueOnFail": true,
+      "credentials": {
+        "redis": {
+          "name": "Redis Local"
+        }
+      }
     },
     {
       "parameters": {
-        "functionCode": "// Parse Redis response or create new conversation\nconst conversationId = $node['Parse Action'].json.conversationId;\nlet context = null;\n\ntry {\n  const redisData = $json.data || $json.body || null;\n  if (redisData) {\n    context = typeof redisData === 'string' ? JSON.parse(redisData) : redisData;\n  }\n} catch (e) {\n  // Redis failed or no data\n}\n\nif (!context) {\n  // Create new conversation\n  const now = new Date();\n  const expiresAt = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000); // 7 days\n  \n  context = {\n    conversation_id: conversationId,\n    created_at: now.toISOString(),\n    last_message_at: now.toISOString(),\n    expires_at: expiresAt.toISOString(),\n    messages: [],\n    context_summary: ''\n  };\n}\n\nreturn { json: { context } };"
+        "functionCode": "// Parse Redis response or create new conversation\nconst conversationId = $node['Parse Action'].json.conversationId;\nlet context = null;\n\ntry {\n  // Redis node returns value directly\n  const redisData = $json.value || $json || null;\n  if (redisData && redisData !== null) {\n    context = typeof redisData === 'string' ? JSON.parse(redisData) : redisData;\n  }\n} catch (e) {\n  // Redis failed or no data\n}\n\nif (!context) {\n  // Create new conversation\n  const now = new Date();\n  const expiresAt = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000); // 7 days\n  \n  context = {\n    conversation_id: conversationId,\n    created_at: now.toISOString(),\n    last_message_at: now.toISOString(),\n    expires_at: expiresAt.toISOString(),\n    messages: [],\n    context_summary: ''\n  };\n}\n\nreturn { json: { context } };"
       },
       "id": "parse-context",
       "name": "Parse or Create Context",
@@ -86,34 +79,27 @@
     },
     {
       "parameters": {
-        "url": "http://localhost:6379",
-        "method": "GET",
-        "sendQuery": true,
-        "queryParameters": {
-          "parameters": [
-            {
-              "name": "key",
-              "value": "conversation:={{ $json.conversationId }}"
-            }
-          ]
-        },
-        "options": {
-          "timeout": 500
-        }
+        "operation": "get",
+        "key": "={{ 'conversation:' + $json.conversationId }}"
       },
       "id": "redis-get-for-store",
       "name": "Redis GET for Store",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 3,
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
       "position": [
         850,
         300
       ],
-      "continueOnFail": true
+      "continueOnFail": true,
+      "credentials": {
+        "redis": {
+          "name": "Redis Local"
+        }
+      }
     },
     {
       "parameters": {
-        "functionCode": "// Load existing context and add new messages\nconst inputData = $node['Parse Action'].json;\nconst conversationId = inputData.conversationId;\n\nlet context = null;\n\ntry {\n  const redisData = $json.data || $json.body || null;\n  if (redisData) {\n    context = typeof redisData === 'string' ? JSON.parse(redisData) : redisData;\n  }\n} catch (e) {\n  // Redis failed or no data\n}\n\nif (!context) {\n  // Create new conversation\n  const now = new Date();\n  const expiresAt = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000); // 7 days\n  \n  context = {\n    conversation_id: conversationId,\n    created_at: now.toISOString(),\n    last_message_at: now.toISOString(),\n    expires_at: expiresAt.toISOString(),\n    messages: [],\n    context_summary: ''\n  };\n}\n\n// Add user message\nif (inputData.userMessage) {\n  context.messages.push({\n    message_id: `msg-${Date.now()}-user`,\n    sender: 'user',\n    content: inputData.userMessage,\n    timestamp: inputData.timestamp,\n    message_type: 'question'\n  });\n}\n\n// Add bot response\nif (inputData.botResponse) {\n  context.messages.push({\n    message_id: `msg-${Date.now()}-bot`,\n    sender: 'bot',\n    content: inputData.botResponse,\n    timestamp: new Date().toISOString(),\n    message_type: 'answer'\n  });\n}\n\n// Update metadata\ncontext.last_message_at = new Date().toISOString();\n\n// Prune old messages (keep last 10 for context)\nif (context.messages.length > 10) {\n  context.messages = context.messages.slice(-10);\n}\n\n// Update context summary (last 5 messages)\nconst recentMessages = context.messages.slice(-5);\ncontext.context_summary = recentMessages.map(m => `${m.sender}: ${m.content.substring(0, 100)}`).join('\\n');\n\n// Check for similar queries (FR-015a)\nconst currentQuery = inputData.userMessage.toLowerCase();\nconst similarQuery = context.messages\n  .filter(m => m.sender === 'user' && m.message_type === 'question')\n  .find(m => {\n    const prevQuery = m.content.toLowerCase();\n    // Simple similarity check (can be enhanced with embeddings)\n    const words1 = new Set(currentQuery.split(/\\s+/));\n    const words2 = new Set(prevQuery.split(/\\s+/));\n    const intersection = new Set([...words1].filter(x => words2.has(x)));\n    const similarity = intersection.size / Math.max(words1.size, words2.size);\n    return similarity > 0.5 && m.content !== inputData.userMessage;\n  });\n\nreturn {\n  json: {\n    context,\n    similarQuery: similarQuery || null\n  }\n};"
+        "functionCode": "// Load existing context and add new messages\nconst inputData = $node['Parse Action'].json;\nconst conversationId = inputData.conversationId;\n\nlet context = null;\n\ntry {\n  // Redis node returns value directly\n  const redisData = $json.value || $json || null;\n  if (redisData && redisData !== null) {\n    context = typeof redisData === 'string' ? JSON.parse(redisData) : redisData;\n  }\n} catch (e) {\n  // Redis failed or no data\n}\n\nif (!context) {\n  // Create new conversation\n  const now = new Date();\n  const expiresAt = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000); // 7 days\n  \n  context = {\n    conversation_id: conversationId,\n    created_at: now.toISOString(),\n    last_message_at: now.toISOString(),\n    expires_at: expiresAt.toISOString(),\n    messages: [],\n    context_summary: ''\n  };\n}\n\n// Add user message\nif (inputData.userMessage) {\n  context.messages.push({\n    message_id: `msg-${Date.now()}-user`,\n    sender: 'user',\n    content: inputData.userMessage,\n    timestamp: inputData.timestamp,\n    message_type: 'question'\n  });\n}\n\n// Add bot response\nif (inputData.botResponse) {\n  context.messages.push({\n    message_id: `msg-${Date.now()}-bot`,\n    sender: 'bot',\n    content: inputData.botResponse,\n    timestamp: new Date().toISOString(),\n    message_type: 'answer'\n  });\n}\n\n// Update metadata\ncontext.last_message_at = new Date().toISOString();\n\n// Prune old messages (keep last 10 for context)\nif (context.messages.length > 10) {\n  context.messages = context.messages.slice(-10);\n}\n\n// Update context summary (last 5 messages)\nconst recentMessages = context.messages.slice(-5);\ncontext.context_summary = recentMessages.map(m => `${m.sender}: ${m.content.substring(0, 100)}`).join('\\n');\n\n// Check for similar queries (FR-015a)\nconst currentQuery = inputData.userMessage.toLowerCase();\nconst similarQuery = context.messages\n  .filter(m => m.sender === 'user' && m.message_type === 'question')\n  .find(m => {\n    const prevQuery = m.content.toLowerCase();\n    // Simple similarity check (can be enhanced with embeddings)\n    const words1 = new Set(currentQuery.split(/\\s+/));\n    const words2 = new Set(prevQuery.split(/\\s+/));\n    const intersection = new Set([...words1].filter(x => words2.has(x)));\n    const similarity = intersection.size / Math.max(words1.size, words2.size);\n    return similarity > 0.5 && m.content !== inputData.userMessage;\n  });\n\nreturn {\n  json: {\n    context,\n    similarQuery: similarQuery || null\n  }\n};"
       },
       "id": "update-context",
       "name": "Update Context",
@@ -126,38 +112,26 @@
     },
     {
       "parameters": {
-        "url": "http://localhost:6379",
-        "method": "POST",
-        "sendBody": true,
-        "bodyParameters": {
-          "parameters": [
-            {
-              "name": "key",
-              "value": "conversation:={{ $json.context.conversation_id }}"
-            },
-            {
-              "name": "value",
-              "value": "={{ JSON.stringify($json.context) }}"
-            },
-            {
-              "name": "ex",
-              "value": "604800"
-            }
-          ]
-        },
-        "options": {
-          "timeout": 500
-        }
+        "operation": "set",
+        "key": "={{ 'conversation:' + $json.context.conversation_id }}",
+        "value": "={{ JSON.stringify($json.context) }}",
+        "expire": true,
+        "ttl": 604800
       },
       "id": "redis-set",
       "name": "Redis SET with TTL",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 3,
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
       "position": [
         1250,
         300
       ],
-      "continueOnFail": true
+      "continueOnFail": true,
+      "credentials": {
+        "redis": {
+          "name": "Redis Local"
+        }
+      }
     },
     {
       "parameters": {

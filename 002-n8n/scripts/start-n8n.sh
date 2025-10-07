@@ -35,10 +35,10 @@ fi
 
 # Start n8n
 echo "Starting n8n..."
-echo "Access the UI at: http://localhost:5678"
+echo "Access the UI at: $WEBHOOK_URL"
 echo ""
 echo "Press Ctrl+C to stop n8n"
 echo ""
 
 # Start n8n (will run in foreground)
-n8n start
+/workspace/n8n/node_modules/.bin/n8n start

@@ -28,9 +28,8 @@
     },
     {
       "parameters": {
-        "url": "http://localhost:6379",
-        "command": "GET",
-        "key": "=user:{{$json.userId}}:history"
+        "operation": "get",
+        "key": "={{ 'user:' + $json.userId + ':history' }}"
       },
       "id": "get-user-history",
       "name": "Get User Query History",
@@ -39,14 +38,20 @@
       "position": [
         650,
         300
-      ]
+      ],
+      "continueOnFail": true,
+      "credentials": {
+        "redis": {
+          "name": "Redis Local"
+        }
+      }
     },
     {
       "parameters": {
         "conditions": {
           "string": [
             {
-              "value1": "={{$json.history}}",
+              "value1": "={{$json.value}}",
               "operation": "isNotEmpty"
             }
           ]
@@ -86,7 +91,7 @@
     },
     {
       "parameters": {
-        "functionCode": "// Parse user history and current query embedding\nconst history = JSON.parse($input.first().json.history || '[]');\nconst currentEmbedding = $input.last().json.embedding;\nconst currentQuery = $input.last().json.query;\n\n// Calculate cosine similarity with previous queries\nfunction cosineSimilarity(a, b) {\n  const dotProduct = a.reduce((sum, val, i) => sum + val * b[i], 0);\n  const magA = Math.sqrt(a.reduce((sum, val) => sum + val * val, 0));\n  const magB = Math.sqrt(b.reduce((sum, val) => sum + val * val, 0));\n  return dotProduct / (magA * magB);\n}\n\nlet bestMatch = null;\nlet highestSimilarity = 0;\n\nfor (const historyItem of history) {\n  if (historyItem.embedding && historyItem.embedding.length === currentEmbedding.length) {\n    const similarity = cosineSimilarity(currentEmbedding, historyItem.embedding);\n    \n    if (similarity >= 0.85 && similarity > highestSimilarity) {\n      highestSimilarity = similarity;\n      bestMatch = {\n        query: historyItem.query,\n        timestamp: historyItem.timestamp,\n        result_id: historyItem.result_id,\n        similarity: similarity\n      };\n    }\n  }\n}\n\nreturn {\n  hasSimilarQuery: bestMatch !== null,\n  similarQuery: bestMatch,\n  currentQuery: currentQuery,\n  currentEmbedding: currentEmbedding\n};"
+        "functionCode": "// Parse user history and current query embedding\n// Redis node returns value directly\nconst historyData = $input.first().json.value || $input.first().json || '[]';\nconst history = typeof historyData === 'string' ? JSON.parse(historyData) : historyData;\nconst currentEmbedding = $input.last().json.embedding;\nconst currentQuery = $input.last().json.query;\n\n// Calculate cosine similarity with previous queries\nfunction cosineSimilarity(a, b) {\n  const dotProduct = a.reduce((sum, val, i) => sum + val * b[i], 0);\n  const magA = Math.sqrt(a.reduce((sum, val) => sum + val * val, 0));\n  const magB = Math.sqrt(b.reduce((sum, val) => sum + val * val, 0));\n  return dotProduct / (magA * magB);\n}\n\nlet bestMatch = null;\nlet highestSimilarity = 0;\n\nfor (const historyItem of history) {\n  if (historyItem.embedding && historyItem.embedding.length === currentEmbedding.length) {\n    const similarity = cosineSimilarity(currentEmbedding, historyItem.embedding);\n    \n    if (similarity >= 0.85 && similarity > highestSimilarity) {\n      highestSimilarity = similarity;\n      bestMatch = {\n        query: historyItem.query,\n        timestamp: historyItem.timestamp,\n        result_id: historyItem.result_id,\n        similarity: similarity\n      };\n    }\n  }\n}\n\nreturn {\n  hasSimilarQuery: bestMatch !== null,\n  similarQuery: bestMatch,\n  currentQuery: currentQuery,\n  currentEmbedding: currentEmbedding\n};"
       },
       "id": "compute-similarity",
       "name": "Compute Similarity",
@@ -159,11 +164,11 @@
     },
     {
       "parameters": {
-        "url": "http://localhost:6379",
-        "command": "SETEX",
-        "key": "={{$json.key}}",
-        "value": "={{$json.value}}",
-        "ttl": "={{$json.ttl}}"
+        "operation": "set",
+        "key": "={{ $json.key }}",
+        "value": "={{ $json.value }}",
+        "expire": true,
+        "ttl": "={{ $json.ttl }}"
       },
       "id": "save-to-redis",
       "name": "Save to Redis",
@@ -172,7 +177,13 @@
       "position": [
         1850,
         300
-      ]
+      ],
+      "continueOnFail": true,
+      "credentials": {
+        "redis": {
+          "name": "Redis Local"
+        }
+      }
     },
     {
       "parameters": {
