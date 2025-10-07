@@ -1,0 +1,83 @@
+{
+  "name": "Tool: Latest Versions Search",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "tool-latest-search",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-trigger",
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [250, 300],
+      "webhookId": "tool-latest-search"
+    },
+    {
+      "parameters": {
+        "functionCode": "// Parse latest versions search parameters\nconst query = $json.query || $json.body?.query || '';\nconst limit = $json.limit || $json.body?.limit || 10;\nconst minScore = $json.min_score || $json.body?.min_score || 0.7;\n\nif (!query) {\n  throw new Error('query is required');\n}\n\nreturn {\n  json: {\n    query,\n    limit,\n    min_score: minScore\n  }\n};"
+      },
+      "id": "parse-input",
+      "name": "Parse Latest Parameters",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "url": "http://localhost:8000/api/v1/search/latest",
+        "method": "POST",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json) }}",
+        "options": {
+          "timeout": 15000
+        }
+      },
+      "id": "call-latest-search",
+      "name": "Call Latest Versions API",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [650, 300]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Format latest versions search results\nconst response = $json;\n\nif (response.status === 'error') {\n  return {\n    json: {\n      success: false,\n      error: response.message || 'Latest versions search error',\n      results: []\n    }\n  };\n}\n\nconst results = (response.results || []).map(result => ({\n  document_id: result.document_id,\n  document_name: result.metadata?.document_name || result.document_name,\n  document_type: result.metadata?.document_type || 'unknown',\n  department: result.metadata?.department || 'unknown',\n  \n  // Content\n  content: result.text || result.content,\n  content_preview: (result.text || result.content || '').substring(0, 250) + '...',\n  \n  // Scores\n  relevance_score: result.score || 0,\n  quality_score: result.metadata?.quality_score || 0,\n  \n  // Version information\n  version: result.metadata?.version || result.version || 'unknown',\n  is_latest_version: result.metadata?.is_latest_version || true,\n  document_date: result.metadata?.document_date || null,\n  supersedes_version: result.metadata?.supersedes_version || null,\n  \n  // Document properties\n  document_type_category: result.metadata?.document_type_category || 'unknown',\n  is_process: result.metadata?.is_process || false,\n  is_form: result.metadata?.is_form || false,\n  \n  // Context\n  chunk_index: result.chunk_key || result.metadata?.chunk_index,\n  document_url: result.metadata?.document_url || null,\n  \n  // Railway-specific\n  fleet_type: result.metadata?.fleet_type || null,\n  train_id: result.metadata?.train_id || null,\n  standard_compliance: result.metadata?.standard_compliance || null,\n  processing_profile: result.metadata?.processing_profile || 'railway'\n}));\n\nreturn {\n  json: {\n    success: true,\n    results,\n    metadata: {\n      query: response.metadata?.query || '',\n      total_results: results.length,\n      search_type: 'latest_versions',\n      version_filter_applied: response.metadata?.version_filter_applied || true,\n      min_score_applied: response.metadata?.min_score || 0.7,\n      note: 'Only the most recent version of each document is included'\n    }\n  }\n};"
+      },
+      "id": "format-results",
+      "name": "Format Latest Versions Results",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [850, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify($json) }}"
+      },
+      "id": "respond",
+      "name": "Respond",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1050, 300]
+    }
+  ],
+  "connections": {
+    "Webhook Trigger": {
+      "main": [[{"node": "Parse Latest Parameters", "type": "main", "index": 0}]]
+    },
+    "Parse Latest Parameters": {
+      "main": [[{"node": "Call Latest Versions API", "type": "main", "index": 0}]]
+    },
+    "Call Latest Versions API": {
+      "main": [[{"node": "Format Latest Versions Results", "type": "main", "index": 0}]]
+    },
+    "Format Latest Versions Results": {
+      "main": [[{"node": "Respond", "type": "main", "index": 0}]]
+    }
+  },
+  "settings": {},
+  "active": true
+}

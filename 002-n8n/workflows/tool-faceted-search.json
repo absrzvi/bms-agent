@@ -1,0 +1,83 @@
+{
+  "name": "Tool: Faceted Search",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "tool-faceted-search",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-trigger",
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [250, 300],
+      "webhookId": "tool-faceted-search"
+    },
+    {
+      "parameters": {
+        "functionCode": "// Parse faceted search parameters\nconst query = $json.query || $json.body?.query || '';\nconst facetFields = $json.facet_fields || $json.body?.facet_fields || ['document_type', 'department'];\nconst limit = $json.limit || $json.body?.limit || 10;\nconst minScore = $json.min_score || $json.body?.min_score || 0.7;\n\nif (!query) {\n  throw new Error('query is required');\n}\n\nif (!Array.isArray(facetFields)) {\n  throw new Error('facet_fields must be an array');\n}\n\nreturn {\n  json: {\n    query,\n    facet_fields: facetFields,\n    limit,\n    min_score: minScore\n  }\n};"
+      },
+      "id": "parse-input",
+      "name": "Parse Facet Parameters",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "url": "http://localhost:8000/api/v1/search/facets",
+        "method": "POST",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json) }}",
+        "options": {
+          "timeout": 15000
+        }
+      },
+      "id": "call-faceted-search",
+      "name": "Call Faceted Search API",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [650, 300]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Format faceted search results with facet breakdown\nconst response = $json;\n\nif (response.status === 'error') {\n  return {\n    json: {\n      success: false,\n      error: response.message || 'Faceted search error',\n      results: [],\n      facets: {}\n    }\n  };\n}\n\nconst results = (response.results || []).map(result => ({\n  document_id: result.document_id,\n  document_name: result.metadata?.document_name || result.document_name,\n  document_type: result.metadata?.document_type || 'unknown',\n  department: result.metadata?.department || 'unknown',\n  \n  // Content\n  content: result.text || result.content,\n  content_preview: (result.text || result.content || '').substring(0, 200) + '...',\n  \n  // Scores\n  relevance_score: result.score || 0,\n  quality_score: result.metadata?.quality_score || 0,\n  \n  // Document properties\n  document_type_category: result.metadata?.document_type_category || 'unknown',\n  is_process: result.metadata?.is_process || false,\n  is_form: result.metadata?.is_form || false,\n  is_template: result.metadata?.is_template || false,\n  \n  // Railway-specific\n  fleet_type: result.metadata?.fleet_type || null,\n  train_id: result.metadata?.train_id || null,\n  standard_compliance: result.metadata?.standard_compliance || null,\n  \n  document_url: result.metadata?.document_url || null\n}));\n\n// Extract facets\nconst facets = response.facets || {};\n\n// Sort facets by count\nconst sortedFacets = {};\nfor (const [field, counts] of Object.entries(facets)) {\n  sortedFacets[field] = Object.entries(counts)\n    .sort((a, b) => b[1] - a[1])\n    .reduce((obj, [key, value]) => ({ ...obj, [key]: value }), {});\n}\n\nreturn {\n  json: {\n    success: true,\n    results,\n    facets: sortedFacets,\n    metadata: {\n      query: response.metadata?.query || '',\n      total_results: results.length,\n      facet_fields: response.metadata?.facet_fields || [],\n      search_type: 'faceted',\n      min_score_applied: response.metadata?.min_score || 0.7\n    }\n  }\n};"
+      },
+      "id": "format-results",
+      "name": "Format Faceted Results",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [850, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify($json) }}"
+      },
+      "id": "respond",
+      "name": "Respond",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1050, 300]
+    }
+  ],
+  "connections": {
+    "Webhook Trigger": {
+      "main": [[{"node": "Parse Facet Parameters", "type": "main", "index": 0}]]
+    },
+    "Parse Facet Parameters": {
+      "main": [[{"node": "Call Faceted Search API", "type": "main", "index": 0}]]
+    },
+    "Call Faceted Search API": {
+      "main": [[{"node": "Format Faceted Results", "type": "main", "index": 0}]]
+    },
+    "Format Faceted Results": {
+      "main": [[{"node": "Respond", "type": "main", "index": 0}]]
+    }
+  },
+  "settings": {},
+  "active": true
+}

@@ -1,0 +1,83 @@
+{
+  "name": "Tool: Explained Search",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "tool-explained-search",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-trigger",
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [250, 300],
+      "webhookId": "tool-explained-search"
+    },
+    {
+      "parameters": {
+        "functionCode": "// Parse explained search parameters\nconst query = $json.query || $json.body?.query || '';\nconst limit = $json.limit || $json.body?.limit || 5;\nconst minScore = $json.min_score || $json.body?.min_score || 0.7;\n\nif (!query) {\n  throw new Error('query is required');\n}\n\nreturn {\n  json: {\n    query,\n    limit,\n    min_score: minScore\n  }\n};"
+      },
+      "id": "parse-input",
+      "name": "Parse Explain Parameters",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "url": "http://localhost:8000/api/v1/search/explain",
+        "method": "POST",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json) }}",
+        "options": {
+          "timeout": 15000
+        }
+      },
+      "id": "call-explained-search",
+      "name": "Call Explained Search API",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [650, 300]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Format explained search results with score breakdown\nconst response = $json;\n\nif (response.status === 'error') {\n  return {\n    json: {\n      success: false,\n      error: response.message || 'Explained search error',\n      results: []\n    }\n  };\n}\n\nconst results = (response.results || []).map(result => ({\n  document_id: result.document_id,\n  document_name: result.metadata?.document_name || result.document_name,\n  document_type: result.metadata?.document_type || 'unknown',\n  department: result.metadata?.department || 'unknown',\n  \n  // Content\n  content: result.text || result.content,\n  content_preview: (result.text || result.content || '').substring(0, 200) + '...',\n  \n  // Scores\n  relevance_score: result.score || 0,\n  quality_score: result.metadata?.quality_score || 0,\n  \n  // Score explanation breakdown\n  explanation: {\n    semantic_score: result.explanation?.semantic_score || 0,\n    quality_boost: result.explanation?.quality_boost || 0,\n    recency_factor: result.explanation?.recency_factor || 0,\n    tf_boost: result.explanation?.tf_boost || 0,\n    matching_terms: result.explanation?.matching_terms || [],\n    formula: result.explanation?.formula || 'semantic * (1 + quality + recency + tf)',\n    components: {\n      base_semantic: result.explanation?.semantic_score || 0,\n      quality_multiplier: result.explanation?.quality_boost || 0,\n      recency_multiplier: result.explanation?.recency_factor || 0,\n      tf_multiplier: result.explanation?.tf_boost || 0\n    }\n  },\n  \n  // Context\n  chunk_index: result.chunk_key || result.metadata?.chunk_index,\n  document_url: result.metadata?.document_url || null,\n  \n  // Additional metadata\n  processing_profile: result.metadata?.processing_profile || 'railway',\n  document_date: result.metadata?.document_date || null,\n  version: result.metadata?.version || null\n}));\n\nreturn {\n  json: {\n    success: true,\n    results,\n    metadata: {\n      query: response.metadata?.query || '',\n      total_results: results.length,\n      search_type: 'explained',\n      min_score_applied: response.metadata?.min_score || 0.7,\n      explanation_available: true\n    }\n  }\n};"
+      },
+      "id": "format-results",
+      "name": "Format Explained Results",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [850, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify($json) }}"
+      },
+      "id": "respond",
+      "name": "Respond",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1050, 300]
+    }
+  ],
+  "connections": {
+    "Webhook Trigger": {
+      "main": [[{"node": "Parse Explain Parameters", "type": "main", "index": 0}]]
+    },
+    "Parse Explain Parameters": {
+      "main": [[{"node": "Call Explained Search API", "type": "main", "index": 0}]]
+    },
+    "Call Explained Search API": {
+      "main": [[{"node": "Format Explained Results", "type": "main", "index": 0}]]
+    },
+    "Format Explained Results": {
+      "main": [[{"node": "Respond", "type": "main", "index": 0}]]
+    }
+  },
+  "settings": {},
+  "active": true
+}
