@@ -6,7 +6,7 @@
  */
 
 const assert = require('assert');
-const RedisClient = require('../../lib/redis-client');
+const { RedisClient } = require('../../lib/redis-client');
 
 describe('Redis TTL Enforcement (T029)', () => {
   let redisClient;
@@ -61,7 +61,7 @@ describe('Redis TTL Enforcement (T029)', () => {
         assert.strictEqual(typeof result.restored, 'boolean', 'Restored flag should be boolean');
       } else {
         // Redis not available in test environment
-        console.log('     Redis not available, skipping success test');
+        console.log('  ï¿½  Redis not available, skipping success test');
       }
     });
 
@@ -87,7 +87,7 @@ describe('Redis TTL Enforcement (T029)', () => {
       const firstConnect = await redisClient.connect();
 
       if (!firstConnect.success) {
-        console.log('     Redis not available, skipping restore test');
+        console.log('  ï¿½  Redis not available, skipping restore test');
         return;
       }
 
@@ -111,7 +111,7 @@ describe('Redis TTL Enforcement (T029)', () => {
       const connectResult = await redisClient.connect();
 
       if (!connectResult.success) {
-        console.log('     Redis not available, skipping execute test');
+        console.log('  ï¿½  Redis not available, skipping execute test');
         return;
       }
 
@@ -152,7 +152,7 @@ describe('Redis TTL Enforcement (T029)', () => {
       const connectResult = await redisClient.connect();
 
       if (!connectResult.success) {
-        console.log('     Redis not available, skipping error handling test');
+        console.log('  ï¿½  Redis not available, skipping error handling test');
         return;
       }
 
@@ -192,7 +192,7 @@ describe('Redis TTL Enforcement (T029)', () => {
       const connectResult = await redisClient.connect();
 
       if (!connectResult.success) {
-        console.log('     Redis not available, skipping TTL set test');
+        console.log('  ï¿½  Redis not available, skipping TTL set test');
         return;
       }
 
@@ -227,7 +227,7 @@ describe('Redis TTL Enforcement (T029)', () => {
       const connectResult = await redisClient.connect();
 
       if (!connectResult.success) {
-        console.log('     Redis not available, skipping expiration test');
+        console.log('  ï¿½  Redis not available, skipping expiration test');
         return;
       }
 
@@ -263,7 +263,7 @@ describe('Redis TTL Enforcement (T029)', () => {
       const connectResult = await redisClient.connect();
 
       if (!connectResult.success) {
-        console.log('     Redis not available, skipping cache retrieval test');
+        console.log('  ï¿½  Redis not available, skipping cache retrieval test');
         return;
       }
 
@@ -304,7 +304,7 @@ describe('Redis TTL Enforcement (T029)', () => {
       const connectResult = await redisClient.connect();
 
       if (!connectResult.success) {
-        console.log('     Redis not available, skipping missing key test');
+        console.log('  ï¿½  Redis not available, skipping missing key test');
         return;
       }
 
@@ -327,7 +327,7 @@ describe('Redis TTL Enforcement (T029)', () => {
       const connectResult = await redisClient.connect();
 
       if (!connectResult.success) {
-        console.log('     Redis not available, skipping TTL refresh test');
+        console.log('  ï¿½  Redis not available, skipping TTL refresh test');
         return;
       }
 
@@ -411,7 +411,7 @@ describe('Redis TTL Enforcement (T029)', () => {
       const connectResult = await redisClient.connect();
 
       if (!connectResult.success) {
-        console.log('     Redis not available, skipping disconnect test');
+        console.log('  ï¿½  Redis not available, skipping disconnect test');
         return;
       }
 
@@ -437,7 +437,7 @@ describe('Redis TTL Enforcement (T029)', () => {
       const connectResult = await redisClient.connect();
 
       if (!connectResult.success) {
-        console.log('     Redis not available, skipping integration test');
+        console.log('  ï¿½  Redis not available, skipping integration test');
         return;
       }
 
@@ -486,7 +486,7 @@ describe('Redis TTL Enforcement (T029)', () => {
       const connectResult = await redisClient.connect();
 
       if (!connectResult.success) {
-        console.log('     Redis not available, skipping cache miss test');
+        console.log('  ï¿½  Redis not available, skipping cache miss test');
         return;
       }
 

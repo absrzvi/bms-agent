@@ -8,7 +8,7 @@
 const assert = require('assert');
 const fs = require('fs');
 const path = require('path');
-const WhitelistManager = require('../../lib/whitelist');
+const { WhitelistManager } = require('../../lib/whitelist');
 
 describe('Whitelist Validation Logic (T028)', () => {
   let whitelistManager;
