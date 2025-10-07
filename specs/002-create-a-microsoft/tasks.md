@@ -448,7 +448,7 @@ Project structure from plan.md:
   - **Manual Step Required**: Import workflows and add tools to bms-ai-agent.json in n8n UI
   - **Note**: These integrate as LangChain tools, not slash commands (agent decides when to use them)
 
-- [ ] **T027d** [P] Update integration tests for new search capabilities
+- [x] **T027d** [P] Update integration tests for new search capabilities
   - Path: `/workspace/002-n8n/tests/integration/test-enhanced-search.js`
   - Test scenarios:
     1. Batch search with 3 queries returns union of results
