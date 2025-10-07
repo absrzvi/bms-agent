@@ -1,0 +1,255 @@
+{
+  "name": "MS Teams Webhook Bot Handler",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "teams-bot",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-trigger",
+      "name": "Teams Message Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [250, 300],
+      "webhookId": "teams-bot"
+    },
+    {
+      "parameters": {
+        "functionCode": "// Parse incoming Teams message\nconst activity = $json;\n\nconsole.log('Received activity:', JSON.stringify(activity, null, 2));\n\n// Extract key information\nconst messageText = activity.text || '';\nconst conversationId = activity.conversation?.id;\nconst userId = activity.from?.id;\nconst userName = activity.from?.name;\nconst serviceUrl = activity.serviceUrl;\nconst channelId = activity.channelId;\nconst activityId = activity.id;\n\n// Check if this is a message (not typing indicator, etc.)\nconst isMessage = activity.type === 'message' && messageText.trim().length > 0;\n\nreturn {\n  json: {\n    isMessage,\n    messageText,\n    conversationId,\n    userId,\n    userName,\n    serviceUrl,\n    channelId,\n    activityId,\n    rawActivity: activity\n  }\n};"
+      },
+      "id": "parse-activity",
+      "name": "Parse Teams Activity",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{ $json.isMessage }}",
+              "value2": true
+            }
+          ]
+        }
+      },
+      "id": "if-message",
+      "name": "Is Valid Message?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [650, 300]
+    },
+    {
+      "parameters": {
+        "url": "https://login.microsoftonline.com/botframework.com/oauth2/v2.0/token",
+        "method": "POST",
+        "sendBody": true,
+        "specifyBody": "form",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "grant_type",
+              "value": "client_credentials"
+            },
+            {
+              "name": "client_id",
+              "value": "={{ $env.BOT_APP_ID }}"
+            },
+            {
+              "name": "client_secret",
+              "value": "={{ $env.BOT_APP_PASSWORD }}"
+            },
+            {
+              "name": "scope",
+              "value": "https://api.botframework.com/.default"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 10000
+        }
+      },
+      "id": "get-token",
+      "name": "Get Bot Framework Token",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [850, 200]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Store access token for later use\nconst tokenResponse = $json;\nconst accessToken = tokenResponse.access_token;\nconst expiresIn = tokenResponse.expires_in;\n\n// Get message data from input 0 (the message data)\nconst messageData = $input.item(0).json;\n\nreturn {\n  json: {\n    ...messageData,\n    accessToken,\n    tokenExpiresIn: expiresIn\n  }\n};"
+      },
+      "id": "combine-token",
+      "name": "Combine Token with Message",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1050, 200]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Send typing indicator while processing\nconst serviceUrl = $json.serviceUrl;\nconst conversationId = $json.conversationId;\nconst accessToken = $json.accessToken;\nconst botId = process.env.BOT_APP_ID;\n\nconst typingActivity = {\n  type: 'typing',\n  from: {\n    id: botId,\n    name: 'BMS Agent'\n  }\n};\n\nreturn {\n  json: {\n    ...$.json,\n    typingEndpoint: `${serviceUrl}/v3/conversations/${conversationId}/activities`,\n    typingActivity\n  }\n};"
+      },
+      "id": "prepare-typing",
+      "name": "Prepare Typing Indicator",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1250, 200]
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.typingEndpoint }}",
+        "method": "POST",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $json.accessToken }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.typingActivity) }}",
+        "options": {
+          "timeout": 5000
+        }
+      },
+      "id": "send-typing",
+      "name": "Send Typing Indicator",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1450, 200]
+    },
+    {
+      "parameters": {
+        "url": "http://localhost:8000/api/v1/ask",
+        "method": "POST",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"query\": \"{{ $json.messageText }}\",\n  \"conversation_id\": \"{{ $json.conversationId }}\",\n  \"user_id\": \"{{ $json.userId }}\",\n  \"limit\": 5,\n  \"min_score\": 0.7\n}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "call-bms-api",
+      "name": "Query BMS Agent",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1650, 200]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Format BMS response for Teams\nconst bmsResponse = $json;\nconst messageData = $input.item(0).json;\n\nlet responseText = '';\n\nif (bmsResponse.status === 'success' && bmsResponse.answer) {\n  responseText = bmsResponse.answer;\n  \n  // Add sources if available\n  if (bmsResponse.sources && bmsResponse.sources.length > 0) {\n    responseText += '\\n\\n**Sources:**\\n';\n    bmsResponse.sources.forEach((source, idx) => {\n      responseText += `${idx + 1}. ${source.document_name} (Score: ${source.score.toFixed(2)})\\n`;\n    });\n  }\n} else {\n  responseText = 'Sorry, I encountered an error processing your request. Please try again.';\n}\n\nconst replyActivity = {\n  type: 'message',\n  from: {\n    id: process.env.BOT_APP_ID,\n    name: 'BMS Agent'\n  },\n  text: responseText,\n  textFormat: 'markdown'\n};\n\nreturn {\n  json: {\n    ...messageData,\n    responseText,\n    replyActivity,\n    replyEndpoint: `${messageData.serviceUrl}/v3/conversations/${messageData.conversationId}/activities`\n  }\n};"
+      },
+      "id": "format-response",
+      "name": "Format Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1850, 200]
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.replyEndpoint }}",
+        "method": "POST",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $json.accessToken }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.replyActivity) }}",
+        "options": {
+          "timeout": 10000
+        }
+      },
+      "id": "send-reply",
+      "name": "Send Reply to Teams",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [2050, 200]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ status: 'ok', processed: true }) }}"
+      },
+      "id": "respond-success",
+      "name": "Respond to Bot Framework",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [2250, 200]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ status: 'ok', processed: false, reason: 'not a message' }) }}"
+      },
+      "id": "respond-ignored",
+      "name": "Respond - Ignored",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [850, 400]
+    }
+  ],
+  "connections": {
+    "Teams Message Webhook": {
+      "main": [[{ "node": "Parse Teams Activity", "type": "main", "index": 0 }]]
+    },
+    "Parse Teams Activity": {
+      "main": [[{ "node": "Is Valid Message?", "type": "main", "index": 0 }]]
+    },
+    "Is Valid Message?": {
+      "main": [
+        [{ "node": "Get Bot Framework Token", "type": "main", "index": 0 }],
+        [{ "node": "Respond - Ignored", "type": "main", "index": 0 }]
+      ]
+    },
+    "Get Bot Framework Token": {
+      "main": [[{ "node": "Combine Token with Message", "type": "main", "index": 0 }]]
+    },
+    "Combine Token with Message": {
+      "main": [[{ "node": "Prepare Typing Indicator", "type": "main", "index": 0 }]]
+    },
+    "Prepare Typing Indicator": {
+      "main": [[{ "node": "Send Typing Indicator", "type": "main", "index": 0 }]]
+    },
+    "Send Typing Indicator": {
+      "main": [[{ "node": "Query BMS Agent", "type": "main", "index": 0 }]]
+    },
+    "Query BMS Agent": {
+      "main": [[{ "node": "Format Response", "type": "main", "index": 0 }]]
+    },
+    "Format Response": {
+      "main": [[{ "node": "Send Reply to Teams", "type": "main", "index": 0 }]]
+    },
+    "Send Reply to Teams": {
+      "main": [[{ "node": "Respond to Bot Framework", "type": "main", "index": 0 }]]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 0,
+  "updatedAt": "2025-10-07T00:00:00.000Z",
+  "versionId": "1",
+  "active": true
+}
