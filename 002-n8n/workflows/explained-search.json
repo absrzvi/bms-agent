@@ -1,0 +1,150 @@
+{
+  "name": "Explained Search",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "webhook-trigger",
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [250, 300],
+      "webhookId": "explained-search"
+    },
+    {
+      "parameters": {
+        "functionCode": "// Extract explained search parameters\nconst query = $input.item.json.query;\nconst limit = $input.item.json.limit || 5;\nconst minScore = $input.item.json.min_score || 0.7;\nconst conversationId = $input.item.json.conversation_id;\nconst userId = $input.item.json.user_id;\n\nif (!query) {\n  throw new Error('query is required');\n}\n\nreturn {\n  query,\n  limit,\n  minScore,\n  conversationId,\n  userId,\n  timestamp: new Date().toISOString()\n};"
+      },
+      "id": "extract-params",
+      "name": "Extract Parameters",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "key": "={{ 'user:' + $json.userId + ':admin' }}"
+      },
+      "id": "check-admin",
+      "name": "Check Admin Status",
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [650, 300],
+      "continueOnFail": true,
+      "credentials": {
+        "redis": {
+          "name": "Redis Local"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{$json.value}}",
+              "operation": "equals",
+              "value2": "true"
+            }
+          ]
+        }
+      },
+      "id": "is-admin",
+      "name": "Is Admin?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [850, 300]
+    },
+    {
+      "parameters": {
+        "url": "http://localhost:8000/api/v1/search/explain",
+        "method": "POST",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "query",
+              "value": "={{$json.query}}"
+            },
+            {
+              "name": "limit",
+              "value": "={{$json.limit}}"
+            },
+            {
+              "name": "min_score",
+              "value": "={{$json.minScore}}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "call-bms-api",
+      "name": "Call BMS API Explained Search",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [1050, 200]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Format explained search results for MS Teams (admin view)\nconst results = $input.item.json.results || [];\nconst metadata = $input.item.json.metadata || {};\n\nlet message = `**🔍 Explained Search Results (Admin)**\\n\\n`;\nmessage += `Query: \"${metadata.query || 'N/A'}\"\\n`;\nmessage += `Total Results: ${metadata.total_results || 0}\\n\\n`;\n\nif (results.length === 0) {\n  message += '⚠️ No matching documents found.\\n';\n} else {\n  results.forEach((result, index) => {\n    message += `**${index + 1}. ${result.file_name || 'Unknown'}**\\n`;\n    message += `📄 Final Score: ${(result.score || 0).toFixed(4)}\\n\\n`;\n    \n    // Show score breakdown\n    if (result.explanation) {\n      const exp = result.explanation;\n      message += `**Score Breakdown:**\\n`;\n      message += `  • Semantic Similarity: ${(exp.semantic_score || 0).toFixed(4)}\\n`;\n      message += `  • Quality Boost: ${(exp.quality_boost || 0).toFixed(4)}\\n`;\n      message += `  • Recency Factor: ${(exp.recency_factor || 0).toFixed(4)}\\n`;\n      message += `  • Term Frequency Boost: ${(exp.tf_boost || 0).toFixed(4)}\\n\\n`;\n      \n      if (exp.matching_terms && exp.matching_terms.length > 0) {\n        message += `  • Matching Terms: ${exp.matching_terms.join(', ')}\\n`;\n      }\n      message += '\\n';\n    }\n    \n    if (result.text) {\n      const preview = result.text.substring(0, 100);\n      message += `${preview}${result.text.length > 100 ? '...' : ''}\\n`;\n    }\n    \n    message += '\\n---\\n\\n';\n  });\n}\n\nreturn {\n  message,\n  conversation_id: $input.item.json.conversation_id\n};"
+      },
+      "id": "format-admin-response",
+      "name": "Format Admin Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [1250, 200]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Non-admin access denied\nreturn {\n  message: '⛔ Access denied. The /search-explain command is restricted to administrators only.',\n  conversation_id: $input.item.json.conversation_id\n};"
+      },
+      "id": "format-denied-response",
+      "name": "Format Denied Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [1050, 400]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Return formatted response\nreturn {\n  json: {\n    success: true,\n    message: $json.message,\n    conversation_id: $json.conversation_id\n  }\n};"
+      },
+      "id": "return-response",
+      "name": "Return Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [1450, 300]
+    }
+  ],
+  "connections": {
+    "Webhook Trigger": {
+      "main": [[{"node": "Extract Parameters", "type": "main", "index": 0}]]
+    },
+    "Extract Parameters": {
+      "main": [[{"node": "Check Admin Status", "type": "main", "index": 0}]]
+    },
+    "Check Admin Status": {
+      "main": [[{"node": "Is Admin?", "type": "main", "index": 0}]]
+    },
+    "Is Admin?": {
+      "main": [
+        [{"node": "Call BMS API Explained Search", "type": "main", "index": 0}],
+        [{"node": "Format Denied Response", "type": "main", "index": 0}]
+      ]
+    },
+    "Call BMS API Explained Search": {
+      "main": [[{"node": "Format Admin Response", "type": "main", "index": 0}]]
+    },
+    "Format Admin Response": {
+      "main": [[{"node": "Return Response", "type": "main", "index": 0}]]
+    },
+    "Format Denied Response": {
+      "main": [[{"node": "Return Response", "type": "main", "index": 0}]]
+    }
+  },
+  "active": true,
+  "settings": {},
+  "versionId": "1.0",
+  "id": "explained-search"
+}

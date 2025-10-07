@@ -1,0 +1,97 @@
+{
+  "name": "Batch Search",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "webhook-trigger",
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [250, 300],
+      "webhookId": "batch-search"
+    },
+    {
+      "parameters": {
+        "functionCode": "// Extract batch search parameters\nconst queries = $input.item.json.queries || []; // Array of query strings\nconst mode = $input.item.json.mode || 'union'; // union or intersection\nconst limit = $input.item.json.limit || 5;\nconst minScore = $input.item.json.min_score || 0.7;\nconst conversationId = $input.item.json.conversation_id;\n\nif (!Array.isArray(queries) || queries.length === 0) {\n  throw new Error('queries array is required and must not be empty');\n}\n\nreturn {\n  queries,\n  mode,\n  limit,\n  minScore,\n  conversationId,\n  timestamp: new Date().toISOString()\n};"
+      },
+      "id": "extract-params",
+      "name": "Extract Parameters",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "url": "http://localhost:8000/api/v1/search/batch",
+        "method": "POST",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "queries",
+              "value": "={{$json.queries}}"
+            },
+            {
+              "name": "mode",
+              "value": "={{$json.mode}}"
+            },
+            {
+              "name": "limit",
+              "value": "={{$json.limit}}"
+            },
+            {
+              "name": "min_score",
+              "value": "={{$json.minScore}}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "call-bms-api",
+      "name": "Call BMS API Batch Search",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [650, 300]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Format batch search results for MS Teams\nconst results = $input.item.json.results || [];\nconst mode = $input.item.json.mode || 'union';\nconst metadata = $input.item.json.metadata || {};\n\nlet message = `**Batch Search Results (${mode} mode)**\\n\\n`;\nmessage += `Queries: ${metadata.queries_count || 0} | Total Results: ${metadata.total_results || 0}\\n\\n`;\n\nif (results.length === 0) {\n  message += '⚠️ No matching documents found.\\n';\n} else {\n  results.forEach((result, index) => {\n    message += `**${index + 1}. ${result.file_name || 'Unknown'}**\\n`;\n    message += `📄 Score: ${(result.score || 0).toFixed(3)}\\n`;\n    \n    if (result.matched_queries && result.matched_queries.length > 0) {\n      message += `✅ Matched queries: ${result.matched_queries.length}\\n`;\n    }\n    \n    if (result.text) {\n      const preview = result.text.substring(0, 150);\n      message += `\\n${preview}${result.text.length > 150 ? '...' : ''}\\n`;\n    }\n    \n    message += '\\n---\\n\\n';\n  });\n}\n\nreturn {\n  message,\n  conversation_id: $input.item.json.conversation_id\n};"
+      },
+      "id": "format-response",
+      "name": "Format MS Teams Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [850, 300]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Return formatted response\nreturn {\n  json: {\n    success: true,\n    message: $json.message,\n    conversation_id: $json.conversation_id\n  }\n};"
+      },
+      "id": "return-response",
+      "name": "Return Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [1050, 300]
+    }
+  ],
+  "connections": {
+    "Webhook Trigger": {
+      "main": [[{"node": "Extract Parameters", "type": "main", "index": 0}]]
+    },
+    "Extract Parameters": {
+      "main": [[{"node": "Call BMS API Batch Search", "type": "main", "index": 0}]]
+    },
+    "Call BMS API Batch Search": {
+      "main": [[{"node": "Format MS Teams Response", "type": "main", "index": 0}]]
+    },
+    "Format MS Teams Response": {
+      "main": [[{"node": "Return Response", "type": "main", "index": 0}]]
+    }
+  },
+  "active": true,
+  "settings": {},
+  "versionId": "1.0",
+  "id": "batch-search"
+}

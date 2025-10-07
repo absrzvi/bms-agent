@@ -1,0 +1,97 @@
+{
+  "name": "Faceted Search",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "webhook-trigger",
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [250, 300],
+      "webhookId": "faceted-search"
+    },
+    {
+      "parameters": {
+        "functionCode": "// Extract faceted search parameters\nconst query = $input.item.json.query;\nconst facetFields = $input.item.json.facet_fields || ['document_type', 'department'];\nconst limit = $input.item.json.limit || 10;\nconst minScore = $input.item.json.min_score || 0.7;\nconst conversationId = $input.item.json.conversation_id;\n\nif (!query) {\n  throw new Error('query is required');\n}\n\nreturn {\n  query,\n  facetFields,\n  limit,\n  minScore,\n  conversationId,\n  timestamp: new Date().toISOString()\n};"
+      },
+      "id": "extract-params",
+      "name": "Extract Parameters",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "url": "http://localhost:8000/api/v1/search/facets",
+        "method": "POST",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "query",
+              "value": "={{$json.query}}"
+            },
+            {
+              "name": "facet_fields",
+              "value": "={{$json.facetFields}}"
+            },
+            {
+              "name": "limit",
+              "value": "={{$json.limit}}"
+            },
+            {
+              "name": "min_score",
+              "value": "={{$json.minScore}}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "call-bms-api",
+      "name": "Call BMS API Faceted Search",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [650, 300]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Format faceted search results for MS Teams\nconst results = $input.item.json.results || [];\nconst facets = $input.item.json.facets || {};\nconst metadata = $input.item.json.metadata || {};\n\nlet message = `**Faceted Search Results**\\n\\n`;\nmessage += `Query: \"${metadata.query || 'N/A'}\"\\n`;\nmessage += `Total Results: ${metadata.total_results || 0}\\n\\n`;\n\n// Show facet breakdown\nif (Object.keys(facets).length > 0) {\n  message += `**📊 Facet Breakdown:**\\n\\n`;\n  \n  for (const [field, counts] of Object.entries(facets)) {\n    message += `**${field}:**\\n`;\n    const sortedCounts = Object.entries(counts).sort((a, b) => b[1] - a[1]);\n    for (const [value, count] of sortedCounts) {\n      message += `  • ${value}: ${count}\\n`;\n    }\n    message += '\\n';\n  }\n  message += '---\\n\\n';\n}\n\n// Show top results\nif (results.length === 0) {\n  message += '⚠️ No matching documents found.\\n';\n} else {\n  message += `**Top ${results.length} Results:**\\n\\n`;\n  results.forEach((result, index) => {\n    message += `**${index + 1}. ${result.file_name || 'Unknown'}**\\n`;\n    message += `📄 Score: ${(result.score || 0).toFixed(3)}\\n`;\n    \n    if (result.document_type) {\n      message += `📑 Type: ${result.document_type}\\n`;\n    }\n    if (result.department) {\n      message += `🏢 Department: ${result.department}\\n`;\n    }\n    \n    if (result.text) {\n      const preview = result.text.substring(0, 120);\n      message += `\\n${preview}${result.text.length > 120 ? '...' : ''}\\n`;\n    }\n    \n    message += '\\n';\n  });\n}\n\nreturn {\n  message,\n  conversation_id: $input.item.json.conversation_id\n};"
+      },
+      "id": "format-response",
+      "name": "Format MS Teams Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [850, 300]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Return formatted response\nreturn {\n  json: {\n    success: true,\n    message: $json.message,\n    conversation_id: $json.conversation_id\n  }\n};"
+      },
+      "id": "return-response",
+      "name": "Return Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [1050, 300]
+    }
+  ],
+  "connections": {
+    "Webhook Trigger": {
+      "main": [[{"node": "Extract Parameters", "type": "main", "index": 0}]]
+    },
+    "Extract Parameters": {
+      "main": [[{"node": "Call BMS API Faceted Search", "type": "main", "index": 0}]]
+    },
+    "Call BMS API Faceted Search": {
+      "main": [[{"node": "Format MS Teams Response", "type": "main", "index": 0}]]
+    },
+    "Format MS Teams Response": {
+      "main": [[{"node": "Return Response", "type": "main", "index": 0}]]
+    }
+  },
+  "active": true,
+  "settings": {},
+  "versionId": "1.0",
+  "id": "faceted-search"
+}
