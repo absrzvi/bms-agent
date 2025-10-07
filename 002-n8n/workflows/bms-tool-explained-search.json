@@ -1,0 +1,68 @@
+{
+  "name": "BMS Tool - Explained Search",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "workflow-trigger",
+      "name": "Execute Workflow Trigger",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://localhost:8000/api/v1/search/explain",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ query: $json.search_query || $json.query, limit: $json.limit || 5, min_score: 0.5 }) }}",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true,
+              "responseFormat": "autodetect"
+            }
+          }
+        }
+      },
+      "id": "call-api",
+      "name": "Call BMS Explained Search API",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "content": "## BMS Tool - Explained Search\n\nSub-workflow for search with score explanations.\n\n**Input Parameters:**\n- search_query or query: The search query\n- limit: Max results (default: 5)\n\n**Output:**\n- results: Search results with explanation\n- Each result includes: text, score, explanation\n  - explanation: { semantic_score, quality_boost, recency_factor, tf_boost, matching_terms }\n\n**Use Case:** Debugging, understanding relevance scores\n\n**Called by:** BMS AI Agent main workflow",
+        "height": 360,
+        "width": 360,
+        "color": 5
+      },
+      "id": "sticky-note",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [180, 60]
+    }
+  ],
+  "connections": {
+    "Execute Workflow Trigger": {
+      "main": [
+        [
+          {
+            "node": "Call BMS Explained Search API",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 0,
+  "active": false
+}
