@@ -404,7 +404,7 @@ Project structure from plan.md:
     3. Use Redis sorted set: `upload_jobs:pending` with score = timestamp for efficient polling
   - Alternative (deferred to production): BMS API webhook callback when processing completes
 
-- [ ] **T027a** Implement BMS API embeddings endpoint (FR-017 dependency)
+- [x] **T027a** Implement BMS API embeddings endpoint (FR-017 dependency)
   - Path: `/workspace/001-bms-agent/api/main.py`
   - **Prerequisite**: Required for similar query detection (T019a)
   - Components:

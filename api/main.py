@@ -4,6 +4,7 @@ Main API server with document upload and search endpoints
 """
 
 import os
+import re
 import uuid
 import hashlib
 import logging
@@ -52,6 +53,14 @@ from cache.semantic_cache import get_cache_manager
 
 # Import quality monitoring
 from monitoring.quality_monitor import get_quality_monitor, get_metrics_collector
+
+# Import batch search endpoint
+try:
+    from api.endpoints.batch_search import BatchSearchRequest, BatchSearchResponse
+    BATCH_SEARCH_AVAILABLE = True
+except ImportError:
+    BATCH_SEARCH_AVAILABLE = False
+    logger.warning("Batch search endpoint not available")
 
 # Initialize semantic cache
 cache_manager = get_cache_manager()
@@ -150,6 +159,9 @@ class AskRequest(BaseModel):
     max_tokens: int = Field(500, ge=50, le=2000, description="Maximum tokens in answer")
     filters: Optional[Dict[str, Any]] = Field(None, description="Search filters")
     min_score: Optional[float] = Field(None, ge=0.0, le=1.0, description="Minimum similarity score")
+
+class EmbeddingRequest(BaseModel):
+    query: str = Field(..., min_length=1, max_length=8192, description="Text to generate embedding for")
 
 class HealthResponse(BaseModel):
     status: str
@@ -533,16 +545,29 @@ async def semantic_search(request: SearchRequest):
         
         if not processor.qdrant_client:
             raise HTTPException(status_code=503, detail="Search service unavailable")
-        
+
         # Generate query embedding
         query_embedding = processor._generate_embeddings(request.query)
         if not query_embedding:
             raise HTTPException(status_code=500, detail="Failed to generate query embedding")
-        
+
         # Build search filter
         search_filter = None
         conditions = []
-        
+
+        # Detect if query is a document ID pattern (e.g., BMS-SERV-INS-004)
+        doc_id_pattern = re.match(r'BMS-[A-Z]+-[A-Z]+-\d+', request.query, re.IGNORECASE)
+        if doc_id_pattern:
+            from qdrant_client.models import FieldCondition, MatchText
+            logging.info(f"Document ID detected in query: {request.query}")
+            # Add document_name filter for exact ID matching
+            conditions.append(
+                FieldCondition(
+                    key="document_name",
+                    match=MatchText(text=request.query)
+                )
+            )
+
         # Add min_quality filter if specified
         if request.min_quality is not None:
             from qdrant_client.models import Range, FieldCondition
@@ -682,10 +707,23 @@ async def hybrid_search(request: HybridSearchRequest):
         # Create sparse vector for keyword component (simplified)
         query_words = request.query.lower().split()
         sparse_vector = processor._create_sparse_vector(request.query, query_words)
-        
+
         # Build search filter (same as semantic search)
         search_filter = None
         conditions = []
+
+        # Detect if query is a document ID pattern (e.g., BMS-SERV-INS-004)
+        doc_id_pattern = re.match(r'BMS-[A-Z]+-[A-Z]+-\d+', request.query, re.IGNORECASE)
+        if doc_id_pattern:
+            from qdrant_client.models import FieldCondition, MatchText
+            logging.info(f"Document ID detected in query: {request.query}")
+            # Add document_name filter for exact ID matching
+            conditions.append(
+                FieldCondition(
+                    key="document_name",
+                    match=MatchText(text=request.query)
+                )
+            )
         
         # Add min_quality filter if specified
         if request.min_quality is not None:
@@ -844,6 +882,470 @@ async def hybrid_search(request: HybridSearchRequest):
     except Exception as e:
         logger.error(f"❌ Hybrid search error: {e}")
         raise HTTPException(status_code=500, detail="Hybrid search failed")
+
+@app.post("/api/v1/search/batch")
+async def batch_search(request: BatchSearchRequest):
+    """
+    Search multiple queries in batch with optional aggregation
+
+    - **queries**: List of search queries (1-50)
+    - **k**: Number of results per query (default: 10)
+    - **deduplicate**: Remove duplicate results across queries (default: true)
+    - **aggregation**: Optional aggregation method (union, intersection, ranked_fusion)
+    - **min_score**: Optional minimum similarity score filter
+
+    Returns results for each query, plus optional aggregated results.
+    """
+    if not BATCH_SEARCH_AVAILABLE:
+        raise HTTPException(status_code=501, detail="Batch search not available")
+
+    try:
+        processor = get_processor()
+
+        if not processor.qdrant_client:
+            raise HTTPException(status_code=503, detail="Search service unavailable")
+
+        # Process each query using semantic search
+        all_results = []
+        seen_chunks = set()
+
+        for query in request.queries:
+            # Generate embedding
+            query_embedding = processor._generate_embeddings(query)
+            if not query_embedding:
+                all_results.append([])
+                continue
+
+            # Search
+            search_results = processor.qdrant_client.search(
+                collection_name=processor.collection_name,
+                query_vector=("chunk_embedding", query_embedding),
+                limit=request.k,
+                with_payload=True
+            )
+
+            # Format results
+            query_results = []
+            for result in search_results:
+                payload = result.payload
+                chunk_id = payload.get("chunk_id")
+
+                # Skip duplicates if requested
+                if request.deduplicate and chunk_id in seen_chunks:
+                    continue
+
+                # Apply score filter if specified
+                if request.min_score is not None and result.score < request.min_score:
+                    continue
+
+                query_results.append({
+                    "chunk_id": chunk_id,
+                    "document_id": payload.get("document_id"),
+                    "document_name": payload.get("document_name"),
+                    "content": payload.get("content", "")[:1500],
+                    "score": float(result.score),
+                    "metadata": {
+                        "chunk_index": payload.get("chunk_index"),
+                        "quality_score": payload.get("quality_score", 0.0)
+                    }
+                })
+
+                if request.deduplicate:
+                    seen_chunks.add(chunk_id)
+
+            all_results.append(query_results)
+
+        # Aggregate if requested
+        aggregated_results = None
+        if request.aggregation and all_results:
+            if request.aggregation == "union":
+                # Union: all unique results
+                union_chunks = {}
+                for query_results in all_results:
+                    for result in query_results:
+                        chunk_id = result["chunk_id"]
+                        if chunk_id not in union_chunks or result["score"] > union_chunks[chunk_id]["score"]:
+                            union_chunks[chunk_id] = result
+                aggregated_results = sorted(union_chunks.values(), key=lambda x: x["score"], reverse=True)
+
+            elif request.aggregation == "intersection":
+                # Intersection: only results appearing in all queries
+                if len(all_results) > 1:
+                    chunk_sets = [set(r["chunk_id"] for r in query_results) for query_results in all_results]
+                    common_chunks = chunk_sets[0].intersection(*chunk_sets[1:])
+
+                    # Collect all instances of common chunks
+                    aggregated_results = []
+                    for query_results in all_results:
+                        for result in query_results:
+                            if result["chunk_id"] in common_chunks:
+                                aggregated_results.append(result)
+
+                    # Average scores for duplicates
+                    chunk_scores = {}
+                    for result in aggregated_results:
+                        chunk_id = result["chunk_id"]
+                        if chunk_id not in chunk_scores:
+                            chunk_scores[chunk_id] = []
+                        chunk_scores[chunk_id].append(result["score"])
+
+                    final_results = []
+                    seen = set()
+                    for result in aggregated_results:
+                        chunk_id = result["chunk_id"]
+                        if chunk_id not in seen:
+                            result["score"] = sum(chunk_scores[chunk_id]) / len(chunk_scores[chunk_id])
+                            final_results.append(result)
+                            seen.add(chunk_id)
+
+                    aggregated_results = sorted(final_results, key=lambda x: x["score"], reverse=True)
+
+        # Calculate statistics
+        total_results = sum(len(r) for r in all_results)
+
+        return BatchSearchResponse(
+            results=all_results,
+            query_count=len(request.queries),
+            total_results=total_results,
+            aggregated_results=aggregated_results,
+            cache_stats=None  # Can add cache stats if needed
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ Batch search error: {e}")
+        raise HTTPException(status_code=500, detail=f"Batch search failed: {str(e)}")
+
+@app.post("/api/v1/search/facets")
+async def faceted_search(request: SearchRequest):
+    """
+    Search with faceted result grouping by metadata fields
+
+    - **query**: Search query text
+    - **limit**: Maximum number of results per facet (default: 5)
+    - **filters**: Optional filters
+
+    Returns results grouped by document_type, department, fleet_type, and standard_compliance
+    """
+    try:
+        processor = get_processor()
+
+        if not processor.qdrant_client:
+            raise HTTPException(status_code=503, detail="Search service unavailable")
+
+        # Generate embedding
+        query_embedding = processor._generate_embeddings(request.query)
+        if not query_embedding:
+            raise HTTPException(status_code=500, detail="Failed to generate query embedding")
+
+        # Search with larger limit to get diverse results
+        search_results = processor.qdrant_client.search(
+            collection_name=processor.collection_name,
+            query_vector=("chunk_embedding", query_embedding),
+            limit=request.limit * 5,  # Get more results for faceting
+            with_payload=True
+        )
+
+        # Group results by facets
+        facets = {
+            "document_type": {},
+            "department": {},
+            "fleet_type": {},
+            "standard_compliance": {}
+        }
+
+        all_results = []
+
+        for result in search_results:
+            payload = result.payload
+
+            # Apply score filter
+            if request.min_score is not None and result.score < request.min_score:
+                continue
+
+            result_obj = {
+                "chunk_id": payload.get("chunk_id"),
+                "document_id": payload.get("document_id"),
+                "document_name": payload.get("document_name"),
+                "content": payload.get("content", "")[:1500],
+                "score": float(result.score),
+                "metadata": {
+                    "document_type": payload.get("document_type", "unknown"),
+                    "department": payload.get("department", "unknown"),
+                    "fleet_type": payload.get("fleet_type", "unknown"),
+                    "standard_compliance": payload.get("standard_compliance", "unknown"),
+                    "quality_score": payload.get("quality_score", 0.0)
+                }
+            }
+
+            all_results.append(result_obj)
+
+            # Add to facets
+            for facet_key in facets.keys():
+                facet_value = payload.get(facet_key, "unknown")
+                if facet_value not in facets[facet_key]:
+                    facets[facet_key][facet_value] = []
+                if len(facets[facet_key][facet_value]) < request.limit:
+                    facets[facet_key][facet_value].append(result_obj)
+
+        # Calculate facet counts
+        facet_counts = {}
+        for facet_key, facet_dict in facets.items():
+            facet_counts[facet_key] = {k: len(v) for k, v in facet_dict.items()}
+
+        return {
+            "query": request.query,
+            "total_results": len(all_results),
+            "results": all_results[:request.limit],
+            "facets": facets,
+            "facet_counts": facet_counts,
+            "search_metadata": {
+                "limit": request.limit,
+                "faceting_enabled": True
+            }
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ Faceted search error: {e}")
+        raise HTTPException(status_code=500, detail=f"Faceted search failed: {str(e)}")
+
+@app.post("/api/v1/search/explain")
+async def explained_search(request: SearchRequest):
+    """
+    Search with detailed score explanations and breakdowns
+
+    - **query**: Search query text
+    - **limit**: Maximum number of results (default: 3 for detailed explanations)
+    - **filters**: Optional filters
+
+    Returns results with detailed score breakdowns and explanation metadata
+    """
+    try:
+        processor = get_processor()
+
+        if not processor.qdrant_client:
+            raise HTTPException(status_code=503, detail="Search service unavailable")
+
+        # Generate embedding
+        query_embedding = processor._generate_embeddings(request.query)
+        if not query_embedding:
+            raise HTTPException(status_code=500, detail="Failed to generate query embedding")
+
+        # Search
+        search_results = processor.qdrant_client.search(
+            collection_name=processor.collection_name,
+            query_vector=("chunk_embedding", query_embedding),
+            limit=request.limit if request.limit <= 10 else 10,  # Cap at 10 for explanations
+            with_payload=True,
+            score_threshold=request.min_score if request.min_score else 0.0
+        )
+
+        # Format results with explanations
+        results = []
+
+        for result in search_results:
+            payload = result.payload
+            semantic_score = float(result.score)
+            quality_score = payload.get("quality_score", 0.0)
+
+            # Calculate explanation components
+            explanation = {
+                "semantic_similarity": semantic_score,
+                "quality_score": quality_score,
+                "quality_boost": quality_score * 0.1,
+                "final_score": semantic_score + (quality_score * 0.1),
+                "score_components": {
+                    "embedding_distance": 1.0 - semantic_score,  # Cosine distance
+                    "metadata_boost": quality_score * 0.1,
+                    "hierarchy_bonus": 0.05 if payload.get("hierarchy_level") == "parent" else 0.0
+                },
+                "matching_keywords": [],  # Can add keyword analysis
+                "relevance_factors": {
+                    "has_context": payload.get("has_context", False),
+                    "is_parent_chunk": payload.get("hierarchy_level") == "parent",
+                    "document_type": payload.get("document_type", "unknown"),
+                    "chunk_size": payload.get("chunk_size", 0)
+                }
+            }
+
+            results.append({
+                "chunk_id": payload.get("chunk_id"),
+                "document_id": payload.get("document_id"),
+                "document_name": payload.get("document_name"),
+                "content": payload.get("content", "")[:1500],
+                "score": explanation["final_score"],
+                "explanation": explanation,
+                "metadata": {
+                    "chunk_index": payload.get("chunk_index"),
+                    "quality_score": quality_score,
+                    "hierarchy_level": payload.get("hierarchy_level", "content")
+                }
+            })
+
+        return {
+            "query": request.query,
+            "total_results": len(results),
+            "results": results,
+            "search_metadata": {
+                "limit": request.limit,
+                "explanations_enabled": True,
+                "scoring_method": "cosine_similarity + quality_boost"
+            }
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ Explained search error: {e}")
+        raise HTTPException(status_code=500, detail=f"Explained search failed: {str(e)}")
+
+@app.post("/api/v1/search/latest")
+async def latest_versions_search(request: SearchRequest):
+    """
+    Search filtering for latest document versions only
+
+    - **query**: Search query text
+    - **limit**: Maximum number of results
+    - **filters**: Optional additional filters
+
+    Returns only results from documents marked as is_latest_version=True
+    """
+    try:
+        processor = get_processor()
+
+        if not processor.qdrant_client:
+            raise HTTPException(status_code=503, detail="Search service unavailable")
+
+        # Generate embedding
+        query_embedding = processor._generate_embeddings(request.query)
+        if not query_embedding:
+            raise HTTPException(status_code=500, detail="Failed to generate query embedding")
+
+        # Build filter for latest versions
+        from qdrant_client.models import Filter, FieldCondition, MatchValue
+
+        conditions = [
+            FieldCondition(key="is_latest_version", match=MatchValue(value=True))
+        ]
+
+        # Add user-provided filters
+        if request.filters:
+            for key, value in request.filters.items():
+                if key in ["document_type", "processing_profile", "department"]:
+                    conditions.append(
+                        FieldCondition(key=key, match=MatchValue(value=value))
+                    )
+
+        # Add quality filter if specified
+        if request.min_quality is not None:
+            from qdrant_client.models import Range
+            conditions.append(
+                FieldCondition(key="quality_score", range=Range(gte=request.min_quality))
+            )
+
+        search_filter = Filter(must=conditions)
+
+        # Search
+        search_results = processor.qdrant_client.search(
+            collection_name=processor.collection_name,
+            query_vector=("chunk_embedding", query_embedding),
+            query_filter=search_filter,
+            limit=request.limit,
+            with_payload=True
+        )
+
+        # Format results
+        results = []
+
+        for result in search_results:
+            if request.min_score is not None and result.score < request.min_score:
+                continue
+
+            payload = result.payload
+            results.append({
+                "chunk_id": payload.get("chunk_id"),
+                "document_id": payload.get("document_id"),
+                "document_name": payload.get("document_name"),
+                "document_version": payload.get("document_version", 1.0),
+                "content": payload.get("content", "")[:1500],
+                "score": float(result.score),
+                "metadata": {
+                    "chunk_index": payload.get("chunk_index"),
+                    "quality_score": payload.get("quality_score", 0.0),
+                    "is_latest_version": True,
+                    "document_date": payload.get("document_date"),
+                    "processing_timestamp": payload.get("processing_timestamp")
+                }
+            })
+
+        return {
+            "query": request.query,
+            "total_results": len(results),
+            "results": results,
+            "search_metadata": {
+                "limit": request.limit,
+                "latest_versions_only": True,
+                "version_filter_applied": True
+            }
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ Latest versions search error: {e}")
+        raise HTTPException(status_code=500, detail=f"Latest versions search failed: {str(e)}")
+
+@app.post("/api/v1/embeddings")
+async def generate_embeddings(request: EmbeddingRequest):
+    """
+    Generate 768-dimensional embedding vector for input text
+
+    Used for similar query detection (FR-017) and external embedding generation.
+    Uses sentence-transformers/all-mpnet-base-v2 model (same as document chunking).
+
+    - **query**: Text to generate embedding for (1-8192 characters)
+
+    Returns:
+    - **embedding**: 768-dimensional float vector
+    - **model**: Model name used for generation
+    - **dimension**: Vector dimensionality
+    """
+
+    try:
+        processor = get_processor()
+
+        if not processor.embedding_model:
+            raise HTTPException(status_code=503, detail="Embedding service unavailable")
+
+        # Validate query encoding
+        try:
+            request.query.encode('utf-8')
+        except UnicodeEncodeError:
+            raise HTTPException(status_code=400, detail="Query contains invalid characters")
+
+        # Generate embedding
+        embedding = processor._generate_embeddings(request.query)
+
+        if embedding is None or len(embedding) == 0:
+            raise HTTPException(status_code=500, detail="Failed to generate embedding")
+
+        # Return embedding with metadata
+        return {
+            "embedding": embedding,
+            "model": "sentence-transformers/all-mpnet-base-v2",
+            "dimension": len(embedding)
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ Embeddings generation error: {e}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Embeddings generation failed: {str(e)}")
 
 @app.get("/metrics/uplink")
 async def metrics_uplink():
