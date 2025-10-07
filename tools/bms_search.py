@@ -39,31 +39,36 @@ Search Capabilities (22 FUNCTIONS):
 === Smart Search (1) - 🚀 RECOMMENDED FOR BEST ACCURACY ===
 5. search_smart(): Metadata-boosted reranking (+12% POC improvement)
 
-=== Filtered Search (6) - ✅ FULLY WORKING ===
+=== Filtered Search (8) - ✅ FULLY WORKING ===
 6. search_by_document_type(): Filter by file type
 7. search_by_fleet_type(): Filter by train type
 8. search_by_standard(): Filter by compliance standard
 9. search_by_department(): Filter by department
 10. search_with_context(): Prioritize contextual chunks
 11. search_high_quality(): Filter by quality score
+12. search_by_train_id(): Railway train/fleet search
+13. search_by_component(): Railway component search
 
-=== Advanced Search (9) - ⚠️ PLANNED (Fallback to hybrid) ===
-12. search_with_session(): Conversational context tracking
-13. search_expanded(): Query expansion with LLM
-14. search_with_explanation(): Detailed score breakdowns
-15. search_synthesized(): Multi-document synthesis
-16. search_by_train_id(): Railway train/fleet search
-17. search_by_component(): Railway component search
-18. search_by_date_range(): Temporal filtering
-19. search_latest_versions(): Version-aware search
-20. search_multiple_queries(): Batch multi-query
-21. search_with_facets(): Faceted result grouping
+=== Enhanced Search (4) - ✅ NEW - FULLY WORKING ===
+14. search_with_explanation(): Detailed score breakdowns ✨ NEW
+15. search_latest_versions(): Version-aware search ✨ NEW
+16. search_multiple_queries(): Batch multi-query ✨ NEW
+17. search_with_facets(): Faceted result grouping ✨ NEW
+
+=== Advanced Search (4) - ⚠️ PLANNED (Fallback to hybrid) ===
+18. search_with_session(): Conversational context tracking
+19. search_expanded(): Query expansion with LLM
+20. search_synthesized(): Multi-document synthesis
+21. search_by_date_range(): Temporal filtering
 
 === Utility (1) - ✅ FULLY WORKING ===
 22. get_api_status(): Check API health
 
 🚀 RECOMMENDED FOR POC: Use search_smart() for best results (expected 80%+ accuracy)
    Alternative: search_hybrid() for standard hybrid search (68-74% baseline)
+
+✨ NEW: 4 advanced endpoints implemented (explain, latest, batch, facets)
+📊 COVERAGE: 18/22 functions WORKING (82%) - Up from 13/22 (59%)
 """
 
 import os
@@ -625,20 +630,26 @@ class Tools:
         limit: int = 5
     ) -> str:
         """
-        Search with conversational context tracking (NEW v3.0).
-        Automatically disambiguates pronouns and carries over entities from previous queries.
-        
-        Example conversation:
+        ⚠️ PLANNED FEATURE - Search with conversational context tracking.
+
+        STATUS: API endpoint /api/v1/search/conversational not yet implemented.
+        Currently falls back to hybrid search.
+
+        WHEN IMPLEMENTED: Will automatically disambiguate pronouns and carry over
+        entities from previous queries for multi-turn conversations.
+
+        Example conversation (when working):
         User: "Tell me about R4600 traction motor"
-        User: "What's its voltage?" <- Automatically understands "its" refers to R4600
-        
+        User: "What's its voltage?" <- Will understand "its" refers to R4600
+
         Args:
             query: Search query text
             session_id: Optional session ID (auto-generated if not provided)
             limit: Number of results
-        
+
         Returns:
-            Search results with conversational context applied
+            Currently: Falls back to hybrid search
+            Future: Search results with conversational context applied
         """
         # Generate or use existing session ID
         if session_id:
@@ -686,16 +697,21 @@ class Tools:
     
     def search_expanded(self, query: str, limit: int = 5) -> str:
         """
-        Search with automatic query expansion using LLM (NEW v3.0).
-        Generates multiple query variations and combines results using Reciprocal Rank Fusion.
-        
+        ⚠️ PLANNED FEATURE - Search with automatic query expansion using LLM.
+
+        STATUS: API endpoint /api/v1/search/expanded not yet implemented.
+        Currently falls back to hybrid search.
+
+        WHEN IMPLEMENTED: Will generate multiple query variations using LLM and combine
+        results using Reciprocal Rank Fusion for broader coverage.
+
         Best for: Ambiguous queries, exploring topics broadly
         Example: "motor issues" -> expands to "motor failures", "motor maintenance", "motor diagnostics"
-        
+
         Args:
             query: Original search query
             limit: Number of results
-        
+
         Returns:
             Combined results from multiple query variations
         """
@@ -734,19 +750,19 @@ class Tools:
     
     def search_with_explanation(self, query: str, limit: int = 3) -> str:
         """
-        Search with detailed explanations of why each result was retrieved (NEW v3.0).
-        Shows: score breakdown, matched keywords, matched entities, metadata matches.
-        
+        ✅ WORKING - Search with detailed explanations of why each result was retrieved.
+        Shows: score breakdown, semantic similarity, quality boost, relevance factors.
+
         Best for: Understanding search behavior, debugging queries, transparency
-        
+
         Args:
             query: Search query
             limit: Number of results (default: 3 for detailed view)
-        
+
         Returns:
             Results with detailed score breakdowns and match explanations
         """
-        endpoint = f"{self.valves.BMS_API_URL}/api/v1/search/explained"
+        endpoint = f"{self.valves.BMS_API_URL}/api/v1/search/explain"
         
         payload = {
             "query": query,
@@ -768,32 +784,33 @@ class Tools:
                 score = result.get("score", 0.0)
                 doc_name = result.get("document_name", "Unknown")
                 content = result.get("content", "")[:500]
-                
+
                 # Score breakdown
                 explanation = result.get("explanation", {})
-                score_breakdown = explanation.get("score_breakdown", {})
-                matched_keywords = explanation.get("matched_keywords", [])
-                matched_entities = explanation.get("matched_entities", [])
-                
-                output.append(f"\n**{i}. {doc_name}** (Score: {score:.3f})")
+
+                output.append(f"\n**{i}. {doc_name}** (Final Score: {score:.3f})")
                 output.append(f"   📝 {content}...\n")
-                
-                # Score breakdown
-                if score_breakdown:
-                    output.append("   📊 **Score Breakdown**:")
-                    for component, value in score_breakdown.items():
-                        if value > 0:
-                            output.append(f"      - {component}: {value:.3f}")
-                
-                # Matched keywords
-                if matched_keywords:
-                    kw_str = ", ".join([kw.get("keyword", "") for kw in matched_keywords[:5]])
-                    output.append(f"   🔑 **Matched Keywords**: {kw_str}")
-                
-                # Matched entities
-                if matched_entities:
-                    ent_str = ", ".join([f"{e.get('entity_type')}: {e.get('entity_value')}" for e in matched_entities[:3]])
-                    output.append(f"   🎯 **Matched Entities**: {ent_str}")
+
+                # Score components
+                if explanation:
+                    output.append("   📊 **Score Components**:")
+                    semantic_score = explanation.get("semantic_similarity", 0)
+                    quality_score = explanation.get("quality_score", 0)
+                    quality_boost = explanation.get("quality_boost", 0)
+
+                    output.append(f"      - Semantic Similarity: {semantic_score:.3f}")
+                    output.append(f"      - Quality Score: {quality_score:.3f}")
+                    output.append(f"      - Quality Boost: {quality_boost:.3f}")
+
+                    # Relevance factors
+                    relevance_factors = explanation.get("relevance_factors", {})
+                    if relevance_factors:
+                        output.append("   🎯 **Relevance Factors**:")
+                        if relevance_factors.get("has_context"):
+                            output.append("      - ✓ Has contextual information")
+                        if relevance_factors.get("is_parent_chunk"):
+                            output.append("      - ✓ Parent chunk (broader context)")
+                        output.append(f"      - Document Type: {relevance_factors.get('document_type', 'unknown')}")
             
             return "\n".join(output)
             
@@ -807,20 +824,24 @@ class Tools:
         limit: int = 5
     ) -> str:
         """
-        Search and synthesize information across multiple documents (NEW v3.0).
-        
+        ⚠️ PLANNED FEATURE - Search and synthesize information across multiple documents.
+
+        STATUS: API endpoint /api/v1/search/synthesized not yet implemented.
+        Currently falls back to hybrid search.
+
+        WHEN IMPLEMENTED: Will use LLM to synthesize information across multiple
+        documents with source attribution.
+
         Strategies:
         - cluster: Group by document (default)
         - timeline: Organize chronologically
         - hierarchy: Organize by component type
-        
-        Returns: Synthesized summary with source attribution
-        
+
         Args:
             query: Search query
             strategy: Synthesis strategy (cluster/timeline/hierarchy)
             limit: Number of documents to synthesize
-        
+
         Returns:
             Synthesized information from multiple sources
         """
@@ -932,17 +953,23 @@ class Tools:
         limit: int = 5
     ) -> str:
         """
-        Search documents within a specific date range (NEW v3.0).
-        
+        ⚠️ PLANNED FEATURE - Search documents within a specific date range.
+
+        STATUS: API endpoint /api/v1/search/temporal not yet implemented.
+        Currently falls back to hybrid search.
+
+        WHEN IMPLEMENTED: Will filter results by document_date metadata field
+        using Qdrant range filters for temporal search.
+
         Args:
             query: Search query
             after: Start date (ISO format: "2024-01-01")
             before: End date (optional, ISO format)
             limit: Number of results
-        
+
         Returns:
             Documents within specified date range
-        
+
         Example: Find documents updated after 2024-06-01
         """
         endpoint = f"{self.valves.BMS_API_URL}/api/v1/search/temporal"
@@ -976,13 +1003,13 @@ class Tools:
     
     def search_latest_versions(self, query: str, limit: int = 5) -> str:
         """
-        Search and return only the latest versions of documents (NEW v3.0).
-        Automatically filters out outdated versions.
-        
+        ✅ WORKING - Search and return only the latest versions of documents.
+        Automatically filters out outdated versions using is_latest_version metadata.
+
         Args:
             query: Search query
             limit: Number of results
-        
+
         Returns:
             Only the most recent version of each document
         """
@@ -1017,20 +1044,19 @@ class Tools:
         limit: int = 5
     ) -> str:
         """
-        Search multiple queries simultaneously and aggregate results (NEW v3.0).
-        
+        ✅ WORKING - Search multiple queries simultaneously and aggregate results.
+
         Aggregation methods:
         - union: Combine all results (default)
         - intersection: Only results appearing in all queries
-        - ranked_fusion: Reciprocal rank fusion
-        
+
         Example: ["motor voltage", "motor current", "motor power"] -> comprehensive motor info
-        
+
         Args:
-            queries: List of search queries
-            aggregation: Aggregation method (union/intersection/ranked_fusion)
+            queries: List of search queries (max 50)
+            aggregation: Aggregation method (union/intersection)
             limit: Number of results per query
-        
+
         Returns:
             Aggregated results from multiple queries
         """
@@ -1039,7 +1065,8 @@ class Tools:
         payload = {
             "queries": queries,
             "aggregation": aggregation,
-            "limit": limit
+            "k": limit,
+            "deduplicate": True
         }
         
         try:
@@ -1067,25 +1094,24 @@ class Tools:
     
     def search_with_facets(self, query: str, limit: int = 5) -> str:
         """
-        Search and show faceted breakdown of results (NEW v3.0).
-        
+        ✅ WORKING - Search and show faceted breakdown of results.
+
         Returns results grouped by:
         - Document type
         - Department
-        - Quality score range
         - Fleet type
-        - Standards
-        
+        - Standard compliance
+
         Useful for: Exploring result distribution, finding patterns
-        
+
         Args:
             query: Search query
-            limit: Number of results
-        
+            limit: Number of results per facet
+
         Returns:
             Results with faceted breakdown
         """
-        endpoint = f"{self.valves.BMS_API_URL}/api/v1/search/faceted"
+        endpoint = f"{self.valves.BMS_API_URL}/api/v1/search/facets"
         
         payload = {
             "query": query,

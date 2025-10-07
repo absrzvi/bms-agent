@@ -1,0 +1,269 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "MS Teams Webhook API",
+    "version": "1.0.0",
+    "description": "Contract for MS Teams incoming messages to n8n webhook"
+  },
+  "paths": {
+    "/webhook/teams": {
+      "post": {
+        "summary": "Receive MS Teams message",
+        "description": "Webhook endpoint triggered when user sends message in MS Teams",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TeamsMessage"
+              },
+              "examples": {
+                "personal_chat_question": {
+                  "value": {
+                    "type": "message",
+                    "id": "1234567890",
+                    "timestamp": "2025-10-06T10:30:00.000Z",
+                    "from": {
+                      "id": "29:1abc...def",
+                      "name": "John Doe"
+                    },
+                    "conversation": {
+                      "id": "a:1conversation...id",
+                      "conversationType": "personal"
+                    },
+                    "text": "What are the emergency brake procedures?",
+                    "attachments": []
+                  }
+                },
+                "channel_command": {
+                  "value": {
+                    "type": "message",
+                    "id": "1234567891",
+                    "timestamp": "2025-10-06T10:31:00.000Z",
+                    "from": {
+                      "id": "29:1admin...xyz",
+                      "name": "Admin User"
+                    },
+                    "conversation": {
+                      "id": "19:abc...def@thread.tacv2",
+                      "conversationType": "channel"
+                    },
+                    "channelData": {
+                      "channel": {
+                        "id": "19:abc...def@thread.tacv2"
+                      },
+                      "team": {
+                        "id": "19:team...id@thread.tacv2"
+                      }
+                    },
+                    "text": "/admin allow #ops-team",
+                    "attachments": []
+                  }
+                },
+                "file_upload": {
+                  "value": {
+                    "type": "message",
+                    "id": "1234567892",
+                    "timestamp": "2025-10-06T10:32:00.000Z",
+                    "from": {
+                      "id": "29:1user...123",
+                      "name": "Jane Smith"
+                    },
+                    "conversation": {
+                      "id": "19:channel...id@thread.tacv2",
+                      "conversationType": "channel"
+                    },
+                    "text": "",
+                    "attachments": [
+                      {
+                        "contentType": "application/pdf",
+                        "contentUrl": "https://teams.microsoft.com/l/file/abc123",
+                        "name": "railway_safety_manual.pdf",
+                        "content": {
+                          "downloadUrl": "https://teams.microsoft.com/download/abc123"
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Message received and processed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "example": "received"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Channel not whitelisted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "TeamsMessage": {
+        "type": "object",
+        "required": ["type", "id", "timestamp", "from", "conversation"],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": ["message"],
+            "description": "Activity type"
+          },
+          "id": {
+            "type": "string",
+            "description": "Unique message ID"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "description": "ISO 8601 timestamp"
+          },
+          "from": {
+            "$ref": "#/components/schemas/User"
+          },
+          "conversation": {
+            "$ref": "#/components/schemas/Conversation"
+          },
+          "channelData": {
+            "type": "object",
+            "description": "MS Teams specific metadata (present for channel messages)",
+            "properties": {
+              "channel": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "description": "MS Teams channel ID"
+                  }
+                }
+              },
+              "team": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "description": "MS Teams team ID"
+                  }
+                }
+              }
+            }
+          },
+          "text": {
+            "type": "string",
+            "description": "Message content (may be empty if attachments present)",
+            "maxLength": 10000
+          },
+          "attachments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Attachment"
+            }
+          },
+          "serviceUrl": {
+            "type": "string",
+            "format": "uri",
+            "description": "Bot Framework service URL for sending responses"
+          }
+        }
+      },
+      "User": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^29:",
+            "description": "MS Teams user ID (starts with 29:)"
+          },
+          "name": {
+            "type": "string",
+            "description": "User display name"
+          },
+          "aadObjectId": {
+            "type": "string",
+            "description": "Azure AD object ID (optional)"
+          }
+        }
+      },
+      "Conversation": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Conversation or channel ID"
+          },
+          "conversationType": {
+            "type": "string",
+            "enum": ["personal", "channel", "groupChat"],
+            "description": "Type of conversation"
+          }
+        }
+      },
+      "Attachment": {
+        "type": "object",
+        "properties": {
+          "contentType": {
+            "type": "string",
+            "description": "MIME type of attachment"
+          },
+          "contentUrl": {
+            "type": "string",
+            "format": "uri",
+            "description": "URL to access attachment"
+          },
+          "name": {
+            "type": "string",
+            "description": "File name"
+          },
+          "content": {
+            "type": "object",
+            "properties": {
+              "downloadUrl": {
+                "type": "string",
+                "format": "uri",
+                "description": "Direct download URL"
+              },
+              "fileType": {
+                "type": "string",
+                "description": "File extension"
+              }
+            }
+          }
+        }
+      },
+      "Error": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

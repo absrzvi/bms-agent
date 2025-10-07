@@ -99,21 +99,87 @@ else
     # If root has keys, copy them to workspace
     if [ -f /root/.ssh/authorized_keys ]; then
         log "Backing up existing root SSH keys to workspace..."
-        cp /root/.ssh/authorized_keys /workspace/config/authorized_keys
         log "SSH keys backed up to /workspace/config/authorized_keys"
     fi
 fi
 
 # Create necessary directories
-log "Creating directory structure..."
 mkdir -p /workspace/logs
+mkdir -p /workspace/config
 mkdir -p /workspace/data/ollama_models
+mkdir -p /workspace/n8n
+mkdir -p /workspace/data/redis
+
+# Ensure local tooling binaries are discoverable
+export PATH=/workspace/n8n/node_modules/.bin:$PATH
 mkdir -p /workspace/qdrant_storage
 mkdir -p /workspace/bms_data
 mkdir -p /workspace/backups
 mkdir -p /workspace/nltk_data
-mkdir -p /workspace/config
 
+# Ensure modern Node.js and npm for n8n
+log "Checking Node.js runtime..."
+NODE_MAJOR=0
+if command -v node >/dev/null 2>&1; then
+    NODE_MAJOR=$(node -p "process.versions.node.split('.')[0]")
+    log "Detected Node.js version $(node -v)"
+fi
+
+if [ "$NODE_MAJOR" -lt 18 ]; then
+    log "Installing Node.js 20.x via NodeSource..."
+    curl -fsSL https://deb.nodesource.com/setup_20.x | bash - >> "$LOGFILE" 2>&1
+    apt-get install -y nodejs >> "$LOGFILE" 2>&1
+    log "Node.js installed: $(node -v)"
+else
+    log "Node.js already meets requirements"
+fi
+
+log "Upgrading npm to latest stable..."
+if npm install -g npm >> "$LOGFILE" 2>&1; then
+    log "npm upgraded: $(npm -v)"
+else
+    log "WARNING: npm upgrade failed"
+fi
+
+# Install Redis if necessary and start server
+log "Checking Redis installation..."
+if ! command -v redis-server >/dev/null 2>&1; then
+    log "Installing Redis..."
+    apt-get install -y redis-server >> "$LOGFILE" 2>&1
+else
+    log "Redis already installed"
+fi
+
+log "Configuring Redis for persistent workspace storage..."
+REDIS_CONF=/workspace/config/redis.conf
+if [ ! -f "$REDIS_CONF" ]; then
+    cat > "$REDIS_CONF" <<'EOF'
+bind 0.0.0.0
+port 6379
+dir /workspace/data/redis
+appendonly yes
+appendfsync everysec
+save 900 1
+save 300 10
+save 60 10000
+logfile /workspace/logs/redis-server.log
+databases 16
+EOF
+    log "Redis config created at $REDIS_CONF"
+fi
+
+if pgrep -x "redis-server" >/dev/null 2>&1; then
+    log "Redis already running"
+else
+    log "Starting Redis server..."
+    nohup redis-server "$REDIS_CONF" >> /workspace/logs/redis-init.log 2>&1 &
+    sleep 3
+    if pgrep -x "redis-server" >/dev/null 2>&1; then
+        log "Redis server started"
+    else
+        log "ERROR: Redis failed to start"
+    fi
+fi
 # Install Ollama if not present (installed in /root for GPU compatibility)
 if [ ! -f /usr/local/bin/ollama ]; then
     log "Ollama not found, installing in /root (for GPU support)..."

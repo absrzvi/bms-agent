@@ -10,8 +10,10 @@
 1. **T032** - OpenWebUI First User Release (IN PROGRESS) → Execute one more test round
 2. **T036** - Connect Unused API Endpoints (NEXT TASK per Q29) → 55% to 65% coverage
 3. **T037** - Dual Collection Verification (BLOCKING MVP per Q27) → Verify architecture exists
-4. **T023b** - Slack & n8n Integration Testing (if not complete)
-5. **T026** - POC Signoff & Evidence Collection → Gate to MVP
+4. **T038** - Low-Quality Search Toggle Implementation (NEW) → Expose `include_low_quality` flag
+5. **T039** - OpenAPI Schema Publication (NEW) → Generate `/openapi.json`
+6. **T023b** - Slack & n8n Integration Testing (if not complete)
+7. **T026** - POC Signoff & Evidence Collection → Gate to MVP
 
 **MVP Phase**:
 6. **T033** - Prometheus/Grafana Monitoring Dashboard
@@ -139,11 +141,25 @@
     - Document test results ✅ (`retrieval-test-cases.md` - 572 lines with detailed findings)
     - Completion enables T026 (POC signoff) ✅
   - **Test Results**:
-    - Tests Passed: 11/15 (73.3% success rate)
+    - Tests Passed: 11/15 (73.3% success rate) — supplemental to the 80% top-5 accuracy benchmark captured in `spec.md` R2.2 and validated via T022
     - Average Relevance: 4.1/5.0 stars (for passing tests)
     - Average Response Time: 5.6 seconds
     - Excellent Performance: Procurement (100%), Quality (100%), GDPR (9/10)
     - Known Issues: 3 critical (documented with workarounds: exact code matching, context bleeding, form disambiguation)
+
+- **T038  Low-Quality Search Toggle Implementation**
+  - Summary: Implement the admin-only `include_low_quality=true` query flag that routes search requests to the `nomad_bms_documents_low_quality` collection when explicitly enabled, fulfilling requirement R1.6. Update API handlers, tool clients, and documentation; add regression tests covering dual-collection access and default exclusion of low-quality chunks.
+  - Dependencies: T037 (dual collection verified)
+  - Files/Paths: `api/main.py`, `tools/bms_search.py`, `tests/integration/test_low_quality_toggle.py`, `docs/API_ENDPOINT_COVERAGE.md`
+  - Parallel: No
+  - **Status**: Pending (POC-blocking for R1.6 coverage)
+
+- **T039  OpenAPI Schema Publication**
+  - Summary: Generate and publish the OpenAPI 3.0 schema at `/openapi.json`, ensure CI checks fail if the schema drifts from the FastAPI routes, and document discovery steps for integrations and compliance evidence, satisfying requirement R3.3.
+  - Dependencies: T032 (tool endpoints stabilised)
+  - Files/Paths: `api/main.py`, `scripts/generate_openapi.py`, `.github/workflows/ci-cd.yml`, `docs/api/openapi_usage.md`
+  - Parallel: No
+  - **Status**: Pending (POC scope)
 
 - **T034  SharePoint URL Integration** ✅ **COMPLETE**
   - Summary: Implement real SharePoint document URLs in search results for direct document access. Parse URLs from `bms-docs-urls.md`, add `document_url` field to Qdrant metadata, update API to return URLs, enhance tool to display URLs, update system prompt with real URL examples.

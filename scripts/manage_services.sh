@@ -211,11 +211,11 @@ start_openwebui() {
 
 stop_openwebui() {
     log "Stopping OpenWebUI..."
-    
+
     if pgrep -f "open-webui serve" > /dev/null; then
         pkill -f "open-webui serve"
         sleep 2
-        
+
         if ! pgrep -f "open-webui serve" > /dev/null; then
             log_success "OpenWebUI stopped"
         else
@@ -226,6 +226,60 @@ stop_openwebui() {
         fi
     else
         log_warn "OpenWebUI is not running"
+    fi
+}
+
+start_n8n() {
+    log "Starting n8n..."
+
+    if pgrep -f "n8n start" > /dev/null; then
+        log_warn "n8n is already running"
+        return 0
+    fi
+
+    if command -v n8n &> /dev/null; then
+        export N8N_USER_FOLDER=/workspace/n8n
+        export N8N_HOST=0.0.0.0
+        export N8N_PORT=5678
+        export N8N_DIAGNOSTICS_ENABLED=false
+        export DB_SQLITE_POOL_SIZE=5
+        export N8N_RUNNERS_ENABLED=true
+        export N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS=true
+        export N8N_BLOCK_ENV_ACCESS_IN_NODE=false
+        export N8N_GIT_NODE_DISABLE_BARE_REPOS=true
+
+        nohup n8n start > "$LOG_DIR/n8n.log" 2>&1 &
+        sleep 3
+
+        if pgrep -f "n8n start" > /dev/null; then
+            log_success "n8n started (PID: $(pgrep -f 'n8n start'))"
+        else
+            log_error "n8n failed to start"
+            return 1
+        fi
+    else
+        log_error "n8n not found in system PATH"
+        return 1
+    fi
+}
+
+stop_n8n() {
+    log "Stopping n8n..."
+
+    if pgrep -f "n8n start" > /dev/null; then
+        pkill -f "n8n start"
+        sleep 2
+
+        if ! pgrep -f "n8n start" > /dev/null; then
+            log_success "n8n stopped"
+        else
+            log_warn "n8n did not stop gracefully, forcing..."
+            pkill -9 -f "n8n start"
+            sleep 1
+            log_success "n8n force stopped"
+        fi
+    else
+        log_warn "n8n is not running"
     fi
 }
 
@@ -247,18 +301,20 @@ show_status() {
     echo ""
     echo "=== BMS Agent Service Status ==="
     echo ""
-    
+
     status_service "Qdrant" "qdrant"
     status_service "Ollama" "ollama serve"
     status_service "BMS API" "uvicorn api.main:app"
     status_service "OpenWebUI" "open-webui serve"
-    
+    status_service "n8n" "n8n start"
+
     echo ""
     echo "Service URLs:"
     echo "  - Qdrant:    http://localhost:6333"
     echo "  - Ollama:    http://localhost:11434"
     echo "  - BMS API:   http://localhost:8000"
     echo "  - OpenWebUI: http://localhost:3000"
+    echo "  - n8n:       http://localhost:5678"
     echo ""
 }
 

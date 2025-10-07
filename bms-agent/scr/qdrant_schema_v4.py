@@ -183,6 +183,9 @@ class QdrantSchemaV4:
             ("document_name", PayloadSchemaType.KEYWORD),
             ("document_type", PayloadSchemaType.KEYWORD),
             ("document_version", PayloadSchemaType.FLOAT),
+            ("document_date", PayloadSchemaType.DATETIME),  # For temporal search
+            ("is_latest_version", PayloadSchemaType.BOOL),  # For version filtering
+            ("department", PayloadSchemaType.KEYWORD),  # For department filtering
             ("processing_profile", PayloadSchemaType.KEYWORD),
             ("processing_timestamp", PayloadSchemaType.DATETIME),
         ]

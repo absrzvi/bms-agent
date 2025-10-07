@@ -45,13 +45,16 @@ This constitution establishes the governing principles and technical standards f
 
 ## 4. Code Quality & Testing (MUST)
 - **Test Coverage**:
-  - Minimum 80% test coverage for core logic (POC: basic functionality tests acceptable)
+  - Minimum 80% test coverage for core logic
+  - **POC DECISION**: Minimum 60% test coverage acceptable for POC phase with documented path to 80% for production deployment
   - Unit tests for data transformations
   - Integration tests for DB and API
 - **Code Quality**:
-  - Pre-commit hooks (Black, Ruff, mypy) (POC: manual code quality checks acceptable)
+  - Pre-commit hooks (Black, Ruff, mypy)
+  - **POC DECISION**: Manual code quality checks acceptable for POC phase; automated pre-commit hooks required for production
   - NumPy style docstrings
-  - Performance benchmarking (POC: basic performance validation acceptable)
+  - Performance benchmarking
+  - **POC DECISION**: Basic performance validation acceptable for POC; comprehensive benchmarking required for production
 
 ## 5. Security & Compliance (MUST)
 - **Data Protection**:
@@ -97,11 +100,13 @@ This constitution establishes the governing principles and technical standards f
   - Correlation IDs
   - Log levels
 - **Metrics**:
-  - Prometheus integration
-  - Health checks
+  - Prometheus integration for production
+  - **POC DECISION**: Basic health endpoint and structured logging acceptable for POC phase; Prometheus/Grafana required for production deployment
+  - Health checks (minimum: /health endpoint returning component status)
   - Performance metrics
 - **Visualization**:
-  - Grafana dashboards
+  - Grafana dashboards for production
+  - **POC DECISION**: Manual log inspection acceptable for POC; automated dashboards and alerting required for production
   - Alerting rules
 
 ## 9. Development Workflow (MUST)
@@ -185,6 +190,10 @@ This constitution establishes the governing principles and technical standards f
   - Error recovery
   - Monitoring hooks
   - Standardized schemas
+- **Testing**:
+  - Workflow JSON schema validation (structure, nodes, connections)
+  - Integration tests for webhook endpoints
+  - **POC DECISION**: Manual workflow creation in n8n UI acceptable with JSON export validation; automated workflow generation required for production scale
 
 ## Governance
 

@@ -1,15 +1,45 @@
 #!/bin/bash
 set -e
 
-echo "🚀 Starting BMS Agent Services..."
-
+echo "Starting BMS Agent Services..."
 # Set persistent data paths
 export OLLAMA_MODELS=/workspace/data/ollama_models
 export NLTK_DATA=/workspace/nltk_data
+export REDIS_CONF=/workspace/config/redis.conf
 
 # Load environment
 source /workspace/scripts/env.sh 2>/dev/null || true
 source /workspace/config/env.sh 2>/dev/null || true
+
+# Start Redis
+if command -v redis-server >/dev/null 2>&1; then
+    if ! pgrep -x "redis-server" >/dev/null 2>&1; then
+        echo "Starting Redis..."
+        mkdir -p /workspace/data/redis
+        CONF_PATH="${REDIS_CONF:-/workspace/config/redis.conf}"
+        if [ ! -f "$CONF_PATH" ]; then
+            cat > "$CONF_PATH" <<'EOF'
+bind 0.0.0.0
+port 6379
+dir /workspace/data/redis
+appendonly yes
+appendfsync everysec
+save 900 1
+save 300 10
+save 60 10000
+logfile /workspace/logs/redis-server.log
+databases 16
+EOF
+        fi
+        nohup redis-server "$CONF_PATH" > /workspace/logs/redis-start.log 2>&1 &
+        sleep 2
+        echo "Redis started"
+    else
+        echo "Redis already running, skipping..."
+    fi
+else
+    echo "WARNING: redis-server not found"
+fi
 
 # Start Qdrant
 if [ -f /workspace/apps/qdrant/qdrant ]; then

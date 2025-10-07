@@ -1,0 +1,582 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Conversation Storage API",
+    "version": "1.0.0",
+    "description": "Contract for conversation context storage (Redis-based)"
+  },
+  "paths": {
+    "/context/{conversation_id}": {
+      "get": {
+        "summary": "Retrieve conversation context",
+        "description": "Get conversation history for multi-turn context",
+        "parameters": [
+          {
+            "name": "conversation_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Conversation found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {"$ref": "#/components/schemas/Conversation"},
+                    {
+                      "type": "object",
+                      "properties": {
+                        "storage_restored": {
+                          "type": "boolean",
+                          "description": "True if storage was previously unavailable and is now restored (NFR-002a)"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Conversation not found or expired"
+          },
+          "503": {
+            "description": "Storage unavailable (fallback to stateless mode)"
+          }
+        }
+      },
+      "post": {
+        "summary": "Store message in conversation",
+        "description": "Add new message to conversation context",
+        "parameters": [
+          {
+            "name": "conversation_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MessageCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Message stored",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Message"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Storage unavailable"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Purge expired conversation",
+        "description": "Manually delete conversation (normally auto-expired via TTL)",
+        "parameters": [
+          {
+            "name": "conversation_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Conversation deleted"
+          },
+          "404": {
+            "description": "Conversation not found"
+          }
+        }
+      }
+    },
+    "/context/channel/{channel_id}": {
+      "get": {
+        "summary": "Find conversation by channel",
+        "description": "Lookup active conversation for a channel",
+        "parameters": [
+          {
+            "name": "channel_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "MS Teams channel ID"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Conversation found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Conversation"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No active conversation for channel"
+          }
+        }
+      }
+    },
+    "/history/{user_id}": {
+      "get": {
+        "summary": "Get user search history",
+        "description": "Retrieve last 7 days of user queries (for /history command)",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "MS Teams user ID"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 10,
+              "minimum": 1,
+              "maximum": 50
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Search history",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/HistoryEntry"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Add query to user history",
+        "description": "Record search query in user history",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HistoryEntryCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "History entry created"
+          }
+        }
+      }
+    },
+    "/whitelist/check": {
+      "post": {
+        "summary": "Check channel whitelist",
+        "description": "Verify if channel is allowed (POC access control)",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "channel_id": {
+                    "type": "string"
+                  },
+                  "user_id": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Whitelist check result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "allowed": {
+                      "type": "boolean"
+                    },
+                    "is_admin": {
+                      "type": "boolean"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/upload/{job_id}": {
+      "get": {
+        "summary": "Get upload job status",
+        "description": "Check document upload processing status",
+        "parameters": [
+          {
+            "name": "job_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Job status",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UploadJob"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Job not found"
+          }
+        }
+      },
+      "post": {
+        "summary": "Create upload job record",
+        "description": "Initialize upload job tracking",
+        "parameters": [
+          {
+            "name": "job_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UploadJobCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Job created"
+          }
+        }
+      },
+      "patch": {
+        "summary": "Update upload job status",
+        "description": "Update processing status (from BMS API callback)",
+        "parameters": [
+          {
+            "name": "job_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UploadJobUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Job updated"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Conversation": {
+        "type": "object",
+        "properties": {
+          "conversation_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "channel_id": {
+            "type": "string",
+            "description": "MS Teams channel/conversation ID"
+          },
+          "participants": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "MS Teams user IDs"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "last_message_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "expires_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "created_at + 7 days"
+          },
+          "context_summary": {
+            "type": "string",
+            "maxLength": 2000,
+            "description": "Condensed conversation history for LLM"
+          },
+          "messages": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Message"
+            }
+          }
+        }
+      },
+      "Message": {
+        "type": "object",
+        "properties": {
+          "message_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "conversation_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "sender": {
+            "type": "string",
+            "enum": ["user", "bot"]
+          },
+          "user_id": {
+            "type": "string",
+            "description": "MS Teams user ID (null if sender=bot)"
+          },
+          "content": {
+            "type": "string",
+            "maxLength": 10000
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "message_type": {
+            "type": "string",
+            "enum": ["question", "answer", "command"]
+          },
+          "bms_query_type": {
+            "type": "string",
+            "enum": ["ask", "search", "upload"],
+            "nullable": true
+          }
+        }
+      },
+      "MessageCreate": {
+        "type": "object",
+        "required": ["sender", "content", "message_type"],
+        "properties": {
+          "sender": {
+            "type": "string",
+            "enum": ["user", "bot"]
+          },
+          "user_id": {
+            "type": "string"
+          },
+          "content": {
+            "type": "string"
+          },
+          "message_type": {
+            "type": "string",
+            "enum": ["question", "answer", "command"]
+          },
+          "bms_query_type": {
+            "type": "string",
+            "enum": ["ask", "search", "upload"],
+            "nullable": true
+          }
+        }
+      },
+      "HistoryEntry": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "result_id": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "query_type": {
+            "type": "string",
+            "enum": ["ask", "search"]
+          }
+        }
+      },
+      "HistoryEntryCreate": {
+        "type": "object",
+        "required": ["query"],
+        "properties": {
+          "query": {
+            "type": "string"
+          },
+          "result_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "query_type": {
+            "type": "string",
+            "enum": ["ask", "search"]
+          }
+        }
+      },
+      "UploadJob": {
+        "type": "object",
+        "properties": {
+          "job_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "document_id": {
+            "type": "string",
+            "nullable": true
+          },
+          "file_name": {
+            "type": "string"
+          },
+          "file_type": {
+            "type": "string"
+          },
+          "uploaded_by": {
+            "type": "string"
+          },
+          "conversation_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "processing_status": {
+            "type": "string",
+            "enum": ["queued", "processing", "completed", "failed"]
+          },
+          "indexed_chunks_count": {
+            "type": "integer",
+            "nullable": true
+          },
+          "error_message": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "UploadJobCreate": {
+        "type": "object",
+        "required": ["file_name", "file_type", "uploaded_by", "conversation_id"],
+        "properties": {
+          "file_name": {
+            "type": "string"
+          },
+          "file_type": {
+            "type": "string"
+          },
+          "uploaded_by": {
+            "type": "string"
+          },
+          "conversation_id": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      },
+      "UploadJobUpdate": {
+        "type": "object",
+        "properties": {
+          "processing_status": {
+            "type": "string",
+            "enum": ["queued", "processing", "completed", "failed"]
+          },
+          "document_id": {
+            "type": "string"
+          },
+          "indexed_chunks_count": {
+            "type": "integer"
+          },
+          "error_message": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

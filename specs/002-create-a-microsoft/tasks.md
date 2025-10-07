@@ -288,7 +288,8 @@ Project structure from plan.md:
     6. **Restoration Detection (NFR-003)**: Track Redis availability state
        - If previous request failed (503) and current request succeeds → set flag `storage_restored=true`
        - Return `storage_restored` flag to main-bot-handler
-       - Main handler sends notification using response-templates.json "storage_restored" template
+       - **CRITICAL**: Main handler MUST send notification using response-templates.json "storage_restored" template when flag is true
+       - Notification text: "Conversation history has been restored. Your previous context is now available."
   - Schema from data-model.md
   - Export as JSON
 
@@ -308,6 +309,18 @@ Project structure from plan.md:
   - Integration: Called by T016 main-bot-handler after whitelist check, before query-analyzer
   - Export as JSON
 
+- [ ] **T019b** [P] Implement dismiss handler for similar query suggestions (FR-032) ⚠️ NEW
+  - Path: Extension to `/workspace/002-n8n/workflows/similar-query-detector.json`
+  - Components:
+    1. Add "Dismiss" button to similar query suggestion message (MS Teams adaptive card or inline action)
+    2. Handle dismiss action: Store user preference in Redis (user:{user_id}:dismissed_suggestions)
+    3. Add key: {suggestion_id: timestamp} with 7-day TTL (matches conversation TTL)
+    4. Update T019a workflow: Check dismissed suggestions before showing
+    5. If suggestion was dismissed → skip suggestion, continue with query processing
+  - **POST-POC Enhancement**: Add global preference to disable all suggestions (user:{user_id}:disable_suggestions flag)
+  - Integration: Called when user clicks "Dismiss" button in similar query notification
+  - Export as JSON
+
 - [ ] **T020** [P] Create admin commands workflow ⚠️ MANUAL IN n8n UI
   - Path: `/workspace/002-n8n/workflows/admin-commands.json`
   - **Status**: Implementation guide ready (Section 5), whitelist module available
@@ -318,6 +331,31 @@ Project structure from plan.md:
     3. Update whitelist.json (add/remove channel)
     4. Return confirmation message
   - Handle commands: /admin allow, /admin revoke, /admin list
+  - Export as JSON
+
+- [ ] **T020a** [P] Implement audit logging for admin reset command (FR-024b) ⚠️ NEW
+  - Path: Extension to `/workspace/002-n8n/workflows/admin-commands.json`
+  - **Security Requirement**: All `/admin reset [secret_key]` attempts MUST be logged for audit trail
+  - Components:
+    1. Add handler for `/admin reset [secret_key]` command in admin-commands workflow
+    2. Validate secret_key against environment variable ADMIN_RESET_SECRET
+    3. **Audit Logging (MANDATORY)**:
+       - Log to Redis list: `audit:admin_resets`
+       - Entry format: {timestamp: ISO8601, user_id: string, display_name: string, success: boolean, ip_address: string (if available)}
+       - TTL: 90 days (7776000s) for compliance retention
+       - Use LPUSH to append, LTRIM to maintain max 1000 entries
+    4. If secret_key matches:
+       - Grant admin privileges (add user_id to whitelist.json admins array)
+       - Update User entity: is_admin=true
+       - Return success message: "Admin privileges granted. This action has been logged."
+    5. If secret_key invalid:
+       - Log failed attempt (success: false)
+       - Return error: "Invalid reset key" (do NOT reveal admin status or key format)
+       - Do NOT grant privileges
+  - **Security Notes**:
+    - Secret key generation: `openssl rand -hex 32` (64-character hex string)
+    - Store in `/workspace/002-n8n/config/.env`: `ADMIN_RESET_SECRET=<generated_key>`
+    - Never log the actual secret key value
   - Export as JSON
 
 ### Supporting Scripts (Parallel - Different Script Files)
@@ -533,30 +571,36 @@ Project structure from plan.md:
   - Constitution: Addresses §8 Monitoring & Observability (POC-appropriate level)
   - POC Decision: Use n8n execution logs + basic health endpoint (Prometheus deferred to production)
 
-- [x] **T034** Validate test coverage meets 60% POC threshold (NFR-012) ⚠️ **BELOW THRESHOLD**
+- [x] **T034** Validate test coverage meets 60% POC threshold (NFR-012) ⚠️ **BELOW THRESHOLD - BLOCKS DEPLOYMENT**
   - Path: Run from `/workspace/002-n8n/`
   - Command: `npm test -- --coverage`
   - Assert: Overall coverage ≥60% (lines, branches, functions, statements)
   - Generate: `coverage/lcov-report/index.html` for detailed report
   - Document: Final coverage percentage in `/workspace/specs/002-create-a-microsoft/quickstart.md`
-  - Constitution: Enforces §4 Code Quality & Testing (line 49 - POC minimum 60%)
-  - Validation Gate: Must pass before production deployment (80% required per §4 line 48)
+  - Constitution: Enforces §4 Code Quality & Testing (POC minimum 60%, production 80%)
+  - Validation Gate: Must pass before POC deployment (critical blocking issue)
   - **Status:** Coverage validation executed
-  - **Current Coverage:** 22.61% statements (⚠️ below 60% POC threshold)
-  - **Analysis:** Comprehensive test coverage summary created at `/workspace/002-n8n/docs/test-coverage-summary.md`
+  - **Current Coverage:** 22.61% statements (⚠️ 37.39% below 60% POC threshold)
+  - **Analysis:** Comprehensive test coverage summary at `/workspace/002-n8n/docs/test-coverage-summary.md`
   - **Findings:**
     - 3 modules with 0% coverage (file-upload-handler, typing-indicator, workflow-helpers)
     - 2 modules with partial coverage (redis-client 50.84%, whitelist 55.73%)
     - 56 total tests: 21 passed, 35 failed (due to Redis unavailability in test env)
     - Root cause: Tests require real service dependencies (Redis, file system)
-  - **Recommendations to reach 60%:**
-    - Priority 1: Add mocks for Redis and file system (+30% coverage → 52%)
-    - Priority 2: Add tests for untested modules (+35% coverage → 87%)
-    - Total effort estimate: 8-10 hours to reach 80% (production threshold)
-  - **Next Steps:**
-    - Implement mocked tests (Priority 1)
-    - Add module tests (Priority 2)
-    - Re-validate coverage ≥60%
+  - **Remediation Plan:** `/workspace/002-n8n/docs/TEST_COVERAGE_REMEDIATION_PLAN.md` ✅ CREATED
+    - **Priority 1** (4-5 hours): Add mocked tests → 52% coverage (POC ready)
+      - Task 1.1: Mock redis-client tests (2h) → +10% coverage
+      - Task 1.2: Mock file-upload-handler tests (1.5h) → +15% coverage
+      - Task 1.3: Mock typing-indicator tests (1h) → +5% coverage
+    - **Priority 2** (4-5 hours): Add module-specific tests → 87% coverage (production ready)
+      - Task 2.1: Whitelist edge cases (1.5h) → +5% coverage
+      - Task 2.2: Redis integration tests (1h) → +3% coverage
+      - Task 2.3: Workflow helpers tests (2h) → +12% coverage
+  - **Next Steps (CRITICAL):**
+    1. Install mocking libraries: `npm install --save-dev redis-mock axios-mock-adapter memfs`
+    2. Execute Priority 1 tasks (Task 1.1, 1.2, 1.3)
+    3. Re-validate: `npm test -- --coverage` → Assert ≥60%
+    4. Proceed with POC deployment only if coverage gate passes
 
 ---
 
@@ -698,20 +742,24 @@ Task: "Create admin commands workflow in /workspace/002-n8n/workflows/admin-comm
 
 ---
 
-## Total Task Count: 43
+## Total Task Count: 45
 
 - Setup: 6 tasks (T001-T006)
 - n8n Installation: 1 task (T015a)
 - Tests: 10 tasks (T007-T015, T015b POST-POC)
-- Core Workflows: 6 tasks (T016-T020, T019a)
+- Core Workflows: 8 tasks (T016-T020, T019a, T019b ⚠️ NEW, T020a ⚠️ NEW)
 - Scripts: 3 tasks (T021-T023)
 - Integration: 5 tasks (T024-T027, T026a)
 - Enhanced Search: 4 tasks (T027a-T027d) ⭐ NEW
 - Polish: 8 tasks (T028-T034)
 
-**Estimated Effort**: 56-68 hours (POC phase) + 3-4 hours (T015b POST-POC)
+**Estimated Effort**: 60-72 hours (POC phase) + 3-4 hours (T015b POST-POC)
 **Critical Path**: ~16-20 hours (sequential dependencies)
-**Parallelizable**: ~36-48 hours (if 5-6 parallel workers)
+**Parallelizable**: ~40-52 hours (if 5-6 parallel workers)
+
+**New Tasks Added (2025-10-07 Analysis Remediation)**:
+- T019b: Dismiss handler for similar query suggestions (FR-032) - 2 hours
+- T020a: Audit logging for admin reset command (FR-024b) - 2 hours
 
 ---
 

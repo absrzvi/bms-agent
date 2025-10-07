@@ -83,6 +83,7 @@ Single-pod deployment on RunPod.io with direct binary installations (no Docker/c
 4. Ensure all endpoints load configuration from environment variables with reasonable defaults for local development.
 5. Implement streaming upload pipeline capable of handling 1 GB files without exhausting memory and persist both dense and sparse (keyword/BM25) payloads for each chunk.
 6. Expose hybrid search utilities in the wrapper (query fusion, keyword extraction) for reuse by future endpoints.
+7. Implement admin-only `include_low_quality` query flag that routes search requests to the `nomad_bms_documents_low_quality` collection when true, including regression tests and documentation updates.
 
 ### Phase 3 – Integrations (`T017`, `T018`)
 - Implement direct FastAPI Slack integration (`api/slack_integration.py`) with slash command handlers and Block Kit formatting.
@@ -92,14 +93,15 @@ Single-pod deployment on RunPod.io with direct binary installations (no Docker/c
 1. **MVP REQUIREMENT**: Basic security implementation:
    - No JWT validation required for MVP (deferred to production)
    - No API key authentication for MVP (deferred to production)
-   - Rate limiting (60 req/min per IP) using in-memory token bucket algorithm (T015)
+   - **Rate limiting deferred to Production** per `spec.md` R3.2; capture remediation plan for Production sprint (T015)
    - Basic security headers middleware (X-Frame-Options, X-Content-Type-Options)
-2. Ensure error handling (400/413/429) is covered by automated tests (T016).
-3. Document security roadmap in `docs/security-notes.md` for production implementation (JWT + API key enforcement).
+2. Ensure error handling (400/413) is covered by automated tests (T016); 429 responses remain production-only alongside rate limiting.
+3. Document security roadmap in `docs/security-notes.md` for Production implementation (JWT, API key enforcement, rate limiting rollout).
 
 ### Phase 5 – Documentation, Tooling & CI/CD (`T015`, `T016`, `T023`, `T024` – post-MVP optional)
 - Configure GitHub Actions (`.github/workflows/ci-cd.yml`) to run tests, coverage, basic security scans (Bandit, Safety - even for POC per constitution §5), pre-commit hooks (Black, Ruff, mypy), and provide deployment automation for RunPod binary releases.
 - Document required secrets (`BMS_API_KEY`, `DEPLOY_KEY`, optional `CODECOV_TOKEN`, `SAFETY_API_KEY`, future `RUNPOD_USER/HOST` for SSH deployment).
+- Generate and publish the OpenAPI 3.0 schema at `/openapi.json`, including CI checks that ensure the spec stays in sync with implemented endpoints and documentation.
 - **Database Migration Note**: Alembic not required for Qdrant (NoSQL vector database). Manual schema changes tracked in `docs/migrations.md` per Phase 0. Future SQL databases (if added) will require Alembic implementation per constitution §9.
 - **Deployment Model**: Direct binary installation in /workspace (not containerized) per constitution §11 persistence requirements for RunPod pods.
 
@@ -227,7 +229,7 @@ See `spec.md` Performance Targets section for complete phase-specific requiremen
 1. Qdrant installed, collection initialized (`nomad_bms_documents`).
 2. Documents ingest via API and are searchable with relevant top results.
 3. Slack integration returns contextual answers; OpenWebUI tool surfaces matching chunks.
-4. **POC**: Basic rate limiting (60 req/min) verified; **Production**: JWT + API key security enforced.
+4. **POC**: Document rate limiting deferment and remediation plan; **Production**: Implement and verify JWT + API key security plus 60 req/min rate limiting.
 5. Retrieval accuracy evaluation ≥95 %; performance benchmarks within target.
 6. Monitoring scripts and health endpoints provide actionable status.
 7. CI pipeline green (tests, coverage, security scans) on main branch.
