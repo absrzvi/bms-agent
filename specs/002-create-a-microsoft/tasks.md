@@ -358,6 +358,99 @@ Project structure from plan.md:
     - Never log the actual secret key value
   - Export as JSON
 
+- [ ] **T020b** Update bms-ai-agent workflow to accept MS Teams webhook triggers ⚠️ NEW - USER REQUEST
+  - Path: `/workspace/002-n8n/workflows/bms-ai-agent.json`
+  - **Objective**: Replace existing trigger with MS Teams webhook to enable chat message integration
+  - **Prerequisites**:
+    - teams-webhook-bot-handler.json workflow exists ✓
+    - BMS AI agent workflow (bms-ai-agent.json) exists
+  - **Analysis Phase** (read current workflow):
+    1. Read current bms-ai-agent.json structure
+    2. Identify existing trigger type (manual, webhook, schedule, etc.)
+    3. Document current input schema expected by agent
+    4. Identify dependencies on trigger data format
+  - **Modification Phase**:
+    1. **Option A - Direct Integration**: Replace trigger with MS Teams webhook
+       - Change trigger node to Webhook node
+       - Path: `/webhook/bms-agent-teams`
+       - Configure to receive MS Teams Bot Framework activity schema
+       - Extract required fields: text (query), from.id (user), conversation.id
+       - Map MS Teams message format to agent input format
+    2. **Option B - Sub-workflow Integration**: Keep agent as called workflow
+       - Keep existing trigger (or make it a sub-workflow callable by Execute Workflow node)
+       - Update teams-webhook-bot-handler.json to call bms-ai-agent.json
+       - Pass: {query: text, user_id: from.id, conversation_id: conversation.id}
+       - **Recommended**: This preserves separation of concerns
+  - **Testing Phase**:
+    1. Send test message via MS Teams: "What are railway safety procedures?"
+    2. Verify webhook triggers bms-ai-agent workflow
+    3. Verify agent receives correct input format
+    4. Verify agent response flows back to MS Teams
+  - **Decision Required**: Choose Option A (direct) or Option B (sub-workflow)
+    - **Recommendation**: Option B for modularity
+  - Export as JSON
+
+- [ ] **T020c** Create integration tests for MS Teams → BMS AI Agent flow ⚠️ NEW - USER REQUEST
+  - Path: `/workspace/002-n8n/tests/integration/test-teams-ai-agent-integration.js`
+  - **Prerequisites**: T020b complete
+  - Test scenarios:
+    1. **Test: Natural language question triggers AI agent**
+       - Send MS Teams message: "What is the emergency brake procedure?"
+       - Assert: bms-ai-agent workflow executes
+       - Assert: Agent calls BMS API with query
+       - Assert: Response includes LangChain tool execution logs
+       - Assert: Final answer posted to MS Teams
+    2. **Test: AI agent uses correct tools**
+       - Send MS Teams message: "Search for VLAN configuration documents"
+       - Assert: Agent selects semantic search tool (not ask tool)
+       - Assert: Results formatted with document citations
+    3. **Test: Conversation context passed to agent**
+       - Message 1: "What are the safety procedures?"
+       - Message 2: "Can you explain step 3?"
+       - Assert: Agent receives context from message 1
+       - Assert: Agent understands "step 3" refers to previous response
+    4. **Test: Whitelist enforcement before agent execution**
+       - Send message from non-whitelisted channel
+       - Assert: Agent workflow NOT triggered
+       - Assert: Whitelist rejection message sent
+    5. **Test: Agent error handling**
+       - Mock BMS API failure (503)
+       - Send MS Teams message
+       - Assert: Agent gracefully handles error
+       - Assert: User-friendly error message posted to Teams
+  - Run: `npm test tests/integration/test-teams-ai-agent-integration.js`
+  - Expected: All 5 scenarios passing
+
+- [ ] **T020d** Document MS Teams + BMS AI Agent integration architecture ⚠️ NEW - USER REQUEST
+  - Path: `/workspace/002-n8n/docs/teams-ai-agent-integration.md`
+  - Content:
+    1. **Architecture Overview**
+       - Diagram: MS Teams → Webhook → teams-webhook-bot-handler → bms-ai-agent → BMS API → Response
+       - Component responsibilities
+       - Data flow between workflows
+    2. **Configuration Guide**
+       - Environment variables required
+       - Webhook URL configuration in Azure Bot Service
+       - n8n workflow activation steps
+    3. **Message Flow**
+       - Incoming message processing (teams-webhook-bot-handler)
+       - Agent invocation (Execute Workflow node or direct trigger)
+       - Tool selection logic (LangChain agent decision-making)
+       - Response formatting and delivery
+    4. **Agent Tools Available**
+       - List all LangChain tools configured in bms-ai-agent.json
+       - Tool selection criteria
+       - Example queries that trigger each tool
+    5. **Troubleshooting**
+       - Webhook not triggering agent
+       - Agent receives malformed input
+       - Tool execution failures
+       - Response not appearing in Teams
+    6. **Testing Procedures**
+       - Manual testing via MS Teams
+       - Automated testing via integration tests
+       - Monitoring agent execution logs in n8n
+
 ### Supporting Scripts (Parallel - Different Script Files)
 
 - [x] **T021** [P] Write deploy-workflows.sh script ✅
@@ -620,9 +713,15 @@ T015a (n8n installation) ⚠️ REQUIRED BEFORE WORKFLOWS
   ↓
 T016-T020 (workflows) ← depends on T015a, T024, T025
   ↓
+T020b (MS Teams AI Agent integration) ← depends on T016 (teams-webhook-bot-handler)
+  ↓
+T020c (integration tests) ← depends on T020b
+  ↓
 T026, T027, T026a (advanced integrations)
   ↓
 T027a (BMS embeddings endpoint) → T027b, T027c, T027d (enhanced search features)
+  ↓
+T020d (AI Agent integration docs) [P] can run in parallel with T028-T034
   ↓
 T028-T034 (polish & validation)
 ```
@@ -672,6 +771,7 @@ T028-T034 (polish & validation)
 - T030 (setup guide)
 - T031 (troubleshooting guide)
 - T033a (health checks & monitoring)
+- T020d (MS Teams AI Agent integration docs) ⚠️ NEW - can run in parallel with polish tasks
 - T034 (test coverage validation) ← Run after all tests complete
 
 ---
@@ -742,24 +842,30 @@ Task: "Create admin commands workflow in /workspace/002-n8n/workflows/admin-comm
 
 ---
 
-## Total Task Count: 45
+## Total Task Count: 48
 
 - Setup: 6 tasks (T001-T006)
 - n8n Installation: 1 task (T015a)
-- Tests: 10 tasks (T007-T015, T015b POST-POC)
+- Tests: 11 tasks (T007-T015, T015b POST-POC, T020c ⚠️ NEW)
 - Core Workflows: 8 tasks (T016-T020, T019a, T019b ⚠️ NEW, T020a ⚠️ NEW)
+- MS Teams AI Agent Integration: 3 tasks (T020b-T020d ⚠️ NEW - USER REQUEST)
 - Scripts: 3 tasks (T021-T023)
 - Integration: 5 tasks (T024-T027, T026a)
 - Enhanced Search: 4 tasks (T027a-T027d) ⭐ NEW
 - Polish: 8 tasks (T028-T034)
 
-**Estimated Effort**: 60-72 hours (POC phase) + 3-4 hours (T015b POST-POC)
-**Critical Path**: ~16-20 hours (sequential dependencies)
-**Parallelizable**: ~40-52 hours (if 5-6 parallel workers)
+**Estimated Effort**: 68-82 hours (POC phase) + 3-4 hours (T015b POST-POC)
+**Critical Path**: ~20-24 hours (sequential dependencies)
+**Parallelizable**: ~44-58 hours (if 5-6 parallel workers)
 
 **New Tasks Added (2025-10-07 Analysis Remediation)**:
 - T019b: Dismiss handler for similar query suggestions (FR-032) - 2 hours
 - T020a: Audit logging for admin reset command (FR-024b) - 2 hours
+
+**New Tasks Added (2025-10-07 MS Teams AI Agent Integration - USER REQUEST)**:
+- T020b: Update bms-ai-agent workflow for MS Teams webhook triggers - 4 hours
+- T020c: Integration tests for MS Teams → AI Agent flow - 2 hours
+- T020d: Document MS Teams + AI Agent integration architecture - 2 hours
 
 ---
 
