@@ -157,6 +157,37 @@ This creates `/workspace/002-n8n/config/whitelist.json`:
 }
 ```
 
+### 4.1b Generate Admin Reset Secret (FR-024b)
+
+The admin reset secret allows recovery if the initial admin becomes unavailable.
+
+```bash
+# Generate 64-character hex secret (32 bytes)
+openssl rand -hex 32 > /workspace/002-n8n/config/.admin_reset_secret
+
+# Set as environment variable
+echo "ADMIN_RESET_SECRET=$(cat /workspace/002-n8n/config/.admin_reset_secret)" \
+  >> /workspace/002-n8n/config/.env
+
+# Secure the file (read-only for owner)
+chmod 400 /workspace/002-n8n/config/.admin_reset_secret
+
+# Verify secret is set
+grep ADMIN_RESET_SECRET /workspace/002-n8n/config/.env
+```
+
+**Security Notes**:
+- Store secret securely - never commit to Git
+- Share secret only with authorized personnel via secure channel
+- Rotate secret periodically (every 90 days recommended)
+- All reset attempts are logged in Redis `audit:admin_resets` (90-day retention)
+
+**Recovery Usage**:
+If admin becomes unavailable, authorized user can type:
+```
+/admin reset <64-char-hex-secret>
+```
+
 ### 4.2 Add Admin Users
 
 Find your MS Teams user ID:

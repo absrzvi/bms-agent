@@ -69,50 +69,49 @@ specs/[###-feature]/
 ```
 
 ### Source Code (repository root)
-<!--
-  ACTION REQUIRED: Replace the placeholder tree below with the concrete layout
-  for this feature. Delete unused options and expand the chosen structure with
-  real paths (e.g., apps/admin, packages/something). The delivered plan must
-  not include Option labels.
--->
+
+**Structure Decision**: **Single Project Structure (Option 1)** selected
+
+**Rationale**:
+- Feature is purely workflow-based (n8n JSON files + supporting scripts)
+- No frontend/backend split required
+- No mobile app component
+- Aligns with n8n best practices for workflow organization
+
+**Actual Implementation**:
 ```
-# [REMOVE IF UNUSED] Option 1: Single project (DEFAULT)
-src/
-├── models/
-├── services/
-├── cli/
-└── lib/
-
-tests/
-├── contract/
-├── integration/
-└── unit/
-
-# [REMOVE IF UNUSED] Option 2: Web application (when "frontend" + "backend" detected)
-backend/
-├── src/
-│   ├── models/
-│   ├── services/
-│   └── api/
-└── tests/
-
-frontend/
-├── src/
-│   ├── components/
-│   ├── pages/
-│   └── services/
-└── tests/
-
-# [REMOVE IF UNUSED] Option 3: Mobile + API (when "iOS/Android" detected)
-api/
-└── [same as backend above]
-
-ios/ or android/
-└── [platform-specific structure: feature modules, UI flows, platform tests]
+/workspace/002-n8n/
+├── workflows/              # n8n workflow JSON exports (6 workflows)
+│   ├── main-bot-handler.json
+│   ├── query-analyzer.json
+│   ├── bms-api-caller.json
+│   ├── context-manager.json
+│   ├── admin-commands.json
+│   └── similar-query-detector.json
+├── lib/                   # Shared JavaScript modules for Function nodes
+│   ├── redis-client.js
+│   ├── whitelist.js
+│   ├── file-upload-handler.js
+│   └── typing-indicator.js
+├── scripts/               # Deployment and maintenance scripts
+│   ├── deploy-workflows.sh
+│   ├── cleanup-expired.sh
+│   ├── manage-services.sh
+│   └── health-check.sh
+├── config/                # Configuration files
+│   ├── whitelist.json
+│   ├── .env
+│   └── n8n.env
+├── tests/                 # Integration and unit tests
+│   ├── contract/
+│   ├── integration/
+│   ├── unit/
+│   └── performance/
+└── docs/                  # Setup and troubleshooting guides
+    ├── setup-ms-teams.md
+    ├── troubleshooting.md
+    └── monitoring.md
 ```
-
-**Structure Decision**: [Document the selected structure and reference the real
-directories captured above]
 
 ## Phase 0: Outline & Research
 1. **Extract unknowns from Technical Context** above:

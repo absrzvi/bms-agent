@@ -144,6 +144,7 @@ Project structure from plan.md:
     5. User types `/ask [question]` → Assert returns answer with citations
     6. (FR-031) User types query with 1001 UTF-8 characters → Assert error "Query too long. Please limit to 1000 characters."
     7. (FR-031) User types query with exactly 1000 characters including emoji → Assert query processed successfully
+    8. (FR-032) User receives similar query suggestion → User replies "dismiss" or clicks dismiss button → Assert suggestion dismissed, query processing continues normally
   - ✅ FAILING as expected
 
 - [x] **T012** [P] Integration test: Document upload with file attachment ✅
@@ -237,8 +238,9 @@ Project structure from plan.md:
        - If recognized command but missing required parameters (e.g., `/admin` with no action) → return error with usage example
     5. Whitelist check (call /whitelist/check)
     6. Route to appropriate sub-workflow or command handler
-    7. Send typing indicator
-    8. Format and send response to MS Teams
+    7. If query-analyzer returns intent="UNCLEAR" → Send query_unclear template from response-templates.json and stop
+    8. Send typing indicator
+    9. Format and send response to MS Teams
        - NOTE: response-templates.json contains message templates for n8n workflow logic
        - Final Teams message is rendered as plain text with citations (per NFR-004)
        - Templates provide structured content that workflows convert to plain text before sending
@@ -253,16 +255,47 @@ Project structure from plan.md:
   - Natural language (no command prefix) → Route to query-analyzer (T017) for intent detection
   - Export as JSON for n8n import
 
+  **Acceptance Criteria** (Mark task complete when ALL checked):
+  - [ ] Workflow created in n8n UI with all nodes documented above
+  - [ ] Exported as JSON to `/workspace/002-n8n/workflows/main-bot-handler.json`
+  - [ ] JSON schema valid (test: `n8n import:workflow --input main-bot-handler.json`)
+  - [ ] Webhook trigger responds to test message: `curl -X POST http://localhost:5678/webhook-test/teams -d '{"text":"test"}'`
+  - [ ] All command routes verified:
+    - [ ] `/help` returns help template
+    - [ ] `/ask` routes to query-analyzer
+    - [ ] `/search` routes to bms-api-caller
+    - [ ] `/admin` routes to admin-commands
+    - [ ] `/status`, `/history`, `/upload` return expected responses
+  - [ ] Whitelist check enforced (non-whitelisted channel rejected)
+  - [ ] Integration test T010 passes with this workflow
+  - [ ] Typing indicator sent before processing
+
 - [ ] **T017** [P] Create query analyzer workflow ⚠️ MANUAL IN n8n UI
   - Path: `/workspace/002-n8n/workflows/query-analyzer.json`
   - **Status**: Implementation guide ready (Section 2 of workflow-implementation-guide.md)
   - Components:
-    1. HTTP Request to Ollama (Mistral Nemo)
-    2. Prompt: Intent classification (ASK vs SEARCH vs COMMAND)
-    3. Parse LLM response
-    4. Return intent + confidence
+    1. **Input Validation (FR-022)**: Detect unclear/invalid queries
+       - Query quality checks:
+         - Word count < 3 → unclear (except commands)
+         - Only stopwords (the, a, is, what, etc.) → unclear
+         - Only special characters/numbers → invalid
+         - Empty or whitespace-only → invalid
+       - If unclear/invalid → Return intent="UNCLEAR" with suggestion template from response-templates.json
+       - If valid → Proceed to step 2
+    2. HTTP Request to Ollama (Mistral Nemo)
+    3. Prompt: Intent classification (ASK vs SEARCH vs COMMAND)
+    4. Parse LLM response
+    5. Return intent + confidence
   - Use prompts from research.md section 4
+  - Stopword list: ["the", "a", "an", "is", "are", "was", "were", "what", "when", "where", "how", "why"]
   - Export as JSON
+
+  **Acceptance Criteria** (Mark task complete when ALL checked):
+  - [ ] Workflow created in n8n UI with all components documented above
+  - [ ] Exported as JSON to `/workspace/002-n8n/workflows/query-analyzer.json`
+  - [ ] Query quality validation working (test unclear queries return intent="UNCLEAR")
+  - [ ] LLM intent classification working (test: "What are brakes?" returns intent="ASK")
+  - [ ] Integration test T011 passes with this workflow
 
 - [ ] **T018** [P] Create BMS API caller workflow ⚠️ MANUAL IN n8n UI
   - Path: `/workspace/002-n8n/workflows/bms-api-caller.json`
@@ -274,6 +307,15 @@ Project structure from plan.md:
     4. Timeout: 2.5s max
     5. Format response with citations
   - Export as JSON
+
+  **Acceptance Criteria** (Mark task complete when ALL checked):
+  - [ ] Workflow created in n8n UI with all components documented above
+  - [ ] Exported as JSON to `/workspace/002-n8n/workflows/bms-api-caller.json`
+  - [ ] ASK intent calls /api/v1/ask (test with mock request)
+  - [ ] SEARCH intent calls /api/v1/search/semantic (test with mock request)
+  - [ ] Error handling working (BMS API 503 returns correct error message)
+  - [ ] Response includes citations array
+  - [ ] Integration test T010 passes with this workflow
 
 - [ ] **T019** [P] Create context manager workflow ⚠️ MANUAL IN n8n UI
   - Path: `/workspace/002-n8n/workflows/context-manager.json`
@@ -292,6 +334,15 @@ Project structure from plan.md:
        - Notification text: "Conversation history has been restored. Your previous context is now available."
   - Schema from data-model.md
   - Export as JSON
+
+  **Acceptance Criteria** (Mark task complete when ALL checked):
+  - [ ] Workflow created in n8n UI with all components documented above
+  - [ ] Exported as JSON to `/workspace/002-n8n/workflows/context-manager.json`
+  - [ ] GET /context retrieves conversation from Redis
+  - [ ] POST /context stores message with 7-day TTL
+  - [ ] Context summary updated (last 5 messages)
+  - [ ] Restoration detection working (storage_restored flag returned)
+  - [ ] Integration test T014 passes with this workflow
 
 - [x] **T019a** [P] Create similar query detection workflow (FR-017) ✅
   - Path: `/workspace/002-n8n/workflows/similar-query-detector.json`
@@ -331,6 +382,32 @@ Project structure from plan.md:
     3. Update whitelist.json (add/remove channel)
     4. Return confirmation message
   - Handle commands: /admin allow, /admin revoke, /admin list
+  - Export as JSON
+
+  **Acceptance Criteria** (Mark task complete when ALL checked):
+  - [ ] Workflow created in n8n UI with all components documented above
+  - [ ] Exported as JSON to `/workspace/002-n8n/workflows/admin-commands.json`
+  - [ ] /admin allow adds channel to whitelist
+  - [ ] /admin revoke removes channel from whitelist
+  - [ ] /admin list displays current whitelist
+  - [ ] Admin verification working (non-admin users rejected)
+  - [ ] Integration test T013 passes with this workflow
+
+- [ ] **T020-bootstrap** [P] Implement first-user-admin bootstrap logic (FR-024a) ⚠️ NEW
+  - Path: Extension to `/workspace/002-n8n/workflows/admin-commands.json`
+  - **Prerequisite**: T020 admin-commands workflow
+  - Components:
+    1. Check if whitelist.json admins array is empty
+    2. If empty AND user sends any message (natural language or /admin command):
+       - Add user to admins array automatically
+       - Log bootstrap event to Redis: `audit:admin_bootstrap`
+       - Send welcome message: "You are now the bot admin. Use /admin grant @user to add more admins."
+    3. If admins array not empty:
+       - Enforce normal admin verification
+       - Reject non-admin /admin commands
+    4. Store bootstrap state in Redis: `system:admin_bootstrapped` with value=true (no TTL)
+  - **Security**: Bootstrap only works when admins array is empty (prevent re-bootstrap attacks)
+  - Integration: Called from main-bot-handler before routing to admin-commands
   - Export as JSON
 
 - [ ] **T020a** [P] Implement audit logging for admin reset command (FR-024b) ⚠️ NEW
@@ -388,6 +465,11 @@ Project structure from plan.md:
     4. Verify agent response flows back to MS Teams
   - **Decision Required**: Choose Option A (direct) or Option B (sub-workflow)
     - **Recommendation**: Option B for modularity
+  - **DECISION (2025-10-07)**: **Option B - Sub-workflow Integration** selected
+    - Reasoning: Preserves separation of concerns, allows independent testing of AI agent
+    - Implementation: teams-webhook-bot-handler calls bms-ai-agent via Execute Workflow node
+    - Data mapping: {query: text, user_id: from.id, conversation_id: conversation.id, context: previous_messages}
+    - Status: ✅ Implemented (see T020b completion status)
   - Export as JSON
 
 - [x] **T020c** Create integration tests for MS Teams → BMS AI Agent flow ⚠️ NEW - USER REQUEST ✅
@@ -626,6 +708,11 @@ Project structure from plan.md:
   - Test: New conversation has 7-day TTL
   - Test: Expired conversations auto-deleted
   - Test: TTL refreshed on message update
+  - Test: Exponential backoff retry logic (NFR-011)
+    - Mock Redis connection failure
+    - Assert retry attempts: 1st (0ms), 2nd (100ms), 3rd (200ms)
+    - Assert max 3 attempts before fallback
+    - Assert fallback to stateless mode with NFR-002 warning
   - **Completed**: 22 test cases covering retry logic, connection handling, execute with fallback, TTL enforcement (60s cache), error handling, and integration with context manager
 
 ### Documentation & Validation
@@ -640,6 +727,26 @@ Project structure from plan.md:
   - Content: Common issues from quickstart.md section 7
   - Include: Redis errors, webhook failures, timeout issues
 
+- [ ] **T031b** [P] Validate all exported workflow JSON schemas
+  - Path: Script validation in `/workspace/002-n8n/scripts/validate-workflows.sh`
+  - **Constitution Requirement**: §13 n8n Integration - Workflow JSON schema validation
+  - Components:
+    1. For each workflow JSON in workflows/:
+       - Validate JSON syntax: `jq . <workflow>.json`
+       - Check required fields: nodes[], connections{}
+       - Verify node structure: id, name, type, typeVersion, position, parameters
+       - Validate connection references (source/target nodes exist)
+    2. n8n import dry-run test:
+       ```bash
+       n8n import:workflow --input <workflow>.json --separate
+       ```
+    3. Report validation results:
+       - ✓ Valid workflows
+       - ✗ Invalid workflows with error details
+  - Exit code: 0 if all valid, 1 if any invalid
+  - Run before T032 (quickstart validation)
+  - Make executable: `chmod +x`
+
 - [ ] **T032** Run full quickstart validation
   - Path: Manual execution of `/workspace/specs/002-create-a-microsoft/quickstart.md`
   - Execute: All 8 setup steps
@@ -652,17 +759,33 @@ Project structure from plan.md:
   - Optimize: If needed, tune Redis connection pooling, Ollama batch size
   - Document: Final performance metrics in quickstart.md
 
-- [x] **T033a** [P] Create basic monitoring and health checks ✅
-  - Path: `/workspace/002-n8n/workflows/health-check.json` (n8n workflow)
+- [x] **T033a** [P] Create script-based health monitoring (NFR-006) ✅
+  - Path: `/workspace/002-n8n/scripts/health-check.sh` (primary health endpoint)
+  - **Rationale**: Avoid circular dependency (n8n workflow cannot check its own health)
   - Components:
-    1. HTTP endpoint: GET /health (via n8n webhook)
-    2. Check Redis connectivity (ping)
-    3. Check BMS API availability (GET /health)
-    4. Check Ollama availability (GET /api/tags)
-    5. Return JSON health status with component statuses
-  - Additional: Document monitoring approach in `/workspace/002-n8n/docs/monitoring.md`
+    1. HTTP script that checks all 4 components:
+       - Redis connectivity: `redis-cli ping` → PONG
+       - BMS API availability: `curl http://localhost:8000/health` → 200
+       - Ollama availability: `curl http://localhost:11434/api/tags` → 200
+       - n8n availability: `curl http://localhost:5678` → 200 (meta-check: HTTP server responsive)
+    2. Return JSON health status:
+       ```json
+       {
+         "status": "healthy|degraded|unhealthy",
+         "components": {
+           "redis": {"status": "up|down", "latency_ms": 5},
+           "bms_api": {"status": "up|down", "latency_ms": 120},
+           "ollama": {"status": "up|down", "latency_ms": 45},
+           "n8n": {"status": "up|down", "latency_ms": 12}
+         },
+         "timestamp": "2025-10-07T17:30:00Z"
+       }
+       ```
+    3. Exit codes: 0 (healthy), 1 (degraded), 2 (unhealthy)
+    4. Response time target: <500ms (NFR-006)
+  - Optional: Create n8n workflow wrapper that calls this script via HTTP Request node
+  - Make executable: `chmod +x`
   - Constitution: Addresses §8 Monitoring & Observability (POC-appropriate level)
-  - POC Decision: Use n8n execution logs + basic health endpoint (Prometheus deferred to production)
 
 - [x] **T034** Validate test coverage meets 60% POC threshold (NFR-012) ⚠️ **BELOW THRESHOLD - BLOCKS DEPLOYMENT**
   - Path: Run from `/workspace/002-n8n/`

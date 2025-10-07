@@ -185,11 +185,12 @@ Railway staff members need quick access to technical documentation and safety pr
 
 **Monitoring & Observability**
 - **NFR-006**: System MUST implement basic health monitoring and logging for POC phase with the following measurable criteria:
-  - Health endpoint (GET /health) returning JSON with component statuses: Redis (connectivity), BMS API (availability), Ollama (availability), n8n (workflow execution status)
+  - Health check script (scripts/health-check.sh) returning JSON with component statuses: Redis (connectivity), BMS API (availability), Ollama (availability), n8n (HTTP responsiveness)
+  - **Implementation**: Script-based health check to avoid circular dependency (n8n workflow cannot check its own health)
   - Structured logging at INFO level minimum (JSON format with timestamp, level, component, message fields)
   - Log retention: 30 days minimum for troubleshooting
   - Health check response time: <500ms
-- **POC DECISION**: Monitoring uses n8n execution logs + basic health endpoint (/health) for POC phase. Advanced metrics (Prometheus) and dashboards (Grafana) deferred to production deployment per product owner approval.
+- **POC DECISION**: Monitoring uses script-based health checks + n8n execution logs for POC phase. Advanced metrics (Prometheus) and dashboards (Grafana) deferred to production deployment per product owner approval.
 
 **Scalability**
 - **NFR-007**: System architecture MUST support expansion to 50-100 users after POC phase (small team expansion)
