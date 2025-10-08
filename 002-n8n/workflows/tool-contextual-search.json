@@ -1,34 +1,22 @@
 {
-  "name": "Tool: Contextual Search",
   "nodes": [
     {
       "parameters": {
-        "httpMethod": "POST",
-        "path": "tool-contextual-search",
-        "responseMode": "responseNode",
-        "options": {}
+        "jsCode": "// Parse Contextual Search Parameters\n// Extracts query and context parameters for hierarchical parent/child search\n\nconst inputData = $input.all();\nconst outputs = [];\n\nfor (const item of inputData) {\n  const input = item.json;\n  \n  // Build the search payload\n  const searchPayload = {\n    query: input.query || \"\",\n    include_parents: input.include_parents !== false, // default true\n    include_children: input.include_children !== false, // default true\n    limit: input.limit !== undefined ? parseInt(input.limit) : 10,\n    min_score: input.min_score !== undefined ? parseFloat(input.min_score) : 0.5,\n    min_quality: input.min_quality !== undefined ? parseFloat(input.min_quality) : 0.5\n  };\n  \n  // Validate query is not empty\n  if (!searchPayload.query || searchPayload.query.trim() === \"\") {\n    throw new Error(\"Query parameter is required and cannot be empty for contextual search\");\n  }\n  \n  // Validate limit\n  if (searchPayload.limit < 1 || searchPayload.limit > 50) {\n    throw new Error(\"Limit must be between 1 and 50\");\n  }\n  \n  outputs.push({ json: searchPayload });\n}\n\nreturn outputs;"
       },
-      "id": "webhook-trigger",
-      "name": "Webhook Trigger",
-      "type": "n8n-nodes-base.webhook",
-      "typeVersion": 1,
-      "position": [250, 300],
-      "webhookId": "tool-contextual-search"
-    },
-    {
-      "parameters": {
-        "functionCode": "// Parse contextual search - uses parent-child hierarchy in Qdrant\nconst query = $json.query || $json.body?.query || '';\nconst contextWindow = $json.context_window || $json.body?.context_window || 2;\nconst limit = $json.limit || $json.body?.limit || 5;\n\nreturn {\n  json: {\n    query,\n    context_window: contextWindow,\n    limit\n  }\n};"
-      },
-      "id": "parse-input",
+      "id": "91bb3a1f-987e-4b4e-93ce-d633c5677f9d",
       "name": "Parse Contextual Params",
       "type": "n8n-nodes-base.code",
-      "typeVersion": 1,
-      "position": [450, 300]
+      "typeVersion": 2,
+      "position": [
+        128,
+        272
+      ]
     },
     {
       "parameters": {
-        "url": "http://localhost:8000/api/v1/search/contextual",
         "method": "POST",
+        "url": "http://localhost:8000/api/v1/search/contextual",
         "sendBody": true,
         "specifyBody": "json",
         "jsonBody": "={{ JSON.stringify($json) }}",
@@ -36,48 +24,77 @@
           "timeout": 20000
         }
       },
-      "id": "call-contextual-search",
+      "id": "6eb772a5-4994-40ac-9919-ee528ac511b2",
       "name": "Call Contextual Search",
       "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 3,
-      "position": [650, 300]
+      "typeVersion": 4.2,
+      "position": [
+        352,
+        272
+      ]
     },
     {
       "parameters": {
-        "functionCode": "// Format contextual results with parent-child relationships\nconst response = $json;\n\nif (response.status === 'error') {\n  return {\n    json: {\n      success: false,\n      error: response.message,\n      results: []\n    }\n  };\n}\n\nconst results = (response.results || []).map(result => ({\n  document_id: result.document_id,\n  document_name: result.metadata?.document_name,\n  \n  // Main content\n  content: result.text || result.content,\n  \n  // Hierarchical context\n  chunk_type: result.metadata?.chunk_type,\n  hierarchy_level: result.metadata?.hierarchy_level,\n  parent_chunk_id: result.metadata?.parent_chunk_id,\n  chunk_index: result.metadata?.chunk_index,\n  \n  // Context fields\n  contextual_description: result.metadata?.contextual_description,\n  surrounding_context: result.metadata?.surrounding_context,\n  has_context: result.metadata?.has_context,\n  \n  // Scores\n  relevance_score: result.score,\n  quality_score: result.metadata?.quality_score,\n  \n  // Metadata\n  department: result.metadata?.department,\n  document_type: result.metadata?.document_type,\n  document_url: result.metadata?.document_url,\n  \n  // Context window info\n  context_window: result.context_window || 0\n}));\n\nreturn {\n  json: {\n    success: true,\n    results,\n    metadata: {\n      search_type: 'contextual',\n      context_window: response.context_window,\n      total_results: results.length\n    }\n  }\n};"
+        "jsCode": "// Format Contextual Search Results\n// Formats hierarchical search results with parent/child relationships\n\nconst inputData = $input.all();\nconst outputs = [];\n\nfor (const item of inputData) {\n  const response = item.json;\n  \n  // Check if we have results\n  if (!response.results || response.results.length === 0) {\n    outputs.push({\n      json: {\n        success: true,\n        message: \"No contextual results found. Try: (1) broader search terms, (2) lower min_score threshold, or (3) semantic search instead.\",\n        query: response.query || \"\",\n        results_count: 0,\n        results: [],\n        hierarchical_structure: []\n      }\n    });\n    continue;\n  }\n\n  // Format results with hierarchy information\n  const formattedResults = response.results.map((result, index) => {\n    return {\n      rank: index + 1,\n      document_code: result.document_id || \"Unknown\",\n      title: result.document_name || \"Untitled Document\",\n      department: result.department || \"Unknown\",\n      document_type: result.document_type_category || \"Unknown\",\n      version: result.version || \"N/A\",\n      \n      // Hierarchy information\n      hierarchy_level: result.hierarchy_level || \"unknown\",\n      is_parent: result.hierarchy_level === \"parent\",\n      is_child: result.hierarchy_level === \"child\",\n      parent_id: result.parent_id || null,\n      \n      // Content with hierarchy context\n      content_snippet: result.content ? result.content.substring(0, 400) + \"...\" : \"\",\n      full_section: result.full_section || null,\n      \n      relevance_score: result.score ? result.score.toFixed(3) : \"N/A\",\n      quality_score: result.quality_score ? result.quality_score.toFixed(3) : \"N/A\",\n      sharepoint_url: result.document_url || null,\n      \n      // Generate citation format\n      citation: `**${result.document_id || \"Unknown\"}** (${\n        result.document_name || \"Untitled\"\n      }${result.version ? \", \" + result.version : \"\"})${result.hierarchy_level ? \" [\" + result.hierarchy_level + \"]\" : \"\"}`\n    };\n  });\n\n  // Build hierarchical structure (group children under parents)\n  const hierarchicalStructure = buildHierarchy(formattedResults);\n  \n  // Create formatted response\n  const formattedResponse = {\n    success: true,\n    search_type: \"contextual\",\n    query: response.query || \"\",\n    results_count: formattedResults.length,\n    \n    // Flat list of all results\n    results: formattedResults,\n    \n    // Hierarchical structure for better presentation\n    hierarchical_structure: hierarchicalStructure,\n    \n    // Statistics\n    statistics: {\n      parent_documents: formattedResults.filter(r => r.is_parent).length,\n      child_sections: formattedResults.filter(r => r.is_child).length,\n      total_results: formattedResults.length\n    },\n    \n    // Generate summary\n    summary: generateContextualSummary(formattedResults, hierarchicalStructure, response.query),\n    \n    // Metadata\n    metadata: {\n      search_time_ms: response.search_time_ms || null,\n      total_documents_searched: response.total_points || null,\n      min_score_threshold: response.min_score || 0.7,\n      min_quality_threshold: response.min_quality || 0.95,\n      includes_parents: response.include_parents !== false,\n      includes_children: response.include_children !== false\n    }\n  };\n\n  outputs.push({ json: formattedResponse });\n}\n\n// Helper function to build hierarchical structure\nfunction buildHierarchy(results) {\n  const hierarchy = [];\n  const parentsMap = {};\n  \n  // First pass: identify all parents\n  results.forEach(result => {\n    if (result.is_parent) {\n      const parentNode = {\n        document: result,\n        children: []\n      };\n      parentsMap[result.document_code] = parentNode;\n      hierarchy.push(parentNode);\n    }\n  });\n  \n  // Second pass: attach children to parents\n  results.forEach(result => {\n    if (result.is_child && result.parent_id) {\n      const parent = parentsMap[result.parent_id];\n      if (parent) {\n        parent.children.push(result);\n      } else {\n        // Child without parent in results - add as standalone\n        hierarchy.push({\n          document: result,\n          children: [],\n          orphaned: true\n        });\n      }\n    } else if (!result.is_parent && !result.is_child) {\n      // Standalone document\n      hierarchy.push({\n        document: result,\n        children: []\n      });\n    }\n  });\n  \n  return hierarchy;\n}\n\n// Helper function to generate summary\nfunction generateContextualSummary(results, hierarchy, query) {\n  if (results.length === 0) {\n    return `No contextual results found for \"${query}\".`;\n  }\n\n  const parents = results.filter(r => r.is_parent);\n  const children = results.filter(r => r.is_child);\n  \n  let summary = `Found ${results.length} contextual results for \"${query}\"\\n\\n`;\n  summary += `Structure: ${parents.length} parent documents, ${children.length} child sections\\n\\n`;\n  \n  // Show top hierarchical results\n  summary += \"Top results with context:\\n\";\n  const topHierarchy = hierarchy.slice(0, 3);\n  topHierarchy.forEach((node, i) => {\n    summary += `${i + 1}. ${node.document.citation}`;\n    if (node.children.length > 0) {\n      summary += ` (${node.children.length} subsections)`;\n    }\n    if (node.orphaned) {\n      summary += \" [orphaned - parent not in results]\";\n    }\n    summary += \"\\n\";\n  });\n  \n  return summary;\n}\n\nreturn outputs;"
       },
-      "id": "format-contextual-results",
+      "id": "16537695-f748-4a7e-a5a8-c83504975923",
       "name": "Format Contextual Results",
       "type": "n8n-nodes-base.code",
-      "typeVersion": 1,
-      "position": [850, 300]
+      "typeVersion": 2,
+      "position": [
+        576,
+        272
+      ]
     },
     {
-      "parameters": {
-        "respondWith": "json",
-        "responseBody": "={{ JSON.stringify($json) }}"
-      },
-      "id": "respond",
-      "name": "Respond",
-      "type": "n8n-nodes-base.respondToWebhook",
+      "parameters": {},
+      "id": "f2457dd8-28e6-44e7-8dbc-129bd71844bf",
+      "name": "Execute Workflow Trigger",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
       "typeVersion": 1,
-      "position": [1050, 300]
+      "position": [
+        -96,
+        272
+      ]
     }
   ],
   "connections": {
-    "Webhook Trigger": {
-      "main": [[{"node": "Parse Contextual Params", "type": "main", "index": 0}]]
-    },
     "Parse Contextual Params": {
-      "main": [[{"node": "Call Contextual Search", "type": "main", "index": 0}]]
+      "main": [
+        [
+          {
+            "node": "Call Contextual Search",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Call Contextual Search": {
-      "main": [[{"node": "Format Contextual Results", "type": "main", "index": 0}]]
+      "main": [
+        [
+          {
+            "node": "Format Contextual Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
-    "Format Contextual Results": {
-      "main": [[{"node": "Respond", "type": "main", "index": 0}]]
+    "Execute Workflow Trigger": {
+      "main": [
+        [
+          {
+            "node": "Parse Contextual Params",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
-  "settings": {},
-  "active": true
+  "pinData": {},
+  "meta": {
+    "instanceId": "b764da079d9461ceee1e13c42e2f4b8dab8acbf563fdde0089b47461f4dd41c8"
+  }
 }

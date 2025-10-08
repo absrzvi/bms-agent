@@ -17,7 +17,7 @@
     },
     {
       "parameters": {
-        "functionCode": "// Parse batch search parameters\nconst queries = $json.queries || $json.body?.queries || [];\nconst mode = $json.mode || $json.body?.mode || 'union';\nconst limit = $json.limit || $json.body?.limit || 5;\nconst minScore = $json.min_score || $json.body?.min_score || 0.7;\n\nif (!Array.isArray(queries) || queries.length === 0) {\n  throw new Error('queries array is required and must not be empty');\n}\n\nreturn {\n  json: {\n    queries,\n    mode,\n    limit,\n    min_score: minScore\n  }\n};"
+        "functionCode": "// Parse batch search parameters\nconst queries = $json.queries || $json.body?.queries || [];\nconst mode = $json.mode || $json.body?.mode || 'union';\nconst limit = $json.limit || $json.body?.limit || 5;\nconst minScore = $json.min_score || $json.body?.min_score || 0.5;\n\nif (!Array.isArray(queries) || queries.length === 0) {\n  throw new Error('queries array is required and must not be empty');\n}\n\nreturn {\n  json: {\n    queries,\n    mode,\n    limit,\n    min_score: minScore\n  }\n};"
       },
       "id": "parse-input",
       "name": "Parse Batch Parameters",

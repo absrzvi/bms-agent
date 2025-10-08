@@ -1,34 +1,22 @@
 {
-  "name": "Tool: Latest Versions Search",
   "nodes": [
     {
       "parameters": {
-        "httpMethod": "POST",
-        "path": "tool-latest-search",
-        "responseMode": "responseNode",
-        "options": {}
+        "jsCode": "// Parse Latest Versions Parameters\n// Extracts query and filter parameters, ensures latest_version flag is set\n\nconst inputData = $input.all();\nconst outputs = [];\n\nfor (const item of inputData) {\n  const input = item.json;\n  \n  // Build filter conditions for latest versions\n  const filterConditions = [];\n  \n  // Always add latest_version filter\n  filterConditions.push({\n    key: \"is_latest_version\",\n    match: { value: true }\n  });\n  \n  // Optional department filter\n  if (input.department) {\n    filterConditions.push({\n      key: \"department\",\n      match: { value: input.department.toUpperCase() }\n    });\n  }\n  \n  // Optional document type filter\n  if (input.document_type) {\n    filterConditions.push({\n      key: \"document_type_category\",\n      match: { value: input.document_type.toLowerCase() }\n    });\n  }\n  \n  // Optional document code filter (without version)\n  if (input.document_code_prefix) {\n    // For prefix matching, we'll handle this in the query\n    // or use a more complex filter if your Qdrant supports it\n  }\n  \n  // Build the search payload\n  const searchPayload = {\n    query: input.query || \"\",\n    limit: input.limit !== undefined ? parseInt(input.limit) : 20,\n    filter: {\n      must: filterConditions\n    },\n    min_score: input.min_score !== undefined ? parseFloat(input.min_score) : 0.7,\n    min_quality: input.min_quality !== undefined ? parseFloat(input.min_quality) : 0.65\n  };\n  \n  // Validate limit\n  if (searchPayload.limit < 1 || searchPayload.limit > 100) {\n    throw new Error(\"Limit must be between 1 and 100\");\n  }\n  \n  outputs.push({ json: searchPayload });\n}\n\nreturn outputs;"
       },
-      "id": "webhook-trigger",
-      "name": "Webhook Trigger",
-      "type": "n8n-nodes-base.webhook",
-      "typeVersion": 1,
-      "position": [250, 300],
-      "webhookId": "tool-latest-search"
-    },
-    {
-      "parameters": {
-        "functionCode": "// Parse latest versions search parameters\nconst query = $json.query || $json.body?.query || '';\nconst limit = $json.limit || $json.body?.limit || 10;\nconst minScore = $json.min_score || $json.body?.min_score || 0.7;\n\nif (!query) {\n  throw new Error('query is required');\n}\n\nreturn {\n  json: {\n    query,\n    limit,\n    min_score: minScore\n  }\n};"
-      },
-      "id": "parse-input",
+      "id": "00d7018a-fbc4-4c97-b017-f7b3501fbacc",
       "name": "Parse Latest Parameters",
       "type": "n8n-nodes-base.code",
-      "typeVersion": 1,
-      "position": [450, 300]
+      "typeVersion": 2,
+      "position": [
+        368,
+        320
+      ]
     },
     {
       "parameters": {
-        "url": "http://localhost:8000/api/v1/search/latest",
         "method": "POST",
+        "url": "http://localhost:8000/api/v1/search/semantic",
         "sendBody": true,
         "specifyBody": "json",
         "jsonBody": "={{ JSON.stringify($json) }}",
@@ -36,48 +24,77 @@
           "timeout": 15000
         }
       },
-      "id": "call-latest-search",
+      "id": "1862607c-a72b-43bb-911e-d55efddcf057",
       "name": "Call Latest Versions API",
       "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 3,
-      "position": [650, 300]
+      "typeVersion": 4.2,
+      "position": [
+        592,
+        320
+      ]
     },
     {
       "parameters": {
-        "functionCode": "// Format latest versions search results\nconst response = $json;\n\nif (response.status === 'error') {\n  return {\n    json: {\n      success: false,\n      error: response.message || 'Latest versions search error',\n      results: []\n    }\n  };\n}\n\nconst results = (response.results || []).map(result => ({\n  document_id: result.document_id,\n  document_name: result.metadata?.document_name || result.document_name,\n  document_type: result.metadata?.document_type || 'unknown',\n  department: result.metadata?.department || 'unknown',\n  \n  // Content\n  content: result.text || result.content,\n  content_preview: (result.text || result.content || '').substring(0, 250) + '...',\n  \n  // Scores\n  relevance_score: result.score || 0,\n  quality_score: result.metadata?.quality_score || 0,\n  \n  // Version information\n  version: result.metadata?.version || result.version || 'unknown',\n  is_latest_version: result.metadata?.is_latest_version || true,\n  document_date: result.metadata?.document_date || null,\n  supersedes_version: result.metadata?.supersedes_version || null,\n  \n  // Document properties\n  document_type_category: result.metadata?.document_type_category || 'unknown',\n  is_process: result.metadata?.is_process || false,\n  is_form: result.metadata?.is_form || false,\n  \n  // Context\n  chunk_index: result.chunk_key || result.metadata?.chunk_index,\n  document_url: result.metadata?.document_url || null,\n  \n  // Railway-specific\n  fleet_type: result.metadata?.fleet_type || null,\n  train_id: result.metadata?.train_id || null,\n  standard_compliance: result.metadata?.standard_compliance || null,\n  processing_profile: result.metadata?.processing_profile || 'railway'\n}));\n\nreturn {\n  json: {\n    success: true,\n    results,\n    metadata: {\n      query: response.metadata?.query || '',\n      total_results: results.length,\n      search_type: 'latest_versions',\n      version_filter_applied: response.metadata?.version_filter_applied || true,\n      min_score_applied: response.metadata?.min_score || 0.7,\n      note: 'Only the most recent version of each document is included'\n    }\n  }\n};"
+        "jsCode": "// Format Latest Versions Results\n// Formats results ensuring all are latest versions with version warnings\n\nconst inputData = $input.all();\nconst outputs = [];\n\nfor (const item of inputData) {\n  const response = item.json;\n  \n  // Check if we have results\n  if (!response.results || response.results.length === 0) {\n    outputs.push({\n      json: {\n        success: true,\n        message: \"No latest version documents found. Try: (1) broader search terms, (2) different department, or (3) check if documents exist.\",\n        query: response.query || \"\",\n        results_count: 0,\n        results: [],\n        latest_versions_only: true\n      }\n    });\n    continue;\n  }\n\n  // Format results with version emphasis\n  const formattedResults = response.results.map((result, index) => {\n    return {\n      rank: index + 1,\n      document_code: result.document_id || \"Unknown\",\n      title: result.document_name || \"Untitled Document\",\n      version: result.version || \"N/A\",\n      is_latest: result.is_latest_version !== false,\n      department: result.department || \"Unknown\",\n      document_type: result.document_type_category || \"Unknown\",\n      updated_date: result.updated_date || null,\n      standard_compliance: result.standard_compliance || [],\n      content_snippet: result.content ? result.content.substring(0, 250) + \"...\" : \"\",\n      relevance_score: result.score ? result.score.toFixed(3) : \"N/A\",\n      quality_score: result.quality_score ? result.quality_score.toFixed(3) : \"N/A\",\n      sharepoint_url: result.document_url || null,\n      \n      // Generate citation format with version emphasis\n      citation: `**${result.document_id || \"Unknown\"}** (${\n        result.document_name || \"Untitled\"\n      }, ${result.version || \"N/A\"})`,\n      \n      // Version warning if not marked as latest\n      version_warning: result.is_latest_version === false ? \"⚠️ This may not be the latest version\" : null\n    };\n  });\n\n  // Group by department\n  const byDepartment = groupBy(formattedResults, 'department');\n  \n  // Check for any non-latest versions (shouldn't happen with proper filter)\n  const nonLatestCount = formattedResults.filter(r => !r.is_latest).length;\n  \n  // Create formatted response\n  const formattedResponse = {\n    success: true,\n    search_type: \"latest_versions\",\n    query: response.query || \"(latest versions only)\",\n    latest_versions_only: true,\n    results_count: formattedResults.length,\n    results: formattedResults,\n    \n    // Grouped by department\n    results_by_department: Object.keys(byDepartment).map(dept => ({\n      department: dept,\n      count: byDepartment[dept].length,\n      latest_versions: byDepartment[dept].map(r => `${r.citation} - Updated: ${r.updated_date || 'Unknown'}`)\n    })),\n    \n    // Warning if any non-latest found\n    version_warning: nonLatestCount > 0 ? `⚠️ ${nonLatestCount} document(s) may not be latest version` : null,\n    \n    // Generate summary\n    summary: generateLatestSummary(formattedResults, response.query),\n    \n    // Metadata\n    metadata: {\n      search_time_ms: response.search_time_ms || null,\n      total_documents_searched: response.total_points || null,\n      min_score_threshold: response.min_score || 0.7,\n      min_quality_threshold: response.min_quality || 0.95,\n      filter_applied: \"is_latest_version=true\"\n    }\n  };\n\n  outputs.push({ json: formattedResponse });\n}\n\n// Helper functions\nfunction groupBy(array, key) {\n  return array.reduce((result, item) => {\n    const groupKey = item[key] || 'Unknown';\n    if (!result[groupKey]) {\n      result[groupKey] = [];\n    }\n    result[groupKey].push(item);\n    return result;\n  }, {});\n}\n\nfunction generateLatestSummary(results, query) {\n  if (results.length === 0) {\n    return `No latest version documents found${query ? ` for \"${query}\"` : \"\"}.`;\n  }\n\n  const deptCounts = results.reduce((acc, r) => {\n    acc[r.department] = (acc[r.department] || 0) + 1;\n    return acc;\n  }, {});\n  \n  const deptSummary = Object.keys(deptCounts)\n    .map(dept => `${dept} (${deptCounts[dept]})`)\n    .join(\", \");\n  \n  const topResults = results.slice(0, 3);\n  const citations = topResults.map(r => r.citation).join(\"\\n\");\n  \n  return `Found ${results.length} latest version documents${query ? ` for \"${query}\"` : \"\"}\\n\\nBy department: ${deptSummary}\\n\\nTop results (latest versions):\\n${citations}`;\n}\n\nreturn outputs;"
       },
-      "id": "format-results",
+      "id": "733427da-a1b3-4f55-8dc3-25ffb1da3333",
       "name": "Format Latest Versions Results",
       "type": "n8n-nodes-base.code",
-      "typeVersion": 1,
-      "position": [850, 300]
+      "typeVersion": 2,
+      "position": [
+        816,
+        320
+      ]
     },
     {
-      "parameters": {
-        "respondWith": "json",
-        "responseBody": "={{ JSON.stringify($json) }}"
-      },
-      "id": "respond",
-      "name": "Respond",
-      "type": "n8n-nodes-base.respondToWebhook",
+      "parameters": {},
+      "id": "1aacb7dc-02ec-478a-bf4b-d28ff578b085",
+      "name": "Execute Workflow Trigger",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
       "typeVersion": 1,
-      "position": [1050, 300]
+      "position": [
+        144,
+        320
+      ]
     }
   ],
   "connections": {
-    "Webhook Trigger": {
-      "main": [[{"node": "Parse Latest Parameters", "type": "main", "index": 0}]]
-    },
     "Parse Latest Parameters": {
-      "main": [[{"node": "Call Latest Versions API", "type": "main", "index": 0}]]
+      "main": [
+        [
+          {
+            "node": "Call Latest Versions API",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Call Latest Versions API": {
-      "main": [[{"node": "Format Latest Versions Results", "type": "main", "index": 0}]]
+      "main": [
+        [
+          {
+            "node": "Format Latest Versions Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
-    "Format Latest Versions Results": {
-      "main": [[{"node": "Respond", "type": "main", "index": 0}]]
+    "Execute Workflow Trigger": {
+      "main": [
+        [
+          {
+            "node": "Parse Latest Parameters",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
-  "settings": {},
-  "active": true
+  "pinData": {},
+  "meta": {
+    "instanceId": "b764da079d9461ceee1e13c42e2f4b8dab8acbf563fdde0089b47461f4dd41c8"
+  }
 }

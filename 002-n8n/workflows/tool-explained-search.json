@@ -1,34 +1,22 @@
 {
-  "name": "Tool: Explained Search",
   "nodes": [
     {
       "parameters": {
-        "httpMethod": "POST",
-        "path": "tool-explained-search",
-        "responseMode": "responseNode",
-        "options": {}
+        "jsCode": "// Parse Explain Search Parameters\n// Extracts query and parameters for search with scoring explanations\n\nconst inputData = $input.all();\nconst outputs = [];\n\nfor (const item of inputData) {\n  const input = item.json;\n  \n  // Build the search payload\n  const searchPayload = {\n    query: input.query || \"\",\n    limit: input.limit !== undefined ? parseInt(input.limit) : 5,\n    explain_scores: true, // Always true for this endpoint\n    min_score: input.min_score !== undefined ? parseFloat(input.min_score) : 0.6,\n    min_quality: input.min_quality !== undefined ? parseFloat(input.min_quality) : 0.65\n  };\n  \n  // Validate query is not empty\n  if (!searchPayload.query || searchPayload.query.trim() === \"\") {\n    throw new Error(\"Query parameter is required and cannot be empty for explained search\");\n  }\n  \n  // Validate limit (keep it small for explained search)\n  if (searchPayload.limit < 1 || searchPayload.limit > 20) {\n    throw new Error(\"Limit must be between 1 and 20 for explained search (detailed analysis)\");\n  }\n  \n  outputs.push({ json: searchPayload });\n}\n\nreturn outputs;"
       },
-      "id": "webhook-trigger",
-      "name": "Webhook Trigger",
-      "type": "n8n-nodes-base.webhook",
-      "typeVersion": 1,
-      "position": [250, 300],
-      "webhookId": "tool-explained-search"
-    },
-    {
-      "parameters": {
-        "functionCode": "// Parse explained search parameters\nconst query = $json.query || $json.body?.query || '';\nconst limit = $json.limit || $json.body?.limit || 5;\nconst minScore = $json.min_score || $json.body?.min_score || 0.7;\n\nif (!query) {\n  throw new Error('query is required');\n}\n\nreturn {\n  json: {\n    query,\n    limit,\n    min_score: minScore\n  }\n};"
-      },
-      "id": "parse-input",
+      "id": "0c378c13-b028-4b46-872d-90e475f82786",
       "name": "Parse Explain Parameters",
       "type": "n8n-nodes-base.code",
-      "typeVersion": 1,
-      "position": [450, 300]
+      "typeVersion": 2,
+      "position": [
+        64,
+        256
+      ]
     },
     {
       "parameters": {
-        "url": "http://localhost:8000/api/v1/search/explain",
         "method": "POST",
+        "url": "http://localhost:8000/api/v1/search/semantic",
         "sendBody": true,
         "specifyBody": "json",
         "jsonBody": "={{ JSON.stringify($json) }}",
@@ -36,48 +24,77 @@
           "timeout": 15000
         }
       },
-      "id": "call-explained-search",
+      "id": "13fcb413-48b7-4924-9ed5-b8296e5d178b",
       "name": "Call Explained Search API",
       "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 3,
-      "position": [650, 300]
+      "typeVersion": 4.2,
+      "position": [
+        288,
+        256
+      ]
     },
     {
       "parameters": {
-        "functionCode": "// Format explained search results with score breakdown\nconst response = $json;\n\nif (response.status === 'error') {\n  return {\n    json: {\n      success: false,\n      error: response.message || 'Explained search error',\n      results: []\n    }\n  };\n}\n\nconst results = (response.results || []).map(result => ({\n  document_id: result.document_id,\n  document_name: result.metadata?.document_name || result.document_name,\n  document_type: result.metadata?.document_type || 'unknown',\n  department: result.metadata?.department || 'unknown',\n  \n  // Content\n  content: result.text || result.content,\n  content_preview: (result.text || result.content || '').substring(0, 200) + '...',\n  \n  // Scores\n  relevance_score: result.score || 0,\n  quality_score: result.metadata?.quality_score || 0,\n  \n  // Score explanation breakdown\n  explanation: {\n    semantic_score: result.explanation?.semantic_score || 0,\n    quality_boost: result.explanation?.quality_boost || 0,\n    recency_factor: result.explanation?.recency_factor || 0,\n    tf_boost: result.explanation?.tf_boost || 0,\n    matching_terms: result.explanation?.matching_terms || [],\n    formula: result.explanation?.formula || 'semantic * (1 + quality + recency + tf)',\n    components: {\n      base_semantic: result.explanation?.semantic_score || 0,\n      quality_multiplier: result.explanation?.quality_boost || 0,\n      recency_multiplier: result.explanation?.recency_factor || 0,\n      tf_multiplier: result.explanation?.tf_boost || 0\n    }\n  },\n  \n  // Context\n  chunk_index: result.chunk_key || result.metadata?.chunk_index,\n  document_url: result.metadata?.document_url || null,\n  \n  // Additional metadata\n  processing_profile: result.metadata?.processing_profile || 'railway',\n  document_date: result.metadata?.document_date || null,\n  version: result.metadata?.version || null\n}));\n\nreturn {\n  json: {\n    success: true,\n    results,\n    metadata: {\n      query: response.metadata?.query || '',\n      total_results: results.length,\n      search_type: 'explained',\n      min_score_applied: response.metadata?.min_score || 0.7,\n      explanation_available: true\n    }\n  }\n};"
+        "jsCode": "// Format Explained Search Results\n// Formats results with detailed scoring explanations and relevance factors\n\nconst inputData = $input.all();\nconst outputs = [];\n\nfor (const item of inputData) {\n  const response = item.json;\n  \n  // Check if we have results\n  if (!response.results || response.results.length === 0) {\n    outputs.push({\n      json: {\n        success: true,\n        message: \"No results found to explain. Try: (1) broader search terms, (2) lower min_score threshold.\",\n        query: response.query || \"\",\n        results_count: 0,\n        results_with_explanations: []\n      }\n    });\n    continue;\n  }\n\n  // Format results with detailed explanations\n  const formattedResults = response.results.map((result, index) => {\n    // Calculate score components\n    const vectorScore = result.score || 0;\n    const qualityScore = result.quality_score || 0;\n    const finalScore = (vectorScore + qualityScore) / 2;\n    \n    // Determine relevance factors\n    const relevanceFactors = analyzeRelevance(result, response.query);\n    \n    return {\n      rank: index + 1,\n      document_code: result.document_id || \"Unknown\",\n      title: result.document_name || \"Untitled Document\",\n      department: result.department || \"Unknown\",\n      document_type: result.document_type_category || \"Unknown\",\n      version: result.version || \"N/A\",\n      \n      // Scoring details\n      scoring: {\n        final_score: finalScore.toFixed(3),\n        vector_similarity: vectorScore.toFixed(3),\n        quality_score: qualityScore.toFixed(3),\n        passed_min_score: vectorScore >= (response.min_score || 0.6),\n        passed_quality: qualityScore >= (response.min_quality || 0.95)\n      },\n      \n      // Relevance explanation\n      relevance_explanation: {\n        factors: relevanceFactors,\n        summary: generateRelevanceSummary(relevanceFactors, vectorScore)\n      },\n      \n      // Why this result ranked here\n      ranking_explanation: generateRankingExplanation(index + 1, vectorScore, qualityScore, relevanceFactors),\n      \n      content_snippet: result.content ? result.content.substring(0, 300) + \"...\" : \"\",\n      sharepoint_url: result.document_url || null,\n      \n      // Generate citation format\n      citation: `**${result.document_id || \"Unknown\"}** (${\n        result.document_name || \"Untitled\"\n      }${result.version ? \", \" + result.version : \"\"})`\n    };\n  });\n\n  // Calculate query analysis\n  const queryAnalysis = analyzeQuery(response.query, formattedResults);\n  \n  // Create formatted response\n  const formattedResponse = {\n    success: true,\n    search_type: \"explained\",\n    query: response.query || \"\",\n    results_count: formattedResults.length,\n    \n    // Query analysis\n    query_analysis: queryAnalysis,\n    \n    // Results with full explanations\n    results_with_explanations: formattedResults,\n    \n    // Overall scoring statistics\n    scoring_statistics: {\n      highest_score: Math.max(...formattedResults.map(r => parseFloat(r.scoring.final_score))).toFixed(3),\n      lowest_score: Math.min(...formattedResults.map(r => parseFloat(r.scoring.final_score))).toFixed(3),\n      average_score: (formattedResults.reduce((sum, r) => sum + parseFloat(r.scoring.final_score), 0) / formattedResults.length).toFixed(3),\n      score_range: (Math.max(...formattedResults.map(r => parseFloat(r.scoring.final_score))) - Math.min(...formattedResults.map(r => parseFloat(r.scoring.final_score)))).toFixed(3)\n    },\n    \n    // Generate summary\n    summary: generateExplainedSummary(formattedResults, queryAnalysis, response.query),\n    \n    // Metadata\n    metadata: {\n      search_time_ms: response.search_time_ms || null,\n      total_documents_searched: response.total_points || null,\n      min_score_threshold: response.min_score || 0.6,\n      min_quality_threshold: response.min_quality || 0.95\n    }\n  };\n\n  outputs.push({ json: formattedResponse });\n}\n\n// Helper function to analyze relevance factors\nfunction analyzeRelevance(result, query) {\n  const factors = [];\n  const queryLower = query.toLowerCase();\n  const contentLower = (result.content || \"\").toLowerCase();\n  const titleLower = (result.document_name || \"\").toLowerCase();\n  \n  // Check for exact phrase match\n  if (contentLower.includes(queryLower)) {\n    factors.push({ factor: \"Exact phrase match in content\", impact: \"high\" });\n  }\n  \n  // Check for title match\n  const queryWords = queryLower.split(/\\s+/);\n  const titleMatches = queryWords.filter(word => titleLower.includes(word)).length;\n  if (titleMatches > 0) {\n    factors.push({ \n      factor: `${titleMatches}/${queryWords.length} query words in title`, \n      impact: titleMatches === queryWords.length ? \"high\" : \"medium\" \n    });\n  }\n  \n  // Check for department relevance\n  if (result.department && queryLower.includes(result.department.toLowerCase())) {\n    factors.push({ factor: \"Department mentioned in query\", impact: \"medium\" });\n  }\n  \n  // Check document type relevance\n  if (result.document_type_category) {\n    const typeKeywords = {\n      'process': ['procedure', 'process', 'steps', 'how to'],\n      'policy': ['policy', 'rule', 'regulation'],\n      'manual': ['manual', 'guide', 'handbook'],\n      'form_template': ['form', 'template', 'checklist']\n    };\n    \n    const relevantKeywords = typeKeywords[result.document_type_category] || [];\n    const matchedKeywords = relevantKeywords.filter(kw => queryLower.includes(kw));\n    if (matchedKeywords.length > 0) {\n      factors.push({ factor: `Document type (${result.document_type_category}) matches query intent`, impact: \"medium\" });\n    }\n  }\n  \n  // Check for recent document\n  if (result.updated_date) {\n    const updateDate = new Date(result.updated_date);\n    const sixMonthsAgo = new Date();\n    sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);\n    if (updateDate > sixMonthsAgo) {\n      factors.push({ factor: \"Recently updated document (< 6 months)\", impact: \"low\" });\n    }\n  }\n  \n  return factors.length > 0 ? factors : [{ factor: \"Semantic similarity (vector embeddings)\", impact: \"high\" }];\n}\n\n// Helper function to generate relevance summary\nfunction generateRelevanceSummary(factors, score) {\n  const highImpact = factors.filter(f => f.impact === \"high\").length;\n  const mediumImpact = factors.filter(f => f.impact === \"medium\").length;\n  \n  if (score > 0.9) {\n    return `Excellent match (${highImpact} high-impact factors)`;\n  } else if (score > 0.8) {\n    return `Strong match (${highImpact + mediumImpact} relevant factors)`;\n  } else if (score > 0.7) {\n    return `Good match (${factors.length} relevance factors)`;\n  } else {\n    return `Moderate match (primarily semantic similarity)`;\n  }\n}\n\n// Helper function to generate ranking explanation\nfunction generateRankingExplanation(rank, vectorScore, qualityScore, factors) {\n  let explanation = `Ranked #${rank} because: `;\n  \n  if (rank === 1) {\n    explanation += \"Highest combined score (vector similarity + quality). \";\n  } else {\n    explanation += `${rank === 2 ? \"Second\" : rank === 3 ? \"Third\" : rank + \"th\"} highest combined score. `;\n  }\n  \n  if (vectorScore > 0.9) {\n    explanation += \"Exceptional semantic match. \";\n  } else if (vectorScore > 0.8) {\n    explanation += \"Strong semantic relevance. \";\n  }\n  \n  const highFactors = factors.filter(f => f.impact === \"high\");\n  if (highFactors.length > 0) {\n    explanation += `High-impact factors: ${highFactors.map(f => f.factor).join(\", \")}.`;\n  }\n  \n  return explanation;\n}\n\n// Helper function to analyze query\nfunction analyzeQuery(query, results) {\n  const words = query.toLowerCase().split(/\\s+/).filter(w => w.length > 2);\n  \n  return {\n    query_length: query.length,\n    word_count: words.length,\n    query_type: words.length === 1 ? \"single-term\" : words.length < 4 ? \"short\" : \"detailed\",\n    suggested_optimization: words.length === 1 ? \"Consider adding more context for better results\" : \n                           words.length > 10 ? \"Query is detailed - results should be highly specific\" :\n                           \"Query length is optimal\",\n    results_quality: results.length > 0 ? \n      (parseFloat(results[0].scoring.final_score) > 0.9 ? \"Excellent\" :\n       parseFloat(results[0].scoring.final_score) > 0.8 ? \"Good\" :\n       parseFloat(results[0].scoring.final_score) > 0.7 ? \"Fair\" : \"Low\") : \"N/A\"\n  };\n}\n\n// Helper function to generate summary\nfunction generateExplainedSummary(results, queryAnalysis, query) {\n  if (results.length === 0) {\n    return `No results found for \"${query}\".`;\n  }\n\n  const topResult = results[0];\n  let summary = `Search Explanation for \"${query}\"\\n\\n`;\n  summary += `Query Analysis: ${queryAnalysis.query_type} query, ${queryAnalysis.results_quality} results quality\\n\\n`;\n  summary += `Top result: ${topResult.citation}\\n`;\n  summary += `Score: ${topResult.scoring.final_score} (vector: ${topResult.scoring.vector_similarity}, quality: ${topResult.scoring.quality_score})\\n`;\n  summary += `Relevance: ${topResult.relevance_explanation.summary}\\n\\n`;\n  summary += `Key factors:\\n`;\n  topResult.relevance_explanation.factors.slice(0, 3).forEach((f, i) => {\n    summary += `${i + 1}. ${f.factor} (${f.impact} impact)\\n`;\n  });\n  \n  return summary;\n}\n\nreturn outputs;"
       },
-      "id": "format-results",
+      "id": "84e99ea8-c8b2-407d-8b7e-4853b904f88b",
       "name": "Format Explained Results",
       "type": "n8n-nodes-base.code",
-      "typeVersion": 1,
-      "position": [850, 300]
+      "typeVersion": 2,
+      "position": [
+        512,
+        256
+      ]
     },
     {
-      "parameters": {
-        "respondWith": "json",
-        "responseBody": "={{ JSON.stringify($json) }}"
-      },
-      "id": "respond",
-      "name": "Respond",
-      "type": "n8n-nodes-base.respondToWebhook",
+      "parameters": {},
+      "id": "10e21f1a-15eb-4d4d-a76b-d40c223df992",
+      "name": "Execute Workflow Trigger",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
       "typeVersion": 1,
-      "position": [1050, 300]
+      "position": [
+        -160,
+        256
+      ]
     }
   ],
   "connections": {
-    "Webhook Trigger": {
-      "main": [[{"node": "Parse Explain Parameters", "type": "main", "index": 0}]]
-    },
     "Parse Explain Parameters": {
-      "main": [[{"node": "Call Explained Search API", "type": "main", "index": 0}]]
+      "main": [
+        [
+          {
+            "node": "Call Explained Search API",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Call Explained Search API": {
-      "main": [[{"node": "Format Explained Results", "type": "main", "index": 0}]]
+      "main": [
+        [
+          {
+            "node": "Format Explained Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
-    "Format Explained Results": {
-      "main": [[{"node": "Respond", "type": "main", "index": 0}]]
+    "Execute Workflow Trigger": {
+      "main": [
+        [
+          {
+            "node": "Parse Explain Parameters",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
-  "settings": {},
-  "active": true
+  "pinData": {},
+  "meta": {
+    "instanceId": "b764da079d9461ceee1e13c42e2f4b8dab8acbf563fdde0089b47461f4dd41c8"
+  }
 }

@@ -1,34 +1,22 @@
 {
-  "name": "Tool: Search by Metadata Filters",
   "nodes": [
     {
       "parameters": {
-        "httpMethod": "POST",
-        "path": "tool-search-metadata",
-        "responseMode": "responseNode",
-        "options": {}
+        "jsCode": "// Build Metadata Filters\n// Constructs Qdrant filter payload from user-provided metadata criteria\n\nconst inputData = $input.all();\nconst outputs = [];\n\nfor (const item of inputData) {\n  const input = item.json;\n  \n  // Build filter conditions\n  const filterConditions = [];\n  \n  // Department filter\n  if (input.department) {\n    filterConditions.push({\n      key: \"department\",\n      match: { value: input.department.toUpperCase() }\n    });\n  }\n  \n  // Document type filter\n  if (input.document_type) {\n    filterConditions.push({\n      key: \"document_type_category\",\n      match: { value: input.document_type.toLowerCase() }\n    });\n  }\n  \n  // Document code exact match\n  if (input.document_code) {\n    filterConditions.push({\n      key: \"document_id\",\n      match: { value: input.document_code.toUpperCase() }\n    });\n  }\n  \n  // Version filter\n  if (input.version) {\n    filterConditions.push({\n      key: \"version\",\n      match: { value: input.version }\n    });\n  }\n  \n  // Date range filters\n  if (input.date_from) {\n    filterConditions.push({\n      key: \"updated_date\",\n      range: { gte: input.date_from }\n    });\n  }\n  \n  if (input.date_to) {\n    filterConditions.push({\n      key: \"updated_date\",\n      range: { lte: input.date_to }\n    });\n  }\n  \n  // Standard compliance filter\n  if (input.standard_compliance) {\n    filterConditions.push({\n      key: \"standard_compliance\",\n      match: { value: input.standard_compliance }\n    });\n  }\n  \n  // Build the search payload\n  const searchPayload = {\n    query: input.query || \"\",\n    limit: input.limit !== undefined ? parseInt(input.limit) : 20,\n    filter: filterConditions.length > 0 ? {\n      must: filterConditions\n    } : undefined,\n    min_score: input.min_score !== undefined ? parseFloat(input.min_score) : 0.7,\n    min_quality: input.min_quality !== undefined ? parseFloat(input.min_quality) : 0.65\n  };\n  \n  // Validate limit\n  if (searchPayload.limit < 1 || searchPayload.limit > 100) {\n    throw new Error(\"Limit must be between 1 and 100\");\n  }\n  \n  // If no query and no filters, throw error\n  if (!searchPayload.query && filterConditions.length === 0) {\n    throw new Error(\"Must provide either a query or at least one filter (department, document_type, document_code, etc.)\");\n  }\n  \n  outputs.push({ json: searchPayload });\n}\n\nreturn outputs;"
       },
-      "id": "webhook-trigger",
-      "name": "Webhook Trigger",
-      "type": "n8n-nodes-base.webhook",
-      "typeVersion": 1,
-      "position": [250, 300],
-      "webhookId": "tool-search-metadata"
-    },
-    {
-      "parameters": {
-        "functionCode": "// Parse metadata filter search\n// Supports filtering by:\n// - department: QHSE, Engineering, Operations\n// - document_type_category: process, form, template, policy\n// - document_type: pdf, docx, xlsx\n// - is_process, is_form, is_template: boolean\n// - fleet_type, train_id, network_component: railway-specific\n// - standard_compliance: ISO standards\n// - processing_profile: railway, technical, general\n\nconst query = $json.query || $json.body?.query || '';\nconst filters = $json.filters || $json.body?.filters || {};\nconst limit = $json.limit || $json.body?.limit || 20;\n\n// Build Qdrant filter structure\nconst qdrantFilters = {\n  must: []\n};\n\n// Department filter\nif (filters.department) {\n  qdrantFilters.must.push({\n    key: 'department',\n    match: { value: filters.department }\n  });\n}\n\n// Document type category\nif (filters.document_type_category) {\n  qdrantFilters.must.push({\n    key: 'document_type_category',\n    match: { value: filters.document_type_category }\n  });\n}\n\n// Boolean flags\nif (filters.is_process !== undefined) {\n  qdrantFilters.must.push({\n    key: 'is_process',\n    match: { value: filters.is_process }\n  });\n}\n\nif (filters.is_form !== undefined) {\n  qdrantFilters.must.push({\n    key: 'is_form',\n    match: { value: filters.is_form }\n  });\n}\n\nif (filters.is_template !== undefined) {\n  qdrantFilters.must.push({\n    key: 'is_template',\n    match: { value: filters.is_template }\n  });\n}\n\n// Railway-specific filters\nif (filters.fleet_type) {\n  qdrantFilters.must.push({\n    key: 'fleet_type',\n    match: { value: filters.fleet_type }\n  });\n}\n\nif (filters.train_id) {\n  qdrantFilters.must.push({\n    key: 'train_id',\n    match: { value: filters.train_id }\n  });\n}\n\nif (filters.network_component) {\n  qdrantFilters.must.push({\n    key: 'network_component',\n    match: { value: filters.network_component }\n  });\n}\n\nreturn {\n  json: {\n    query,\n    limit,\n    filters: qdrantFilters.must.length > 0 ? qdrantFilters : {},\n    min_score: filters.min_score || 0.6\n  }\n};"
-      },
-      "id": "build-metadata-filters",
+      "id": "f344d333-17e5-4d0f-b180-4a3fd2188579",
       "name": "Build Metadata Filters",
       "type": "n8n-nodes-base.code",
-      "typeVersion": 1,
-      "position": [450, 300]
+      "typeVersion": 2,
+      "position": [
+        -48,
+        336
+      ]
     },
     {
       "parameters": {
-        "url": "http://localhost:8000/api/v1/search/semantic",
         "method": "POST",
+        "url": "http://localhost:8000/api/v1/search/semantic",
         "sendBody": true,
         "specifyBody": "json",
         "jsonBody": "={{ JSON.stringify($json) }}",
@@ -36,48 +24,77 @@
           "timeout": 15000
         }
       },
-      "id": "search-with-filters",
+      "id": "edcf0252-20dc-49ed-a301-9be0cf56309a",
       "name": "Search with Filters",
       "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 3,
-      "position": [650, 300]
+      "typeVersion": 4.2,
+      "position": [
+        176,
+        336
+      ]
     },
     {
       "parameters": {
-        "functionCode": "// Format filtered results\nconst response = $json;\n\nif (response.status === 'error') {\n  return {\n    json: {\n      success: false,\n      error: response.message,\n      results: []\n    }\n  };\n}\n\nconst results = (response.results || []).map(result => ({\n  document_id: result.document_id,\n  document_name: result.metadata?.document_name,\n  department: result.metadata?.department,\n  document_type_category: result.metadata?.document_type_category,\n  content_preview: (result.text || '').substring(0, 200),\n  relevance_score: result.score,\n  is_process: result.metadata?.is_process,\n  is_form: result.metadata?.is_form,\n  is_template: result.metadata?.is_template,\n  fleet_type: result.metadata?.fleet_type,\n  train_id: result.metadata?.train_id,\n  standard_compliance: result.metadata?.standard_compliance,\n  document_url: result.metadata?.document_url\n}));\n\nreturn {\n  json: {\n    success: true,\n    results,\n    filters_applied: $('Build Metadata Filters').item.json.filters,\n    total_results: results.length\n  }\n};"
+        "jsCode": "// Format Filtered Results\n// Formats metadata search results with proper grouping and citations\n\nconst inputData = $input.all();\nconst outputs = [];\n\nfor (const item of inputData) {\n  const response = item.json;\n  \n  // Check if we have results\n  if (!response.results || response.results.length === 0) {\n    outputs.push({\n      json: {\n        success: true,\n        message: \"No documents found matching your filters. Try: (1) removing some filters, (2) broader search terms, or (3) different departments.\",\n        query: response.query || \"\",\n        filters_applied: extractAppliedFilters(response),\n        results_count: 0,\n        results: [],\n        results_by_department: {},\n        results_by_type: {}\n      }\n    });\n    continue;\n  }\n\n  // Format results with proper citations\n  const formattedResults = response.results.map((result, index) => {\n    return {\n      rank: index + 1,\n      document_code: result.document_id || \"Unknown\",\n      title: result.document_name || \"Untitled Document\",\n      department: result.department || \"Unknown\",\n      document_type: result.document_type_category || \"Unknown\",\n      document_type_code: extractTypeCode(result.document_id),\n      version: result.version || \"N/A\",\n      updated_date: result.updated_date || null,\n      standard_compliance: result.standard_compliance || [],\n      content_snippet: result.content ? result.content.substring(0, 250) + \"...\" : \"\",\n      relevance_score: result.score ? result.score.toFixed(3) : \"N/A\",\n      quality_score: result.quality_score ? result.quality_score.toFixed(3) : \"N/A\",\n      sharepoint_url: result.document_url || null,\n      \n      // Generate citation format\n      citation: `**${result.document_id || \"Unknown\"}** (${\n        result.document_name || \"Untitled\"\n      }${result.version ? \", \" + result.version : \"\"})`\n    };\n  });\n\n  // Group by department\n  const byDepartment = groupBy(formattedResults, 'department');\n  \n  // Group by document type\n  const byType = groupBy(formattedResults, 'document_type');\n  \n  // Create formatted response\n  const formattedResponse = {\n    success: true,\n    search_type: \"metadata_filtered\",\n    query: response.query || \"(no query - filter only)\",\n    filters_applied: extractAppliedFilters(response),\n    results_count: formattedResults.length,\n    results: formattedResults,\n    \n    // Grouped results for easy navigation\n    results_by_department: Object.keys(byDepartment).map(dept => ({\n      department: dept,\n      count: byDepartment[dept].length,\n      documents: byDepartment[dept].map(r => r.citation)\n    })),\n    \n    results_by_type: Object.keys(byType).map(type => ({\n      type: type,\n      count: byType[type].length,\n      documents: byType[type].map(r => r.citation)\n    })),\n    \n    // Generate summary\n    summary: generateFilteredSummary(formattedResults, response.query),\n    \n    // Metadata\n    metadata: {\n      search_time_ms: response.search_time_ms || null,\n      total_documents_searched: response.total_points || null,\n      min_score_threshold: response.min_score || 0.7,\n      min_quality_threshold: response.min_quality || 0.95\n    }\n  };\n\n  outputs.push({ json: formattedResponse });\n}\n\n// Helper functions\nfunction groupBy(array, key) {\n  return array.reduce((result, item) => {\n    const groupKey = item[key] || 'Unknown';\n    if (!result[groupKey]) {\n      result[groupKey] = [];\n    }\n    result[groupKey].push(item);\n    return result;\n  }, {});\n}\n\nfunction extractTypeCode(documentId) {\n  if (!documentId) return \"Unknown\";\n  const match = documentId.match(/BMS-[A-Z]+-([A-Z]+)-/);\n  return match ? match[1] : \"Unknown\";\n}\n\nfunction extractAppliedFilters(response) {\n  const filters = [];\n  if (response.filter && response.filter.must) {\n    response.filter.must.forEach(condition => {\n      if (condition.match) {\n        filters.push(`${condition.key}=${condition.match.value}`);\n      } else if (condition.range) {\n        if (condition.range.gte) {\n          filters.push(`${condition.key}>=${condition.range.gte}`);\n        }\n        if (condition.range.lte) {\n          filters.push(`${condition.key}<=${condition.range.lte}`);\n        }\n      }\n    });\n  }\n  return filters;\n}\n\nfunction generateFilteredSummary(results, query) {\n  if (results.length === 0) {\n    return `No results found${query ? ` for \"${query}\"` : \"\"}.`;\n  }\n\n  const deptCounts = results.reduce((acc, r) => {\n    acc[r.department] = (acc[r.department] || 0) + 1;\n    return acc;\n  }, {});\n  \n  const deptSummary = Object.keys(deptCounts)\n    .map(dept => `${dept} (${deptCounts[dept]})`)\n    .join(\", \");\n  \n  const topResults = results.slice(0, 3);\n  const citations = topResults.map(r => r.citation).join(\"\\n\");\n  \n  return `Found ${results.length} documents${query ? ` for \"${query}\"` : \"\"}\\n\\nBy department: ${deptSummary}\\n\\nTop results:\\n${citations}`;\n}\n\nreturn outputs;"
       },
-      "id": "format-filtered-results",
+      "id": "e9f21be0-f5b1-4d98-a6f9-6dbf4fa15f6a",
       "name": "Format Filtered Results",
       "type": "n8n-nodes-base.code",
-      "typeVersion": 1,
-      "position": [850, 300]
+      "typeVersion": 2,
+      "position": [
+        400,
+        336
+      ]
     },
     {
-      "parameters": {
-        "respondWith": "json",
-        "responseBody": "={{ JSON.stringify($json) }}"
-      },
-      "id": "respond",
-      "name": "Respond",
-      "type": "n8n-nodes-base.respondToWebhook",
+      "parameters": {},
+      "id": "5cc064a9-3752-44da-9ff4-f069a84a93f8",
+      "name": "Execute Workflow Trigger",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
       "typeVersion": 1,
-      "position": [1050, 300]
+      "position": [
+        -272,
+        336
+      ]
     }
   ],
   "connections": {
-    "Webhook Trigger": {
-      "main": [[{"node": "Build Metadata Filters", "type": "main", "index": 0}]]
-    },
     "Build Metadata Filters": {
-      "main": [[{"node": "Search with Filters", "type": "main", "index": 0}]]
+      "main": [
+        [
+          {
+            "node": "Search with Filters",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Search with Filters": {
-      "main": [[{"node": "Format Filtered Results", "type": "main", "index": 0}]]
+      "main": [
+        [
+          {
+            "node": "Format Filtered Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
-    "Format Filtered Results": {
-      "main": [[{"node": "Respond", "type": "main", "index": 0}]]
+    "Execute Workflow Trigger": {
+      "main": [
+        [
+          {
+            "node": "Build Metadata Filters",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
-  "settings": {},
-  "active": true
+  "pinData": {},
+  "meta": {
+    "instanceId": "b764da079d9461ceee1e13c42e2f4b8dab8acbf563fdde0089b47461f4dd41c8"
+  }
 }

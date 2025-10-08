@@ -1,34 +1,22 @@
 {
-  "name": "Tool: Search Hybrid",
   "nodes": [
     {
       "parameters": {
-        "httpMethod": "POST",
-        "path": "tool-search-hybrid",
-        "responseMode": "responseNode",
-        "options": {}
+        "jsCode": "const inputData = $input.all();\nconst outputs = [];\n\nfor (const item of inputData) {\n  const params = {\n    query: item.json.query || \"\",\n    alpha: item.json.alpha !== undefined ? parseFloat(item.json.alpha) : 0.5,\n    limit: item.json.limit !== undefined ? parseInt(item.json.limit) : 10,\n    min_score: item.json.min_score !== undefined ? parseFloat(item.json.min_score) : 0.3\n  };\n  \n  // Only add min_quality if explicitly provided (don't default it)\n  if (item.json.min_quality !== undefined) {\n    params.min_quality = parseFloat(item.json.min_quality);\n  }\n\n  if (!params.query || params.query.trim() === \"\") {\n    throw new Error(\"Query parameter is required and cannot be empty\");\n  }\n\n  if (params.alpha < 0 || params.alpha > 1) {\n    throw new Error(\"Alpha must be between 0.0 and 1.0\");\n  }\n\n  if (params.limit < 1 || params.limit > 50) {\n    throw new Error(\"Limit must be between 1 and 50\");\n  }\n\n  if (params.min_score < 0 || params.min_score > 1) {\n    throw new Error(\"min_score must be between 0.0 and 1.0\");\n  }\n\n  if (params.min_quality !== undefined && (params.min_quality < 0 || params.min_quality > 1)) {\n    throw new Error(\"min_quality must be between 0.0 and 1.0\");\n  }\n\n  outputs.push({ json: params });\n}\n\nreturn outputs;"
       },
-      "id": "webhook-trigger",
-      "name": "Webhook Trigger",
-      "type": "n8n-nodes-base.webhook",
-      "typeVersion": 1,
-      "position": [250, 300],
-      "webhookId": "tool-search-hybrid"
-    },
-    {
-      "parameters": {
-        "functionCode": "// Parse hybrid search parameters\nconst query = $json.query || $json.body?.query || '';\nconst limit = $json.limit || $json.body?.limit || 10;\nconst vectorWeight = $json.vector_weight || $json.body?.vector_weight || 0.7;\nconst keywordWeight = $json.keyword_weight || $json.body?.keyword_weight || 0.3;\nconst candidateMultiplier = $json.candidate_multiplier || $json.body?.candidate_multiplier || 3;\nconst filters = $json.filters || $json.body?.filters || {};\n\nreturn {\n  json: {\n    query,\n    limit,\n    vector_weight: vectorWeight,\n    keyword_weight: keywordWeight,\n    candidate_multiplier: candidateMultiplier,\n    filters\n  }\n};"
-      },
-      "id": "parse-input",
+      "id": "5d6e6f16-c30f-45d2-83d4-0e081eac1adf",
       "name": "Parse Hybrid Parameters",
       "type": "n8n-nodes-base.code",
       "typeVersion": 1,
-      "position": [450, 300]
+      "position": [
+        -32,
+        -16
+      ]
     },
     {
       "parameters": {
-        "url": "http://localhost:8000/api/v1/search/hybrid",
         "method": "POST",
+        "url": "http://localhost:8000/api/v1/search/hybrid",
         "sendBody": true,
         "specifyBody": "json",
         "jsonBody": "={{ JSON.stringify($json) }}",
@@ -36,48 +24,82 @@
           "timeout": 20000
         }
       },
-      "id": "call-hybrid-search",
+      "id": "b2b1a248-10c0-46b9-b3ce-5437de39bb59",
       "name": "Call Hybrid Search",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 3,
-      "position": [650, 300]
+      "position": [
+        192,
+        -16
+      ]
     },
     {
       "parameters": {
-        "functionCode": "// Format hybrid search results\nconst response = $json;\n\nif (response.status === 'error') {\n  return {\n    json: {\n      success: false,\n      error: response.message,\n      results: []\n    }\n  };\n}\n\nconst results = (response.results || []).map(result => ({\n  document_id: result.document_id,\n  document_name: result.metadata?.document_name || result.document_name,\n  content_preview: (result.text || '').substring(0, 250),\n  relevance_score: result.score || 0,\n  vector_score: result.vector_score || 0,\n  keyword_score: result.keyword_score || 0,\n  department: result.metadata?.department,\n  document_type: result.metadata?.document_type,\n  document_url: result.metadata?.document_url,\n  chunk_type: result.metadata?.chunk_type,\n  keywords: result.metadata?.keywords ? JSON.parse(result.metadata.keywords) : []\n}));\n\nreturn {\n  json: {\n    success: true,\n    results,\n    metadata: {\n      query: response.query,\n      search_type: 'hybrid',\n      vector_weight: response.vector_weight,\n      keyword_weight: response.keyword_weight,\n      total_results: results.length\n    }\n  }\n};"
+        "jsCode": "const inputData = $input.all();\nconst outputs = [];\n\nfor (const item of inputData) {\n  const response = item.json;\n  \n  if (!response.results || response.results.length === 0) {\n    outputs.push({\n      json: {\n        success: true,\n        message: \"No results found. Try broader search terms.\",\n        query: response.query || \"\",\n        results_count: 0,\n        results: []\n      }\n    });\n    continue;\n  }\n\n  const formattedResults = response.results.map((result, index) => {\n    return {\n      rank: index + 1,\n      document_code: result.document_id || \"Unknown\",\n      title: result.document_name || \"Untitled Document\",\n      department: result.department || \"Unknown\",\n      content_snippet: result.content ? result.content.substring(0, 300) + \"...\" : \"\",\n      relevance_score: result.score ? result.score.toFixed(3) : \"N/A\",\n      version: result.version || \"N/A\",\n      citation: `**${result.document_id || \"Unknown\"}** (${result.document_name || \"Untitled\"}${result.version ? \", \" + result.version : \"\"})`\n    };\n  });\n\n  const formattedResponse = {\n    success: true,\n    search_type: \"hybrid\",\n    query: response.query || \"\",\n    results_count: formattedResults.length,\n    results: formattedResults,\n    summary: `Found ${formattedResults.length} documents for \"${response.query || \"\"}\"\\n\\nTop result: ${formattedResults[0].citation}`\n  };\n\n  outputs.push({ json: formattedResponse });\n}\n\nreturn outputs;"
       },
-      "id": "format-results",
+      "id": "9f028e0a-1196-43d3-9212-b0926c00f859",
       "name": "Format Hybrid Results",
       "type": "n8n-nodes-base.code",
       "typeVersion": 1,
-      "position": [850, 300]
+      "position": [
+        416,
+        -16
+      ]
     },
     {
-      "parameters": {
-        "respondWith": "json",
-        "responseBody": "={{ JSON.stringify($json) }}"
-      },
-      "id": "respond",
-      "name": "Respond",
-      "type": "n8n-nodes-base.respondToWebhook",
+      "parameters": {},
+      "id": "6aa89c66-515e-4eb2-b41a-ebff8a13c88f",
+      "name": "Execute Workflow Trigger",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
       "typeVersion": 1,
-      "position": [1050, 300]
+      "position": [
+        -256,
+        -16
+      ]
     }
   ],
   "connections": {
-    "Webhook Trigger": {
-      "main": [[{"node": "Parse Hybrid Parameters", "type": "main", "index": 0}]]
-    },
     "Parse Hybrid Parameters": {
-      "main": [[{"node": "Call Hybrid Search", "type": "main", "index": 0}]]
+      "main": [
+        [
+          {
+            "node": "Call Hybrid Search",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Call Hybrid Search": {
-      "main": [[{"node": "Format Hybrid Results", "type": "main", "index": 0}]]
+      "main": [
+        [
+          {
+            "node": "Format Hybrid Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Format Hybrid Results": {
-      "main": [[{"node": "Respond", "type": "main", "index": 0}]]
+      "main": [
+        []
+      ]
+    },
+    "Execute Workflow Trigger": {
+      "main": [
+        [
+          {
+            "node": "Parse Hybrid Parameters",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
-  "settings": {},
-  "active": true
+  "pinData": {},
+  "meta": {
+    "instanceId": "b764da079d9461ceee1e13c42e2f4b8dab8acbf563fdde0089b47461f4dd41c8"
+  }
 }

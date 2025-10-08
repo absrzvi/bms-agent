@@ -1,34 +1,33 @@
 {
-  "name": "Tool: Search Semantic",
   "nodes": [
     {
-      "parameters": {
-        "httpMethod": "POST",
-        "path": "tool-search-semantic",
-        "responseMode": "responseNode",
-        "options": {}
-      },
-      "id": "webhook-trigger",
-      "name": "Webhook Trigger",
-      "type": "n8n-nodes-base.webhook",
+      "parameters": {},
+      "id": "18ef8bb1-2193-4991-88a4-5a6f639b572d",
+      "name": "Execute Workflow Trigger",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
       "typeVersion": 1,
-      "position": [250, 300],
-      "webhookId": "tool-search-semantic"
+      "position": [
+        -144,
+        240
+      ]
     },
     {
       "parameters": {
-        "functionCode": "// Parse search parameters with metadata filters\nconst query = $json.query || $json.body?.query || '';\nconst limit = $json.limit || $json.body?.limit || 10;\nconst minScore = $json.min_score || $json.body?.min_score || 0.7;\nconst minQuality = $json.min_quality || $json.body?.min_quality || 0.0;\n\n// Enhanced filters from Qdrant metadata\nconst filters = $json.filters || $json.body?.filters || {};\n\n// Available filter fields:\n// - department: QHSE, Engineering, Operations, etc.\n// - document_type_category: process, form, template, policy, procedure\n// - is_process, is_form, is_template: boolean flags\n// - processing_profile: railway, technical, general\n// - fleet_type, train_id, network_component: railway-specific\n// - standard_compliance: ISO standards\n\nreturn {\n  json: {\n    query,\n    limit,\n    min_score: minScore,\n    min_quality: minQuality,\n    filters,\n    include_metadata: true\n  }\n};"
+        "jsCode": "// Parse and validate search parameters\nconst inputData = $input.all();\n\nlet query = '';\nlet collection_name = 'nomad_bms_documents';\nlet top_k = 5;\nlet score_threshold = 0.3;\n\nif (inputData.length > 0) {\n  const data = inputData[0].json;\n  query = data.query || data.q || data.search || data.text || '';\n  collection_name = data.collection || data.collection_name || 'nomad_bms_documents';\n  top_k = parseInt(data.top_k || data.limit || data.k || 5);\n  score_threshold = parseFloat(data.score_threshold || data.threshold || 0.3);\n}\n\nif (!query || query.trim() === '') {\n  throw new Error('Missing required parameter: query');\n}\n\nreturn [{\n  json: {\n    query: query.trim(),\n    collection_name: collection_name,\n    top_k: top_k,\n    score_threshold: score_threshold\n  }\n}];"
       },
-      "id": "parse-input",
+      "id": "75cb5eb2-10ee-4bb3-823e-282ac125140b",
       "name": "Parse Search Parameters",
       "type": "n8n-nodes-base.code",
-      "typeVersion": 1,
-      "position": [450, 300]
+      "typeVersion": 2,
+      "position": [
+        48,
+        240
+      ]
     },
     {
       "parameters": {
-        "url": "http://localhost:8000/api/v1/search/semantic",
         "method": "POST",
+        "url": "http://localhost:8000/api/v1/search/semantic",
         "sendBody": true,
         "specifyBody": "json",
         "jsonBody": "={{ JSON.stringify($json) }}",
@@ -36,48 +35,66 @@
           "timeout": 15000
         }
       },
-      "id": "call-semantic-search",
+      "id": "80c36863-ecfc-43ef-8f1c-96443af560fd",
       "name": "Call Semantic Search",
       "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 3,
-      "position": [650, 300]
+      "typeVersion": 4.2,
+      "position": [
+        256,
+        240
+      ]
     },
     {
       "parameters": {
-        "functionCode": "// Format search results with rich metadata\nconst response = $json;\n\nif (response.status === 'error') {\n  return {\n    json: {\n      success: false,\n      error: response.message,\n      results: []\n    }\n  };\n}\n\nconst results = (response.results || []).map(result => ({\n  document_id: result.document_id,\n  document_name: result.metadata?.document_name || result.document_name,\n  document_type: result.metadata?.document_type || 'unknown',\n  department: result.metadata?.department || 'unknown',\n  document_type_category: result.metadata?.document_type_category || 'unknown',\n  \n  // Content\n  content: result.text || result.content,\n  content_preview: (result.text || result.content || '').substring(0, 300) + '...',\n  \n  // Scores\n  relevance_score: result.score || 0,\n  quality_score: result.metadata?.quality_score || 0,\n  \n  // Context\n  chunk_index: result.chunk_key || result.metadata?.chunk_index,\n  chunk_type: result.metadata?.chunk_type || 'unknown',\n  hierarchy_level: result.metadata?.hierarchy_level || 'unknown',\n  has_context: result.metadata?.has_context || false,\n  \n  // Railway-specific metadata\n  fleet_type: result.metadata?.fleet_type || null,\n  train_id: result.metadata?.train_id || null,\n  network_component: result.metadata?.network_component || null,\n  configuration_type: result.metadata?.configuration_type || null,\n  \n  // Document properties\n  is_process: result.metadata?.is_process || false,\n  is_form: result.metadata?.is_form || false,\n  is_template: result.metadata?.is_template || false,\n  \n  // Standards\n  standard_compliance: result.metadata?.standard_compliance || null,\n  \n  // URLs\n  document_url: result.metadata?.document_url || result.source_url || null,\n  \n  // Processing info\n  processing_profile: result.metadata?.processing_profile || 'railway',\n  processing_version: result.metadata?.processing_version || 'unknown',\n  \n  // Entities and keywords\n  entities: result.metadata?.entities ? JSON.parse(result.metadata.entities) : [],\n  keywords: result.metadata?.keywords ? JSON.parse(result.metadata.keywords) : [],\n  technical_terms: result.metadata?.technical_terms ? JSON.parse(result.metadata.technical_terms) : []\n}));\n\nreturn {\n  json: {\n    success: true,\n    results,\n    metadata: {\n      query: response.query,\n      total_results: results.length,\n      search_type: 'semantic',\n      min_score_applied: response.min_score || 0.7,\n      min_quality_applied: response.min_quality || 0.0\n    }\n  }\n};"
+        "jsCode": "// Format API response with metadata\nconst inputData = $input.all();\n\nif (inputData.length === 0) {\n  return [{\n    json: {\n      success: false,\n      error: 'No response from search API',\n      results: []\n    }\n  }];\n}\n\nconst response = inputData[0].json;\n\nif (response.detail || response.error) {\n  return [{\n    json: {\n      success: false,\n      error: response.detail || response.error,\n      results: []\n    }\n  }];\n}\n\nif (!response.chunks || response.chunks.length === 0) {\n  return [{\n    json: {\n      success: true,\n      message: 'No results found',\n      results: [],\n      total_results: 0\n    }\n  }];\n}\n\nconst formattedResults = response.chunks.map((chunk, index) => {\n  const metadata = chunk.metadata || {};\n  return {\n    rank: index + 1,\n    score: chunk.score ? chunk.score.toFixed(4) : 'N/A',\n    content: chunk.content || chunk.text || '',\n    document_name: metadata.document_name || 'Unknown',\n    document_type: metadata.document_type || 'Unknown',\n    page_number: metadata.page_number || null,\n    chunk_type: metadata.chunk_type || 'unknown',\n    standards: metadata.standards || [],\n    categories: metadata.categories || []\n  };\n});\n\nreturn [{\n  json: {\n    success: true,\n    total_results: formattedResults.length,\n    query: response.query || 'N/A',\n    results: formattedResults,\n    search_metadata: {\n      collection: response.collection_name || 'bms_documents',\n      execution_time_ms: response.execution_time_ms || null,\n      timestamp: new Date().toISOString()\n    }\n  }\n}];"
       },
-      "id": "format-results",
+      "id": "5cc471d7-175f-475d-a0a4-fd984890ee23",
       "name": "Format Results with Metadata",
       "type": "n8n-nodes-base.code",
-      "typeVersion": 1,
-      "position": [850, 300]
-    },
-    {
-      "parameters": {
-        "respondWith": "json",
-        "responseBody": "={{ JSON.stringify($json) }}"
-      },
-      "id": "respond",
-      "name": "Respond",
-      "type": "n8n-nodes-base.respondToWebhook",
-      "typeVersion": 1,
-      "position": [1050, 300]
+      "typeVersion": 2,
+      "position": [
+        464,
+        240
+      ]
     }
   ],
   "connections": {
-    "Webhook Trigger": {
-      "main": [[{"node": "Parse Search Parameters", "type": "main", "index": 0}]]
+    "Execute Workflow Trigger": {
+      "main": [
+        [
+          {
+            "node": "Parse Search Parameters",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Parse Search Parameters": {
-      "main": [[{"node": "Call Semantic Search", "type": "main", "index": 0}]]
+      "main": [
+        [
+          {
+            "node": "Call Semantic Search",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Call Semantic Search": {
-      "main": [[{"node": "Format Results with Metadata", "type": "main", "index": 0}]]
-    },
-    "Format Results with Metadata": {
-      "main": [[{"node": "Respond", "type": "main", "index": 0}]]
+      "main": [
+        [
+          {
+            "node": "Format Results with Metadata",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
-  "settings": {},
-  "active": true
+  "pinData": {},
+  "meta": {
+    "instanceId": "b764da079d9461ceee1e13c42e2f4b8dab8acbf563fdde0089b47461f4dd41c8"
+  }
 }
