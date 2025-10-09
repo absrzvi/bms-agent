@@ -5,57 +5,28 @@
         "public": true,
         "options": {}
       },
-      "id": "d38d7785-314b-403a-9779-11902bde9b36",
+      "id": "54d470d2-7a95-4f9d-9101-2f764787c38e",
       "name": "When chat message received",
       "type": "@n8n/n8n-nodes-langchain.chatTrigger",
       "typeVersion": 1.1,
       "position": [
-        336,
-        32
+        -16,
+        304
       ],
       "webhookId": "bms-ai-agent-chat"
-    },
-    {
-      "parameters": {
-        "assignments": {
-          "assignments": [
-            {
-              "id": "query-field",
-              "name": "query",
-              "value": "={{ $json?.chatInput || $json.body?.chatInput || $json.query }}",
-              "type": "string"
-            },
-            {
-              "id": "session-field",
-              "name": "sessionId",
-              "value": "={{ $json?.sessionId || $json.body?.sessionId || 'default-session' }}",
-              "type": "string"
-            }
-          ]
-        },
-        "options": {}
-      },
-      "id": "655f5194-2e50-4c7a-8a12-e6eacfb321cc",
-      "name": "Parse Input",
-      "type": "n8n-nodes-base.set",
-      "typeVersion": 3.4,
-      "position": [
-        560,
-        32
-      ]
     },
     {
       "parameters": {
         "model": "gpt-oss:latest",
         "options": {}
       },
-      "id": "8b1d6b63-7163-4d00-b803-e86038fe28e3",
+      "id": "d07f90e9-ea75-40c9-9ddc-bd296b089db5",
       "name": "Ollama Chat Model",
       "type": "@n8n/n8n-nodes-langchain.lmChatOllama",
       "typeVersion": 1,
       "position": [
-        688,
-        256
+        208,
+        432
       ],
       "credentials": {
         "ollamaApi": {
@@ -63,51 +34,6 @@
           "name": "Ollama account"
         }
       }
-    },
-    {
-      "parameters": {
-        "sessionIdType": "customKey",
-        "sessionKey": "={{ $json.sessionId }}",
-        "contextWindowLength": 10
-      },
-      "id": "8e204422-586b-484d-97e9-801b2d8d3b9f",
-      "name": "Window Buffer Memory",
-      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
-      "typeVersion": 1.2,
-      "position": [
-        848,
-        256
-      ]
-    },
-    {
-      "parameters": {
-        "promptType": "define",
-        "text": "={{ $json.query }}",
-        "options": {
-          "systemMessage": "You are BMS Agent, a specialized AI assistant for railway network documentation.\nKnowledge cutoff: January 2025\nCurrent date: {current_date}\nReasoning: medium\n```\n\n## Developer Message\n\nYou are the Nomad BMS Documentation Agent. You help users find information across 552 railway documents (1,794 searchable chunks) spanning 24 departments.\n\n---\n\n## Document Coverage (Verified 2025-10-07)\n\n**Core Stats**:\n- 552 unique documents | 1,794 searchable chunks | 7,936 vector embeddings (768-dim)\n- 24 departments | 22 document types | Multi-vector architecture (parent/child/chunk/full_doc)\n- Naming: `BMS-[DEPT]-[TYPE]-[###] [Title]`\n\n**Top Departments** (67% coverage):\n- QHSE (421 docs, 23.5%) - Quality, Health, Safety, Environment\n- RENG (212, 11.8%) - Railway Engineering  \n- HUMR (206, 11.5%) - Human Resources\n- ISEC (156, 8.7%) - Information Security\n- PROJ (113, 6.3%) - Project Management\n- SERV (80, 4.5%) - Service/Operations\n\n**Other Departments**: FINA, PROC, HI, BDEV, ITBS, PROD, QATE, MARK, ENER, TDEV, SYSA, LEGA, SALE, ENGI, BCON, DEVL, DEVO, COMM\n\n**Top Document Types** (82% coverage):\n- FOR (339, 20.5%) - Forms/Templates\n- PRO (273, 16.5%) - Procedures/Processes\n- POL (222, 13.4%) - Policies\n- GUI (222, 13.4%) - Guidelines\n- TEC (155, 9.4%) - Technical Specifications\n- MAN (153, 9.3%) - Manuals\n\n**Standards**: ISO 27001, ISO 14001, ISO 9001, ISO 45001 | Railway: EN50155, EN45545\n\n---\n\n## 8 Search Tools\n\n| Tool | Use When | Speed |\n|------|----------|-------|\n| **ask_bms** | General Q&A, natural language | 200ms |\n| **search_semantic** | Concepts, meaning-based | 100ms |\n| **search_hybrid** | Specific terms + concepts (highest precision) | 150ms |\n| **search_contextual** | Need full section/parent document | 180ms |\n| **search_metadata** | Filter by dept/type/date | 80ms |\n| **search_version** | Latest version only (safety-critical) | 120ms |\n| **search_faceted** | Explore categories/distribution | 200ms |\n| **search_explained** | Understand scoring/relevance | 120ms |\n\n**Quality Gates**: All tools enforce relevance ≥0.5, RAGAS quality ≥0.7 (avg: 0.844, range: 0.76-0.90)\n\n---\n\n## Tool Selection (Quick Rules)\n\n- Natural question → **ask_bms**\n- Conceptual search → **search_semantic**  \n- Exact terms + concepts → **search_hybrid** ⭐\n- Full context needed → **search_contextual**\n- Filter properties → **search_metadata**\n- \"Latest\" or safety docs → **search_version** ⭐\n- Explore/discover → **search_faceted**\n- Why this result? → **search_explained**\n\n**Common Patterns**: hybrid→contextual | faceted→metadata | semantic→version\n\n---\n\n## Critical Rules\n\n### 🚨 MANDATORY: Source Citation\n**EVERY response with document content MUST cite sources.**\n\nFormat: \"According to **BMS-DEPT-TYPE-###** (Title, vX.X)...\"\n\nRequired elements:\n- **Document code** (bold): **BMS-QHSE-PRO-007**\n- **Version** (for QHSE/RENG safety): v2.1\n- **Title** (recommended): Visitor Management Process\n\n**No citation = Unacceptable response.** If no source found, say: \"I couldn't find this in the BMS system.\"\n\n### Domain Boundaries\n- ONLY answer BMS railway documentation questions\n- Redirect unrelated: \"I'm specialized in BMS railway documentation covering [departments]. How can I help with BMS docs?\"\n\n### Quality Standards\n- Never fabricate content\n- Use search_version for QHSE/RENG safety docs\n- Verify versions for compliance info\n- Top 3-5 results unless requested otherwise\n\n### Response Format\n- Bold document codes: **BMS-QHSE-PRO-007**\n- Clear, professional, concise\n- Cite: \"According to **BMS-[CODE]** (vX.X)...\"\n- Offer follow-ups: \"Need full context? I can use search_contextual\"\n\n---\n\n## Department Focus\n\n**Safety-Critical** (use search_version + search_hybrid):\n- QHSE: Safety, environment, risk management\n- RENG: Engineering standards, technical specs\n\n**Operational**:\n- SERV: Service operations, maintenance\n- PROJ: Project management, planning\n- HUMR: Personnel, training, HR policies\n\n**Compliance/Security**:\n- ISEC: Cybersecurity, access control\n- LEGA: Legal, regulatory\n\n**Business Support**:\n- FINA: Financial planning, budgeting\n- PROC: Procurement, vendor management\n- MARK/SALE: Marketing, sales\n\n---\n\n## Workflow\n\n1. **Parse intent** → select optimal tool\n2. **Execute search** → apply quality filters (≥0.5 relevance, ≥0.5 quality)\n3. **Synthesize** → cite sources with **bold codes + versions**\n4. **Offer next** → suggest contextual search if needed\n\n**No results?** Try: broader terms | different tool | department filter | search_faceted to explore\n\n---\n\n## Key Do's & Don'ts\n\n**✅ DO**:\n- **ALWAYS cite with document codes** (non-negotiable)\n- Use search_version for safety/compliance docs\n- Bold format: **BMS-DEPT-TYPE-###**\n- Include versions for QHSE/RENG\n- Apply quality thresholds (≥0.5 relevance, ≥0.5 quality)\n\n**❌ DON'T**:\n- **NEVER provide uncited information** (#1 rule)\n- Fabricate content\n- Skip version verification for safety docs\n- Present low-quality results (<0.5 score)\n- Make up document codes\n\n---\n\n## Success = \n\nUsers find info in ≤3 turns | Citations present (≥0.85 score) | Responses clear + actionable | Right tool selected | Trust maintained through transparency\n\n**Trust built by**: Never fabricating | Acknowledging limits | Prioritizing accuracy | Always citing | Using right tools\n\n---\n\n## Response Template\n\n```\nAccording to **BMS-[DEPT]-[TYPE]-[###]** ([Title], v[X.X]), [answer content]...\n\n[If multiple sources:]\nAdditionally, **BMS-[DEPT]-[TYPE]-[###]** (v[X.X]) specifies...\n\n[Offer follow-up:]\nWould you like [full context / related docs / specific department focus]?\n```\n\n---\n\n**Mission**: Make 552 railway documents accessible with precision, citations, and trust. Use the right tool. Cite every source. Be helpful."
-        }
-      },
-      "id": "6b9f3ffd-c309-4c4a-873a-d2190abffc72",
-      "name": "BMS AI Agent",
-      "type": "@n8n/n8n-nodes-langchain.agent",
-      "typeVersion": 1.6,
-      "position": [
-        976,
-        32
-      ]
-    },
-    {
-      "parameters": {
-        "options": {}
-      },
-      "id": "90f2db69-f775-4b60-a5f7-48db5400de49",
-      "name": "Respond to Webhook",
-      "type": "n8n-nodes-base.respondToWebhook",
-      "typeVersion": 1.1,
-      "position": [
-        1328,
-        32
-      ]
     },
     {
       "parameters": {
@@ -122,12 +48,12 @@
           ]
         }
       },
-      "id": "7d53154c-4238-488a-8c97-5a2116df0181",
+      "id": "e218e53f-ba93-4a0b-82a1-b3f0261254eb",
       "name": "search_metadata",
       "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
       "typeVersion": 1.1,
       "position": [
-        976,
+        464,
         432
       ]
     },
@@ -144,12 +70,12 @@
           ]
         }
       },
-      "id": "daff48df-536e-4fbd-bb18-66041211e5d1",
+      "id": "bdee8e6c-3661-4716-a5be-6038e9490ef0",
       "name": "search_version",
       "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
       "typeVersion": 1.1,
       "position": [
-        1104,
+        592,
         432
       ]
     },
@@ -166,12 +92,12 @@
           ]
         }
       },
-      "id": "365083d9-627f-4423-8906-476ceddd829c",
+      "id": "a7823348-8966-4f6c-8427-cb122f6e2d7e",
       "name": "search_faceted",
       "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
       "typeVersion": 1.1,
       "position": [
-        1232,
+        720,
         432
       ]
     },
@@ -188,12 +114,12 @@
           ]
         }
       },
-      "id": "280053f0-9127-456b-9f13-85583c766b8d",
+      "id": "1b86f3fe-90b6-448c-b228-54130e5573ab",
       "name": "search_explained",
       "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
       "typeVersion": 1.1,
       "position": [
-        1360,
+        848,
         432
       ]
     },
@@ -210,13 +136,13 @@
           ]
         }
       },
-      "id": "400ce7ce-93e4-4937-b7a3-d5f11670d1d4",
+      "id": "59d08a5e-1f5e-47c5-bd0c-ef8022870db6",
       "name": "ask_bms",
       "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
       "typeVersion": 1.1,
       "position": [
         976,
-        256
+        432
       ]
     },
     {
@@ -232,13 +158,13 @@
           ]
         }
       },
-      "id": "a8f4ab60-0578-44d6-a11f-2793358a7fb4",
+      "id": "d6d5b995-4164-496f-9509-226d9aca5b17",
       "name": "search_semantic",
       "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
       "typeVersion": 1.1,
       "position": [
         1104,
-        256
+        432
       ]
     },
     {
@@ -254,13 +180,13 @@
           ]
         }
       },
-      "id": "b03a2420-ce96-42e8-afb0-9f38a8ea0b14",
+      "id": "a1828e82-de71-4cd7-a264-f4c0831368e3",
       "name": "search_hybrid",
       "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
       "typeVersion": 1.1,
       "position": [
         1232,
-        256
+        432
       ]
     },
     {
@@ -276,14 +202,184 @@
           ]
         }
       },
-      "id": "e6eb368c-33c0-4212-96b8-149fa4db1336",
+      "id": "3838b2e8-773e-4d7b-9eb0-c1b6ab2d29b9",
       "name": "search_contextual",
       "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
       "typeVersion": 1.1,
       "position": [
         1360,
-        256
+        432
       ]
+    },
+    {
+      "parameters": {
+        "trigger": [
+          "app_mention"
+        ],
+        "watchWorkspace": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.slackTrigger",
+      "typeVersion": 1,
+      "position": [
+        80,
+        112
+      ],
+      "id": "dccbf4ca-044c-4df9-b875-8796c9ebe71e",
+      "name": "Slack Trigger",
+      "webhookId": "3acd57cb-06be-4c9d-9f69-8fd6c1327562",
+      "credentials": {
+        "slackApi": {
+          "id": "OeiwmHKRbZ7N0LWS",
+          "name": "Slack account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "select": "user",
+        "user": {
+          "__rl": true,
+          "value": "UCRCE1PL1",
+          "mode": "list",
+          "cachedResultName": "ext.jan.haegeman"
+        },
+        "text": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Message_Text', ``, 'string') }}",
+        "otherOptions": {}
+      },
+      "type": "n8n-nodes-base.slackTool",
+      "typeVersion": 2.3,
+      "position": [
+        1488,
+        432
+      ],
+      "id": "3a90f7b1-00e5-4276-8b94-57807877ea35",
+      "name": "Send a message in Slack",
+      "webhookId": "68fcd4c9-1465-400f-b3d1-b87025bf8839",
+      "credentials": {
+        "slackApi": {
+          "id": "OeiwmHKRbZ7N0LWS",
+          "name": "Slack account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "C09LEHUHAG0",
+          "mode": "list",
+          "cachedResultName": "nomi-test"
+        },
+        "text": "={{ $json.output }}",
+        "otherOptions": {}
+      },
+      "id": "db7c349c-21b7-4760-a1b8-5f38abd618f4",
+      "name": "Reply to Thread (API Token)",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.2,
+      "position": [
+        1200,
+        112
+      ],
+      "webhookId": "4046827b-63e1-4224-8e3e-ab34d8be72d5",
+      "credentials": {
+        "slackOAuth2Api": {
+          "id": "nHz4P3t89aErJMd4",
+          "name": "Slack account"
+        }
+      },
+      "notes": "Posts reply using Slack API Token"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "user-text",
+              "name": "userMessage",
+              "value": "={{ $json.blocks[0].elements[0].elements[1].text }}",
+              "type": "string"
+            },
+            {
+              "id": "user-id",
+              "name": "userId",
+              "value": "={{ $json.user }}",
+              "type": "string"
+            },
+            {
+              "id": "channel-id",
+              "name": "channelId",
+              "value": "={{ $json.channel }}",
+              "type": "string"
+            },
+            {
+              "id": "event-ts",
+              "name": "eventTs",
+              "value": "={{ $json.event_ts }}",
+              "type": "string"
+            },
+            {
+              "id": "a1229d3b-59f1-4ef0-82fc-375ba095a1f4",
+              "name": "type",
+              "value": "={{ $json.type }}",
+              "type": "string"
+            },
+            {
+              "id": "a482ddc0-bc68-4e42-8992-8736bc6f04d2",
+              "name": "sessionId",
+              "value": "={{ $json.client_msg_id }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "750185c1-3b22-4241-996e-cfa27d8d97f4",
+      "name": "Parse Slack Mention",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        304,
+        112
+      ],
+      "notes": "Extract user message and metadata"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.userMessage }}",
+        "options": {
+          "systemMessage": "You are Nomi, a specialized AI assistant for railway network documentation.\nKnowledge cutoff: January 2025\nCurrent date: {current_date}\nReasoning: medium\n```\n\n## Developer Message\n\nYou are the Nomad BMS Documentation Agent. You help users find information across 552 railway documents (1,794 searchable chunks) spanning 24 departments.\n\n---\n\n## Document Coverage (Verified 2025-10-07)\n\n**Core Stats**:\n- 552 unique documents | 1,794 searchable chunks | 7,936 vector embeddings (768-dim)\n- 24 departments | 22 document types | Multi-vector architecture (parent/child/chunk/full_doc)\n- Naming: `BMS-[DEPT]-[TYPE]-[###] [Title]`\n\n**Top Departments** (67% coverage):\n- QHSE (421 docs, 23.5%) - Quality, Health, Safety, Environment\n- RENG (212, 11.8%) - Railway Engineering  \n- HUMR (206, 11.5%) - Human Resources\n- ISEC (156, 8.7%) - Information Security\n- PROJ (113, 6.3%) - Project Management\n- SERV (80, 4.5%) - Service/Operations\n\n**Other Departments**: FINA, PROC, HI, BDEV, ITBS, PROD, QATE, MARK, ENER, TDEV, SYSA, LEGA, SALE, ENGI, BCON, DEVL, DEVO, COMM\n\n**Top Document Types** (82% coverage):\n- FOR (339, 20.5%) - Forms/Templates\n- PRO (273, 16.5%) - Procedures/Processes\n- POL (222, 13.4%) - Policies\n- GUI (222, 13.4%) - Guidelines\n- TEC (155, 9.4%) - Technical Specifications\n- MAN (153, 9.3%) - Manuals\n\n**Standards**: ISO 27001, ISO 14001, ISO 9001, ISO 45001 | Railway: EN50155, EN45545\n\n---\n\n## 8 Search Tools\n\n| Tool | Use When | Speed |\n|------|----------|-------|\n| **ask_bms** | General Q&A, natural language | 200ms |\n| **search_semantic** | Concepts, meaning-based | 100ms |\n| **search_hybrid** | Specific terms + concepts (highest precision) | 150ms |\n| **search_contextual** | Need full section/parent document | 180ms |\n| **search_metadata** | Filter by dept/type/date | 80ms |\n| **search_version** | Latest version only (safety-critical) | 120ms |\n| **search_faceted** | Explore categories/distribution | 200ms |\n| **search_explained** | Understand scoring/relevance | 120ms |\n\n**Quality Gates**: All tools enforce relevance ≥0.5, RAGAS quality ≥0.5 (relaxed for broader recall)\n\n---\n\n## Tool Selection (Quick Rules)\n\n- Natural question → **ask_bms**\n- Conceptual search → **search_semantic**  \n- Exact terms + concepts → **search_hybrid** ⭐\n- Full context needed → **search_contextual**\n- Filter properties → **search_metadata**\n- \"Latest\" or safety docs → **search_version** ⭐\n- Explore/discover → **search_faceted**\n- Why this result? → **search_explained**\n\n**Common Patterns**: hybrid→contextual | faceted→metadata | semantic→version\n\n---\n\n## Critical Rules\n\n### 🚨 MANDATORY: Source Citation\n**EVERY response with document content MUST cite sources.**\n\nFormat: \"According to **BMS-DEPT-TYPE-###** (Title, vX.X)...\"\n\nRequired elements:\n- **Document code** (bold): **BMS-QHSE-PRO-007**\n- **Version** (for QHSE/RENG safety): v2.1\n- **Title** (recommended): Visitor Management Process\n\n**No citation = Unacceptable response.** If no source found, say: \"I couldn't find this in the BMS system.\"\n\n### Domain Boundaries\n- ONLY answer BMS railway documentation questions\n- Redirect unrelated: \"I'm specialized in BMS railway documentation covering [departments]. How can I help with BMS docs?\"\n\n### Quality Standards\n- Never fabricate content\n- Use search_version for QHSE/RENG safety docs\n- Verify versions for compliance info\n- Top 3-5 results unless requested otherwise\n\n### Response Format\n- Bold document codes: **BMS-QHSE-PRO-007**\n- Clear, professional, concise\n- Cite: \"According to **BMS-[CODE]** (vX.X)...\"\n- Offer follow-ups: \"Need full context? I can use search_contextual\"\n\n---\n\n## Department Focus\n\n**Safety-Critical** (use search_version + search_hybrid):\n- QHSE: Safety, environment, risk management\n- RENG: Engineering standards, technical specs\n\n**Operational**:\n- SERV: Service operations, maintenance\n- PROJ: Project management, planning\n- HUMR: Personnel, training, HR policies\n\n**Compliance/Security**:\n- ISEC: Cybersecurity, access control\n- LEGA: Legal, regulatory\n\n**Business Support**:\n- FINA: Financial planning, budgeting\n- PROC: Procurement, vendor management\n- MARK/SALE: Marketing, sales\n\n---\n\n## Workflow\n\n1. **Parse intent** → select optimal tool\n2. **Execute search** → apply quality filters (≥0.5 relevance, ≥0.5 quality)\n3. **Synthesize** → cite sources with **bold codes + versions**\n4. **Offer next** → suggest contextual search if needed\n\n**No results?** Try: broader terms | different tool | department filter | search_faceted to explore\n\n---\n\n## Key Do's & Don'ts\n\n**✅ DO**:\n- **ALWAYS cite with document codes** (non-negotiable)\n- Use search_version for safety/compliance docs\n- Bold format: **BMS-DEPT-TYPE-###**\n- Include versions for QHSE/RENG\n- Apply quality thresholds (≥0.5 relevance, ≥0.5 quality)\n\n**❌ DON'T**:\n- **NEVER provide uncited information** (#1 rule)\n- Fabricate content\n- Skip version verification for safety docs\n- Present low-quality results (<0.5 score)\n- Make up document codes\n\n---\n\n## Success = \n\nUsers find info in ≤3 turns | Citations present (≥0.85 score) | Responses clear + actionable | Right tool selected | Trust maintained through transparency\n\n**Trust built by**: Never fabricating | Acknowledging limits | Prioritizing accuracy | Always citing | Using right tools\n\n---\n\n## Response Template\n\n```\nAccording to **BMS-[DEPT]-[TYPE]-[###]** ([Title], v[X.X]), [answer content]...\n\n[If multiple sources:]\nAdditionally, **BMS-[DEPT]-[TYPE]-[###]** (v[X.X]) specifies...\n\n[Offer follow-up:]\nWould you like [full context / related docs / specific department focus]?\n```\n\n---\n\n**Mission**: Make 552 railway documents accessible with precision, citations, and trust. Use the right tool. Cite every source. Be helpful."
+        }
+      },
+      "id": "afde9d50-b6de-4cf5-a3fe-b20f47e808c7",
+      "name": "Nomi",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.6,
+      "position": [
+        784,
+        112
+      ]
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.memoryRedisChat",
+      "typeVersion": 1.5,
+      "position": [
+        336,
+        432
+      ],
+      "id": "e81f0373-1e6f-434f-8475-1e5a10124e07",
+      "name": "Redis Chat Memory",
+      "credentials": {
+        "redis": {
+          "id": "JYKe4Lf6VUmb0fuq",
+          "name": "Redis account"
+        }
+      }
     }
   ],
   "connections": {
@@ -291,18 +387,7 @@
       "main": [
         [
           {
-            "node": "Parse Input",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Parse Input": {
-      "main": [
-        [
-          {
-            "node": "BMS AI Agent",
+            "node": "Nomi",
             "type": "main",
             "index": 0
           }
@@ -313,30 +398,8 @@
       "ai_languageModel": [
         [
           {
-            "node": "BMS AI Agent",
+            "node": "Nomi",
             "type": "ai_languageModel",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Window Buffer Memory": {
-      "ai_memory": [
-        [
-          {
-            "node": "BMS AI Agent",
-            "type": "ai_memory",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "BMS AI Agent": {
-      "main": [
-        [
-          {
-            "node": "Respond to Webhook",
-            "type": "main",
             "index": 0
           }
         ]
@@ -346,7 +409,7 @@
       "ai_tool": [
         [
           {
-            "node": "BMS AI Agent",
+            "node": "Nomi",
             "type": "ai_tool",
             "index": 0
           }
@@ -357,7 +420,7 @@
       "ai_tool": [
         [
           {
-            "node": "BMS AI Agent",
+            "node": "Nomi",
             "type": "ai_tool",
             "index": 0
           }
@@ -368,7 +431,7 @@
       "ai_tool": [
         [
           {
-            "node": "BMS AI Agent",
+            "node": "Nomi",
             "type": "ai_tool",
             "index": 0
           }
@@ -379,7 +442,7 @@
       "ai_tool": [
         [
           {
-            "node": "BMS AI Agent",
+            "node": "Nomi",
             "type": "ai_tool",
             "index": 0
           }
@@ -390,7 +453,7 @@
       "ai_tool": [
         [
           {
-            "node": "BMS AI Agent",
+            "node": "Nomi",
             "type": "ai_tool",
             "index": 0
           }
@@ -401,7 +464,7 @@
       "ai_tool": [
         [
           {
-            "node": "BMS AI Agent",
+            "node": "Nomi",
             "type": "ai_tool",
             "index": 0
           }
@@ -412,7 +475,7 @@
       "ai_tool": [
         [
           {
-            "node": "BMS AI Agent",
+            "node": "Nomi",
             "type": "ai_tool",
             "index": 0
           }
@@ -423,15 +486,104 @@
       "ai_tool": [
         [
           {
-            "node": "BMS AI Agent",
+            "node": "Nomi",
             "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Slack Trigger": {
+      "main": [
+        [
+          {
+            "node": "Parse Slack Mention",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message in Slack": {
+      "ai_tool": [
+        [
+          {
+            "node": "Nomi",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Slack Mention": {
+      "main": [
+        [
+          {
+            "node": "Nomi",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Nomi": {
+      "main": [
+        [
+          {
+            "node": "Reply to Thread (API Token)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Redis Chat Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "Nomi",
+            "type": "ai_memory",
             "index": 0
           }
         ]
       ]
     }
   },
-  "pinData": {},
+  "pinData": {
+    "Slack Trigger": [
+      {
+        "user": "UCRCE1PL1",
+        "type": "app_mention",
+        "ts": "1760006223.249329",
+        "client_msg_id": "bb3d9438-1cb9-41de-9c69-5d15c2539449",
+        "text": "<@U09KGNMCZGD> can you help?",
+        "team": "T4F9SSM0R",
+        "blocks": [
+          {
+            "type": "rich_text",
+            "block_id": "sHHYQ",
+            "elements": [
+              {
+                "type": "rich_text_section",
+                "elements": [
+                  {
+                    "type": "user",
+                    "user_id": "U09KGNMCZGD"
+                  },
+                  {
+                    "type": "text",
+                    "text": " can you help?"
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "channel": "C09LEHUHAG0",
+        "event_ts": "1760006223.249329"
+      }
+    ]
+  },
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "b764da079d9461ceee1e13c42e2f4b8dab8acbf563fdde0089b47461f4dd41c8"

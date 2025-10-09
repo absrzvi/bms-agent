@@ -1,333 +1,351 @@
 /**
- * Mocked Typing Indicator Tests (Task 1.3 - Coverage Remediation)
+ * Mocked Typing Indicator Tests (Task 1.3 - Test Coverage Remediation)
  *
- * Purpose: Test typing-indicator.js with mocked MS Teams Bot Framework API
- * Strategy: Mock axios for HTTP requests, use fake timers for intervals
- * Coverage Target: +5% (typing-indicator.js from 0% → 40%)
+ * Purpose: Test typing-indicator.js with mocked MS Teams API
+ * Coverage Goal: +5% (typing-indicator.js from 0% → 40%)
+ * Strategy: Mock axios for Bot Framework API calls
  */
 
+jest.mock('axios');
 const axios = require('axios');
-const MockAdapter = require('axios-mock-adapter');
+const handler = require('../../lib/typing-indicator');
 
 describe('TypingIndicatorHandler (Mocked) - Task 1.3', () => {
-  let handler;
-  let mockAxios;
+  const mockServiceUrl = 'https://smba.trafficmanager.net/teams';
+  const mockConversationId = 'conv-123';
+  const mockBotId = 'bot-456';
 
   beforeEach(() => {
-    // Clear module cache to get fresh instance
-    jest.resetModules();
-    handler = require('../../lib/typing-indicator');
-    mockAxios = new MockAdapter(axios);
+    jest.clearAllMocks();
     jest.useFakeTimers();
+    handler.cleanup(); // Clean up any active indicators
   });
 
   afterEach(() => {
-    mockAxios.restore();
-    handler.cleanup();
     jest.useRealTimers();
-  });
-
-  // ===== Single Typing Indicator Tests =====
-
-  test('should send typing activity to Bot Framework API', async () => {
-    mockAxios.onPost('https://smba.trafficmanager.net/teams/v3/conversations/conv-123/activities')
-      .reply(200, { id: 'activity-123' });
-
-    const result = await handler.sendTypingIndicator(
-      'https://smba.trafficmanager.net/teams',
-      'conv-123',
-      'bot-456'
-    );
-
-    expect(result).toBe(true);
-    expect(mockAxios.history.post.length).toBe(1);
-
-    const request = mockAxios.history.post[0];
-    expect(request.url).toContain('conv-123/activities');
-    expect(JSON.parse(request.data).type).toBe('typing');
-    expect(JSON.parse(request.data).from.id).toBe('bot-456');
-  });
-
-  test('should handle Bot Framework API error gracefully', async () => {
-    mockAxios.onPost().reply(401, { error: 'Unauthorized' });
-
-    const result = await handler.sendTypingIndicator(
-      'https://smba.trafficmanager.net/teams',
-      'conv-123',
-      'bot-456'
-    );
-
-    expect(result).toBe(false);
-  });
-
-  test('should handle network timeout gracefully', async () => {
-    mockAxios.onPost().timeout();
-
-    const result = await handler.sendTypingIndicator(
-      'https://smba.trafficmanager.net/teams',
-      'conv-123',
-      'bot-456'
-    );
-
-    expect(result).toBe(false);
-  });
-
-  test('should send single indicator via sendSingleIndicator', async () => {
-    mockAxios.onPost().reply(200, { id: 'activity-123' });
-
-    const result = await handler.sendSingleIndicator(
-      'https://smba.trafficmanager.net/teams',
-      'conv-123',
-      'bot-456'
-    );
-
-    expect(result).toBe(true);
-    expect(mockAxios.history.post.length).toBe(1);
-  });
-
-  // ===== Continuous Typing Indicator Tests =====
-
-  test('should start continuous typing indicator', () => {
-    mockAxios.onPost().reply(200, { id: 'activity-123' });
-
-    const indicatorId = handler.startTypingIndicator(
-      'https://smba.trafficmanager.net/teams',
-      'conv-123',
-      'bot-456'
-    );
-
-    expect(indicatorId).toBeTruthy();
-    expect(indicatorId).toContain('conv-123');
-    expect(handler.getActiveCount()).toBe(1);
-  });
-
-  test('should send typing indicator immediately on start', () => {
-    mockAxios.onPost().reply(200, { id: 'activity-123' });
-
-    handler.startTypingIndicator(
-      'https://smba.trafficmanager.net/teams',
-      'conv-123',
-      'bot-456'
-    );
-
-    // Should have sent one indicator immediately
-    expect(mockAxios.history.post.length).toBeGreaterThan(0);
-  });
-
-  test('should auto-refresh typing indicator every 3 seconds', () => {
-    mockAxios.onPost().reply(200, { id: 'activity-123' });
-
-    handler.startTypingIndicator(
-      'https://smba.trafficmanager.net/teams',
-      'conv-123',
-      'bot-456'
-    );
-
-    const initialCount = mockAxios.history.post.length;
-
-    // Advance time by 9 seconds (3 cycles)
-    jest.advanceTimersByTime(9000);
-
-    // Should have sent 3 additional indicators (plus the initial one)
-    expect(mockAxios.history.post.length).toBeGreaterThanOrEqual(initialCount + 3);
-  });
-
-  test('should stop typing indicator', () => {
-    mockAxios.onPost().reply(200, { id: 'activity-123' });
-
-    const indicatorId = handler.startTypingIndicator(
-      'https://smba.trafficmanager.net/teams',
-      'conv-123',
-      'bot-456'
-    );
-
-    expect(handler.getActiveCount()).toBe(1);
-
-    handler.stopTypingIndicator(indicatorId);
-
-    expect(handler.getActiveCount()).toBe(0);
-  });
-
-  test('should not send more indicators after stop', () => {
-    mockAxios.onPost().reply(200, { id: 'activity-123' });
-
-    const indicatorId = handler.startTypingIndicator(
-      'https://smba.trafficmanager.net/teams',
-      'conv-123',
-      'bot-456'
-    );
-
-    const countBeforeStop = mockAxios.history.post.length;
-
-    handler.stopTypingIndicator(indicatorId);
-
-    // Advance time after stopping
-    jest.advanceTimersByTime(9000);
-
-    // Should not have sent any new indicators
-    expect(mockAxios.history.post.length).toBe(countBeforeStop);
-  });
-
-  test('should handle stop on non-existent indicator gracefully', () => {
-    expect(() => {
-      handler.stopTypingIndicator('non-existent-id');
-    }).not.toThrow();
-  });
-
-  // ===== Wrap Operation with Indicator Tests =====
-
-  test('should wrap async operation with typing indicator', async () => {
-    mockAxios.onPost().reply(200, { id: 'activity-123' });
-
-    const mockOperation = jest.fn().mockResolvedValue('operation result');
-
-    const result = await handler.withTypingIndicator(
-      'https://smba.trafficmanager.net/teams',
-      'conv-123',
-      'bot-456',
-      mockOperation
-    );
-
-    expect(result).toBe('operation result');
-    expect(mockOperation).toHaveBeenCalledTimes(1);
-    expect(handler.getActiveCount()).toBe(0); // Indicator should be stopped
-  });
-
-  test('should stop indicator even if operation fails', async () => {
-    mockAxios.onPost().reply(200, { id: 'activity-123' });
-
-    const mockOperation = jest.fn().mockRejectedValue(new Error('Operation failed'));
-
-    await expect(
-      handler.withTypingIndicator(
-        'https://smba.trafficmanager.net/teams',
-        'conv-123',
-        'bot-456',
-        mockOperation
-      )
-    ).rejects.toThrow('Operation failed');
-
-    // Indicator should still be stopped
-    expect(handler.getActiveCount()).toBe(0);
-  });
-
-  test('should handle long-running operation with continuous typing', async () => {
-    mockAxios.onPost().reply(200, { id: 'activity-123' });
-
-    const longOperation = () => {
-      return new Promise(resolve => {
-        jest.advanceTimersByTime(10000); // Simulate 10 second operation
-        resolve('done');
-      });
-    };
-
-    const indicatorCountBefore = mockAxios.history.post.length;
-
-    await handler.withTypingIndicator(
-      'https://smba.trafficmanager.net/teams',
-      'conv-123',
-      'bot-456',
-      longOperation
-    );
-
-    // Should have sent multiple indicators during operation
-    expect(mockAxios.history.post.length).toBeGreaterThan(indicatorCountBefore + 2);
-  });
-
-  // ===== Multiple Indicators Tests =====
-
-  test('should support multiple concurrent indicators', () => {
-    mockAxios.onPost().reply(200, { id: 'activity-123' });
-
-    const id1 = handler.startTypingIndicator('https://teams.com', 'conv-1', 'bot-1');
-    const id2 = handler.startTypingIndicator('https://teams.com', 'conv-2', 'bot-1');
-
-    expect(handler.getActiveCount()).toBe(2);
-    expect(id1).not.toBe(id2);
-  });
-
-  test('should stop specific indicator without affecting others', () => {
-    mockAxios.onPost().reply(200, { id: 'activity-123' });
-
-    const id1 = handler.startTypingIndicator('https://teams.com', 'conv-1', 'bot-1');
-    const id2 = handler.startTypingIndicator('https://teams.com', 'conv-2', 'bot-1');
-
-    handler.stopTypingIndicator(id1);
-
-    expect(handler.getActiveCount()).toBe(1);
-  });
-
-  // ===== Cleanup Tests =====
-
-  test('should cleanup all active indicators', () => {
-    mockAxios.onPost().reply(200, { id: 'activity-123' });
-
-    handler.startTypingIndicator('https://teams.com', 'conv-1', 'bot-1');
-    handler.startTypingIndicator('https://teams.com', 'conv-2', 'bot-1');
-    handler.startTypingIndicator('https://teams.com', 'conv-3', 'bot-1');
-
-    expect(handler.getActiveCount()).toBe(3);
-
     handler.cleanup();
-
-    expect(handler.getActiveCount()).toBe(0);
   });
 
-  test('should handle cleanup with no active indicators', () => {
-    expect(() => {
+  describe('Single Typing Indicator', () => {
+    test('should send typing indicator successfully', async () => {
+      axios.post.mockResolvedValue({ status: 200 });
+
+      const result = await handler.sendTypingIndicator(
+        mockServiceUrl,
+        mockConversationId,
+        mockBotId
+      );
+
+      expect(result).toBe(true);
+      expect(axios.post).toHaveBeenCalledWith(
+        `${mockServiceUrl}/v3/conversations/${mockConversationId}/activities`,
+        expect.objectContaining({
+          type: 'typing',
+          from: expect.objectContaining({
+            id: mockBotId,
+            name: 'BMS Teams Bot'
+          })
+        }),
+        expect.objectContaining({
+          headers: { 'Content-Type': 'application/json' },
+          timeout: 5000
+        })
+      );
+    });
+
+    test('should handle API errors gracefully', async () => {
+      axios.post.mockRejectedValue(new Error('Network timeout'));
+
+      const result = await handler.sendTypingIndicator(
+        mockServiceUrl,
+        mockConversationId,
+        mockBotId
+      );
+
+      expect(result).toBe(false);
+    });
+
+    test('sendSingleIndicator should call sendTypingIndicator', async () => {
+      axios.post.mockResolvedValue({ status: 200 });
+
+      const result = await handler.sendSingleIndicator(
+        mockServiceUrl,
+        mockConversationId,
+        mockBotId
+      );
+
+      expect(result).toBe(true);
+      expect(axios.post).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('Continuous Typing Indicator', () => {
+    test('should start typing indicator', () => {
+      axios.post.mockResolvedValue({ status: 200 });
+
+      const indicatorId = handler.startTypingIndicator(
+        mockServiceUrl,
+        mockConversationId,
+        mockBotId
+      );
+
+      expect(indicatorId).toMatch(/^conv-123-\d+$/);
+      expect(handler.getActiveCount()).toBe(1);
+    });
+
+    test('should send indicator immediately on start', () => {
+      axios.post.mockResolvedValue({ status: 200 });
+
+      handler.startTypingIndicator(
+        mockServiceUrl,
+        mockConversationId,
+        mockBotId
+      );
+
+      // Should have sent indicator immediately (before any timer fires)
+      expect(axios.post).toHaveBeenCalledTimes(1);
+    });
+
+    test('should send indicator every 3 seconds', () => {
+      axios.post.mockResolvedValue({ status: 200 });
+
+      handler.startTypingIndicator(
+        mockServiceUrl,
+        mockConversationId,
+        mockBotId
+      );
+
+      // Initial call
+      expect(axios.post).toHaveBeenCalledTimes(1);
+
+      // Advance timer by 3 seconds
+      jest.advanceTimersByTime(3000);
+      expect(axios.post).toHaveBeenCalledTimes(2);
+
+      // Advance another 3 seconds
+      jest.advanceTimersByTime(3000);
+      expect(axios.post).toHaveBeenCalledTimes(3);
+
+      // Advance another 3 seconds
+      jest.advanceTimersByTime(3000);
+      expect(axios.post).toHaveBeenCalledTimes(4);
+    });
+
+    test('should stop typing indicator', () => {
+      axios.post.mockResolvedValue({ status: 200 });
+
+      const indicatorId = handler.startTypingIndicator(
+        mockServiceUrl,
+        mockConversationId,
+        mockBotId
+      );
+
+      expect(handler.getActiveCount()).toBe(1);
+
+      handler.stopTypingIndicator(indicatorId);
+
+      expect(handler.getActiveCount()).toBe(0);
+    });
+
+    test('should not send more indicators after stop', () => {
+      axios.post.mockResolvedValue({ status: 200 });
+
+      const indicatorId = handler.startTypingIndicator(
+        mockServiceUrl,
+        mockConversationId,
+        mockBotId
+      );
+
+      // Initial call
+      expect(axios.post).toHaveBeenCalledTimes(1);
+
+      // Stop indicator
+      handler.stopTypingIndicator(indicatorId);
+
+      // Advance timer - should NOT send more indicators
+      jest.advanceTimersByTime(6000);
+      expect(axios.post).toHaveBeenCalledTimes(1); // Still only 1
+    });
+
+    test('should handle multiple concurrent indicators', () => {
+      axios.post.mockResolvedValue({ status: 200 });
+
+      const id1 = handler.startTypingIndicator(mockServiceUrl, 'conv-1', mockBotId);
+      const id2 = handler.startTypingIndicator(mockServiceUrl, 'conv-2', mockBotId);
+      const id3 = handler.startTypingIndicator(mockServiceUrl, 'conv-3', mockBotId);
+
+      expect(handler.getActiveCount()).toBe(3);
+
+      handler.stopTypingIndicator(id2);
+      expect(handler.getActiveCount()).toBe(2);
+
+      handler.stopTypingIndicator(id1);
+      handler.stopTypingIndicator(id3);
+      expect(handler.getActiveCount()).toBe(0);
+    });
+
+    test('should handle stopping non-existent indicator gracefully', () => {
+      handler.stopTypingIndicator('non-existent-id');
+      // Should not throw error
+      expect(handler.getActiveCount()).toBe(0);
+    });
+  });
+
+  describe('Typing Indicator Wrapper', () => {
+    test('should wrap async operation with typing indicator', async () => {
+      axios.post.mockResolvedValue({ status: 200 });
+
+      const mockOperation = jest.fn().mockResolvedValue('operation result');
+
+      const result = await handler.withTypingIndicator(
+        mockServiceUrl,
+        mockConversationId,
+        mockBotId,
+        mockOperation
+      );
+
+      expect(result).toBe('operation result');
+      expect(mockOperation).toHaveBeenCalled();
+      expect(handler.getActiveCount()).toBe(0); // Should be stopped after operation
+    });
+
+    test('should stop indicator even if operation throws error', async () => {
+      axios.post.mockResolvedValue({ status: 200 });
+
+      const mockOperation = jest.fn().mockRejectedValue(new Error('Operation failed'));
+
+      await expect(
+        handler.withTypingIndicator(
+          mockServiceUrl,
+          mockConversationId,
+          mockBotId,
+          mockOperation
+        )
+      ).rejects.toThrow('Operation failed');
+
+      // Indicator should still be stopped
+      expect(handler.getActiveCount()).toBe(0);
+    });
+
+    test('should send indicators during long operation', async () => {
+      axios.post.mockResolvedValue({ status: 200 });
+
+      const mockOperation = jest.fn().mockImplementation(async () => {
+        // Simulate 10-second operation
+        await new Promise(resolve => setTimeout(resolve, 10000));
+        return 'result';
+      });
+
+      const promise = handler.withTypingIndicator(
+        mockServiceUrl,
+        mockConversationId,
+        mockBotId,
+        mockOperation
+      );
+
+      // Should send initial indicator
+      expect(axios.post).toHaveBeenCalledTimes(1);
+
+      // Advance timer through the operation
+      jest.advanceTimersByTime(10000);
+      await promise;
+
+      // Should have sent multiple indicators (initial + 3 intervals)
+      expect(axios.post).toHaveBeenCalledTimes(4);
+    });
+  });
+
+  describe('Cleanup', () => {
+    test('should clean up all active indicators', () => {
+      axios.post.mockResolvedValue({ status: 200 });
+
+      handler.startTypingIndicator(mockServiceUrl, 'conv-1', mockBotId);
+      handler.startTypingIndicator(mockServiceUrl, 'conv-2', mockBotId);
+      handler.startTypingIndicator(mockServiceUrl, 'conv-3', mockBotId);
+
+      expect(handler.getActiveCount()).toBe(3);
+
       handler.cleanup();
-    }).not.toThrow();
+
+      expect(handler.getActiveCount()).toBe(0);
+    });
+
+    test('should handle cleanup with no active indicators', () => {
+      handler.cleanup();
+      // Should not throw error
+      expect(handler.getActiveCount()).toBe(0);
+    });
   });
 
-  // ===== Edge Cases =====
+  describe('Active Indicator Tracking', () => {
+    test('should track active indicator count', () => {
+      axios.post.mockResolvedValue({ status: 200 });
 
-  test('should handle empty conversation ID', async () => {
-    mockAxios.onPost().reply(200, { id: 'activity-123' });
+      expect(handler.getActiveCount()).toBe(0);
 
-    const result = await handler.sendTypingIndicator(
-      'https://smba.trafficmanager.net/teams',
-      '',
-      'bot-456'
-    );
+      const id1 = handler.startTypingIndicator(mockServiceUrl, 'conv-1', mockBotId);
+      expect(handler.getActiveCount()).toBe(1);
 
-    // Should not throw, but may fail API call
-    expect(typeof result).toBe('boolean');
+      const id2 = handler.startTypingIndicator(mockServiceUrl, 'conv-2', mockBotId);
+      expect(handler.getActiveCount()).toBe(2);
+
+      handler.stopTypingIndicator(id1);
+      expect(handler.getActiveCount()).toBe(1);
+
+      handler.stopTypingIndicator(id2);
+      expect(handler.getActiveCount()).toBe(0);
+    });
   });
 
-  test('should handle malformed service URL', async () => {
-    mockAxios.onPost().networkError();
+  describe('Error Resilience', () => {
+    test('should continue sending indicators even if one fails', () => {
+      axios.post
+        .mockRejectedValueOnce(new Error('Network error'))
+        .mockResolvedValue({ status: 200 });
 
-    const result = await handler.sendTypingIndicator(
-      'invalid-url',
-      'conv-123',
-      'bot-456'
-    );
+      handler.startTypingIndicator(
+        mockServiceUrl,
+        mockConversationId,
+        mockBotId
+      );
 
-    expect(result).toBe(false);
-  });
+      // First call fails
+      expect(axios.post).toHaveBeenCalledTimes(1);
 
-  test('should handle Bot Framework 403 Forbidden', async () => {
-    mockAxios.onPost().reply(403, { error: 'Forbidden' });
+      // Subsequent calls should still work
+      jest.advanceTimersByTime(3000);
+      expect(axios.post).toHaveBeenCalledTimes(2);
 
-    const result = await handler.sendTypingIndicator(
-      'https://smba.trafficmanager.net/teams',
-      'conv-123',
-      'bot-456'
-    );
+      jest.advanceTimersByTime(3000);
+      expect(axios.post).toHaveBeenCalledTimes(3);
+    });
 
-    expect(result).toBe(false);
-  });
+    test('should handle Bot Framework 401 errors', async () => {
+      const error = new Error('Unauthorized');
+      error.response = { status: 401, data: { error: 'Invalid credentials' } };
+      axios.post.mockRejectedValue(error);
 
-  test('should use 3 second indicator duration', () => {
-    expect(handler.indicatorDuration).toBe(3000);
-  });
+      const result = await handler.sendTypingIndicator(
+        mockServiceUrl,
+        mockConversationId,
+        mockBotId
+      );
 
-  test('should generate unique indicator IDs for same conversation', () => {
-    mockAxios.onPost().reply(200, { id: 'activity-123' });
+      expect(result).toBe(false);
+    });
 
-    const id1 = handler.startTypingIndicator('https://teams.com', 'conv-1', 'bot-1');
-    const id2 = handler.startTypingIndicator('https://teams.com', 'conv-1', 'bot-1');
+    test('should handle Bot Framework 429 rate limit', async () => {
+      const error = new Error('Too Many Requests');
+      error.response = { status: 429, data: { error: 'Rate limit exceeded' } };
+      axios.post.mockRejectedValue(error);
 
-    expect(id1).not.toBe(id2); // Different IDs even for same conversation
+      const result = await handler.sendTypingIndicator(
+        mockServiceUrl,
+        mockConversationId,
+        mockBotId
+      );
+
+      expect(result).toBe(false);
+    });
   });
 });

@@ -1,0 +1,290 @@
+{
+  "timestamp": "2025-10-09T18:03:20.924106Z",
+  "total_files": 34,
+  "valid_files": 25,
+  "warning_files": 8,
+  "invalid_files": 9,
+  "results": [
+    {
+      "file": "admin-commands.json",
+      "status": "VALID",
+      "message": "All checks passed",
+      "issues": [
+        "All checks passed"
+      ]
+    },
+    {
+      "file": "batch-search.json",
+      "status": "VALID",
+      "message": "All checks passed",
+      "issues": [
+        "All checks passed"
+      ]
+    },
+    {
+      "file": "bms-ai-agent-code-tools.json",
+      "status": "VALID",
+      "message": "All checks passed",
+      "issues": [
+        "All checks passed"
+      ]
+    },
+    {
+      "file": "bms-ai-agent-fixed.json",
+      "status": "WARNING",
+      "message": "All checks passed",
+      "issues": [
+        "All checks passed",
+        "Potentially orphaned nodes: Sticky Note"
+      ]
+    },
+    {
+      "file": "bms-ai-agent-simple.json",
+      "status": "VALID",
+      "message": "All checks passed",
+      "issues": [
+        "All checks passed"
+      ]
+    },
+    {
+      "file": "bms-ai-agent.json",
+      "status": "INVALID",
+      "message": "Missing required field: name",
+      "issues": [
+        "Missing required field: name"
+      ]
+    },
+    {
+      "file": "bms-ai-simple-direct.json",
+      "status": "WARNING",
+      "message": "All checks passed",
+      "issues": [
+        "All checks passed",
+        "Potentially orphaned nodes: Sticky Note"
+      ]
+    },
+    {
+      "file": "bms-api-caller.json",
+      "status": "VALID",
+      "message": "All checks passed",
+      "issues": [
+        "All checks passed"
+      ]
+    },
+    {
+      "file": "bms-tool-ask.json",
+      "status": "WARNING",
+      "message": "All checks passed",
+      "issues": [
+        "All checks passed",
+        "Potentially orphaned nodes: Sticky Note"
+      ]
+    },
+    {
+      "file": "bms-tool-contextual-search.json",
+      "status": "WARNING",
+      "message": "All checks passed",
+      "issues": [
+        "All checks passed",
+        "Potentially orphaned nodes: Sticky Note"
+      ]
+    },
+    {
+      "file": "bms-tool-document-lookup.json",
+      "status": "WARNING",
+      "message": "All checks passed",
+      "issues": [
+        "All checks passed",
+        "Potentially orphaned nodes: Sticky Note"
+      ]
+    },
+    {
+      "file": "bms-tool-hybrid-search.json",
+      "status": "WARNING",
+      "message": "All checks passed",
+      "issues": [
+        "All checks passed",
+        "Potentially orphaned nodes: Sticky Note"
+      ]
+    },
+    {
+      "file": "bms-tool-semantic-search.json",
+      "status": "WARNING",
+      "message": "All checks passed",
+      "issues": [
+        "All checks passed",
+        "Potentially orphaned nodes: Sticky Note"
+      ]
+    },
+    {
+      "file": "context-manager.json",
+      "status": "VALID",
+      "message": "All checks passed",
+      "issues": [
+        "All checks passed"
+      ]
+    },
+    {
+      "file": "document-status-poller.json",
+      "status": "VALID",
+      "message": "All checks passed",
+      "issues": [
+        "All checks passed"
+      ]
+    },
+    {
+      "file": "explained-search.json",
+      "status": "VALID",
+      "message": "All checks passed",
+      "issues": [
+        "All checks passed"
+      ]
+    },
+    {
+      "file": "faceted-search.json",
+      "status": "VALID",
+      "message": "All checks passed",
+      "issues": [
+        "All checks passed"
+      ]
+    },
+    {
+      "file": "health-check.json",
+      "status": "VALID",
+      "message": "All checks passed",
+      "issues": [
+        "All checks passed"
+      ]
+    },
+    {
+      "file": "langchain-agent-orchestrator.json",
+      "status": "VALID",
+      "message": "All checks passed",
+      "issues": [
+        "All checks passed"
+      ]
+    },
+    {
+      "file": "latest-versions-search.json",
+      "status": "VALID",
+      "message": "All checks passed",
+      "issues": [
+        "All checks passed"
+      ]
+    },
+    {
+      "file": "main-bot-handler.json",
+      "status": "VALID",
+      "message": "All checks passed",
+      "issues": [
+        "All checks passed"
+      ]
+    },
+    {
+      "file": "query-analyzer.json",
+      "status": "VALID",
+      "message": "All checks passed",
+      "issues": [
+        "All checks passed"
+      ]
+    },
+    {
+      "file": "sample-rag.json",
+      "status": "WARNING",
+      "message": "All checks passed",
+      "issues": [
+        "All checks passed",
+        "Potentially orphaned nodes: Sticky Note, Sticky Note1, Sticky Note2, Sticky Note3, Create Document Rows Table (for Tabular Data), Sticky Note9, Sticky Note8"
+      ]
+    },
+    {
+      "file": "similar-query-detector.json",
+      "status": "VALID",
+      "message": "All checks passed",
+      "issues": [
+        "All checks passed"
+      ]
+    },
+    {
+      "file": "teams-webhook-bot-handler.json",
+      "status": "VALID",
+      "message": "All checks passed",
+      "issues": [
+        "All checks passed"
+      ]
+    },
+    {
+      "file": "tool-ask-bms-enhanced.json",
+      "status": "INVALID",
+      "message": "Missing required field: name",
+      "issues": [
+        "Missing required field: name",
+        "Potentially orphaned nodes: Sticky Note"
+      ]
+    },
+    {
+      "file": "tool-batch-search.json",
+      "status": "VALID",
+      "message": "All checks passed",
+      "issues": [
+        "All checks passed"
+      ]
+    },
+    {
+      "file": "tool-contextual-search.json",
+      "status": "INVALID",
+      "message": "Missing required field: name",
+      "issues": [
+        "Missing required field: name"
+      ]
+    },
+    {
+      "file": "tool-explained-search.json",
+      "status": "INVALID",
+      "message": "Missing required field: name",
+      "issues": [
+        "Missing required field: name"
+      ]
+    },
+    {
+      "file": "tool-faceted-search.json",
+      "status": "INVALID",
+      "message": "Missing required field: name",
+      "issues": [
+        "Missing required field: name"
+      ]
+    },
+    {
+      "file": "tool-latest-versions-search.json",
+      "status": "INVALID",
+      "message": "Missing required field: name",
+      "issues": [
+        "Missing required field: name"
+      ]
+    },
+    {
+      "file": "tool-search-by-metadata.json",
+      "status": "INVALID",
+      "message": "Missing required field: name",
+      "issues": [
+        "Missing required field: name"
+      ]
+    },
+    {
+      "file": "tool-search-hybrid.json",
+      "status": "INVALID",
+      "message": "Missing required field: name",
+      "issues": [
+        "Missing required field: name"
+      ]
+    },
+    {
+      "file": "tool-search-semantic.json",
+      "status": "INVALID",
+      "message": "Missing required field: name",
+      "issues": [
+        "Missing required field: name"
+      ]
+    }
+  ]
+}
