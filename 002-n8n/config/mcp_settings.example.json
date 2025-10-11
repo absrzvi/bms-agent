@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "n8n-mcp": {
+      "command": "node",
+      "args": ["dist/mcp/index.js"],
+      "cwd": "/workspace/n8n-mcp",
+      "env": {
+        "N8N_API_URL": "http://localhost:5678",
+        "N8N_API_KEY": "YOUR_N8N_API_KEY_HERE",
+        "N8N_DB_PATH": "/workspace/n8n/.n8n/database.sqlite"
+      }
+    }
+  }
+}

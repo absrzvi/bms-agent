@@ -183,12 +183,187 @@ function inferCommandType(items) {
   return firstItem.intent || firstItem.command_type || 'natural_language';
 }
 
+// ============================================================================
+// Tool Call Logging (FR-034)
+// ============================================================================
+
+const fs = require('fs');
+const path = require('path');
+
+const TOOL_CALL_LOG_PATH = process.env.TOOL_CALL_LOG_PATH || '/workspace/logs/tool-calls.jsonl';
+const MAX_LOG_SIZE_MB = parseInt(process.env.MAX_TOOL_LOG_SIZE_MB || '100', 10);
+
+/**
+ * Log a tool invocation with standard fields for analysis
+ * @param {Object} toolCall - Tool call details
+ * @param {string} toolCall.tool_name - Name of tool (ask_bms, search_hybrid, etc.)
+ * @param {string} toolCall.query - User query text (sanitized)
+ * @param {number} toolCall.response_time_ms - Response time in milliseconds
+ * @param {number} toolCall.result_count - Number of results returned
+ * @param {number} [toolCall.confidence_score] - Confidence score (0.0-1.0)
+ * @param {boolean} toolCall.success - Whether call succeeded
+ * @param {string} [toolCall.error_message] - Error message if failed
+ * @param {Object} [toolCall.metadata] - Additional metadata
+ */
+function logToolCall(toolCall) {
+  try {
+    // Ensure logs directory exists
+    const logDir = path.dirname(TOOL_CALL_LOG_PATH);
+    if (!fs.existsSync(logDir)) {
+      fs.mkdirSync(logDir, { recursive: true });
+    }
+
+    // Build log entry with standard fields
+    const logEntry = {
+      timestamp: new Date().toISOString(),
+      tool_name: toolCall.tool_name,
+      query: sanitizeQuery(toolCall.query),
+      response_time_ms: Math.round(toolCall.response_time_ms),
+      result_count: toolCall.result_count || 0,
+      confidence_score: toolCall.confidence_score !== undefined ? toolCall.confidence_score : null,
+      success: toolCall.success,
+      error_message: toolCall.error_message || null,
+      metadata: toolCall.metadata || {}
+    };
+
+    // Append as newline-delimited JSON
+    fs.appendFileSync(TOOL_CALL_LOG_PATH, JSON.stringify(logEntry) + '\n', 'utf8');
+
+    // Check if log rotation needed
+    checkLogRotation();
+  } catch (err) {
+    console.error('Failed to log tool call:', err);
+  }
+}
+
+/**
+ * Sanitize user query to remove PII
+ * @param {string} query - Raw query text
+ * @returns {string} Sanitized query
+ */
+function sanitizeQuery(query) {
+  if (!query) return '';
+
+  // Remove email addresses
+  let sanitized = query.replace(/\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/g, '[EMAIL]');
+
+  // Remove phone numbers (basic patterns)
+  sanitized = sanitized.replace(/\b\d{3}[-.]?\d{3}[-.]?\d{4}\b/g, '[PHONE]');
+
+  // Remove potential usernames (Slack/Teams ID patterns)
+  sanitized = sanitized.replace(/\b[U|C]\d{9,}\b/g, '[USER_ID]');
+
+  return sanitized.substring(0, 500); // Truncate to 500 chars
+}
+
+/**
+ * Check if log file needs rotation based on size
+ */
+function checkLogRotation() {
+  try {
+    if (!fs.existsSync(TOOL_CALL_LOG_PATH)) return;
+
+    const stats = fs.statSync(TOOL_CALL_LOG_PATH);
+    const sizeMB = stats.size / (1024 * 1024);
+
+    if (sizeMB >= MAX_LOG_SIZE_MB) {
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+      const archivePath = TOOL_CALL_LOG_PATH.replace('.jsonl', `-${timestamp}.jsonl`);
+
+      fs.renameSync(TOOL_CALL_LOG_PATH, archivePath);
+      console.log(`Tool call log rotated: ${archivePath}`);
+    }
+  } catch (err) {
+    console.error('Failed to rotate tool call log:', err);
+  }
+}
+
+/**
+ * Get tool call statistics from log file
+ * @param {Object} options - Query options
+ * @param {number} [options.hours] - Look back N hours (default: 24)
+ * @param {string} [options.tool_name] - Filter by tool name
+ * @returns {Object} Statistics summary
+ */
+function getToolStats(options = {}) {
+  const hours = options.hours || 24;
+  const toolNameFilter = options.tool_name;
+  const cutoffTime = new Date(Date.now() - hours * 60 * 60 * 1000);
+
+  try {
+    if (!fs.existsSync(TOOL_CALL_LOG_PATH)) {
+      return { total: 0, by_tool: {}, avg_response_time: 0, success_rate: 0 };
+    }
+
+    const lines = fs.readFileSync(TOOL_CALL_LOG_PATH, 'utf8').split('\n').filter(Boolean);
+
+    let total = 0;
+    let successful = 0;
+    let totalResponseTime = 0;
+    const byTool = {};
+
+    for (const line of lines) {
+      try {
+        const entry = JSON.parse(line);
+        const entryTime = new Date(entry.timestamp);
+
+        // Filter by time range
+        if (entryTime < cutoffTime) continue;
+
+        // Filter by tool name if specified
+        if (toolNameFilter && entry.tool_name !== toolNameFilter) continue;
+
+        total++;
+        if (entry.success) successful++;
+        totalResponseTime += entry.response_time_ms;
+
+        // Aggregate by tool
+        if (!byTool[entry.tool_name]) {
+          byTool[entry.tool_name] = { count: 0, successes: 0, total_time: 0 };
+        }
+        byTool[entry.tool_name].count++;
+        if (entry.success) byTool[entry.tool_name].successes++;
+        byTool[entry.tool_name].total_time += entry.response_time_ms;
+      } catch (parseErr) {
+        // Skip malformed lines
+        continue;
+      }
+    }
+
+    // Calculate per-tool averages
+    for (const tool in byTool) {
+      const stats = byTool[tool];
+      byTool[tool].avg_response_time = Math.round(stats.total_time / stats.count);
+      byTool[tool].success_rate = (stats.successes / stats.count * 100).toFixed(2) + '%';
+    }
+
+    return {
+      total,
+      successful,
+      failed: total - successful,
+      success_rate: total > 0 ? (successful / total * 100).toFixed(2) + '%' : '0%',
+      avg_response_time: total > 0 ? Math.round(totalResponseTime / total) : 0,
+      by_tool: byTool,
+      time_range_hours: hours
+    };
+  } catch (err) {
+    console.error('Failed to get tool stats:', err);
+    return { error: err.message };
+  }
+}
+
 module.exports = {
+  // Prometheus metrics (existing)
   trackRequest,
   trackError,
   trackLatency,
   trackDocumentUpload,
   trackBmsApiCall,
   startTimer,
-  instrumentWorkflow
+  instrumentWorkflow,
+
+  // Tool call logging (FR-034)
+  logToolCall,
+  getToolStats,
+  sanitizeQuery
 };

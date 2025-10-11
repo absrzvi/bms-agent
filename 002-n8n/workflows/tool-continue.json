@@ -1,0 +1,191 @@
+{
+  "name": "Tool: Continue Previous Request",
+  "nodes": [
+    {
+      "parameters": {
+        "method": "POST",
+        "path": "continue-command",
+        "options": {},
+        "responseMode": "responseNode"
+      },
+      "id": "webhook-trigger",
+      "name": "Continue Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [250, 300],
+      "webhookId": "continue-command"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parse /continue command input\nconst body = $input.item.json.body || $input.item.json;\nconst query = body.query || body.text || '';\nconst userId = body.user || body.user_id || '';\nconst channel = body.channel || body.channel_id || '';\nconst threadTs = body.thread_ts || body.conversation_id || '';\n\n// Extract optional conversation ID from command args\n// Usage: /continue or /continue <thread_ts>\nconst args = query.replace(/^\\/continue\\s*/i, '').trim();\nconst targetThreadTs = args || threadTs;\n\nreturn [{\n  json: {\n    userId,\n    channel,\n    threadTs: targetThreadTs,\n    originalQuery: query,\n    timestamp: new Date().toISOString()\n  },\n  pairedItem: { item: 0 }\n}];"
+      },
+      "id": "parse-input",
+      "name": "Parse Input",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Retrieve partial result from Redis cache\nconst timeoutHandler = require('./lib/timeout-handler');\nconst threadTs = $input.item.json.threadTs;\n\nif (!threadTs) {\n  return [{\n    json: {\n      found: false,\n      error: 'No conversation ID provided. Use `/continue` in a thread or `/continue <thread_ts>`',\n      threadTs: null\n    },\n    pairedItem: { item: 0 }\n  }];\n}\n\nconst partialResult = await timeoutHandler.getPartialResult(threadTs);\n\nif (!partialResult) {\n  return [{\n    json: {\n      found: false,\n      error: 'No timed-out request found for this conversation. Partial results expire after 5 minutes.',\n      threadTs\n    },\n    pairedItem: { item: 0 }\n  }];\n}\n\n// Found partial result\nreturn [{\n  json: {\n    found: true,\n    partialResult,\n    threadTs,\n    canResume: partialResult.canResume || false,\n    originalQuery: partialResult.query,\n    toolName: partialResult.toolName,\n    timedOutAt: partialResult.timedOutAt\n  },\n  pairedItem: { item: 0 }\n}];"
+      },
+      "id": "fetch-partial-result",
+      "name": "Fetch Partial Result",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [650, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{ $json.found }}",
+              "operation": "equal",
+              "value2": true
+            }
+          ]
+        }
+      },
+      "id": "check-found",
+      "name": "Check Found",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [850, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Format \"not found\" error message for Slack\nconst error = $input.item.json.error;\nconst threadTs = $input.item.json.threadTs;\n\nreturn {\n  json: {\n    channel: $('Parse Input').item.json.channel,\n    thread_ts: threadTs,\n    blocks: [\n      {\n        \"type\": \"header\",\n        \"text\": {\n          \"type\": \"plain_text\",\n          \"text\": \"❌ Cannot Continue\",\n          \"emoji\": true\n        }\n      },\n      {\n        \"type\": \"section\",\n        \"text\": {\n          \"type\": \"mrkdwn\",\n          \"text\": error\n        }\n      },\n      {\n        \"type\": \"context\",\n        \"elements\": [{\n          \"type\": \"mrkdwn\",\n          \"text\": \"_Partial results are cached for 5 minutes after timeout._\"\n        }]\n      }\n    ],\n    text: error\n  }\n};"
+      },
+      "id": "format-not-found",
+      "name": "Format Not Found",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1050, 450]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{ $json.canResume }}",
+              "operation": "equal",
+              "value2": true
+            }
+          ]
+        }
+      },
+      "id": "check-resumable",
+      "name": "Check Resumable",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [1050, 200]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Resume tool execution from partial state\nconst partialResult = $input.item.json.partialResult;\nconst toolName = partialResult.toolName;\nconst originalQuery = partialResult.query;\n\n// TODO: Implement tool-specific resume logic\n// For now, return partial results with message\n\nconst partialData = partialResult.partialResult || {};\n\nreturn {\n  json: {\n    resumed: true,\n    toolName,\n    originalQuery,\n    partialData,\n    message: `Resumed search for: \"${originalQuery}\". Processing...`\n  }\n};"
+      },
+      "id": "resume-execution",
+      "name": "Resume Execution",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1250, 150]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Format \"cannot resume\" message (no partial state saved)\nconst partialResult = $input.item.json.partialResult;\nconst toolName = partialResult.toolName;\nconst originalQuery = partialResult.query;\nconst timedOutAt = new Date(partialResult.timedOutAt).toLocaleString();\n\nreturn {\n  json: {\n    channel: $('Parse Input').item.json.channel,\n    thread_ts: $input.item.json.threadTs,\n    blocks: [\n      {\n        \"type\": \"header\",\n        \"text\": {\n          \"type\": \"plain_text\",\n          \"text\": \"⏱️ Request Timed Out\",\n          \"emoji\": true\n        }\n      },\n      {\n        \"type\": \"section\",\n        \"text\": {\n          \"type\": \"mrkdwn\",\n          \"text\": `Your previous request timed out, but no partial results were saved.\\n\\n*Original query:* ${originalQuery}\\n*Tool:* \\`${toolName}\\`\\n*Timed out at:* ${timedOutAt}`\n        }\n      },\n      {\n        \"type\": \"section\",\n        \"text\": {\n          \"type\": \"mrkdwn\",\n          \"text\": \"*Options:*\\n• Try a more specific query\\n• Break down your question into smaller parts\\n• Contact support if the issue persists\"\n        }\n      },\n      {\n        \"type\": \"context\",\n        \"elements\": [{\n          \"type\": \"mrkdwn\",\n          \"text\": \"_Resume is not available because the tool did not save intermediate results._\"\n        }]\n      }\n    ],\n    text: `Request timed out: ${originalQuery}`\n  }\n};"
+      },
+      "id": "format-cannot-resume",
+      "name": "Format Cannot Resume",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1250, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Format successful resume response for Slack\nconst resumeData = $input.item.json;\nconst originalQuery = resumeData.originalQuery;\nconst partialData = resumeData.partialData;\n\n// Extract results from partial data (structure depends on tool)\nconst results = partialData.results || [];\nconst processedCount = results.length || 0;\n\nlet resultsText = '';\nif (processedCount > 0) {\n  resultsText = `\\n*Partial results (${processedCount} items):*\\n`;\n  results.slice(0, 3).forEach((result, idx) => {\n    resultsText += `${idx + 1}. ${result.title || result.document_name || 'Result ' + (idx + 1)}\\n`;\n  });\n  if (processedCount > 3) {\n    resultsText += `_...and ${processedCount - 3} more results_\\n`;\n  }\n}\n\nreturn {\n  json: {\n    channel: $('Parse Input').item.json.channel,\n    thread_ts: $('Parse Input').item.json.threadTs,\n    blocks: [\n      {\n        \"type\": \"header\",\n        \"text\": {\n          \"type\": \"plain_text\",\n          \"text\": \"✅ Resumed Previous Request\",\n          \"emoji\": true\n        }\n      },\n      {\n        \"type\": \"section\",\n        \"text\": {\n          \"type\": \"mrkdwn\",\n          \"text\": `*Original query:* ${originalQuery}${resultsText}`\n        }\n      },\n      {\n        \"type\": \"context\",\n        \"elements\": [{\n          \"type\": \"mrkdwn\",\n          \"text\": `⚡ Resumed at ${new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}`\n        }]\n      }\n    ],\n    text: `Resumed: ${originalQuery}`\n  }\n};"
+      },
+      "id": "format-resumed",
+      "name": "Format Resumed",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1450, 150]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://slack.com/api/chat.postMessage",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "slackOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"channel\": {{ JSON.stringify($json.channel) }},\n  \"thread_ts\": {{ JSON.stringify($json.thread_ts) }},\n  \"blocks\": {{ JSON.stringify($json.blocks) }},\n  \"text\": {{ JSON.stringify($json.text) }}\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1650, 250],
+      "id": "send-slack-response",
+      "name": "Send Slack Response",
+      "credentials": {
+        "slackOAuth2Api": {
+          "id": "0gBx26V1GeDGkB3d",
+          "name": "Slack account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ success: true }) }}",
+        "options": {}
+      },
+      "id": "respond-webhook",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1850, 250]
+    }
+  ],
+  "connections": {
+    "Continue Webhook": {
+      "main": [[{ "node": "Parse Input", "type": "main", "index": 0 }]]
+    },
+    "Parse Input": {
+      "main": [[{ "node": "Fetch Partial Result", "type": "main", "index": 0 }]]
+    },
+    "Fetch Partial Result": {
+      "main": [[{ "node": "Check Found", "type": "main", "index": 0 }]]
+    },
+    "Check Found": {
+      "main": [
+        [{ "node": "Check Resumable", "type": "main", "index": 0 }],
+        [{ "node": "Format Not Found", "type": "main", "index": 0 }]
+      ]
+    },
+    "Check Resumable": {
+      "main": [
+        [{ "node": "Resume Execution", "type": "main", "index": 0 }],
+        [{ "node": "Format Cannot Resume", "type": "main", "index": 0 }]
+      ]
+    },
+    "Resume Execution": {
+      "main": [[{ "node": "Format Resumed", "type": "main", "index": 0 }]]
+    },
+    "Format Not Found": {
+      "main": [[{ "node": "Send Slack Response", "type": "main", "index": 0 }]]
+    },
+    "Format Cannot Resume": {
+      "main": [[{ "node": "Send Slack Response", "type": "main", "index": 0 }]]
+    },
+    "Format Resumed": {
+      "main": [[{ "node": "Send Slack Response", "type": "main", "index": 0 }]]
+    },
+    "Send Slack Response": {
+      "main": [[{ "node": "Respond to Webhook", "type": "main", "index": 0 }]]
+    }
+  },
+  "meta": {
+    "templateCredsSetupCompleted": true
+  }
+}
