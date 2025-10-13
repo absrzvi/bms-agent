@@ -159,12 +159,14 @@ class AnswerGenerator:
         include_citations: bool
     ) -> str:
         """Create prompt for LLM"""
-        
+
         citation_instruction = ""
         if include_citations:
             citation_instruction = "\nWhen referencing information, cite the source using [1], [2], etc."
-        
-        prompt = f"""You are a helpful assistant for railway documentation. Answer the question based on the provided context.
+
+        prompt = f"""You are a helpful assistant for railway documentation.
+
+**CRITICAL**: Answer ONLY using information EXPLICITLY stated in the provided context. If the context doesn't contain the answer, say so.
 
 Context:
 {context}
@@ -172,13 +174,24 @@ Context:
 Question: {query}
 
 Instructions:
-- Provide a clear, accurate answer based on the context
-- If the context doesn't contain enough information, say so
-- Be concise but complete{citation_instruction}
-- Focus on railway safety and technical accuracy
+- Answer ONLY from the context above
+- NEVER make up information or use general knowledge
+- If context is insufficient, say "The documentation doesn't provide enough information about [topic]"
+- Keep answer under 800 characters
+- Use maximum 3 bullet points if listing items
+- MUST end with "Source: [document name from context]"{citation_instruction}
+
+Format:
+[Direct answer in 1-2 sentences]
+
+• [Key point 1]
+• [Key point 2]
+• [Key point 3]
+
+Source: [document name]
 
 Answer:"""
-        
+
         return prompt
     
     def _call_ollama(self, prompt: str) -> str:
@@ -349,8 +362,10 @@ class RailwayAnswerGenerator(AnswerGenerator):
     def _create_safety_prompt(self, query: str, context: str, include_citations: bool) -> str:
         """Create safety-focused prompt"""
         citation_instruction = "\nCite sources using [1], [2], etc." if include_citations else ""
-        
-        return f"""You are a railway safety expert. Answer the safety-related question based on the provided documentation.
+
+        return f"""You are a railway safety expert.
+
+**CRITICAL**: Answer ONLY using safety information EXPLICITLY stated in the provided context. Safety-critical information must never be assumed.
 
 Context:
 {context}
@@ -358,19 +373,33 @@ Context:
 Question: {query}
 
 CRITICAL SAFETY INSTRUCTIONS:
-- Prioritize safety information above all else
-- Include all relevant warnings and cautions
-- Reference applicable safety standards (EN50155, EN45545, TSI)
-- If safety-critical information is missing, explicitly state this
-- Never make assumptions about safety procedures{citation_instruction}
+- Answer ONLY from the context above
+- If safety procedures/standards are NOT in context, say "The documentation doesn't specify safety procedures for [topic]"
+- NEVER make up safety warnings or procedures
+- Reference standards (EN50155, EN45545, TSI) ONLY if mentioned in context
+- Prioritize safety information from context
+- Keep answer under 800 characters
+- Use maximum 3 bullet points for safety points
+- MUST end with "Source: [document name from context]"{citation_instruction}
+
+Format:
+[Direct safety answer in 1-2 sentences]
+
+• [Safety point 1 from context]
+• [Safety point 2 from context]
+• [Safety point 3 from context]
+
+Source: [document name]
 
 Answer:"""
     
     def _create_technical_prompt(self, query: str, context: str, include_citations: bool) -> str:
         """Create technical prompt"""
         citation_instruction = "\nCite sources using [1], [2], etc." if include_citations else ""
-        
-        return f"""You are a railway technical expert. Provide a detailed technical answer based on the documentation.
+
+        return f"""You are a railway technical expert.
+
+**CRITICAL**: Answer ONLY using technical specifications EXPLICITLY stated in the provided context. NEVER infer or make up specifications.
 
 Context:
 {context}
@@ -378,18 +407,32 @@ Context:
 Question: {query}
 
 Instructions:
-- Provide precise technical specifications
-- Include relevant standards and compliance information
-- Use correct technical terminology
-- Reference specific components and systems{citation_instruction}
+- Provide ONLY specifications found in the context above
+- If specific specs (model numbers, voltages, etc.) are NOT in context, say "The documentation doesn't specify [what's missing]"
+- NEVER make up component names, model numbers, or specifications
+- Use correct technical terminology from the context
+- Keep answer under 800 characters
+- Use maximum 3 bullet points for specifications
+- MUST end with "Source: [document name from context]"{citation_instruction}
+
+Format:
+[Direct technical answer in 1-2 sentences]
+
+• [Specification 1 from context]
+• [Specification 2 from context]
+• [Specification 3 from context]
+
+Source: [document name]
 
 Answer:"""
     
     def _create_procedural_prompt(self, query: str, context: str, include_citations: bool) -> str:
         """Create procedural prompt"""
         citation_instruction = "\nCite sources using [1], [2], etc." if include_citations else ""
-        
-        return f"""You are a railway procedures expert. Provide step-by-step guidance based on the documentation.
+
+        return f"""You are a railway procedures expert.
+
+**CRITICAL**: Provide ONLY procedures EXPLICITLY stated in the provided context. NEVER infer or make up procedural steps.
 
 Context:
 {context}
@@ -397,9 +440,21 @@ Context:
 Question: {query}
 
 Instructions:
-- Provide clear, sequential steps
-- Include prerequisites and safety checks
-- Note any required tools or qualifications
-- Highlight critical steps{citation_instruction}
+- Provide ONLY steps found in the context above
+- If procedures are NOT in context, say "The documentation doesn't provide procedures for [topic]"
+- NEVER make up steps, prerequisites, or safety checks
+- Use sequential language from context
+- Keep answer under 800 characters
+- Use maximum 3 main steps (can mention sub-steps within)
+- MUST end with "Source: [document name from context]"{citation_instruction}
+
+Format:
+[Direct procedural answer in 1-2 sentences]
+
+• [Step/aspect 1 from context]
+• [Step/aspect 2 from context]
+• [Step/aspect 3 from context]
+
+Source: [document name]
 
 Answer:"""
