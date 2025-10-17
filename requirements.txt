@@ -1,0 +1,50 @@
+# BMS Agent Core Dependencies
+
+# FastAPI & Web Framework
+fastapi>=0.104.0
+uvicorn>=0.24.0
+python-multipart>=0.0.6
+
+# Natural Language Processing
+nltk>=3.8.1
+spacy>=3.5.0
+transformers>=4.35.0
+sentence-transformers>=2.2.2
+
+# Data Processing
+pandas>=2.0.0
+numpy>=1.24.0
+openpyxl>=3.1.0
+
+# Document Processing
+PyMuPDF>=1.23.0
+beautifulsoup4>=4.12.0
+Pillow>=10.0.0
+python-docx>=0.8.11
+python-pptx>=0.6.21
+pdfplumber>=0.10.0
+
+# Vector Database & Search
+qdrant-client>=1.7.0
+
+# Utilities
+tqdm>=4.66.0
+python-dotenv>=1.0.0
+pyyaml>=6.0
+requests>=2.31.0
+
+# Testing
+pytest>=7.4.0
+pytest-cov>=4.1.0
+pytest-asyncio>=0.21.0
+
+# Optional Advanced Features
+scikit-learn>=1.3.0
+
+# Tooling & CLIs (manual installs)
+# uv (installed via https://astral.sh/uv/install.sh)
+# specify-cli (uv tool install specify-cli --from git+https://github.com/github/spec-kit.git)
+# Node.js>=20.19.5 (installed via NodeSource)
+# npm>=11.6.1
+# Claude Code CLI (@anthropic-ai/claude-code via npm)
+

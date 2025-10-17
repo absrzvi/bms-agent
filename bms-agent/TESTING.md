@@ -61,7 +61,6 @@ export BMS_ENABLE_QUALITY_VALIDATION=true
 ### Run All Tests
 ```bash
 pytest -v --cov=./ --cov-report=term-missing
-```
 
 During integration tests (`tests/test_basic.py`), assert the enriched payload returned by `/api/v1/documents/upload` contains:
 
@@ -80,14 +79,19 @@ pytest tests/integration/
 
 # Performance tests
 pytest tests/performance/test_performance.py -m performance
+pytest tests/integration/test_hybrid_search.py -m hybrid
 
-# Following suites land with tasks T017/T020
-# pytest tests/performance/load/test_locust.py -m load   # ≤100 ms p95 @ 1,000 concurrent users
-# pytest tests/integration/test_hybrid_search.py -m hybrid
+```bash
+# Load test (requires API + Qdrant running locally)
+locust -f tests/performance/load/test_locust.py --headless -u 1000 -r 50 -t 7m --host http://localhost:8000
+```
+
+- **Targets enforced**: ≤100 ms p95, ≤50 ms average response time for both semantic and hybrid search.
+- Override thresholds by exporting `BMS_TARGET_P95_MS` / `BMS_TARGET_AVG_MS` if hardware differs from reference pod.
    - Uploads coverage to Codecov
 
 2. **Deploy Job** (main branch only):
-   - Runs after successful tests
+{{ ... }}
    - Deploys to production environment
 
 ## Test Data Management

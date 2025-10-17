@@ -1,0 +1,669 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "BMS Agent API Integration",
+    "version": "1.0.0",
+    "description": "Contract for n8n workflow to BMS Agent API endpoints"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:8000",
+      "description": "BMS Agent API on RunPod"
+    }
+  ],
+  "paths": {
+    "/api/v1/ask": {
+      "post": {
+        "summary": "Ask question with LLM-generated answer",
+        "description": "Get direct answer with citations (used when intent=ASK)",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AskRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Answer generated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AskResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "BMS API error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/search/semantic": {
+      "post": {
+        "summary": "Semantic document search",
+        "description": "Find relevant documents (used when intent=SEARCH)",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SearchRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Search results",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SearchResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/search/hybrid": {
+      "post": {
+        "summary": "Hybrid search (semantic + keyword)",
+        "description": "Alternative to semantic search with keyword matching",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HybridSearchRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Hybrid search results",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SearchResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/documents/upload": {
+      "post": {
+        "summary": "Upload document (synchronous)",
+        "description": "Upload and index document immediately",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/UploadRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Document processed successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UploadResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid file type or size",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/documents/upload/async": {
+      "post": {
+        "summary": "Upload document (asynchronous)",
+        "description": "Upload document for background processing",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/UploadRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Document queued for processing",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AsyncUploadResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/embeddings": {
+      "post": {
+        "summary": "Generate query embeddings (Session 2025-10-09: Updated spec)",
+        "description": "Get 768-dimensional embedding vector for similarity detection (FR-017). Max 1000 characters, 60 req/min rate limit, 2000ms timeout.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["query"],
+                "properties": {
+                  "query": {
+                    "type": "string",
+                    "maxLength": 1000,
+                    "description": "Query text to embed (consistent with FR-031 max query length)"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Embedding generated successfully",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "description": "Rate limit (60 requests/minute)",
+                "schema": {
+                  "type": "integer",
+                  "example": 60
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "description": "Remaining requests in current window",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-RateLimit-Reset": {
+                "description": "Unix timestamp when rate limit resets",
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "embedding": {
+                      "type": "array",
+                      "items": {"type": "number"},
+                      "minItems": 768,
+                      "maxItems": 768,
+                      "description": "768-dimensional embedding vector (sentence-transformers/all-mpnet-base-v2)"
+                    },
+                    "model": {
+                      "type": "string",
+                      "example": "sentence-transformers/all-mpnet-base-v2",
+                      "description": "Embedding model used"
+                    },
+                    "query_length": {
+                      "type": "integer",
+                      "description": "Character count of input query"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Query exceeds 1000 characters or is empty",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "detail": {
+                      "type": "string",
+                      "example": "Query exceeds maximum length of 1000 characters"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded (60 requests/minute)",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "description": "Rate limit (60 requests/minute)",
+                "schema": {
+                  "type": "integer",
+                  "example": 60
+                }
+              },
+              "X-RateLimit-Reset": {
+                "description": "Unix timestamp when rate limit resets",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "Retry-After": {
+                "description": "Seconds until rate limit resets",
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "detail": {
+                      "type": "string",
+                      "example": "Rate limit exceeded. Try again in 30 seconds."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Embedding model unavailable or generation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "detail": {
+                      "type": "string",
+                      "example": "Embedding model unavailable"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/documents/status/{job_id}": {
+      "get": {
+        "summary": "Get upload status",
+        "description": "Check document processing status (async uploads)",
+        "parameters": [
+          {
+            "name": "job_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Job status",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobStatus"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Job not found"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AskRequest": {
+        "type": "object",
+        "required": ["query"],
+        "properties": {
+          "query": {
+            "type": "string",
+            "maxLength": 1000,
+            "description": "User's question"
+          },
+          "max_chunks": {
+            "type": "integer",
+            "default": 5,
+            "minimum": 1,
+            "maximum": 10,
+            "description": "Max context chunks for answer"
+          },
+          "include_citations": {
+            "type": "boolean",
+            "default": true,
+            "description": "Include source citations"
+          },
+          "temperature": {
+            "type": "number",
+            "default": 0.7,
+            "minimum": 0.0,
+            "maximum": 1.0
+          },
+          "min_score": {
+            "type": "number",
+            "minimum": 0.0,
+            "maximum": 1.0,
+            "description": "Minimum relevance score"
+          }
+        }
+      },
+      "AskResponse": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "example": "success"
+          },
+          "query": {
+            "type": "string"
+          },
+          "answer": {
+            "type": "string",
+            "description": "Generated answer"
+          },
+          "citations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Citation"
+            }
+          },
+          "confidence": {
+            "type": "number",
+            "description": "Answer confidence (0.0-1.0)"
+          },
+          "generation_time_ms": {
+            "type": "integer"
+          }
+        }
+      },
+      "SearchRequest": {
+        "type": "object",
+        "required": ["query"],
+        "properties": {
+          "query": {
+            "type": "string",
+            "maxLength": 1000
+          },
+          "limit": {
+            "type": "integer",
+            "default": 5,
+            "minimum": 1,
+            "maximum": 10
+          },
+          "min_score": {
+            "type": "number",
+            "minimum": 0.0,
+            "maximum": 1.0,
+            "description": "Minimum relevance threshold"
+          },
+          "min_quality": {
+            "type": "number",
+            "minimum": 0.0,
+            "maximum": 1.0,
+            "description": "Minimum RAGAS quality score"
+          }
+        }
+      },
+      "HybridSearchRequest": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/SearchRequest"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "vector_weight": {
+                "type": "number",
+                "default": 0.6,
+                "minimum": 0.0,
+                "maximum": 1.0
+              },
+              "keyword_weight": {
+                "type": "number",
+                "default": 0.4,
+                "minimum": 0.0,
+                "maximum": 1.0
+              }
+            }
+          }
+        ]
+      },
+      "SearchResponse": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "example": "success"
+          },
+          "query": {
+            "type": "string"
+          },
+          "results": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SearchResult"
+            }
+          },
+          "search_metadata": {
+            "type": "object",
+            "properties": {
+              "total_results": {
+                "type": "integer"
+              },
+              "search_time_ms": {
+                "type": "integer"
+              }
+            }
+          }
+        }
+      },
+      "SearchResult": {
+        "type": "object",
+        "properties": {
+          "chunk_id": {
+            "type": "string"
+          },
+          "document_name": {
+            "type": "string"
+          },
+          "content": {
+            "type": "string",
+            "maxLength": 1500
+          },
+          "score": {
+            "type": "number",
+            "description": "Relevance score (0.0-1.0)"
+          },
+          "metadata": {
+            "type": "object",
+            "properties": {
+              "quality_score": {
+                "type": "number"
+              },
+              "document_url": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      },
+      "Citation": {
+        "type": "object",
+        "description": "Session 2025-10-09: Added footnote_number for footnote-style citations (FR-004)",
+        "properties": {
+          "footnote_number": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Sequential footnote number for citation formatting (1-based)"
+          },
+          "index": {
+            "type": "integer",
+            "description": "Original citation index from BMS API response"
+          },
+          "chunk_id": {
+            "type": "string"
+          },
+          "document_name": {
+            "type": "string"
+          },
+          "preview": {
+            "type": "string",
+            "maxLength": 500
+          },
+          "relevance_score": {
+            "type": "number"
+          }
+        }
+      },
+      "UploadRequest": {
+        "type": "object",
+        "required": ["file"],
+        "properties": {
+          "file": {
+            "type": "string",
+            "format": "binary",
+            "description": "Document file (PDF, CSV, XLSX, TXT, MD, DOCX, PPTX)"
+          },
+          "profile": {
+            "type": "string",
+            "enum": ["railway", "technical", "general"],
+            "default": "railway",
+            "description": "Processing profile"
+          }
+        }
+      },
+      "UploadResponse": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "example": "success"
+          },
+          "document_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "file_name": {
+            "type": "string"
+          },
+          "processing_result": {
+            "type": "object",
+            "properties": {
+              "chunks_created": {
+                "type": "integer"
+              },
+              "quality_score": {
+                "type": "number"
+              },
+              "processing_time_ms": {
+                "type": "integer"
+              }
+            }
+          }
+        }
+      },
+      "AsyncUploadResponse": {
+        "type": "object",
+        "properties": {
+          "job_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "status": {
+            "type": "string",
+            "example": "queued"
+          },
+          "status_url": {
+            "type": "string",
+            "format": "uri"
+          }
+        }
+      },
+      "JobStatus": {
+        "type": "object",
+        "properties": {
+          "job_id": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["queued", "processing", "completed", "failed"]
+          },
+          "progress": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100
+          },
+          "result": {
+            "type": "object",
+            "description": "Present when status=completed"
+          }
+        }
+      },
+      "Error": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "example": "error"
+          },
+          "error": {
+            "type": "string"
+          },
+          "detail": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

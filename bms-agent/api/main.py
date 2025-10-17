@@ -63,6 +63,12 @@ class SemanticSearchRequest(BaseModel):
     limit: int = Field(5, ge=1, le=50)
 
 
+class HybridSearchRequest(SemanticSearchRequest):
+    candidate_multiplier: int = Field(4, ge=1, le=10)
+    vector_weight: Optional[float] = Field(None, ge=0.0, le=1.0)
+    keyword_weight: Optional[float] = Field(None, ge=0.0, le=1.0)
+
+
 @app.get("/", tags=["Info"])
 async def root() -> Dict[str, str]:
     return {
@@ -110,6 +116,20 @@ async def semantic_search(payload: SemanticSearchRequest, _: str = Depends(verif
     _metrics["last_search_latency"] = (datetime.utcnow() - start).total_seconds()
     return results
 
+
+@app.post("/api/v1/search/hybrid", tags=["Search"])
+async def hybrid_search(payload: HybridSearchRequest, _: str = Depends(verify_api_key)) -> Dict[str, object]:
+    start = datetime.utcnow()
+    results = await processor.hybrid_search(
+        payload.query,
+        limit=payload.limit,
+        candidate_multiplier=payload.candidate_multiplier,
+        vector_weight=payload.vector_weight,
+        keyword_weight=payload.keyword_weight,
+    )
+    _metrics["search_requests"] = (_metrics["search_requests"] or 0) + 1
+    _metrics["last_search_latency"] = (datetime.utcnow() - start).total_seconds()
+    return results
 
 @app.post("/api/v1/documents/upload", tags=["Documents"])
 async def upload_document(file: UploadFile = File(...), _: str = Depends(verify_api_key)) -> JSONResponse:

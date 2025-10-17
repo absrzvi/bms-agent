@@ -1,0 +1,97 @@
+openapi: 3.1.0
+info:
+  title: BMS Agent Document API
+  version: 0.1.0
+paths:
+  /api/v1/documents/upload:
+    post:
+      summary: Upload and ingest a document
+      description: Streams a single document (≤1 GB) through the EnhancedDocumentProcessor pipeline.
+      operationId: uploadDocument
+      security:
+        - ApiKeyAuth: []
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - file
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: PDF, DOCX, PPTX, CSV, XLSX, or TXT file
+            encoding:
+              file:
+                contentType: application/octet-stream
+      responses:
+        '202':
+          description: Document accepted for processing
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UploadAccepted'
+        '400':
+          description: Unsupported file type or validation failure
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '413':
+          description: Payload too large (exceeds 1 GB limit)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '429':
+          description: Rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Unexpected server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    UploadAccepted:
+      type: object
+      properties:
+        document_id:
+          type: string
+          format: uuid
+        version_number:
+          type: integer
+          minimum: 1
+        status:
+          type: string
+          enum: [processing]
+        message:
+          type: string
+          example: Document accepted and queued for processing.
+    ErrorResponse:
+      type: object
+      required: [error_code, message]
+      properties:
+        error_code:
+          type: string
+        message:
+          type: string
+        details:
+          type: object
+          additionalProperties: true

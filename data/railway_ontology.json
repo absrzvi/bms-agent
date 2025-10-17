@@ -1,0 +1,148 @@
+{
+  "train_models": {
+    "R4600": {
+      "manufacturer": "Stadler",
+      "type": "EMU",
+      "aliases": ["FLIRT", "FLIRT3"],
+      "components": ["traction", "braking", "hvac", "doors", "pantograph"]
+    },
+    "Cityjet": {
+      "manufacturer": "Stadler",
+      "type": "EMU",
+      "aliases": ["KISS"],
+      "components": ["traction", "braking", "hvac", "doors", "pantograph"]
+    },
+    "Talent3": {
+      "manufacturer": "Bombardier",
+      "type": "DMU",
+      "aliases": ["Talent"],
+      "components": ["traction", "braking", "hvac", "doors"]
+    }
+  },
+  "components": {
+    "traction": {
+      "category": "propulsion",
+      "subcategories": ["motor", "inverter", "transformer", "converter"],
+      "related_standards": ["EN50155", "EN50163"],
+      "safety_critical": true
+    },
+    "braking": {
+      "category": "safety",
+      "subcategories": ["disc_brake", "magnetic_brake", "parking_brake", "emergency_brake"],
+      "related_standards": ["EN14198", "TSI"],
+      "safety_critical": true
+    },
+    "hvac": {
+      "category": "comfort",
+      "subcategories": ["cooling", "heating", "ventilation", "air_conditioning"],
+      "related_standards": ["EN14750"],
+      "safety_critical": false
+    },
+    "doors": {
+      "category": "passenger_interface",
+      "subcategories": ["sliding_door", "plug_door", "door_control", "door_sensor"],
+      "related_standards": ["EN14752", "TSI"],
+      "safety_critical": true
+    },
+    "pantograph": {
+      "category": "power_collection",
+      "subcategories": ["pantograph_head", "pantograph_arm", "carbon_strip"],
+      "related_standards": ["EN50206", "EN50367"],
+      "safety_critical": true
+    },
+    "signaling": {
+      "category": "control",
+      "subcategories": ["etcs", "atc", "atp", "cab_signaling"],
+      "related_standards": ["EN50126", "EN50128", "EN50129"],
+      "safety_critical": true
+    },
+    "lighting": {
+      "category": "comfort",
+      "subcategories": ["interior_lighting", "exterior_lighting", "emergency_lighting"],
+      "related_standards": ["EN13272"],
+      "safety_critical": false
+    },
+    "battery": {
+      "category": "power",
+      "subcategories": ["traction_battery", "auxiliary_battery", "emergency_battery"],
+      "related_standards": ["EN50155"],
+      "safety_critical": true
+    }
+  },
+  "standards": {
+    "EN50155": {
+      "title": "Railway applications - Electronic equipment used on rolling stock",
+      "category": "electronics",
+      "scope": "EMC, environmental conditions, reliability",
+      "mandatory": true
+    },
+    "EN45545": {
+      "title": "Railway applications - Fire protection on railway vehicles",
+      "category": "safety",
+      "scope": "Fire behavior, smoke toxicity",
+      "mandatory": true
+    },
+    "EN50163": {
+      "title": "Railway applications - Supply voltages of traction systems",
+      "category": "power",
+      "scope": "Voltage levels, tolerances",
+      "mandatory": true
+    },
+    "EN14198": {
+      "title": "Railway applications - Braking - Requirements for the brake system",
+      "category": "safety",
+      "scope": "Brake performance, safety requirements",
+      "mandatory": true
+    },
+    "TSI": {
+      "title": "Technical Specifications for Interoperability",
+      "category": "interoperability",
+      "scope": "EU railway interoperability requirements",
+      "mandatory": true
+    },
+    "EN50126": {
+      "title": "Railway applications - RAMS specification and demonstration",
+      "category": "reliability",
+      "scope": "Reliability, Availability, Maintainability, Safety",
+      "mandatory": true
+    },
+    "EN50128": {
+      "title": "Railway applications - Software for railway control and protection systems",
+      "category": "software",
+      "scope": "Software safety integrity levels",
+      "mandatory": true
+    },
+    "EN50129": {
+      "title": "Railway applications - Safety related electronic systems for signalling",
+      "category": "signaling",
+      "scope": "Electronic signaling safety",
+      "mandatory": true
+    }
+  },
+  "document_categories": {
+    "technical_specification": {
+      "keywords": ["specification", "technical data", "parameters", "ratings"],
+      "typical_formats": ["pdf", "docx"]
+    },
+    "maintenance_manual": {
+      "keywords": ["maintenance", "service", "repair", "inspection"],
+      "typical_formats": ["pdf", "docx"]
+    },
+    "safety_documentation": {
+      "keywords": ["safety", "hazard", "risk assessment", "emergency"],
+      "typical_formats": ["pdf", "docx"]
+    },
+    "operational_procedure": {
+      "keywords": ["procedure", "operation", "workflow", "checklist"],
+      "typical_formats": ["pdf", "docx", "pptx"]
+    },
+    "test_report": {
+      "keywords": ["test", "validation", "verification", "results"],
+      "typical_formats": ["pdf", "xlsx"]
+    },
+    "compliance_certificate": {
+      "keywords": ["certificate", "compliance", "approval", "conformity"],
+      "typical_formats": ["pdf"]
+    }
+  }
+}

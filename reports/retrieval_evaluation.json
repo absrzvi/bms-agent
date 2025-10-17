@@ -1,0 +1,12 @@
+{
+  "top_k_accuracy": 0.96,
+  "threshold": 0.95,
+  "passed": true,
+  "precision": 0.5499999999999999,
+  "recall": 0.96,
+  "f1_score": 0.6993377483443708,
+  "mrr": 0.9013333333333334,
+  "total_queries": 50,
+  "failed_queries": 0,
+  "top_k": 5
+}

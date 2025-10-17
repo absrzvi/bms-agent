@@ -44,10 +44,10 @@ class QdrantConfig:
     api_key: Optional[str] = None
     
     # Collection settings
-    collection_name: str = "railway_documents_v4"
+    collection_name: str = "nomad_bms_documents"
     
-    # Vector dimensions (for all-mpnet-base-v2)
-    dense_vector_size: int = 768
+    # Vector dimensions (for snowflake-arctic-embed2)
+    dense_vector_size: int = 1024
     sparse_vector_size: int = 30000  # For BM25 vocabulary
     
     # Performance settings
@@ -183,6 +183,9 @@ class QdrantSchemaV4:
             ("document_name", PayloadSchemaType.KEYWORD),
             ("document_type", PayloadSchemaType.KEYWORD),
             ("document_version", PayloadSchemaType.FLOAT),
+            ("document_date", PayloadSchemaType.DATETIME),  # For temporal search
+            ("is_latest_version", PayloadSchemaType.BOOL),  # For version filtering
+            ("department", PayloadSchemaType.KEYWORD),  # For department filtering
             ("processing_profile", PayloadSchemaType.KEYWORD),
             ("processing_timestamp", PayloadSchemaType.DATETIME),
         ]
@@ -213,6 +216,9 @@ class QdrantSchemaV4:
             ("has_context", PayloadSchemaType.BOOL),  # Contextual retrieval
             ("is_parent", PayloadSchemaType.BOOL),
             ("is_child", PayloadSchemaType.BOOL),
+            ("context_type", PayloadSchemaType.KEYWORD),  # document, section, chunk
+            ("late_chunking_applied", PayloadSchemaType.BOOL),
+            ("processing_version", PayloadSchemaType.KEYWORD),
         ]
         
         # Text search indexes for hybrid search
@@ -220,6 +226,9 @@ class QdrantSchemaV4:
             ("content", PayloadSchemaType.TEXT),  # Full-text search
             ("keywords", PayloadSchemaType.TEXT),  # Extracted keywords
             ("entities", PayloadSchemaType.TEXT),  # Named entities
+            ("contextual_description", PayloadSchemaType.TEXT),  # Contextual descriptions
+            ("surrounding_context", PayloadSchemaType.TEXT),  # Surrounding context
+            ("technical_terms", PayloadSchemaType.TEXT),  # Technical terminology
         ]
         
         # Create all indexes
@@ -330,9 +339,12 @@ class QdrantSchemaV4:
             "precision": chunk.get('quality', {}).get('metrics', {}).get('context_precision', 0.0),
             "recall": chunk.get('quality', {}).get('metrics', {}).get('context_recall', 0.0),
             
-            # Contextual retrieval
+            # Contextual retrieval (Enhanced)
             "has_context": chunk.get('has_context', False),
             "context_similarity": chunk.get('context_similarity', 0.0),
+            "contextual_description": chunk.get('contextual_description', ''),
+            "context_type": chunk.get('context_type', 'none'),  # document, section, chunk
+            "surrounding_context": chunk.get('surrounding_context', ''),
             
             # Hybrid search metadata
             "search_type": "hybrid" if 'keyword_content' in chunk else "vector",
@@ -348,10 +360,22 @@ class QdrantSchemaV4:
             "position": chunk.get('metadata', {}).get('position', 0),
             "position_in_parent": chunk.get('metadata', {}).get('position_in_parent', 0),
             
-            # Entities and topics
+            # Entities and topics (Enhanced)
             "entities": json.dumps(chunk.get('entities', [])),
             "topics": json.dumps(chunk.get('topics', [])),
             "relationships": json.dumps(chunk.get('relationships', [])),
+            "entity_types": json.dumps(chunk.get('entity_types', [])),
+            "technical_terms": json.dumps(chunk.get('technical_terms', [])),
+            
+            # Late chunking features
+            "late_chunking_applied": chunk.get('late_chunking_applied', False),
+            "full_doc_context": chunk.get('full_doc_context', ''),
+            "document_summary": chunk.get('document_summary', ''),
+            
+            # Version tracking
+            "processing_version": chunk.get('processing_version', '1.0'),
+            "embedding_version": chunk.get('embedding_version', ''),
+            "last_updated": chunk.get('last_updated', datetime.now().isoformat()),
         }
         
         # Add railway-specific metadata if present

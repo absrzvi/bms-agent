@@ -1,0 +1,182 @@
+openapi: 3.1.0
+info:
+  title: BMS Agent Search API
+  version: 0.1.0
+paths:
+  /api/v1/search/semantic:
+    post:
+      summary: Semantic search across embedded document chunks
+      description: Accepts a natural language query and returns the top matching chunks with dense similarity scores.
+      operationId: semanticSearch
+      security:
+        - ApiKeyAuth: []
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SemanticSearchRequest'
+      responses:
+        '200':
+          description: Successful semantic search response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SearchResponse'
+        '400':
+          description: Invalid query payload
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Authentication failure
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '429':
+          description: Rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/search/hybrid:
+    post:
+      summary: Hybrid (dense + sparse) search with fusion weights
+      description: Combines semantic and keyword/BM25 results, returning fused scores and metadata.
+      operationId: hybridSearch
+      security:
+        - ApiKeyAuth: []
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HybridSearchRequest'
+      responses:
+        '200':
+          description: Successful hybrid search response with fused rankings
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SearchResponse'
+        '400':
+          description: Invalid payload (missing weights, filters, etc.)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Authentication failure
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '429':
+          description: Rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    SemanticSearchRequest:
+      type: object
+      required: [query]
+      properties:
+        query:
+          type: string
+          minLength: 1
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 10
+          default: 5
+        filters:
+          type: object
+          additionalProperties: true
+    HybridSearchRequest:
+      type: object
+      required: [query]
+      properties:
+        query:
+          type: string
+          minLength: 1
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 10
+          default: 5
+        candidate_multiplier:
+          type: integer
+          minimum: 1
+          maximum: 5
+          default: 3
+        vector_weight:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          default: 0.6
+        keyword_weight:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          default: 0.4
+        filters:
+          type: object
+          additionalProperties: true
+    SearchResponse:
+      type: object
+      properties:
+        query_id:
+          type: string
+          format: uuid
+        latency_ms:
+          type: number
+        results:
+          type: array
+          items:
+            type: object
+            properties:
+              chunk_id:
+                type: string
+                format: uuid
+              score_dense:
+                type: number
+              score_sparse:
+                type: number
+              score_fused:
+                type: number
+              text_snippet:
+                type: string
+              document_id:
+                type: string
+                format: uuid
+              metadata:
+                type: object
+                additionalProperties: true
+    ErrorResponse:
+      type: object
+      required: [error_code, message]
+      properties:
+        error_code:
+          type: string
+        message:
+          type: string
+        details:
+          type: object
+          additionalProperties: true

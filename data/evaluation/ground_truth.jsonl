@@ -1,0 +1,25 @@
+{"query": "What is business continuity?", "expected_documents": ["BMS-BCON-FOR-001-Business Continuity Response Template.docx", "BMS-BCON-FOR-005-Business Continuity Response PR Scenario.docx"], "category": "business_continuity", "difficulty": "easy"}
+{"query": "How do I submit overtime?", "expected_documents": ["BMS-HUMR-FOR-028 Overtime Form Template.xlsx"], "category": "human_resources", "difficulty": "easy"}
+{"query": "Find the credit card expense form", "expected_documents": ["BMS-FINA-FOR-006 Company Credit Card Expense Form.xlsx"], "category": "finance", "difficulty": "easy"}
+{"query": "What is the ERP supplier approval process?", "expected_documents": ["ERP Supplier Request & Approval Process.pdf"], "category": "procurement", "difficulty": "medium"}
+{"query": "How do I request SharePoint permissions?", "expected_documents": ["SharePoint Permission Request.pdf"], "category": "it_systems", "difficulty": "medium"}
+{"query": "Find the PE commissioning report template", "expected_documents": ["BMS-ENGI-FOR-003 PE Commissioning Report Template.xlsx"], "category": "engineering", "difficulty": "easy"}
+{"query": "What is the material management process?", "expected_documents": ["Material Management Process.pdf"], "category": "operations", "difficulty": "medium"}
+{"query": "Find the onboarding and probation process", "expected_documents": ["Onboarding & Probation.pdf"], "category": "human_resources", "difficulty": "easy"}
+{"query": "What is the tender risk assessment form?", "expected_documents": ["TEN-FRM-016 E AMS Ethics & Compliance Tender Risk Assessment form.xlsx"], "category": "compliance", "difficulty": "medium"}
+{"query": "How do I handle non-conforming products?", "expected_documents": ["Non Conforming Product - NCP Process.pdf", "PM - NCP Form- External Use.pdf"], "category": "quality", "difficulty": "hard"}
+{"query": "Find the project technical documentation template", "expected_documents": ["BMS-PROJ-FOR-010 Project Technical Documentation.xlsx"], "category": "project_management", "difficulty": "medium"}
+{"query": "What is the commissioning test report format?", "expected_documents": ["BMS-PROJ-FOR-016 Commissioning Test Report.xlsx"], "category": "engineering", "difficulty": "medium"}
+{"query": "How do I create a bid project task sheet?", "expected_documents": ["BMS-BDEV-FOR-027 Bid Project Task Sheet.xlsx"], "category": "business_development", "difficulty": "medium"}
+{"query": "Find the cable schedule template", "expected_documents": ["BMS-ENGI-FOR-002 PE Cable Schedule Template.xlsx"], "category": "engineering", "difficulty": "easy"}
+{"query": "What is the bench BOM template?", "expected_documents": ["BMS-ENGI-FOR-001 Bench BOM Template.xlsx"], "category": "engineering", "difficulty": "easy"}
+{"query": "How do I handle a cyber incident?", "expected_documents": ["BMS-BCON-FOR-003-Business Continuity Response Template - CyberIncidents.docx"], "category": "security", "difficulty": "medium"}
+{"query": "What is the IT business continuity template?", "expected_documents": ["BMS-BCON-FOR-004-Business Continuity Response Template - IT.docx"], "category": "it_systems", "difficulty": "medium"}
+{"query": "Find the sales led legal support process", "expected_documents": ["Sales Led Legal Support Process.pdf"], "category": "legal", "difficulty": "medium"}
+{"query": "What is the RIPA request management process?", "expected_documents": ["RIPA Request Management Process.pdf"], "category": "legal", "difficulty": "hard"}
+{"query": "How do I manage marketing opt-in and opt-out?", "expected_documents": ["Marketing Opt-In and Opt-Out Process.pdf"], "category": "marketing", "difficulty": "medium"}
+{"query": "Find the HR employee lifecycle process", "expected_documents": ["HR Employee Lifecycle Process Overview.pdf"], "category": "human_resources", "difficulty": "medium"}
+{"query": "What is the development and QA process?", "expected_documents": ["Dev & QA Process.pdf"], "category": "it_systems", "difficulty": "medium"}
+{"query": "Find the project manager checklist", "expected_documents": ["BMS-PROJ-FOR-033 Project Manager Checklist.pdf"], "category": "project_management", "difficulty": "easy"}
+{"query": "How do I change my personal information?", "expected_documents": ["Change of Personal Information.pdf"], "category": "human_resources", "difficulty": "easy"}
+{"query": "What is the crisis communications template for non-fatality incidents?", "expected_documents": ["Crisis Comms External Press Release Template 2 (Non-Fatality).pdf"], "category": "communications", "difficulty": "hard"}

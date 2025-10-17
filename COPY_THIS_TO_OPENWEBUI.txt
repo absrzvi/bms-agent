@@ -1,0 +1,39 @@
+================================================================================
+COPY THE ENTIRE CONTENT BELOW TO OPENWEBUI
+================================================================================
+
+The tool works perfectly when tested directly, but OpenWebUI has an old version.
+
+TO FIX:
+1. Go to: http://localhost:3000
+2. Click: Workspace → Tools
+3. Find: "bms_search" tool
+4. Click: EDIT (pencil icon)
+5. DELETE: All existing code
+6. COPY: Everything from the file below
+7. PASTE: Into OpenWebUI editor
+8. SAVE: Click save button
+9. TEST: Try "what is business continuity"
+
+FILE TO COPY:
+/workspace/001-bms-agent/tools/bms_search.py
+
+TO VIEW THE FILE:
+cat /workspace/001-bms-agent/tools/bms_search.py
+
+OR use this command to copy to clipboard (if available):
+cat /workspace/001-bms-agent/tools/bms_search.py | xclip -selection clipboard
+
+================================================================================
+VERIFICATION THAT API WORKS:
+================================================================================
+
+Command line test shows tool works perfectly:
+✅ Configured API URL: http://localhost:8000
+✅ Found 3 results for: 'business continuity'
+✅ BMS-BCON-FOR-005-Business Continuity Response PR Scenario.docx
+✅ BMS-BCON-FOR-001-Business Continuity Response Template.docx
+
+The issue is ONLY that OpenWebUI has outdated tool code.
+
+================================================================================

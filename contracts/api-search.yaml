@@ -1,0 +1,309 @@
+openapi: 3.0.3
+info:
+  title: BMS Agent Search API
+  description: Search and retrieval endpoints for BMS Agent
+  version: 1.0.0
+
+paths:
+  /api/v1/search/semantic:
+    post:
+      summary: Semantic search in documents
+      description: Perform semantic search using dense vector embeddings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                query:
+                  type: string
+                  description: Search query text
+                  example: "How to configure VLAN settings for railway network?"
+                limit:
+                  type: integer
+                  minimum: 1
+                  maximum: 100
+                  default: 10
+                  description: Maximum number of results to return
+                filters:
+                  type: object
+                  properties:
+                    document_type:
+                      type: string
+                      enum: [pdf, csv, xlsx, txt, docx, pptx]
+                    processing_profile:
+                      type: string
+                      enum: [general, technical, legal, medical, financial, railway]
+                    quality_score_min:
+                      type: number
+                      format: float
+                      minimum: 0
+                      maximum: 100
+              required:
+                - query
+      responses:
+        '200':
+          description: Search completed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  query:
+                    type: string
+                    example: "How to configure VLAN settings for railway network?"
+                  results:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        chunk_id:
+                          type: string
+                          example: "doc123_chunk_5_a1b2c3"
+                        document_id:
+                          type: string
+                          format: uuid
+                        document_name:
+                          type: string
+                          example: "railway_network_manual.pdf"
+                        content:
+                          type: string
+                          description: Chunk content
+                        score:
+                          type: number
+                          format: float
+                          description: Semantic similarity score
+                          example: 0.87
+                        metadata:
+                          type: object
+                          properties:
+                            chunk_index:
+                              type: integer
+                            hierarchy_level:
+                              type: string
+                              enum: [parent, child, single]
+                            quality_score:
+                              type: number
+                              format: float
+                            has_context:
+                              type: boolean
+                            processing_version:
+                              type: string
+                  search_metadata:
+                    type: object
+                    properties:
+                      total_results:
+                        type: integer
+                      search_time_ms:
+                        type: integer
+                      embedding_model:
+                        type: string
+                        example: "snowflake-arctic-embed2"
+        '400':
+          description: Bad request - invalid query parameters
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: error
+                  error:
+                    type: string
+                    example: Query cannot be empty
+        '500':
+          description: Internal server error during search
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: error
+                  error:
+                    type: string
+                    example: Search service unavailable
+
+  /api/v1/search/hybrid:
+    post:
+      summary: Hybrid search combining semantic and keyword search
+      description: Perform hybrid search using both dense vectors and BM25 keyword search
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                query:
+                  type: string
+                  description: Search query text
+                  example: "R4600-2Ax CCU VLAN configuration"
+                limit:
+                  type: integer
+                  minimum: 1
+                  maximum: 100
+                  default: 10
+                vector_weight:
+                  type: number
+                  format: float
+                  minimum: 0
+                  maximum: 1
+                  default: 0.5
+                  description: Weight for semantic search component
+                keyword_weight:
+                  type: number
+                  format: float
+                  minimum: 0
+                  maximum: 1
+                  default: 0.5
+                  description: Weight for keyword search component
+                filters:
+                  type: object
+                  properties:
+                    document_type:
+                      type: string
+                      enum: [pdf, csv, xlsx, txt, docx, pptx]
+                    processing_profile:
+                      type: string
+                      enum: [general, technical, legal, medical, financial, railway]
+                    has_context:
+                      type: boolean
+                    is_parent:
+                      type: boolean
+                    quality_score_min:
+                      type: number
+                      format: float
+              required:
+                - query
+      responses:
+        '200':
+          description: Hybrid search completed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  query:
+                    type: string
+                  results:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        chunk_id:
+                          type: string
+                        document_id:
+                          type: string
+                          format: uuid
+                        document_name:
+                          type: string
+                        content:
+                          type: string
+                        hybrid_score:
+                          type: number
+                          format: float
+                          description: Combined hybrid score
+                        semantic_score:
+                          type: number
+                          format: float
+                          description: Semantic similarity score
+                        keyword_score:
+                          type: number
+                          format: float
+                          description: BM25 keyword score
+                        metadata:
+                          type: object
+                          properties:
+                            chunk_index:
+                              type: integer
+                            hierarchy_level:
+                              type: string
+                            quality_score:
+                              type: number
+                              format: float
+                            keywords:
+                              type: string
+                              description: Extracted keywords
+                            technical_terms:
+                              type: array
+                              items:
+                                type: string
+                  search_metadata:
+                    type: object
+                    properties:
+                      total_results:
+                        type: integer
+                      search_time_ms:
+                        type: integer
+                      vector_weight_used:
+                        type: number
+                        format: float
+                      keyword_weight_used:
+                        type: number
+                        format: float
+                      fusion_method:
+                        type: string
+                        example: "weighted_sum"
+        '400':
+          description: Bad request - invalid parameters
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: error
+                  error:
+                    type: string
+                    example: Vector weight and keyword weight must sum to 1.0
+
+  /health:
+    get:
+      summary: Basic health check
+      description: Check if the search service is operational
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: healthy
+                  timestamp:
+                    type: string
+                    format: date-time
+                  services:
+                    type: object
+                    properties:
+                      qdrant:
+                        type: string
+                        example: connected
+                      ollama:
+                        type: string
+                        example: connected
+        '503':
+          description: Service unavailable
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: unhealthy
+                  error:
+                    type: string

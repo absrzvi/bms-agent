@@ -1,0 +1,247 @@
+[2025-10-04 21:27:05,509] 4ab6ca1e7391/INFO/locust.main: Starting Locust 2.41.3
+[2025-10-04 21:27:05,513] 4ab6ca1e7391/INFO/locust.main: Run time limit set to 180 seconds
+[2025-10-04 21:27:05,521] 4ab6ca1e7391/INFO/locust.runners: Ramping to 20 users at a rate of 2.00 per second
+[2025-10-04 21:27:05,858] 4ab6ca1e7391/INFO/test_locust: Semantic search: 5 results, 5ms
+[2025-10-04 21:27:05,858] 4ab6ca1e7391/INFO/test_locust: Semantic search: 0 results, 9ms
+[2025-10-04 21:27:06,581] 4ab6ca1e7391/INFO/test_locust: Hybrid search: 5 results, 5ms
+[2025-10-04 21:27:06,582] 4ab6ca1e7391/INFO/test_locust: Hybrid search: 8 results, 6ms
+[2025-10-04 21:27:06,994] 4ab6ca1e7391/INFO/test_locust: Semantic search: 0 results, 4ms
+[2025-10-04 21:27:07,421] 4ab6ca1e7391/INFO/test_locust: Hybrid search: 3 results, 6ms
+[2025-10-04 21:27:07,580] 4ab6ca1e7391/INFO/test_locust: Semantic search: 5 results, 5ms
+[2025-10-04 21:27:07,582] 4ab6ca1e7391/INFO/test_locust: Semantic search: 0 results, 3ms
+[2025-10-04 21:27:11,140] 4ab6ca1e7391/INFO/test_locust: Hybrid search: 5 results, 6ms
+[2025-10-04 21:27:14,677] 4ab6ca1e7391/INFO/locust.runners: All users spawned: {"BMSAgentUser": 5, "HeavyLoadUser": 5, "LightLoadUser": 5, "MediumLoadUser": 5} (20 total users)
+[2025-10-04 21:27:19,121] 4ab6ca1e7391/INFO/test_locust: Semantic search: 0 results, 5ms
+[2025-10-04 21:27:19,122] 4ab6ca1e7391/INFO/test_locust: Semantic search: 15 results, 5ms
+[2025-10-04 21:27:19,122] 4ab6ca1e7391/INFO/test_locust: Semantic search: 10 results, 5ms
+[2025-10-04 21:27:19,123] 4ab6ca1e7391/INFO/test_locust: Hybrid search: 5 results, 4ms
+[2025-10-04 21:27:19,123] 4ab6ca1e7391/INFO/test_locust: Hybrid search: 5 results, 4ms
+[2025-10-04 21:27:19,126] 4ab6ca1e7391/INFO/test_locust: Semantic search: 0 results, 3ms
+[2025-10-04 21:27:19,126] 4ab6ca1e7391/INFO/test_locust: Semantic search: 0 results, 2ms
+[2025-10-04 21:27:19,126] 4ab6ca1e7391/INFO/test_locust: Semantic search: 0 results, 3ms
+[2025-10-04 21:27:19,127] 4ab6ca1e7391/INFO/test_locust: Hybrid search: 8 results, 4ms
+[2025-10-04 21:27:19,253] 4ab6ca1e7391/INFO/test_locust: Semantic search: 0 results, 3ms
+[2025-10-04 21:27:19,254] 4ab6ca1e7391/INFO/test_locust: Semantic search: 10 results, 4ms
+[2025-10-04 21:27:19,256] 4ab6ca1e7391/INFO/test_locust: Hybrid search: 3 results, 3ms
+[2025-10-04 21:27:19,256] 4ab6ca1e7391/INFO/test_locust: Semantic search: 0 results, 2ms
+[2025-10-04 21:27:19,257] 4ab6ca1e7391/INFO/test_locust: Hybrid search: 5 results, 4ms
+[2025-10-04 21:27:19,257] 4ab6ca1e7391/INFO/test_locust: Semantic search: 5 results, 4ms
+[2025-10-04 21:27:19,257] 4ab6ca1e7391/INFO/test_locust: Semantic search: 0 results, 2ms
+[2025-10-04 21:27:19,258] 4ab6ca1e7391/INFO/test_locust: Semantic search: 0 results, 2ms
+[2025-10-04 21:27:19,258] 4ab6ca1e7391/INFO/test_locust: Hybrid search: 8 results, 3ms
+[2025-10-04 21:27:19,259] 4ab6ca1e7391/INFO/test_locust: Hybrid search: 5 results, 3ms
+[2025-10-04 21:27:19,802] 4ab6ca1e7391/INFO/test_locust: Semantic search: 0 results, 2ms
+[2025-10-04 21:27:36,013] 4ab6ca1e7391/INFO/test_locust: Semantic search: 0 results, 3ms
+[2025-10-04 21:27:36,014] 4ab6ca1e7391/INFO/test_locust: Semantic search: 10 results, 4ms
+[2025-10-04 21:27:36,014] 4ab6ca1e7391/INFO/test_locust: Hybrid search: 5 results, 4ms
+[2025-10-04 21:27:36,015] 4ab6ca1e7391/INFO/test_locust: Semantic search: 0 results, 3ms
+[2025-10-04 21:27:36,015] 4ab6ca1e7391/INFO/test_locust: Semantic search: 0 results, 2ms
+[2025-10-04 21:27:36,016] 4ab6ca1e7391/INFO/test_locust: Hybrid search: 5 results, 3ms
+[2025-10-04 21:27:36,016] 4ab6ca1e7391/INFO/test_locust: Hybrid search: 3 results, 3ms
+[2025-10-04 21:27:36,017] 4ab6ca1e7391/INFO/test_locust: Semantic search: 5 results, 4ms
+[2025-10-04 21:27:36,017] 4ab6ca1e7391/INFO/test_locust: Semantic search: 0 results, 2ms
+[2025-10-04 21:27:36,018] 4ab6ca1e7391/INFO/test_locust: Hybrid search: 8 results, 4ms
+[2025-10-04 21:27:36,018] 4ab6ca1e7391/INFO/test_locust: Semantic search: 15 results, 5ms
+[2025-10-04 21:27:36,019] 4ab6ca1e7391/INFO/test_locust: Semantic search: 0 results, 2ms
+[2025-10-04 21:27:36,019] 4ab6ca1e7391/INFO/test_locust: Semantic search: 0 results, 2ms
+[2025-10-04 21:27:36,020] 4ab6ca1e7391/INFO/test_locust: Hybrid search: 5 results, 5ms
+[2025-10-04 21:27:36,020] 4ab6ca1e7391/INFO/test_locust: Semantic search: 0 results, 3ms
+[2025-10-04 21:27:36,021] 4ab6ca1e7391/INFO/test_locust: Semantic search: 0 results, 2ms
+[2025-10-04 21:27:36,021] 4ab6ca1e7391/INFO/test_locust: Semantic search: 0 results, 4ms
+[2025-10-04 21:27:36,028] 4ab6ca1e7391/INFO/test_locust: Semantic search: 0 results, 2ms
+[2025-10-04 21:27:37,087] 4ab6ca1e7391/INFO/test_locust: Hybrid search: 5 results, 5ms
+[2025-10-04 21:27:37,244] 4ab6ca1e7391/INFO/test_locust: Semantic search: 0 results, 3ms
+[2025-10-04 21:27:37,337] 4ab6ca1e7391/INFO/test_locust: Semantic search: 0 results, 4ms
+[2025-10-04 21:27:37,469] 4ab6ca1e7391/INFO/test_locust: Semantic search: 10 results, 5ms
+[2025-10-04 21:27:37,504] 4ab6ca1e7391/INFO/test_locust: Semantic search: 15 results, 4ms
+[2025-10-04 21:27:37,566] 4ab6ca1e7391/INFO/test_locust: Hybrid search: 8 results, 11ms
+[2025-10-04 21:27:37,581] 4ab6ca1e7391/INFO/test_locust: Semantic search: 0 results, 3ms
+[2025-10-04 21:27:37,955] 4ab6ca1e7391/INFO/test_locust: Semantic search: 0 results, 3ms
+[2025-10-04 21:27:38,020] 4ab6ca1e7391/INFO/test_locust: Hybrid search: 5 results, 5ms
+[2025-10-04 21:27:46,621] 4ab6ca1e7391/INFO/test_locust: Hybrid search: 5 results, 6ms
+[2025-10-04 21:27:46,622] 4ab6ca1e7391/INFO/test_locust: Semantic search: 15 results, 5ms
+[2025-10-04 21:27:46,622] 4ab6ca1e7391/INFO/test_locust: Hybrid search: 5 results, 4ms
+[2025-10-04 21:27:46,623] 4ab6ca1e7391/INFO/test_locust: Semantic search: 0 results, 5ms
+[2025-10-04 21:27:46,623] 4ab6ca1e7391/INFO/test_locust: Hybrid search: 8 results, 4ms
+[2025-10-04 21:27:46,624] 4ab6ca1e7391/INFO/test_locust: Semantic search: 0 results, 3ms
+[2025-10-04 21:27:46,624] 4ab6ca1e7391/INFO/test_locust: Semantic search: 15 results, 6ms
+[2025-10-04 21:27:46,625] 4ab6ca1e7391/INFO/test_locust: Semantic search: 0 results, 3ms
+[2025-10-04 21:27:46,625] 4ab6ca1e7391/INFO/test_locust: Hybrid search: 5 results, 4ms
+[2025-10-04 21:27:46,626] 4ab6ca1e7391/INFO/test_locust: Hybrid search: 3 results, 9ms
+[2025-10-04 21:27:46,626] 4ab6ca1e7391/INFO/test_locust: Semantic search: 15 results, 5ms
+[2025-10-04 21:27:46,627] 4ab6ca1e7391/INFO/test_locust: Hybrid search: 3 results, 5ms
+[2025-10-04 21:27:46,627] 4ab6ca1e7391/INFO/test_locust: Hybrid search: 8 results, 3ms
+[2025-10-04 21:27:46,627] 4ab6ca1e7391/INFO/test_locust: Semantic search: 0 results, 3ms
+[2025-10-04 21:27:46,628] 4ab6ca1e7391/INFO/test_locust: Semantic search: 0 results, 2ms
+[2025-10-04 21:27:46,628] 4ab6ca1e7391/INFO/test_locust: Semantic search: 0 results, 13ms
+[2025-10-04 21:27:46,629] 4ab6ca1e7391/INFO/test_locust: Hybrid search: 8 results, 4ms
+[2025-10-04 21:27:46,629] 4ab6ca1e7391/INFO/test_locust: Semantic search: 15 results, 4ms
+[2025-10-04 21:27:46,630] 4ab6ca1e7391/INFO/test_locust: Semantic search: 0 results, 3ms
+[2025-10-04 21:27:47,705] 4ab6ca1e7391/INFO/test_locust: Semantic search: 15 results, 6ms
+[2025-10-04 21:27:47,949] 4ab6ca1e7391/INFO/test_locust: Semantic search: 0 results, 2ms
+[2025-10-04 21:27:48,037] 4ab6ca1e7391/INFO/test_locust: Semantic search: 0 results, 2ms
+[2025-10-04 21:27:48,250] 4ab6ca1e7391/INFO/test_locust: Hybrid search: 3 results, 4ms
+[2025-10-04 21:27:48,311] 4ab6ca1e7391/INFO/test_locust: Semantic search: 0 results, 2ms
+[2025-10-04 21:27:48,495] 4ab6ca1e7391/INFO/test_locust: Semantic search: 0 results, 2ms
+[2025-10-04 21:27:48,699] 4ab6ca1e7391/INFO/test_locust: Hybrid search: 5 results, 3ms
+[2025-10-04 21:27:48,718] 4ab6ca1e7391/INFO/test_locust: Semantic search: 0 results, 1ms
+[2025-10-04 21:27:48,734] 4ab6ca1e7391/INFO/test_locust: Semantic search: 0 results, 2ms
+[2025-10-04 21:27:48,838] 4ab6ca1e7391/INFO/test_locust: Semantic search: 0 results, 2ms
+[2025-10-04 21:27:48,916] 4ab6ca1e7391/INFO/test_locust: Semantic search: 0 results, 1ms
+[2025-10-04 21:27:49,021] 4ab6ca1e7391/INFO/test_locust: Hybrid search: 8 results, 3ms
+[2025-10-04 21:27:49,060] 4ab6ca1e7391/INFO/test_locust: Semantic search: 0 results, 2ms
+[2025-10-04 21:27:49,093] 4ab6ca1e7391/INFO/test_locust: Semantic search: 0 results, 2ms
+[2025-10-04 21:27:49,271] 4ab6ca1e7391/INFO/test_locust: Semantic search: 0 results, 2ms
+[2025-10-04 21:27:49,411] 4ab6ca1e7391/INFO/test_locust: Semantic search: 0 results, 2ms
+[2025-10-04 21:27:49,452] 4ab6ca1e7391/INFO/test_locust: Hybrid search: 8 results, 4ms
+[2025-10-04 21:27:49,515] 4ab6ca1e7391/INFO/test_locust: Hybrid search: 5 results, 4ms
+[2025-10-04 21:27:49,618] 4ab6ca1e7391/INFO/test_locust: Semantic search: 5 results, 5ms
+[2025-10-04 21:27:49,651] 4ab6ca1e7391/INFO/test_locust: Semantic search: 15 results, 5ms
+[2025-10-04 21:27:49,652] 4ab6ca1e7391/INFO/test_locust: Semantic search: 10 results, 4ms
+[2025-10-04 21:27:49,756] 4ab6ca1e7391/INFO/test_locust: Semantic search: 10 results, 5ms
+[2025-10-04 21:27:49,924] 4ab6ca1e7391/INFO/test_locust: Hybrid search: 8 results, 5ms
+[2025-10-04 21:27:50,085] 4ab6ca1e7391/INFO/test_locust: Semantic search: 5 results, 4ms
+[2025-10-04 21:27:50,325] 4ab6ca1e7391/INFO/test_locust: Semantic search: 0 results, 3ms
+[2025-10-04 21:27:50,623] 4ab6ca1e7391/INFO/test_locust: Semantic search: 0 results, 2ms
+[2025-10-04 21:27:50,624] 4ab6ca1e7391/INFO/test_locust: Hybrid search: 5 results, 3ms
+[2025-10-04 21:27:50,624] 4ab6ca1e7391/INFO/test_locust: Semantic search: 0 results, 2ms
+[2025-10-04 21:27:50,750] 4ab6ca1e7391/INFO/test_locust: Hybrid search: 8 results, 4ms
+[2025-10-04 21:27:59,104] 4ab6ca1e7391/INFO/test_locust: Semantic search: 15 results, 4ms
+[2025-10-04 21:27:59,105] 4ab6ca1e7391/INFO/test_locust: Semantic search: 0 results, 2ms
+[2025-10-04 21:27:59,335] 4ab6ca1e7391/INFO/test_locust: Hybrid search: 8 results, 7ms
+[2025-10-04 21:27:59,336] 4ab6ca1e7391/INFO/test_locust: Semantic search: 0 results, 2ms
+[2025-10-04 21:27:59,336] 4ab6ca1e7391/INFO/test_locust: Semantic search: 0 results, 2ms
+[2025-10-04 21:27:59,336] 4ab6ca1e7391/INFO/test_locust: Semantic search: 0 results, 4ms
+[2025-10-04 21:27:59,337] 4ab6ca1e7391/INFO/test_locust: Semantic search: 0 results, 2ms
+[2025-10-04 21:27:59,337] 4ab6ca1e7391/INFO/test_locust: Semantic search: 0 results, 2ms
+[2025-10-04 21:27:59,338] 4ab6ca1e7391/INFO/test_locust: Hybrid search: 8 results, 4ms
+[2025-10-04 21:27:59,338] 4ab6ca1e7391/INFO/test_locust: Hybrid search: 8 results, 4ms
+[2025-10-04 21:27:59,339] 4ab6ca1e7391/INFO/test_locust: Hybrid search: 5 results, 4ms
+[2025-10-04 21:27:59,340] 4ab6ca1e7391/INFO/test_locust: Hybrid search: 8 results, 7ms
+[2025-10-04 21:27:59,340] 4ab6ca1e7391/INFO/test_locust: Semantic search: 0 results, 2ms
+[2025-10-04 21:27:59,340] 4ab6ca1e7391/INFO/test_locust: Hybrid search: 5 results, 4ms
+[2025-10-04 21:27:59,341] 4ab6ca1e7391/INFO/test_locust: Semantic search: 0 results, 3ms
+[2025-10-04 21:27:59,341] 4ab6ca1e7391/INFO/test_locust: Semantic search: 0 results, 3ms
+[2025-10-04 21:27:59,342] 4ab6ca1e7391/INFO/test_locust: Hybrid search: 3 results, 3ms
+[2025-10-04 21:27:59,915] 4ab6ca1e7391/INFO/test_locust: Semantic search: 5 results, 4ms
+[2025-10-04 21:27:59,992] 4ab6ca1e7391/INFO/test_locust: Hybrid search: 5 results, 3ms
+[2025-10-04 21:28:00,205] 4ab6ca1e7391/INFO/test_locust: Semantic search: 0 results, 2ms
+[2025-10-04 21:28:00,217] 4ab6ca1e7391/INFO/test_locust: Semantic search: 0 results, 2ms
+[2025-10-04 21:28:00,321] 4ab6ca1e7391/INFO/test_locust: Semantic search: 0 results, 3ms
+[2025-10-04 21:28:00,400] 4ab6ca1e7391/INFO/test_locust: Semantic search: 0 results, 3ms
+[2025-10-04 21:28:00,952] 4ab6ca1e7391/INFO/test_locust: Semantic search: 0 results, 5ms
+[2025-10-04 21:28:00,993] 4ab6ca1e7391/INFO/test_locust: Semantic search: 15 results, 5ms
+[2025-10-04 21:28:00,993] 4ab6ca1e7391/INFO/test_locust: Semantic search: 0 results, 3ms
+[2025-10-04 21:28:01,335] 4ab6ca1e7391/INFO/test_locust: Semantic search: 0 results, 3ms
+[2025-10-04 21:28:01,368] 4ab6ca1e7391/INFO/test_locust: Semantic search: 0 results, 4ms
+[2025-10-04 21:28:01,461] 4ab6ca1e7391/INFO/test_locust: Semantic search: 0 results, 5ms
+[2025-10-04 21:28:01,481] 4ab6ca1e7391/INFO/test_locust: Semantic search: 10 results, 5ms
+[2025-10-04 21:28:01,694] 4ab6ca1e7391/INFO/test_locust: Semantic search: 0 results, 2ms
+[2025-10-04 21:28:01,736] 4ab6ca1e7391/INFO/test_locust: Hybrid search: 5 results, 4ms
+[2025-10-04 21:28:01,819] 4ab6ca1e7391/INFO/test_locust: Hybrid search: 3 results, 3ms
+[2025-10-04 21:28:02,126] 4ab6ca1e7391/INFO/test_locust: Semantic search: 0 results, 2ms
+[2025-10-04 21:28:02,126] 4ab6ca1e7391/INFO/test_locust: Semantic search: 0 results, 2ms
+[2025-10-04 21:28:02,127] 4ab6ca1e7391/INFO/test_locust: Semantic search: 0 results, 2ms
+[2025-10-04 21:28:02,216] 4ab6ca1e7391/INFO/test_locust: Semantic search: 0 results, 2ms
+[2025-10-04 21:28:02,229] 4ab6ca1e7391/INFO/test_locust: Semantic search: 0 results, 2ms
+[2025-10-04 21:28:02,488] 4ab6ca1e7391/INFO/test_locust: Hybrid search: 3 results, 3ms
+[2025-10-04 21:28:02,521] 4ab6ca1e7391/INFO/test_locust: Semantic search: 0 results, 3ms
+[2025-10-04 21:28:02,537] 4ab6ca1e7391/INFO/test_locust: Semantic search: 15 results, 4ms
+[2025-10-04 21:28:02,736] 4ab6ca1e7391/INFO/test_locust: Hybrid search: 3 results, 3ms
+[2025-10-04 21:28:02,761] 4ab6ca1e7391/INFO/test_locust: Semantic search: 0 results, 3ms
+[2025-10-04 21:28:19,287] 4ab6ca1e7391/INFO/test_locust: Hybrid search: 5 results, 5ms
+[2025-10-04 21:28:19,288] 4ab6ca1e7391/INFO/test_locust: Hybrid search: 3 results, 3ms
+[2025-10-04 21:28:19,288] 4ab6ca1e7391/INFO/test_locust: Semantic search: 0 results, 3ms
+[2025-10-04 21:28:19,289] 4ab6ca1e7391/INFO/test_locust: Semantic search: 5 results, 4ms
+[2025-10-04 21:28:19,289] 4ab6ca1e7391/INFO/test_locust: Semantic search: 15 results, 5ms
+[2025-10-04 21:28:19,290] 4ab6ca1e7391/INFO/test_locust: Semantic search: 5 results, 3ms
+[2025-10-04 21:28:19,290] 4ab6ca1e7391/INFO/test_locust: Semantic search: 0 results, 2ms
+[2025-10-04 21:28:19,291] 4ab6ca1e7391/INFO/test_locust: Hybrid search: 5 results, 3ms
+[2025-10-04 21:28:19,291] 4ab6ca1e7391/INFO/test_locust: Hybrid search: 8 results, 15ms
+[2025-10-04 21:28:19,292] 4ab6ca1e7391/INFO/test_locust: Hybrid search: 8 results, 5ms
+[2025-10-04 21:28:19,292] 4ab6ca1e7391/INFO/test_locust: Semantic search: 5 results, 4ms
+[2025-10-04 21:28:19,293] 4ab6ca1e7391/INFO/test_locust: Semantic search: 15 results, 4ms
+[2025-10-04 21:28:19,293] 4ab6ca1e7391/INFO/test_locust: Semantic search: 0 results, 3ms
+[2025-10-04 21:28:19,294] 4ab6ca1e7391/INFO/test_locust: Semantic search: 5 results, 5ms
+[2025-10-04 21:28:19,294] 4ab6ca1e7391/INFO/test_locust: Semantic search: 0 results, 2ms
+[2025-10-04 21:28:19,294] 4ab6ca1e7391/INFO/test_locust: Semantic search: 0 results, 4ms
+[2025-10-04 21:28:19,295] 4ab6ca1e7391/INFO/test_locust: Semantic search: 0 results, 2ms
+[2025-10-04 21:28:19,315] 4ab6ca1e7391/INFO/test_locust: Semantic search: 0 results, 3ms
+[2025-10-04 21:28:19,315] 4ab6ca1e7391/INFO/test_locust: Semantic search: 0 results, 2ms
+[2025-10-04 21:28:20,017] 4ab6ca1e7391/INFO/test_locust: Hybrid search: 3 results, 5ms
+[2025-10-04 21:28:20,469] 4ab6ca1e7391/INFO/test_locust: Semantic search: 10 results, 5ms
+[2025-10-04 21:28:20,845] 4ab6ca1e7391/INFO/test_locust: Semantic search: 10 results, 4ms
+[2025-10-04 21:28:20,845] 4ab6ca1e7391/INFO/test_locust: Semantic search: 0 results, 2ms
+[2025-10-04 21:28:20,845] 4ab6ca1e7391/INFO/test_locust: Semantic search: 0 results, 2ms
+[2025-10-04 21:28:20,846] 4ab6ca1e7391/INFO/test_locust: Hybrid search: 5 results, 3ms
+[2025-10-04 21:28:21,311] 4ab6ca1e7391/INFO/test_locust: Hybrid search: 5 results, 3ms
+[2025-10-04 21:28:21,350] 4ab6ca1e7391/INFO/test_locust: Semantic search: 0 results, 2ms
+[2025-10-04 21:28:21,374] 4ab6ca1e7391/INFO/test_locust: Hybrid search: 5 results, 3ms
+[2025-10-04 21:28:21,411] 4ab6ca1e7391/INFO/test_locust: Semantic search: 0 results, 2ms
+[2025-10-04 21:28:21,613] 4ab6ca1e7391/INFO/test_locust: Hybrid search: 3 results, 3ms
+[2025-10-04 21:28:21,798] 4ab6ca1e7391/INFO/test_locust: Semantic search: 10 results, 3ms
+[2025-10-04 21:28:21,879] 4ab6ca1e7391/INFO/test_locust: Semantic search: 0 results, 2ms
+[2025-10-04 21:28:21,893] 4ab6ca1e7391/INFO/test_locust: Hybrid search: 3 results, 2ms
+[2025-10-04 21:28:21,947] 4ab6ca1e7391/INFO/test_locust: Semantic search: 0 results, 2ms
+[2025-10-04 21:28:22,087] 4ab6ca1e7391/INFO/test_locust: Hybrid search: 3 results, 2ms
+[2025-10-04 21:28:22,204] 4ab6ca1e7391/INFO/test_locust: Semantic search: 0 results, 2ms
+[2025-10-04 21:28:22,218] 4ab6ca1e7391/INFO/test_locust: Hybrid search: 3 results, 3ms
+[2025-10-04 21:28:22,434] 4ab6ca1e7391/INFO/test_locust: Semantic search: 15 results, 6ms
+[2025-10-04 21:28:22,475] 4ab6ca1e7391/INFO/test_locust: Hybrid search: 5 results, 4ms
+[2025-10-04 21:28:22,564] 4ab6ca1e7391/INFO/test_locust: Semantic search: 5 results, 9ms
+[2025-10-04 21:28:22,610] 4ab6ca1e7391/INFO/test_locust: Hybrid search: 3 results, 3ms
+[2025-10-04 21:28:22,703] 4ab6ca1e7391/INFO/test_locust: Semantic search: 15 results, 4ms
+[2025-10-04 21:28:22,781] 4ab6ca1e7391/INFO/test_locust: Semantic search: 0 results, 2ms
+[2025-10-04 21:28:22,803] 4ab6ca1e7391/INFO/test_locust: Semantic search: 10 results, 4ms
+[2025-10-04 21:28:22,858] 4ab6ca1e7391/INFO/test_locust: Semantic search: 0 results, 2ms
+[2025-10-04 21:28:22,898] 4ab6ca1e7391/INFO/test_locust: Semantic search: 0 results, 2ms
+[2025-10-04 21:28:23,001] 4ab6ca1e7391/INFO/locust.main: writing html report to file: reports/performance-baseline.html
+[2025-10-04 21:28:23,012] 4ab6ca1e7391/INFO/locust.main: Shutting down (exit code 0)
+[2025-10-04 21:28:23,598] 4ab6ca1e7391/INFO/test_locust: ============================================================
+[2025-10-04 21:28:23,598] 4ab6ca1e7391/INFO/test_locust: BMS AGENT PERFORMANCE BASELINE REPORT
+[2025-10-04 21:28:23,599] 4ab6ca1e7391/INFO/test_locust: ============================================================
+[2025-10-04 21:28:23,599] 4ab6ca1e7391/INFO/test_locust: Total Requests: 218
+[2025-10-04 21:28:23,602] 4ab6ca1e7391/INFO/test_locust: Error Rate: 0.00%
+[2025-10-04 21:28:23,602] 4ab6ca1e7391/INFO/test_locust: 
+[2025-10-04 21:28:23,603] 4ab6ca1e7391/INFO/test_locust: Document Upload:
+[2025-10-04 21:28:23,603] 4ab6ca1e7391/INFO/test_locust:   Count: 14
+[2025-10-04 21:28:23,603] 4ab6ca1e7391/INFO/test_locust:   Average: 5507.58ms
+[2025-10-04 21:28:23,603] 4ab6ca1e7391/INFO/test_locust:   P50: 7837.34ms
+[2025-10-04 21:28:23,604] 4ab6ca1e7391/INFO/test_locust:   P95: 15744.33ms
+[2025-10-04 21:28:23,604] 4ab6ca1e7391/INFO/test_locust:   P99: 15744.33ms
+[2025-10-04 21:28:23,605] 4ab6ca1e7391/INFO/test_locust:   Min: 192.48ms
+[2025-10-04 21:28:23,605] 4ab6ca1e7391/INFO/test_locust:   Max: 15744.33ms
+[2025-10-04 21:28:23,605] 4ab6ca1e7391/INFO/test_locust: 
+[2025-10-04 21:28:23,606] 4ab6ca1e7391/INFO/test_locust: Semantic Search:
+[2025-10-04 21:28:23,606] 4ab6ca1e7391/INFO/test_locust:   Count: 131
+[2025-10-04 21:28:23,606] 4ab6ca1e7391/INFO/test_locust:   Average: 4671.01ms
+[2025-10-04 21:28:23,607] 4ab6ca1e7391/INFO/test_locust:   P50: 147.95ms
+[2025-10-04 21:28:23,607] 4ab6ca1e7391/INFO/test_locust:   P95: 15446.03ms
+[2025-10-04 21:28:23,607] 4ab6ca1e7391/INFO/test_locust:   P99: 16023.83ms
+[2025-10-04 21:28:23,607] 4ab6ca1e7391/INFO/test_locust:   Min: 12.07ms
+[2025-10-04 21:28:23,608] 4ab6ca1e7391/INFO/test_locust:   Max: 16024.85ms
+[2025-10-04 21:28:23,608] 4ab6ca1e7391/INFO/test_locust: 
+[2025-10-04 21:28:23,608] 4ab6ca1e7391/INFO/test_locust: Hybrid Search:
+[2025-10-04 21:28:23,608] 4ab6ca1e7391/INFO/test_locust:   Count: 62
+[2025-10-04 21:28:23,609] 4ab6ca1e7391/INFO/test_locust:   Average: 5147.44ms
+[2025-10-04 21:28:23,609] 4ab6ca1e7391/INFO/test_locust:   P50: 5585.61ms
+[2025-10-04 21:28:23,609] 4ab6ca1e7391/INFO/test_locust:   P95: 15723.09ms
+[2025-10-04 21:28:23,610] 4ab6ca1e7391/INFO/test_locust:   P99: 16019.18ms
+[2025-10-04 21:28:23,610] 4ab6ca1e7391/INFO/test_locust:   Min: 14.82ms
+[2025-10-04 21:28:23,610] 4ab6ca1e7391/INFO/test_locust:   Max: 16019.18ms
+[2025-10-04 21:28:23,610] 4ab6ca1e7391/INFO/test_locust: 
+[2025-10-04 21:28:23,611] 4ab6ca1e7391/INFO/test_locust: Health Check:
+[2025-10-04 21:28:23,611] 4ab6ca1e7391/INFO/test_locust:   Count: 11
+[2025-10-04 21:28:23,611] 4ab6ca1e7391/INFO/test_locust:   Average: 3087.35ms
+[2025-10-04 21:28:23,611] 4ab6ca1e7391/INFO/test_locust:   P50: 2.51ms
+[2025-10-04 21:28:23,612] 4ab6ca1e7391/INFO/test_locust:   P95: 13513.29ms
+[2025-10-04 21:28:23,612] 4ab6ca1e7391/INFO/test_locust:   P99: 13513.29ms
+[2025-10-04 21:28:23,612] 4ab6ca1e7391/INFO/test_locust:   Min: 1.84ms
+[2025-10-04 21:28:23,612] 4ab6ca1e7391/INFO/test_locust:   Max: 13513.29ms
+[2025-10-04 21:28:23,612] 4ab6ca1e7391/INFO/test_locust: 
+[2025-10-04 21:28:23,617] 4ab6ca1e7391/INFO/test_locust: Detailed report saved to: performance_baseline_report.json
+[2025-10-04 21:28:23,618] 4ab6ca1e7391/INFO/test_locust: ============================================================
+[2025-10-04 21:28:23,618] 4ab6ca1e7391/INFO/test_locust: POC BASELINE MEASUREMENT COMPLETE
+[2025-10-04 21:28:23,618] 4ab6ca1e7391/INFO/test_locust: Note: This is baseline data collection only.
+[2025-10-04 21:28:23,618] 4ab6ca1e7391/INFO/test_locust: No performance targets or pass/fail criteria applied.
+[2025-10-04 21:28:23,619] 4ab6ca1e7391/INFO/test_locust: ============================================================

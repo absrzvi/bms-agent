@@ -1,7 +1,9 @@
 # BMS Agent Project Constitution
 
 ## Preamble
-This constitution establishes the governing principles and technical standards for the BMS (Building Management System) Agent project, a Proof of Concept (POC) for RAG (Retrieval-Augmented Generation) implementation focused on railway connectivity infrastructure. This document ensures consistency, quality, and maintainability across all aspects of the project.
+This constitution establishes the governing principles and technical standards for the BMS (Business Management System) Agent project - a railway documentation RAG system providing Retrieval-Augmented Generation for internal documentation and technical specifications. This document ensures consistency, quality, and maintainability across all aspects of the project.
+
+**POC/MVP Exception Framework**: Requirements marked as MUST may be relaxed or deferred for POC and MVP phases when explicitly documented with "POC DECISION" or "MVP DECISION" markers in specifications. Production deployment must satisfy all MUST requirements.
 
 ## 1. Railway IT Infrastructure Standards (MUST)
 - **Compliance with Standards**: All implementations MUST adhere to:
@@ -11,12 +13,11 @@ This constitution establishes the governing principles and technical standards f
   - ÖBB (Austrian Federal Railways) technical requirements
 - **Availability**: Systems MUST maintain 99.99% uptime
 - **Network Architecture**:
-  - Support for high-availability configurations
-  - Integration with Nomad Connect Routers
-  - 10Gbps network infrastructure
-  - Enterprise-grade WiFi access points
+  - Support for high-availability configurations suitable for railway operations
+  - Resilient connectivity patterns that sustain 99.99% uptime targets
+  - Enterprise-grade wireless access where applicable
 - **Performance**:
-  - Real-time data processing with <100ms latency for moving train data
+  - Real-time data processing with <100ms latency for moving train data (POC: best effort performance acceptable)
   - Resilience patterns for tunnel connectivity and high-speed handovers
 
 ## 2. Data Processing & RAG Architecture (MUST)
@@ -45,12 +46,15 @@ This constitution establishes the governing principles and technical standards f
 ## 4. Code Quality & Testing (MUST)
 - **Test Coverage**:
   - Minimum 80% test coverage for core logic
+  - **POC DECISION**: Minimum 60% test coverage acceptable for POC phase with documented path to 80% for production deployment
   - Unit tests for data transformations
   - Integration tests for DB and API
 - **Code Quality**:
   - Pre-commit hooks (Black, Ruff, mypy)
+  - **POC DECISION**: Manual code quality checks acceptable for POC phase; automated pre-commit hooks required for production
   - NumPy style docstrings
   - Performance benchmarking
+  - **POC DECISION**: Basic performance validation acceptable for POC; comprehensive benchmarking required for production
 
 ## 5. Security & Compliance (MUST)
 - **Data Protection**:
@@ -58,9 +62,9 @@ This constitution establishes the governing principles and technical standards f
   - Encryption at rest
   - Input validation
 - **Access Control**:
-  - JWT/API key authentication
-  - RBAC implementation
-  - Audit logging
+  - JWT/API key authentication (POC: no authentication acceptable for development)
+  - RBAC implementation (POC: deferred to production)
+  - Audit logging (POC: basic logging acceptable)
 - **Security Scanning**:
   - Regular Bandit scans
   - Dependency vulnerability checks
@@ -87,8 +91,8 @@ This constitution establishes the governing principles and technical standards f
   - Async operations
   - Memory profiling
 - **Targets**:
-  - 1000+ concurrent requests
-  - Sub-100ms response times
+  - 1000+ concurrent requests (POC: best effort performance, no specific targets)
+  - Sub-100ms response times (POC: best effort performance, no specific targets)
 
 ## 8. Monitoring & Observability (MUST)
 - **Logging**:
@@ -96,11 +100,13 @@ This constitution establishes the governing principles and technical standards f
   - Correlation IDs
   - Log levels
 - **Metrics**:
-  - Prometheus integration
-  - Health checks
+  - Prometheus integration for production
+  - **POC DECISION**: Basic health endpoint and structured logging acceptable for POC phase; Prometheus/Grafana required for production deployment
+  - Health checks (minimum: /health endpoint returning component status)
   - Performance metrics
 - **Visualization**:
-  - Grafana dashboards
+  - Grafana dashboards for production
+  - **POC DECISION**: Manual log inspection acceptable for POC; automated dashboards and alerting required for production
   - Alerting rules
 
 ## 9. Development Workflow (MUST)
@@ -146,6 +152,24 @@ This constitution establishes the governing principles and technical standards f
   - Support for air-gapped deployment scenarios
   - Local embedding generation with versioned models
   - Documented data flow with clear boundaries
+- **Installation & Persistence** (RunPod Pod Deployment - NOT Docker):
+  - **Context**: System runs in RunPod pods where only `/workspace` is persistent across restarts
+  - **Critical**: All applications, libraries, and dependencies MUST be installed in `/workspace` to survive pod restarts
+  - Python virtual environment MUST be in `/workspace/bms-api-venv` (NOT system Python)
+  - All data directories MUST be in `/workspace`:
+    - Qdrant storage: `/workspace/qdrant_storage`
+    - BMS data: `/workspace/bms_data`
+    - Logs: `/workspace/logs`
+    - Backups: `/workspace/backups`
+    - Ollama models: `/workspace/data/ollama_models`
+    - NLTK data: `/workspace/nltk_data` (configured via `NLTK_DATA` environment variable)
+    - Configuration: `/workspace/config` (SSH keys, environment variables)
+  - **Exception**: Ollama binary MUST be installed in `/root` (default location) for GPU compatibility
+    - Ollama models configured via `OLLAMA_MODELS=/workspace/data/ollama_models` for persistence
+    - Ollama binary reinstalled on each pod start (non-persistent location)
+  - `requirements.txt` dependencies MUST be installed in `/workspace/bms-api-venv` during initialization
+  - Initialization script (`runpod_init.sh`) MUST handle both first-time setup and pod restarts
+  - Completion marker (`/workspace/.runpod_init_complete`) prevents redundant initialization on restarts
 
 ## 12. Vector Database (MUST)
 - **Implementation**:
@@ -166,6 +190,10 @@ This constitution establishes the governing principles and technical standards f
   - Error recovery
   - Monitoring hooks
   - Standardized schemas
+- **Testing**:
+  - Workflow JSON schema validation (structure, nodes, connections)
+  - Integration tests for webhook endpoints
+  - **POC DECISION**: Manual workflow creation in n8n UI acceptable with JSON export validation; automated workflow generation required for production scale
 
 ## Governance
 

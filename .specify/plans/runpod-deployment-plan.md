@@ -11,7 +11,7 @@ Single-pod deployment on RunPod.io with direct binary installations (no Docker) 
 
 ## Deployment Environment
 - **Platform**: Runpod.io single pod (no Docker/Kubernetes)
-- **Hardware**: 8-16 vCPUs, 32-64GB RAM, 200-500GB NVMe SSD
+- **Hardware**: 16 vCPUs, 64 GB RAM, 500 GB NVMe SSD (baseline sizing for 1,000 concurrent users and 1 GB ingestion)
 - **Existing Services**: Ollama, n8n, OpenWebUI (already installed)
 - **To Install**: Qdrant vector database
 - **Persistent Storage**: ~/persistent/ for all data
@@ -50,6 +50,11 @@ Single-pod deployment on RunPod.io with direct binary installations (no Docker) 
 - Review constitution (§1–§4) to ensure acceptance criteria include standards compliance, JWT/webhook security, monitoring, and testing thresholds.
 - Establish Git flow branching strategy (feature/release branches) and document workflow expectations in `README.md`.
 - Create `docs/migrations.md` to track any manual data/schema changes executed during the MVP.
+- Prepare runpod environment prerequisites before executing T001:
+  - Download Qdrant v1.7.4 binary (`wget https://github.com/qdrant/qdrant/releases/download/v1.7.4/qdrant-x86_64-unknown-linux-gnu.tar.gz && tar -xzf qdrant-x86_64-unknown-linux-gnu.tar.gz`).
+  - Verify Python 3.11+ availability (`python3 --version`).
+  - Generate RSA key pair for JWT validation (`openssl genrsa -out private_key.pem 2048 && openssl rsa -in private_key.pem -pubout -out public_key.pem`).
+  - Capture pod resource allocation confirmation (16 vCPU / 64 GB RAM) in `DEPLOYMENT_CHECKLIST.md`.
 
 ### Phase 1 – Environment & Qdrant (`T001–T005`)
 1. Provision project directories and persistent storage (`tasks.md` `T001`) sized for ≥1 TB to support multi-GB uploads and indexes.
@@ -86,22 +91,22 @@ Single-pod deployment on RunPod.io with direct binary installations (no Docker) 
 ### Phase 5 – Documentation, Tooling & CI/CD (`T015`, `T016`, `T023`, `T024` – post-MVP optional)
 - Maintain `README.md`, `TESTING.md`, `DEPLOYMENT_CHECKLIST.md`, and `reports/performance-baseline.md` with instructions reflecting current architecture.
 - Configure GitHub Actions (`.github/workflows/ci-cd.yml`) to run tests, coverage, security scans (Bandit, Safety), pre-commit hooks (Black, Ruff, mypy), and provide deployment placeholders for RunPod automation.
-- Introduce repository tooling (`pre-commit`, formatting, linting, typing) and fail builds on formatting/type regressions (`T023`, planned post-MVP).
-- Define container build pipeline (OCI image for FastAPI service), semantic versioning policy, and automated migration scripts invoked during deploy (`T024`, planned post-MVP).
 - Document required secrets (`BMS_API_KEY`, `DEPLOY_KEY`, optional `CODECOV_TOKEN`, `SAFETY_API_KEY`, future `RUNPOD_USER/HOST`, `REGISTRY_USERNAME/PASSWORD`).
 
 ### Phase 6 – Testing & Evaluation (`T010`, `T017`, `T019`, `T020`)
 1. Use `scripts/run_tests.sh` to orchestrate integration tests (processor, API smoke checks).
-2. Expand `tests/test_basic.py`, `tests/performance/test_performance.py`, and dedicated load tests to verify ≤100 ms p95 latency with 1,000 concurrent requests (e.g., Locust/Gatling scenarios).
+2. Expand `tests/test_basic.py` and the Locust suite in `tests/performance/load/test_locust.py` to verify ≤100 ms p95 latency with 1,000 concurrent requests and capture JSON stats for analysis.
 3. Create evaluation dataset (`data/evaluation/ground_truth.jsonl`) and `scripts/evaluate_retrieval.py` to compute top-5 accuracy ≥95 %.
-4. Add hybrid retrieval regression tests validating keyword enrichment and dense/sparse fusion logic.
+4. Add hybrid retrieval regression tests validating keyword enrichment and dense/sparse fusion logic (leveraging `/api/v1/search/hybrid`).
 5. Integrate evaluation into CI (report accuracy figure and fail if below threshold) and surface performance/hybrid results in pipeline artifacts.
+6. Update `DEPLOYMENT_CHECKLIST.md` to include manual alert runbooks for latency, ingestion, and dependency degradation.
 
 ### Phase 7 – Observability & Operations (`T012`, `T013`, `T018`, `T021` – post-MVP optional)
-1. Manage lifecycle via `scripts/manage_services.sh` (start/stop/status) and `scripts/health_check.sh`.
-2. Implement `/metrics/uplink` endpoint exposing latency histogram, request counts, and error totals for scraping.
-3. Expose Prometheus metrics (FastAPI + Qdrant exporters) and provision Grafana dashboards/alert rules aligned to 99.99 % availability (`T021`, scheduled post-MVP).
-4. Document monitoring routine, log rotation, and incident response in `DEPLOYMENT_CHECKLIST.md`.
+1. Extend `/metrics/uplink` to expose latency histogram, request counts, error totals, embedding generation latency, and resource utilization (CPU %, memory, disk I/O, GPU load).
+2. Instrument Qdrant and Ollama with Prometheus exporters, wiring dashboards that track ingestion throughput, chunk backlog, and RAGAS quality drift alongside latency SLAs (`T021`).
+3. Document manual and automated alert thresholds (latency ≥100 ms p95, ingestion failure spikes, CPU ≥85 %, disk usage ≥80 %, embedding latency >1 s) in `DEPLOYMENT_CHECKLIST.md`.
+4. Define secret rotation and audit logging validation routines (JWT key rotation, API key refresh cadence, audit trail completeness) and include escalation contacts in operations docs.
+5. Outline future automation for paging/notification delivery and log archival to object storage; mark as post-MVP follow-up.
 
 ## File Structure
 ```
@@ -131,8 +136,8 @@ Single-pod deployment on RunPod.io with direct binary installations (no Docker) 
     │   └── evaluate_retrieval.py
     ├── tests/
     │   ├── test_basic.py
-    │   ├── performance/test_performance.py
-    │   └── security/ (optional future expansion)
+    │   ├── integration/test_hybrid_search.py
+    │   └── performance/load/test_locust.py
     ├── reports/performance-baseline.md
     ├── README.md
     ├── TESTING.md
@@ -156,27 +161,33 @@ BMS_API_KEY=change-me
 BMS_JWT_PUBLIC_KEY="-----BEGIN PUBLIC KEY-----..."
 BMS_JWT_ALGORITHM=RS256
 RATE_LIMIT_PER_MIN=60
+JWT_KEY_ROTATION_DAYS=30
 
 # Qdrant
 QDRANT_HOST=localhost
 QDRANT_PORT=6333
 QDRANT_COLLECTION=nomad_bms_documents
+QDRANT_GRPC_PORT=6334
+QDRANT_MAX_PAYLOAD_SIZE=1073741824
 
 # Ollama
 OLLAMA_URL=http://localhost:11434
 EMBEDDING_MODEL=snowflake-arctic-embed2
 GENERATION_MODEL=mistral-nemo:12b-instruct
+EMBEDDING_BATCH_SIZE=32
 
 # Integrations
 SLACK_BOT_TOKEN=your-token
 SLACK_SIGNING_SECRET=your-secret
 OPENWEBUI_URL=http://localhost:8080
 N8N_WEBHOOK_JWT=...
+PROMETHEUS_PORT=9090
+GRAFANA_PORT=3000
 ```
 
 ## API Endpoints (MVP)
 
-- `POST /api/v1/documents/upload` – Upload and process a single document (≤100 MB).
+- `POST /api/v1/documents/upload` – Upload and process a single document (≤1 GB streaming, chunked write).
 - `POST /api/v1/search/semantic` – Semantic vector search (JWT + API key protected, rate limited).
 - `GET /health` – Lightweight service heartbeat.
 - `GET /health/detailed` – Extended health report (Qdrant collection state, Ollama status, n8n/OpenWebUI reachability).
@@ -187,14 +198,14 @@ N8N_WEBHOOK_JWT=...
 
 1. `./scripts/run_tests.sh` – Ensures Qdrant running, processor ingestion works, API responsive.
 2. `pytest -v --cov=./ --cov-report=term-missing` – Unit/integration coverage (≥80 %).
-3. `pytest tests/performance/test_performance.py -m performance` – Validates latency targets (<500 ms average, <1 s p95).
+3. `locust -f tests/performance/load/test_locust.py --headless -u 1000 -r 50 -t 7m --host http://localhost:8000` – Validates ≤100 ms p95 and ≤50 ms average latency under 1,000 concurrent users.
 4. `python scripts/evaluate_retrieval.py` – Computes top-5 accuracy vs `data/evaluation/ground_truth.jsonl` (≥95 %).
 5. Manual smoke tests via Slack bot and OpenWebUI to ensure integrations operate with current API key/JWT configuration.
 
 ## Performance & Reliability Targets
 
 - Document processing throughput: ≥10 documents/minute (using EnhancedDocumentProcessor).
-- Semantic query latency: <500 ms average, <1 s p95.
+- Semantic query latency: ≤100 ms p95 with 1,000 concurrent users (validated via `tests/performance/load/test_locust.py`).
 - Availability: 99.99 % (documented monitoring + incident response, failover guidance TBD).
 - Storage efficiency: ≤100 GB for 10 k documents using on-disk vectors/payloads.
 

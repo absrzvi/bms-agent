@@ -1,0 +1,100 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "MS Teams Bot Response Templates",
+  "description": "Standardized response messages for the BMS Agent MS Teams bot",
+  "version": "1.0.0",
+
+  "templates": {
+    "help": {
+      "title": "BMS Agent Bot - Available Commands",
+      "text": "Ask me questions about railway documentation or use these commands:\n\n/ask [question] - Get direct answers with citations\n/search [query] - Search for documents\n/upload - Upload a document for indexing\n/status [doc_id] - Check document processing status\n/history - View your recent searches (7 days)\n/admin [action] - Manage access (admins only)\n/help - Show this message\n\nExamples:\n- What are the emergency brake procedures?\n- /search VLAN configuration\n- /admin allow #operations-team"
+    },
+
+    "query_too_long": {
+      "text": "Query too long. Please limit to 1000 characters.",
+      "severity": "error"
+    },
+
+    "file_type_invalid": {
+      "text": "Invalid file type. Supported formats: PDF, CSV, XLSX, XLS, TXT, MD, DOCX, PPTX",
+      "severity": "error"
+    },
+
+    "bms_api_unavailable": {
+      "text": "BMS-search tool cannot be accessed at this time. Please try again later.",
+      "severity": "error"
+    },
+
+    "no_results_found": {
+      "text": "No results found for your query. Try rephrasing or using different keywords.",
+      "severity": "info"
+    },
+
+    "channel_not_whitelisted": {
+      "text": "This bot is currently in POC phase. Contact your admin to request access.",
+      "severity": "warning"
+    },
+
+    "storage_unavailable": {
+      "text": "Conversation history is temporarily unavailable. Your question will still be answered.",
+      "severity": "warning"
+    },
+
+    "storage_restored": {
+      "text": "Conversation history has been restored. Your previous context is now available.",
+      "severity": "info"
+    },
+
+    "upload_complete": {
+      "text": "Document processing complete!\nDocument: {{file_name}}\nStatus: {{status}}\nIndexed chunks: {{chunk_count}}",
+      "variables": ["file_name", "status", "chunk_count"]
+    },
+
+    "upload_failed": {
+      "text": "Document processing failed: {{error_message}}",
+      "variables": ["error_message"],
+      "severity": "error"
+    },
+
+    "similar_query": {
+      "text": "You asked something similar on {{date}}: \"{{previous_query}}\"\n\nPrevious answer: {{previous_answer}}\n\n[Reply to dismiss this suggestion]",
+      "variables": ["date", "previous_query", "previous_answer"]
+    },
+
+    "admin_access_granted": {
+      "text": "Access granted to {{target}}",
+      "variables": ["target"]
+    },
+
+    "admin_access_revoked": {
+      "text": "Access revoked for {{target}}",
+      "variables": ["target"]
+    },
+
+    "admin_reset_success": {
+      "text": "Admin privileges granted. This action has been logged.",
+      "severity": "info"
+    },
+
+    "admin_reset_invalid": {
+      "text": "Invalid reset key",
+      "severity": "error"
+    },
+
+    "unknown_command": {
+      "text": "Unknown command. Type /help for available commands.",
+      "severity": "error"
+    },
+
+    "malformed_command": {
+      "text": "Malformed command. {{usage_hint}}\n\nType /help for all commands.",
+      "variables": ["usage_hint"],
+      "severity": "error"
+    },
+
+    "query_unclear": {
+      "text": "I couldn't understand your query. Try being more specific:\n\n✓ Good: \"What are emergency brake procedures for Class 395?\"\n✗ Vague: \"Tell me about trains\"\n\n✓ Good: \"Search for VLAN configuration in safety systems\"\n✗ Vague: \"network stuff\"",
+      "severity": "info"
+    }
+  }
+}

@@ -1,0 +1,2 @@
+# BMS Agent Auto-Start
+@reboot /workspace/scripts/start_all_services.sh >> /workspace/logs/startup.log 2>&1

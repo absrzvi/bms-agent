@@ -20,7 +20,7 @@
 
 - **Search & Retrieval**
   - R2.1: Provide semantic search via `/api/v1/search/semantic` returning responses ≤100 ms p95 latency under 1,000 concurrent requests.
-    - *Acceptance*: `tests/performance/test_performance.py` (and load tests) record ≤100 ms p95 latency with 1,000 simulated clients.
+    - *Acceptance*: `tests/performance/load/test_locust.py` records ≤100 ms p95 latency with 1,000 simulated clients and publishes JSON statistics.
   - R2.2: Achieve ≥95 % top-5 retrieval accuracy on curated validation set (`data/evaluation/ground_truth.jsonl`).
     - *Acceptance*: `scripts/evaluate_retrieval.py` reports accuracy ≥95 %.
   - R2.3: Support hybrid retrieval (semantic + keyword/BM25) with query-time fusion.
@@ -45,13 +45,13 @@
   - R6.2: Document database/data store changes through a migration log (`docs/migrations.md`) even when applying manual steps during the MVP.
   - R6.3: Produce container images for the API service, follow semantic versioning, and automate database migrations as part of the release workflow.
   
-- **Observability & Operations (Post-MVP)**
-  - R7.1: Expose Prometheus-compatible metrics and ship a Grafana dashboard with 99.99 % availability alerts (latency/error budgets) per constitution §8 (scheduled for post-MVP delivery).
-
-## Acceptance Criteria Summary
-- Supported file types (≤1 GB) ingest successfully; invalid files rejected with specific errors.
-- Semantic/hybrid search responds ≤100 ms p95 under 1,000 concurrent users.
+- **Observability & Operations**
+  - R7.1: Expose Prometheus-compatible metrics and ship Grafana dashboards with 99.99 % availability visualizations per constitution §8 as part of the MVP.
+  - R7.2: Document manual alert runbooks for latency, ingestion, and dependency degradation; automated notification delivery is deferred to a post-MVP roadmap item.
+successfully; invalid files rejected with specific errors.
+- Semantic/hybrid search responds ≤100 ms p95 under 1,000 concurrent users, validated via `tests/performance/load/test_locust.py`.
 - Retrieval evaluation script reports ≥95 % accuracy.
 - JWT + API key enforcement validated by automated tests; unauthorized access denied.
-- Monitoring endpoints return status objects and metrics; referenced in operations playbook.
+- Monitoring endpoints return status objects and metrics; Prometheus scrape targets andGrafana dashboards are operational with documented manual alert runbooks.
+- Manual alert runbooks cover latency threshold breaches, ingestion failures, and dependency degradation; automated delivery is tracked as follow-up work.
 - CI pipeline passes tests, coverage, and security scans on main branch.

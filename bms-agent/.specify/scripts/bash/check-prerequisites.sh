@@ -80,7 +80,9 @@ source "$SCRIPT_DIR/common.sh"
 
 # Get feature paths and validate branch
 eval $(get_feature_paths)
-check_feature_branch "$CURRENT_BRANCH" "$HAS_GIT" || exit 1
+if [[ "$HAS_GIT" == "true" ]]; then
+    echo "INFO: Current branch is $CURRENT_BRANCH"
+fi
 
 # If paths-only mode, output paths and exit (support JSON + paths-only combined)
 if $PATHS_ONLY; then

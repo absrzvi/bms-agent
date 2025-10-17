@@ -1,0 +1,683 @@
+[2025-10-04 21:23:01,777] 4ab6ca1e7391/INFO/locust.main: Starting Locust 2.41.3
+[2025-10-04 21:23:01,782] 4ab6ca1e7391/INFO/locust.main: Run time limit set to 180 seconds
+Type     Name                                                                          # reqs      # fails |    Avg     Min     Max    Med |   req/s  failures/s
+--------|----------------------------------------------------------------------------|-------|-------------|-------|-------|-------|-------|--------|-----------
+--------|----------------------------------------------------------------------------|-------|-------------|-------|-------|-------|-------|--------|-----------
+         Aggregated                                                                         0     0(0.00%) |      0       0       0      0 |    0.00        0.00
+
+[2025-10-04 21:23:01,788] 4ab6ca1e7391/INFO/locust.runners: Ramping to 20 users at a rate of 2.00 per second
+[2025-10-04 21:23:01,853] 4ab6ca1e7391/INFO/test_locust: Semantic search: 0 results, 8ms
+[2025-10-04 21:23:02,857] 4ab6ca1e7391/INFO/test_locust: Hybrid search: 5 results, 7ms
+[2025-10-04 21:23:02,858] 4ab6ca1e7391/INFO/test_locust: Semantic search: 0 results, 4ms
+[2025-10-04 21:23:02,874] 4ab6ca1e7391/INFO/test_locust: Semantic search: 15 results, 5ms
+Type     Name                                                                          # reqs      # fails |    Avg     Min     Max    Med |   req/s  failures/s
+--------|----------------------------------------------------------------------------|-------|-------------|-------|-------|-------|-------|--------|-----------
+GET      health_check                                                                       2     0(0.00%) |     22       3      40      4 |    0.00        0.00
+POST     hybrid_search                                                                      1     0(0.00%) |     62      62      62     62 |    0.00        0.00
+POST     semantic_search                                                                    3     0(0.00%) |     48      28      60     56 |    0.00        0.00
+--------|----------------------------------------------------------------------------|-------|-------------|-------|-------|-------|-------|--------|-----------
+         Aggregated                                                                         6     0(0.00%) |     41       3      62     41 |    0.00        0.00
+
+[2025-10-04 21:23:03,865] 4ab6ca1e7391/INFO/test_locust: Hybrid search: 5 results, 7ms
+[2025-10-04 21:23:03,866] 4ab6ca1e7391/INFO/test_locust: Semantic search: 10 results, 10ms
+[2025-10-04 21:23:03,983] 4ab6ca1e7391/INFO/test_locust: Semantic search: 0 results, 5ms
+[2025-10-04 21:23:04,308] 4ab6ca1e7391/INFO/test_locust: Semantic search: 0 results, 3ms
+[2025-10-04 21:23:04,626] 4ab6ca1e7391/INFO/test_locust: Semantic search: 0 results, 4ms
+[2025-10-04 21:23:04,841] 4ab6ca1e7391/INFO/test_locust: Semantic search: 15 results, 5ms
+[2025-10-04 21:23:04,842] 4ab6ca1e7391/INFO/test_locust: Hybrid search: 8 results, 5ms
+[2025-10-04 21:23:05,287] 4ab6ca1e7391/INFO/test_locust: Semantic search: 5 results, 6ms
+[2025-10-04 21:23:05,451] 4ab6ca1e7391/INFO/test_locust: Semantic search: 0 results, 3ms
+[2025-10-04 21:23:05,744] 4ab6ca1e7391/INFO/test_locust: Semantic search: 0 results, 4ms
+[2025-10-04 21:23:05,764] 4ab6ca1e7391/INFO/test_locust: Semantic search: 5 results, 6ms
+Type     Name                                                                          # reqs      # fails |    Avg     Min     Max    Med |   req/s  failures/s
+--------|----------------------------------------------------------------------------|-------|-------------|-------|-------|-------|-------|--------|-----------
+GET      health_check                                                                       2     0(0.00%) |     22       3      40      4 |    0.50        0.00
+POST     hybrid_search                                                                      3     0(0.00%) |     53      35      63     62 |    0.50        0.00
+POST     semantic_search                                                                   12     0(0.00%) |     34      16      63     28 |    1.50        0.00
+--------|----------------------------------------------------------------------------|-------|-------------|-------|-------|-------|-------|--------|-----------
+         Aggregated                                                                        17     0(0.00%) |     36       3      63     32 |    2.50        0.00
+
+[2025-10-04 21:23:05,847] 4ab6ca1e7391/INFO/test_locust: Hybrid search: 8 results, 5ms
+[2025-10-04 21:23:05,848] 4ab6ca1e7391/INFO/test_locust: Semantic search: 15 results, 5ms
+[2025-10-04 21:23:05,937] 4ab6ca1e7391/INFO/test_locust: Hybrid search: 8 results, 6ms
+[2025-10-04 21:23:05,993] 4ab6ca1e7391/INFO/test_locust: Semantic search: 0 results, 4ms
+[2025-10-04 21:23:06,010] 4ab6ca1e7391/INFO/test_locust: Semantic search: 0 results, 3ms
+[2025-10-04 21:23:06,557] 4ab6ca1e7391/INFO/test_locust: Semantic search: 10 results, 5ms
+[2025-10-04 21:23:06,773] 4ab6ca1e7391/INFO/test_locust: Semantic search: 0 results, 4ms
+[2025-10-04 21:23:06,868] 4ab6ca1e7391/INFO/test_locust: Semantic search: 10 results, 7ms
+[2025-10-04 21:23:06,868] 4ab6ca1e7391/INFO/test_locust: Hybrid search: 8 results, 6ms
+[2025-10-04 21:23:07,184] 4ab6ca1e7391/INFO/test_locust: Semantic search: 15 results, 8ms
+[2025-10-04 21:23:07,226] 4ab6ca1e7391/INFO/test_locust: Hybrid search: 3 results, 5ms
+[2025-10-04 21:23:07,635] 4ab6ca1e7391/INFO/test_locust: Hybrid search: 5 results, 8ms
+[2025-10-04 21:23:07,658] 4ab6ca1e7391/INFO/test_locust: Semantic search: 0 results, 4ms
+Type     Name                                                                          # reqs      # fails |    Avg     Min     Max    Med |   req/s  failures/s
+--------|----------------------------------------------------------------------------|-------|-------------|-------|-------|-------|-------|--------|-----------
+GET      health_check                                                                       3     0(0.00%) |     15       3      40      4 |    0.50        0.00
+POST     hybrid_search                                                                      8     0(0.00%) |     39      19      63     35 |    0.75        0.00
+POST     semantic_search                                                                   20     0(0.00%) |     32      16      63     28 |    2.00        0.00
+--------|----------------------------------------------------------------------------|-------|-------------|-------|-------|-------|-------|--------|-----------
+         Aggregated                                                                        31     0(0.00%) |     32       3      63     30 |    3.25        0.00
+
+[2025-10-04 21:23:07,870] 4ab6ca1e7391/INFO/test_locust: Semantic search: 0 results, 5ms
+[2025-10-04 21:23:07,870] 4ab6ca1e7391/INFO/test_locust: Hybrid search: 3 results, 4ms
+[2025-10-04 21:23:08,206] 4ab6ca1e7391/INFO/test_locust: Semantic search: 10 results, 4ms
+[2025-10-04 21:23:08,267] 4ab6ca1e7391/INFO/test_locust: Semantic search: 0 results, 2ms
+[2025-10-04 21:23:08,439] 4ab6ca1e7391/INFO/test_locust: Semantic search: 0 results, 3ms
+[2025-10-04 21:23:08,782] 4ab6ca1e7391/INFO/test_locust: Semantic search: 5 results, 3ms
+[2025-10-04 21:23:08,863] 4ab6ca1e7391/INFO/test_locust: Semantic search: 0 results, 2ms
+[2025-10-04 21:23:08,864] 4ab6ca1e7391/INFO/test_locust: Semantic search: 15 results, 3ms
+[2025-10-04 21:23:08,910] 4ab6ca1e7391/INFO/test_locust: Semantic search: 10 results, 4ms
+[2025-10-04 21:23:08,939] 4ab6ca1e7391/INFO/test_locust: Semantic search: 0 results, 3ms
+[2025-10-04 21:23:09,041] 4ab6ca1e7391/INFO/test_locust: Hybrid search: 8 results, 4ms
+[2025-10-04 21:23:09,237] 4ab6ca1e7391/INFO/test_locust: Semantic search: 5 results, 4ms
+Type     Name                                                                          # reqs      # fails |    Avg     Min     Max    Med |   req/s  failures/s
+--------|----------------------------------------------------------------------------|-------|-------------|-------|-------|-------|-------|--------|-----------
+GET      health_check                                                                       4     0(0.00%) |     12       1      40      3 |    0.33        0.00
+POST     hybrid_search                                                                     10     0(0.00%) |     38      19      63     35 |    1.00        0.00
+POST     semantic_search                                                                   30     0(0.00%) |     31      14      74     28 |    3.00        0.00
+POST     upload_document                                                                    1     0(0.00%) |    257     257     257    257 |    0.00        0.00
+--------|----------------------------------------------------------------------------|-------|-------------|-------|-------|-------|-------|--------|-----------
+         Aggregated                                                                        45     0(0.00%) |     36       1     257     28 |    4.33        0.00
+
+[2025-10-04 21:23:10,971] 4ab6ca1e7391/INFO/locust.runners: All users spawned: {"BMSAgentUser": 5, "HeavyLoadUser": 5, "LightLoadUser": 5, "MediumLoadUser": 5} (20 total users)
+Type     Name                                                                          # reqs      # fails |    Avg     Min     Max    Med |   req/s  failures/s
+--------|----------------------------------------------------------------------------|-------|-------------|-------|-------|-------|-------|--------|-----------
+GET      health_check                                                                       4     0(0.00%) |     12       1      40      3 |    0.33        0.00
+POST     hybrid_search                                                                     10     0(0.00%) |     38      19      63     35 |    1.00        0.00
+POST     semantic_search                                                                   30     0(0.00%) |     31      14      74     28 |    3.00        0.00
+POST     upload_document                                                                    1     0(0.00%) |    257     257     257    257 |    0.00        0.00
+--------|----------------------------------------------------------------------------|-------|-------------|-------|-------|-------|-------|--------|-----------
+         Aggregated                                                                        45     0(0.00%) |     36       1     257     28 |    4.33        0.00
+
+Type     Name                                                                          # reqs      # fails |    Avg     Min     Max    Med |   req/s  failures/s
+--------|----------------------------------------------------------------------------|-------|-------------|-------|-------|-------|-------|--------|-----------
+GET      health_check                                                                       4     0(0.00%) |     12       1      40      3 |    0.33        0.00
+POST     hybrid_search                                                                     10     0(0.00%) |     38      19      63     35 |    1.00        0.00
+POST     semantic_search                                                                   30     0(0.00%) |     31      14      74     28 |    3.00        0.00
+POST     upload_document                                                                    1     0(0.00%) |    257     257     257    257 |    0.00        0.00
+--------|----------------------------------------------------------------------------|-------|-------------|-------|-------|-------|-------|--------|-----------
+         Aggregated                                                                        45     0(0.00%) |     36       1     257     28 |    4.33        0.00
+
+Type     Name                                                                          # reqs      # fails |    Avg     Min     Max    Med |   req/s  failures/s
+--------|----------------------------------------------------------------------------|-------|-------------|-------|-------|-------|-------|--------|-----------
+GET      health_check                                                                       4     0(0.00%) |     12       1      40      3 |    0.33        0.00
+POST     hybrid_search                                                                     10     0(0.00%) |     38      19      63     35 |    1.00        0.00
+POST     semantic_search                                                                   30     0(0.00%) |     31      14      74     28 |    3.00        0.00
+POST     upload_document                                                                    1     0(0.00%) |    257     257     257    257 |    0.00        0.00
+--------|----------------------------------------------------------------------------|-------|-------------|-------|-------|-------|-------|--------|-----------
+         Aggregated                                                                        45     0(0.00%) |     36       1     257     28 |    4.33        0.00
+
+Type     Name                                                                          # reqs      # fails |    Avg     Min     Max    Med |   req/s  failures/s
+--------|----------------------------------------------------------------------------|-------|-------------|-------|-------|-------|-------|--------|-----------
+GET      health_check                                                                       5     0(0.00%) |   1413       1    7019      4 |    0.20        0.00
+POST     hybrid_search                                                                     10     0(0.00%) |     38      19      63     35 |    0.70        0.00
+POST     semantic_search                                                                   30     0(0.00%) |     31      14      74     28 |    2.20        0.00
+POST     upload_document                                                                    2     0(0.00%) |   4090     257    7922    260 |    0.10        0.00
+--------|----------------------------------------------------------------------------|-------|-------------|-------|-------|-------|-------|--------|-----------
+         Aggregated                                                                        47     0(0.00%) |    352       1    7922     30 |    3.20        0.00
+
+Type     Name                                                                          # reqs      # fails |    Avg     Min     Max    Med |   req/s  failures/s
+--------|----------------------------------------------------------------------------|-------|-------------|-------|-------|-------|-------|--------|-----------
+GET      health_check                                                                       5     0(0.00%) |   1413       1    7019      4 |    0.20        0.00
+POST     hybrid_search                                                                     10     0(0.00%) |     38      19      63     35 |    0.70        0.00
+POST     semantic_search                                                                   30     0(0.00%) |     31      14      74     28 |    2.20        0.00
+POST     upload_document                                                                    2     0(0.00%) |   4090     257    7922    260 |    0.10        0.00
+--------|----------------------------------------------------------------------------|-------|-------------|-------|-------|-------|-------|--------|-----------
+         Aggregated                                                                        47     0(0.00%) |    352       1    7922     30 |    3.20        0.00
+
+Type     Name                                                                          # reqs      # fails |    Avg     Min     Max    Med |   req/s  failures/s
+--------|----------------------------------------------------------------------------|-------|-------------|-------|-------|-------|-------|--------|-----------
+GET      health_check                                                                       5     0(0.00%) |   1413       1    7019      4 |    0.20        0.00
+POST     hybrid_search                                                                     10     0(0.00%) |     38      19      63     35 |    0.70        0.00
+POST     semantic_search                                                                   30     0(0.00%) |     31      14      74     28 |    2.20        0.00
+POST     upload_document                                                                    2     0(0.00%) |   4090     257    7922    260 |    0.10        0.00
+--------|----------------------------------------------------------------------------|-------|-------------|-------|-------|-------|-------|--------|-----------
+         Aggregated                                                                        47     0(0.00%) |    352       1    7922     30 |    3.20        0.00
+
+Type     Name                                                                          # reqs      # fails |    Avg     Min     Max    Med |   req/s  failures/s
+--------|----------------------------------------------------------------------------|-------|-------------|-------|-------|-------|-------|--------|-----------
+GET      health_check                                                                       5     0(0.00%) |   1413       1    7019      4 |    0.20        0.00
+POST     hybrid_search                                                                     10     0(0.00%) |     38      19      63     35 |    0.70        0.00
+POST     semantic_search                                                                   30     0(0.00%) |     31      14      74     28 |    2.20        0.00
+POST     upload_document                                                                    2     0(0.00%) |   4090     257    7922    260 |    0.10        0.00
+--------|----------------------------------------------------------------------------|-------|-------------|-------|-------|-------|-------|--------|-----------
+         Aggregated                                                                        47     0(0.00%) |    352       1    7922     30 |    3.20        0.00
+
+[2025-10-04 21:23:25,286] 4ab6ca1e7391/INFO/test_locust: Semantic search: 10 results, 5ms
+[2025-10-04 21:23:25,286] 4ab6ca1e7391/INFO/test_locust: Hybrid search: 8 results, 4ms
+[2025-10-04 21:23:25,287] 4ab6ca1e7391/INFO/test_locust: Semantic search: 5 results, 4ms
+[2025-10-04 21:23:25,287] 4ab6ca1e7391/INFO/test_locust: Hybrid search: 3 results, 3ms
+[2025-10-04 21:23:25,287] 4ab6ca1e7391/INFO/test_locust: Semantic search: 0 results, 4ms
+[2025-10-04 21:23:25,287] 4ab6ca1e7391/INFO/test_locust: Hybrid search: 3 results, 3ms
+[2025-10-04 21:23:25,287] 4ab6ca1e7391/INFO/test_locust: Hybrid search: 5 results, 3ms
+[2025-10-04 21:23:25,287] 4ab6ca1e7391/INFO/test_locust: Semantic search: 0 results, 4ms
+[2025-10-04 21:23:25,288] 4ab6ca1e7391/INFO/test_locust: Semantic search: 10 results, 4ms
+[2025-10-04 21:23:25,288] 4ab6ca1e7391/INFO/test_locust: Semantic search: 0 results, 3ms
+[2025-10-04 21:23:25,289] 4ab6ca1e7391/INFO/test_locust: Semantic search: 0 results, 3ms
+[2025-10-04 21:23:25,289] 4ab6ca1e7391/INFO/test_locust: Semantic search: 0 results, 3ms
+[2025-10-04 21:23:25,289] 4ab6ca1e7391/INFO/test_locust: Hybrid search: 8 results, 4ms
+[2025-10-04 21:23:25,290] 4ab6ca1e7391/INFO/test_locust: Semantic search: 10 results, 4ms
+[2025-10-04 21:23:25,290] 4ab6ca1e7391/INFO/test_locust: Semantic search: 10 results, 4ms
+[2025-10-04 21:23:25,290] 4ab6ca1e7391/INFO/test_locust: Semantic search: 15 results, 5ms
+[2025-10-04 21:23:25,290] 4ab6ca1e7391/INFO/test_locust: Semantic search: 0 results, 4ms
+[2025-10-04 21:23:25,320] 4ab6ca1e7391/INFO/test_locust: Semantic search: 0 results, 2ms
+[2025-10-04 21:23:25,320] 4ab6ca1e7391/INFO/test_locust: Hybrid search: 5 results, 4ms
+[2025-10-04 21:23:25,833] 4ab6ca1e7391/INFO/test_locust: Semantic search: 15 results, 5ms
+Type     Name                                                                          # reqs      # fails |    Avg     Min     Max    Med |   req/s  failures/s
+--------|----------------------------------------------------------------------------|-------|-------------|-------|-------|-------|-------|--------|-----------
+GET      health_check                                                                       5     0(0.00%) |   1413       1    7019      4 |    0.10        0.00
+POST     hybrid_search                                                                     16     0(0.00%) |   5064      19   15419     48 |    0.00        0.00
+POST     semantic_search                                                                   44     0(0.00%) |   4190      14   15951     35 |    0.00        0.00
+POST     upload_document                                                                    3     0(0.00%) |   7485     257   14274   7900 |    0.10        0.00
+--------|----------------------------------------------------------------------------|-------|-------------|-------|-------|-------|-------|--------|-----------
+         Aggregated                                                                        68     0(0.00%) |   4337       1   15951     41 |    0.20        0.00
+
+[2025-10-04 21:23:25,911] 4ab6ca1e7391/INFO/test_locust: Hybrid search: 8 results, 4ms
+[2025-10-04 21:23:25,975] 4ab6ca1e7391/INFO/test_locust: Semantic search: 5 results, 4ms
+[2025-10-04 21:23:26,009] 4ab6ca1e7391/INFO/test_locust: Semantic search: 15 results, 5ms
+[2025-10-04 21:23:26,326] 4ab6ca1e7391/INFO/test_locust: Hybrid search: 8 results, 5ms
+[2025-10-04 21:23:26,373] 4ab6ca1e7391/INFO/test_locust: Semantic search: 0 results, 4ms
+[2025-10-04 21:23:26,438] 4ab6ca1e7391/INFO/test_locust: Semantic search: 0 results, 4ms
+[2025-10-04 21:23:26,524] 4ab6ca1e7391/INFO/test_locust: Semantic search: 0 results, 3ms
+[2025-10-04 21:23:26,621] 4ab6ca1e7391/INFO/test_locust: Semantic search: 0 results, 3ms
+[2025-10-04 21:23:26,638] 4ab6ca1e7391/INFO/test_locust: Semantic search: 0 results, 3ms
+[2025-10-04 21:23:26,692] 4ab6ca1e7391/INFO/test_locust: Hybrid search: 3 results, 3ms
+[2025-10-04 21:23:26,805] 4ab6ca1e7391/INFO/test_locust: Semantic search: 0 results, 4ms
+[2025-10-04 21:23:27,148] 4ab6ca1e7391/INFO/test_locust: Hybrid search: 3 results, 6ms
+[2025-10-04 21:23:27,423] 4ab6ca1e7391/INFO/test_locust: Hybrid search: 3 results, 4ms
+[2025-10-04 21:23:27,423] 4ab6ca1e7391/INFO/test_locust: Hybrid search: 5 results, 4ms
+[2025-10-04 21:23:27,601] 4ab6ca1e7391/INFO/test_locust: Semantic search: 0 results, 2ms
+[2025-10-04 21:23:27,690] 4ab6ca1e7391/INFO/test_locust: Hybrid search: 3 results, 3ms
+[2025-10-04 21:23:27,784] 4ab6ca1e7391/INFO/test_locust: Semantic search: 5 results, 4ms
+Type     Name                                                                          # reqs      # fails |    Avg     Min     Max    Med |   req/s  failures/s
+--------|----------------------------------------------------------------------------|-------|-------------|-------|-------|-------|-------|--------|-----------
+GET      health_check                                                                       5     0(0.00%) |   1413       1    7019      4 |    0.10        0.00
+POST     hybrid_search                                                                     23     0(0.00%) |   3535      16   15419     42 |    0.00        0.00
+POST     semantic_search                                                                   54     0(0.00%) |   3418      14   15951     29 |    0.00        0.00
+POST     upload_document                                                                    4     0(0.00%) |   5680     257   14274    270 |    0.10        0.00
+--------|----------------------------------------------------------------------------|-------|-------------|-------|-------|-------|-------|--------|-----------
+         Aggregated                                                                        86     0(0.00%) |   3438       1   15951     35 |    0.20        0.00
+
+[2025-10-04 21:23:27,988] 4ab6ca1e7391/INFO/test_locust: Semantic search: 0 results, 3ms
+[2025-10-04 21:23:28,004] 4ab6ca1e7391/INFO/test_locust: Hybrid search: 5 results, 3ms
+[2025-10-04 21:23:28,128] 4ab6ca1e7391/INFO/test_locust: Hybrid search: 8 results, 4ms
+[2025-10-04 21:23:28,140] 4ab6ca1e7391/INFO/test_locust: Semantic search: 0 results, 2ms
+[2025-10-04 21:23:28,165] 4ab6ca1e7391/INFO/test_locust: Semantic search: 15 results, 4ms
+[2025-10-04 21:23:28,264] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:28,577] 4ab6ca1e7391/ERROR/test_locust: Request failed: hybrid_search - HTTP 429
+[2025-10-04 21:23:28,691] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:28,727] 4ab6ca1e7391/ERROR/test_locust: Request failed: hybrid_search - HTTP 429
+[2025-10-04 21:23:28,775] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:28,902] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:28,902] 4ab6ca1e7391/INFO/test_locust: Semantic search: 0 results, 4ms
+[2025-10-04 21:23:28,938] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:29,108] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:29,133] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:29,186] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:29,226] 4ab6ca1e7391/ERROR/test_locust: Request failed: hybrid_search - HTTP 429
+[2025-10-04 21:23:29,239] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:29,301] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:29,354] 4ab6ca1e7391/ERROR/test_locust: Request failed: hybrid_search - HTTP 429
+[2025-10-04 21:23:29,375] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:29,421] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:29,813] 4ab6ca1e7391/ERROR/test_locust: Request failed: upload_document - HTTP 429
+Type     Name                                                                          # reqs      # fails |    Avg     Min     Max    Med |   req/s  failures/s
+--------|----------------------------------------------------------------------------|-------|-------------|-------|-------|-------|-------|--------|-----------
+GET      health_check                                                                       5     0(0.00%) |   1413       1    7019      4 |    0.10        0.00
+POST     hybrid_search                                                                     29    4(13.79%) |   2806       2   15419     32 |    0.90        0.00
+POST     semantic_search                                                                   70   12(17.14%) |   2638       1   15951     25 |    2.20        0.00
+POST     upload_document                                                                    5    1(20.00%) |   4545       2   14274    270 |    0.20        0.00
+--------|----------------------------------------------------------------------------|-------|-------------|-------|-------|-------|-------|--------|-----------
+         Aggregated                                                                       109   17(15.60%) |   2714       1   15951     27 |    3.40        0.00
+
+[2025-10-04 21:23:30,012] 4ab6ca1e7391/INFO/test_locust: Semantic search: 0 results, 5ms
+[2025-10-04 21:23:30,029] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:30,060] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:30,092] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:30,152] 4ab6ca1e7391/ERROR/test_locust: Request failed: hybrid_search - HTTP 429
+[2025-10-04 21:23:30,173] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:30,303] 4ab6ca1e7391/ERROR/test_locust: Request failed: hybrid_search - HTTP 429
+[2025-10-04 21:23:30,755] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:31,087] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:31,366] 4ab6ca1e7391/ERROR/test_locust: Request failed: hybrid_search - HTTP 429
+[2025-10-04 21:23:31,372] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:31,423] 4ab6ca1e7391/ERROR/test_locust: Request failed: hybrid_search - HTTP 429
+[2025-10-04 21:23:31,518] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:31,520] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:31,552] 4ab6ca1e7391/ERROR/test_locust: Request failed: hybrid_search - HTTP 429
+[2025-10-04 21:23:31,560] 4ab6ca1e7391/ERROR/test_locust: Request failed: hybrid_search - HTTP 429
+[2025-10-04 21:23:31,777] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:31,816] 4ab6ca1e7391/ERROR/test_locust: Request failed: hybrid_search - HTTP 429
+Type     Name                                                                          # reqs      # fails |    Avg     Min     Max    Med |   req/s  failures/s
+--------|----------------------------------------------------------------------------|-------|-------------|-------|-------|-------|-------|--------|-----------
+GET      health_check                                                                       5     0(0.00%) |   1413       1    7019      4 |    0.00        0.00
+POST     hybrid_search                                                                     36   11(30.56%) |   2260       1   15419     22 |    1.70        0.20
+POST     semantic_search                                                                   81   22(27.16%) |   2280       1   15951     20 |    3.30        0.50
+POST     upload_document                                                                    6    1(16.67%) |   3825       2   14274    260 |    0.20        0.00
+--------|----------------------------------------------------------------------------|-------|-------------|-------|-------|-------|-------|--------|-----------
+         Aggregated                                                                       128   34(26.56%) |   2313       1   15951     21 |    5.20        0.70
+
+[2025-10-04 21:23:32,078] 4ab6ca1e7391/INFO/test_locust: Semantic search: 5 results, 5ms
+[2025-10-04 21:23:32,145] 4ab6ca1e7391/ERROR/test_locust: Request failed: hybrid_search - HTTP 429
+[2025-10-04 21:23:32,184] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:32,394] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:32,423] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:32,432] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:32,443] 4ab6ca1e7391/ERROR/test_locust: Request failed: hybrid_search - HTTP 429
+[2025-10-04 21:23:32,514] 4ab6ca1e7391/ERROR/test_locust: Request failed: hybrid_search - HTTP 429
+[2025-10-04 21:23:32,559] 4ab6ca1e7391/ERROR/test_locust: Request failed: upload_document - HTTP 429
+[2025-10-04 21:23:32,576] 4ab6ca1e7391/ERROR/test_locust: Request failed: hybrid_search - HTTP 429
+[2025-10-04 21:23:32,577] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:32,730] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:32,823] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:32,919] 4ab6ca1e7391/INFO/test_locust: Hybrid search: 8 results, 5ms
+[2025-10-04 21:23:33,183] 4ab6ca1e7391/ERROR/test_locust: Request failed: upload_document - HTTP 429
+[2025-10-04 21:23:33,200] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:33,374] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:33,527] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:33,696] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:33,859] 4ab6ca1e7391/INFO/test_locust: Hybrid search: 3 results, 5ms
+Type     Name                                                                          # reqs      # fails |    Avg     Min     Max    Med |   req/s  failures/s
+--------|----------------------------------------------------------------------------|-------|-------------|-------|-------|-------|-------|--------|-----------
+GET      health_check                                                                       5     0(0.00%) |   1413       1    7019      4 |    0.00        0.00
+POST     hybrid_search                                                                     42   15(35.71%) |   1939       1   15419     21 |    2.10        0.60
+POST     semantic_search                                                                   93   33(35.48%) |   1987       1   15951     18 |    4.60        1.70
+POST     upload_document                                                                    8    3(37.50%) |   2870       2   14274    230 |    0.30        0.10
+--------|----------------------------------------------------------------------------|-------|-------------|-------|-------|-------|-------|--------|-----------
+         Aggregated                                                                       148   51(34.46%) |   2001       1   15951     19 |    7.00        2.40
+
+[2025-10-04 21:23:33,959] 4ab6ca1e7391/ERROR/test_locust: Request failed: hybrid_search - HTTP 429
+[2025-10-04 21:23:34,022] 4ab6ca1e7391/ERROR/test_locust: Request failed: hybrid_search - HTTP 429
+[2025-10-04 21:23:34,088] 4ab6ca1e7391/ERROR/test_locust: Request failed: upload_document - HTTP 429
+[2025-10-04 21:23:34,122] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:34,274] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:34,307] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:34,498] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:34,517] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:34,659] 4ab6ca1e7391/ERROR/test_locust: Request failed: hybrid_search - HTTP 429
+[2025-10-04 21:23:34,710] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:34,730] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:34,932] 4ab6ca1e7391/INFO/test_locust: Hybrid search: 8 results, 6ms
+[2025-10-04 21:23:35,057] 4ab6ca1e7391/ERROR/test_locust: Request failed: upload_document - HTTP 429
+[2025-10-04 21:23:35,169] 4ab6ca1e7391/ERROR/test_locust: Request failed: hybrid_search - HTTP 429
+[2025-10-04 21:23:35,218] 4ab6ca1e7391/ERROR/test_locust: Request failed: hybrid_search - HTTP 429
+[2025-10-04 21:23:35,265] 4ab6ca1e7391/ERROR/test_locust: Request failed: hybrid_search - HTTP 429
+[2025-10-04 21:23:35,374] 4ab6ca1e7391/ERROR/test_locust: Request failed: hybrid_search - HTTP 429
+[2025-10-04 21:23:35,432] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:35,627] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:35,762] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:35,790] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+Type     Name                                                                          # reqs      # fails |    Avg     Min     Max    Med |   req/s  failures/s
+--------|----------------------------------------------------------------------------|-------|-------------|-------|-------|-------|-------|--------|-----------
+GET      health_check                                                                       5     0(0.00%) |   1413       1    7019      4 |    0.00        0.00
+POST     hybrid_search                                                                     50   22(44.00%) |   1629       1   15419     17 |    3.10        1.50
+POST     semantic_search                                                                  104   44(42.31%) |   1777       1   15951     17 |    5.90        2.90
+POST     upload_document                                                                   10    5(50.00%) |   2296       2   14274      3 |    0.50        0.20
+--------|----------------------------------------------------------------------------|-------|-------------|-------|-------|-------|-------|--------|-----------
+         Aggregated                                                                       169   71(42.01%) |   1753       1   15951     17 |    9.50        4.60
+
+[2025-10-04 21:23:36,002] 4ab6ca1e7391/INFO/test_locust: Hybrid search: 3 results, 5ms
+[2025-10-04 21:23:36,164] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:36,239] 4ab6ca1e7391/ERROR/test_locust: Request failed: hybrid_search - HTTP 429
+[2025-10-04 21:23:36,247] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:36,296] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:36,322] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:36,542] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:36,698] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:36,743] 4ab6ca1e7391/ERROR/test_locust: Request failed: hybrid_search - HTTP 429
+[2025-10-04 21:23:37,011] 4ab6ca1e7391/ERROR/test_locust: Request failed: hybrid_search - HTTP 429
+[2025-10-04 21:23:37,012] 4ab6ca1e7391/INFO/test_locust: Hybrid search: 8 results, 8ms
+[2025-10-04 21:23:37,091] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:37,226] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:37,424] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:37,501] 4ab6ca1e7391/ERROR/test_locust: Request failed: hybrid_search - HTTP 429
+[2025-10-04 21:23:37,553] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:37,581] 4ab6ca1e7391/ERROR/test_locust: Request failed: hybrid_search - HTTP 429
+[2025-10-04 21:23:37,602] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+Type     Name                                                                          # reqs      # fails |    Avg     Min     Max    Med |   req/s  failures/s
+--------|----------------------------------------------------------------------------|-------|-------------|-------|-------|-------|-------|--------|-----------
+GET      health_check                                                                       6     0(0.00%) |   1178       1    7019      3 |    0.00        0.00
+POST     hybrid_search                                                                     57   27(47.37%) |   1431       1   15419     17 |    3.60        1.80
+POST     semantic_search                                                                  115   55(47.83%) |   1607       1   15951     16 |    7.00        4.00
+POST     upload_document                                                                   10    5(50.00%) |   2296       2   14274      3 |    0.70        0.40
+--------|----------------------------------------------------------------------------|-------|-------------|-------|-------|-------|-------|--------|-----------
+         Aggregated                                                                       188   87(46.28%) |   1577       1   15951     16 |   11.30        6.20
+
+[2025-10-04 21:23:38,209] 4ab6ca1e7391/INFO/test_locust: Hybrid search: 5 results, 6ms
+[2025-10-04 21:23:38,219] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:38,254] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:38,305] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:38,496] 4ab6ca1e7391/ERROR/test_locust: Request failed: hybrid_search - HTTP 429
+[2025-10-04 21:23:38,769] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:38,893] 4ab6ca1e7391/INFO/test_locust: Hybrid search: 5 results, 6ms
+[2025-10-04 21:23:38,931] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:38,955] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:38,960] 4ab6ca1e7391/ERROR/test_locust: Request failed: hybrid_search - HTTP 429
+[2025-10-04 21:23:38,967] 4ab6ca1e7391/ERROR/test_locust: Request failed: hybrid_search - HTTP 429
+[2025-10-04 21:23:39,035] 4ab6ca1e7391/ERROR/test_locust: Request failed: hybrid_search - HTTP 429
+[2025-10-04 21:23:39,098] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:39,133] 4ab6ca1e7391/ERROR/test_locust: Request failed: hybrid_search - HTTP 429
+[2025-10-04 21:23:39,211] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:39,237] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:39,326] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:39,379] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:39,554] 4ab6ca1e7391/ERROR/test_locust: Request failed: hybrid_search - HTTP 429
+[2025-10-04 21:23:39,555] 4ab6ca1e7391/ERROR/test_locust: Request failed: hybrid_search - HTTP 429
+[2025-10-04 21:23:39,645] 4ab6ca1e7391/ERROR/test_locust: Request failed: hybrid_search - HTTP 429
+Type     Name                                                                          # reqs      # fails |    Avg     Min     Max    Med |   req/s  failures/s
+--------|----------------------------------------------------------------------------|-------|-------------|-------|-------|-------|-------|--------|-----------
+GET      health_check                                                                       6     0(0.00%) |   1178       1    7019      3 |    0.10        0.00
+POST     hybrid_search                                                                     67   35(52.24%) |   1218       1   15419      3 |    3.40        2.40
+POST     semantic_search                                                                  126   66(52.38%) |   1467       1   15951      4 |    5.80        5.00
+POST     upload_document                                                                   10    5(50.00%) |   2296       2   14274      3 |    0.70        0.50
+--------|----------------------------------------------------------------------------|-------|-------------|-------|-------|-------|-------|--------|-----------
+         Aggregated                                                                       209  106(50.72%) |   1419       1   15951      4 |   10.00        7.90
+
+[2025-10-04 21:23:39,922] 4ab6ca1e7391/INFO/test_locust: Hybrid search: 5 results, 7ms
+[2025-10-04 21:23:39,964] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:40,045] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:40,084] 4ab6ca1e7391/ERROR/test_locust: Request failed: hybrid_search - HTTP 429
+[2025-10-04 21:23:40,180] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:40,331] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:40,348] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:40,504] 4ab6ca1e7391/ERROR/test_locust: Request failed: hybrid_search - HTTP 429
+[2025-10-04 21:23:40,556] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:40,609] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:40,621] 4ab6ca1e7391/ERROR/test_locust: Request failed: hybrid_search - HTTP 429
+[2025-10-04 21:23:41,059] 4ab6ca1e7391/INFO/test_locust: Semantic search: 0 results, 5ms
+[2025-10-04 21:23:41,146] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:41,153] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:41,193] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:41,205] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:41,439] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:41,518] 4ab6ca1e7391/ERROR/test_locust: Request failed: hybrid_search - HTTP 429
+[2025-10-04 21:23:41,534] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:41,883] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:41,883] 4ab6ca1e7391/INFO/test_locust: Semantic search: 15 results, 7ms
+Type     Name                                                                          # reqs      # fails |    Avg     Min     Max    Med |   req/s  failures/s
+--------|----------------------------------------------------------------------------|-------|-------------|-------|-------|-------|-------|--------|-----------
+GET      health_check                                                                       7     0(0.00%) |   1010       1    7019      4 |    0.10        0.00
+POST     hybrid_search                                                                     72   39(54.17%) |   1134       1   15419      3 |    3.50        2.80
+POST     semantic_search                                                                  142   80(56.34%) |   1302       1   15951      3 |    5.80        5.60
+POST     upload_document                                                                   10    5(50.00%) |   2296       2   14274      3 |    0.60        0.50
+--------|----------------------------------------------------------------------------|-------|-------------|-------|-------|-------|-------|--------|-----------
+         Aggregated                                                                       231  124(53.68%) |   1284       1   15951      3 |   10.00        8.90
+
+[2025-10-04 21:23:41,954] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:41,994] 4ab6ca1e7391/ERROR/test_locust: Request failed: hybrid_search - HTTP 429
+[2025-10-04 21:23:42,009] 4ab6ca1e7391/ERROR/test_locust: Request failed: hybrid_search - HTTP 429
+[2025-10-04 21:23:42,149] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:42,305] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:42,456] 4ab6ca1e7391/ERROR/test_locust: Request failed: hybrid_search - HTTP 429
+[2025-10-04 21:23:42,481] 4ab6ca1e7391/ERROR/test_locust: Request failed: hybrid_search - HTTP 429
+[2025-10-04 21:23:42,497] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:42,825] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:42,828] 4ab6ca1e7391/ERROR/test_locust: Request failed: hybrid_search - HTTP 429
+[2025-10-04 21:23:42,920] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:42,920] 4ab6ca1e7391/INFO/test_locust: Semantic search: 15 results, 8ms
+[2025-10-04 21:23:43,026] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:43,167] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:43,380] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:43,544] 4ab6ca1e7391/ERROR/test_locust: Request failed: hybrid_search - HTTP 429
+[2025-10-04 21:23:43,564] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:43,668] 4ab6ca1e7391/ERROR/test_locust: Request failed: upload_document - HTTP 429
+[2025-10-04 21:23:43,881] 4ab6ca1e7391/ERROR/test_locust: Request failed: hybrid_search - HTTP 429
+[2025-10-04 21:23:43,882] 4ab6ca1e7391/INFO/test_locust: Semantic search: 15 results, 7ms
+Type     Name                                                                          # reqs      # fails |    Avg     Min     Max    Med |   req/s  failures/s
+--------|----------------------------------------------------------------------------|-------|-------------|-------|-------|-------|-------|--------|-----------
+GET      health_check                                                                       9     0(0.00%) |    786       1    7019      4 |    0.20        0.00
+POST     hybrid_search                                                                     79   46(58.23%) |   1034       1   15419      3 |    4.00        3.20
+POST     semantic_search                                                                  154   90(58.44%) |   1202       1   15951      3 |    5.70        5.60
+POST     upload_document                                                                   11    6(54.55%) |   2088       2   14274      3 |    0.50        0.40
+--------|----------------------------------------------------------------------------|-------|-------------|-------|-------|-------|-------|--------|-----------
+         Aggregated                                                                       253  142(56.13%) |   1173       1   15951      3 |   10.40        9.20
+
+[2025-10-04 21:23:43,904] 4ab6ca1e7391/ERROR/test_locust: Request failed: hybrid_search - HTTP 429
+[2025-10-04 21:23:43,927] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:43,942] 4ab6ca1e7391/ERROR/test_locust: Request failed: hybrid_search - HTTP 429
+[2025-10-04 21:23:44,040] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:44,304] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:44,383] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:44,863] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:44,864] 4ab6ca1e7391/INFO/test_locust: Semantic search: 0 results, 5ms
+[2025-10-04 21:23:44,939] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:44,978] 4ab6ca1e7391/ERROR/test_locust: Request failed: hybrid_search - HTTP 429
+[2025-10-04 21:23:45,103] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:45,197] 4ab6ca1e7391/ERROR/test_locust: Request failed: hybrid_search - HTTP 429
+[2025-10-04 21:23:45,289] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:45,323] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:45,569] 4ab6ca1e7391/ERROR/test_locust: Request failed: upload_document - HTTP 429
+[2025-10-04 21:23:45,576] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:45,608] 4ab6ca1e7391/ERROR/test_locust: Request failed: hybrid_search - HTTP 429
+[2025-10-04 21:23:45,613] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:45,662] 4ab6ca1e7391/ERROR/test_locust: Request failed: upload_document - HTTP 429
+[2025-10-04 21:23:45,744] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:45,744] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:45,776] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:45,887] 4ab6ca1e7391/INFO/test_locust: Semantic search: 0 results, 5ms
+Type     Name                                                                          # reqs      # fails |    Avg     Min     Max    Med |   req/s  failures/s
+--------|----------------------------------------------------------------------------|-------|-------------|-------|-------|-------|-------|--------|-----------
+GET      health_check                                                                       9     0(0.00%) |    786       1    7019      4 |    0.30        0.00
+POST     hybrid_search                                                                     84   51(60.71%) |    973       1   15419      3 |    3.60        2.90
+POST     semantic_search                                                                  170  104(61.18%) |   1089       1   15951      3 |    6.00        5.70
+POST     upload_document                                                                   13    8(61.54%) |   1767       2   14274      3 |    0.30        0.30
+--------|----------------------------------------------------------------------------|-------|-------------|-------|-------|-------|-------|--------|-----------
+         Aggregated                                                                       276  163(59.06%) |   1076       1   15951      3 |   10.20        8.90
+
+[2025-10-04 21:23:45,963] 4ab6ca1e7391/ERROR/test_locust: Request failed: hybrid_search - HTTP 429
+[2025-10-04 21:23:45,982] 4ab6ca1e7391/ERROR/test_locust: Request failed: upload_document - HTTP 429
+[2025-10-04 21:23:46,080] 4ab6ca1e7391/ERROR/test_locust: Request failed: hybrid_search - HTTP 429
+[2025-10-04 21:23:46,190] 4ab6ca1e7391/ERROR/test_locust: Request failed: hybrid_search - HTTP 429
+[2025-10-04 21:23:46,264] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:46,573] 4ab6ca1e7391/ERROR/test_locust: Request failed: hybrid_search - HTTP 429
+[2025-10-04 21:23:46,616] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:46,748] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:46,786] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:46,796] 4ab6ca1e7391/ERROR/test_locust: Request failed: upload_document - HTTP 429
+[2025-10-04 21:23:47,145] 4ab6ca1e7391/INFO/test_locust: Semantic search: 0 results, 5ms
+[2025-10-04 21:23:47,484] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:47,724] 4ab6ca1e7391/ERROR/test_locust: Request failed: hybrid_search - HTTP 429
+[2025-10-04 21:23:47,863] 4ab6ca1e7391/INFO/test_locust: Semantic search: 0 results, 5ms
+Type     Name                                                                          # reqs      # fails |    Avg     Min     Max    Med |   req/s  failures/s
+--------|----------------------------------------------------------------------------|-------|-------------|-------|-------|-------|-------|--------|-----------
+GET      health_check                                                                       9     0(0.00%) |    786       1    7019      4 |    0.40        0.00
+POST     hybrid_search                                                                     89   56(62.92%) |    918       1   15419      3 |    3.60        3.10
+POST     semantic_search                                                                  177  109(61.58%) |   1046       1   15951      3 |    6.10        5.60
+POST     upload_document                                                                   15   10(66.67%) |   1531       2   14274      3 |    0.20        0.20
+--------|----------------------------------------------------------------------------|-------|-------------|-------|-------|-------|-------|--------|-----------
+         Aggregated                                                                       290  175(60.34%) |   1024       1   15951      3 |   10.30        8.90
+
+[2025-10-04 21:23:47,897] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:47,965] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:47,987] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:48,108] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:48,230] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:48,405] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:48,496] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:48,591] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:48,616] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:48,660] 4ab6ca1e7391/ERROR/test_locust: Request failed: hybrid_search - HTTP 429
+[2025-10-04 21:23:48,674] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:48,711] 4ab6ca1e7391/ERROR/test_locust: Request failed: hybrid_search - HTTP 429
+[2025-10-04 21:23:48,866] 4ab6ca1e7391/INFO/test_locust: Hybrid search: 8 results, 6ms
+[2025-10-04 21:23:48,965] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:49,031] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:49,176] 4ab6ca1e7391/ERROR/test_locust: Request failed: hybrid_search - HTTP 429
+[2025-10-04 21:23:49,207] 4ab6ca1e7391/ERROR/test_locust: Request failed: hybrid_search - HTTP 429
+[2025-10-04 21:23:49,503] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:49,591] 4ab6ca1e7391/ERROR/test_locust: Request failed: hybrid_search - HTTP 429
+[2025-10-04 21:23:49,680] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+Type     Name                                                                          # reqs      # fails |    Avg     Min     Max    Med |   req/s  failures/s
+--------|----------------------------------------------------------------------------|-------|-------------|-------|-------|-------|-------|--------|-----------
+GET      health_check                                                                      10     0(0.00%) |    708       1    7019      4 |    0.30        0.00
+POST     hybrid_search                                                                     95   61(64.21%) |    861       1   15419      3 |    3.50        3.10
+POST     semantic_search                                                                  191  123(64.40%) |    970       1   15951      3 |    6.40        5.80
+POST     upload_document                                                                   15   10(66.67%) |   1531       2   14274      3 |    0.50        0.50
+--------|----------------------------------------------------------------------------|-------|-------------|-------|-------|-------|-------|--------|-----------
+         Aggregated                                                                       311  194(62.38%) |    955       1   15951      3 |   10.70        9.40
+
+[2025-10-04 21:23:49,930] 4ab6ca1e7391/INFO/test_locust: Semantic search: 0 results, 4ms
+[2025-10-04 21:23:49,982] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:49,994] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:50,032] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:50,088] 4ab6ca1e7391/ERROR/test_locust: Request failed: hybrid_search - HTTP 429
+[2025-10-04 21:23:50,096] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:50,119] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:50,362] 4ab6ca1e7391/ERROR/test_locust: Request failed: hybrid_search - HTTP 429
+[2025-10-04 21:23:50,380] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:50,395] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:50,723] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:50,769] 4ab6ca1e7391/ERROR/test_locust: Request failed: hybrid_search - HTTP 429
+[2025-10-04 21:23:50,853] 4ab6ca1e7391/INFO/test_locust: Hybrid search: 8 results, 4ms
+[2025-10-04 21:23:50,897] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:50,933] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:51,021] 4ab6ca1e7391/ERROR/test_locust: Request failed: upload_document - HTTP 429
+[2025-10-04 21:23:51,078] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:51,103] 4ab6ca1e7391/ERROR/test_locust: Request failed: hybrid_search - HTTP 429
+[2025-10-04 21:23:51,180] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:51,250] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:51,298] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:51,301] 4ab6ca1e7391/ERROR/test_locust: Request failed: hybrid_search - HTTP 429
+[2025-10-04 21:23:51,619] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:51,694] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+Type     Name                                                                          # reqs      # fails |    Avg     Min     Max    Med |   req/s  failures/s
+--------|----------------------------------------------------------------------------|-------|-------------|-------|-------|-------|-------|--------|-----------
+GET      health_check                                                                      10     0(0.00%) |    708       1    7019      4 |    0.40        0.00
+POST     hybrid_search                                                                    101   66(65.35%) |    810       1   15419      3 |    3.00        2.80
+POST     semantic_search                                                                  208  139(66.83%) |    891       1   15951      3 |    6.70        5.90
+POST     upload_document                                                                   16   11(68.75%) |   1436       2   14274      3 |    0.50        0.50
+--------|----------------------------------------------------------------------------|-------|-------------|-------|-------|-------|-------|--------|-----------
+         Aggregated                                                                       335  216(64.48%) |    887       1   15951      3 |   10.60        9.20
+
+[2025-10-04 21:23:51,918] 4ab6ca1e7391/INFO/test_locust: Semantic search: 0 results, 5ms
+[2025-10-04 21:23:52,323] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:52,339] 4ab6ca1e7391/ERROR/test_locust: Request failed: hybrid_search - HTTP 429
+[2025-10-04 21:23:52,667] 4ab6ca1e7391/ERROR/test_locust: Request failed: hybrid_search - HTTP 429
+[2025-10-04 21:23:52,686] 4ab6ca1e7391/ERROR/test_locust: Request failed: hybrid_search - HTTP 429
+[2025-10-04 21:23:52,883] 4ab6ca1e7391/INFO/test_locust: Semantic search: 0 results, 4ms
+[2025-10-04 21:23:52,988] 4ab6ca1e7391/ERROR/test_locust: Request failed: hybrid_search - HTTP 429
+[2025-10-04 21:23:53,016] 4ab6ca1e7391/ERROR/test_locust: Request failed: hybrid_search - HTTP 429
+[2025-10-04 21:23:53,225] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:53,231] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:53,278] 4ab6ca1e7391/ERROR/test_locust: Request failed: hybrid_search - HTTP 429
+[2025-10-04 21:23:53,331] 4ab6ca1e7391/ERROR/test_locust: Request failed: hybrid_search - HTTP 429
+[2025-10-04 21:23:53,415] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:53,427] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:53,562] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:53,576] 4ab6ca1e7391/ERROR/test_locust: Request failed: hybrid_search - HTTP 429
+[2025-10-04 21:23:53,673] 4ab6ca1e7391/ERROR/test_locust: Request failed: hybrid_search - HTTP 429
+[2025-10-04 21:23:53,705] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:53,707] 4ab6ca1e7391/ERROR/test_locust: Request failed: hybrid_search - HTTP 429
+Type     Name                                                                          # reqs      # fails |    Avg     Min     Max    Med |   req/s  failures/s
+--------|----------------------------------------------------------------------------|-------|-------------|-------|-------|-------|-------|--------|-----------
+GET      health_check                                                                      10     0(0.00%) |    708       1    7019      4 |    0.30        0.00
+POST     hybrid_search                                                                    111   76(68.47%) |    737       1   15419      3 |    2.80        2.60
+POST     semantic_search                                                                  217  146(67.28%) |    854       1   15951      3 |    6.90        6.00
+POST     upload_document                                                                   16   11(68.75%) |   1436       2   14274      3 |    0.50        0.50
+--------|----------------------------------------------------------------------------|-------|-------------|-------|-------|-------|-------|--------|-----------
+         Aggregated                                                                       354  233(65.82%) |    840       1   15951      3 |   10.50        9.10
+
+[2025-10-04 21:23:54,034] 4ab6ca1e7391/INFO/test_locust: Semantic search: 0 results, 3ms
+[2025-10-04 21:23:54,111] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:54,120] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:54,170] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:54,260] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:54,360] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:54,367] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:54,379] 4ab6ca1e7391/ERROR/test_locust: Request failed: hybrid_search - HTTP 429
+[2025-10-04 21:23:54,723] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:54,751] 4ab6ca1e7391/ERROR/test_locust: Request failed: hybrid_search - HTTP 429
+[2025-10-04 21:23:54,954] 4ab6ca1e7391/INFO/test_locust: Semantic search: 0 results, 4ms
+[2025-10-04 21:23:55,182] 4ab6ca1e7391/ERROR/test_locust: Request failed: upload_document - HTTP 429
+[2025-10-04 21:23:55,218] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:55,228] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:55,370] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:55,572] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:55,672] 4ab6ca1e7391/ERROR/test_locust: Request failed: hybrid_search - HTTP 429
+Type     Name                                                                          # reqs      # fails |    Avg     Min     Max    Med |   req/s  failures/s
+--------|----------------------------------------------------------------------------|-------|-------------|-------|-------|-------|-------|--------|-----------
+GET      health_check                                                                      11     0(0.00%) |    644       1    7019      4 |    0.20        0.00
+POST     hybrid_search                                                                    114   79(69.30%) |    718       1   15419      3 |    2.80        2.60
+POST     semantic_search                                                                  230  157(68.26%) |    806       1   15951      3 |    6.20        5.40
+POST     upload_document                                                                   17   12(70.59%) |   1352       2   14274      3 |    0.60        0.60
+--------|----------------------------------------------------------------------------|-------|-------------|-------|-------|-------|-------|--------|-----------
+         Aggregated                                                                       372  248(66.67%) |    799       1   15951      3 |    9.80        8.60
+
+[2025-10-04 21:23:56,014] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:56,015] 4ab6ca1e7391/INFO/test_locust: Hybrid search: 5 results, 6ms
+[2025-10-04 21:23:56,416] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:56,537] 4ab6ca1e7391/ERROR/test_locust: Request failed: hybrid_search - HTTP 429
+[2025-10-04 21:23:56,653] 4ab6ca1e7391/ERROR/test_locust: Request failed: hybrid_search - HTTP 429
+[2025-10-04 21:23:56,727] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:56,729] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:56,802] 4ab6ca1e7391/ERROR/test_locust: Request failed: hybrid_search - HTTP 429
+[2025-10-04 21:23:56,888] 4ab6ca1e7391/ERROR/test_locust: Request failed: hybrid_search - HTTP 429
+[2025-10-04 21:23:56,889] 4ab6ca1e7391/INFO/test_locust: Hybrid search: 8 results, 7ms
+[2025-10-04 21:23:56,893] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:56,926] 4ab6ca1e7391/ERROR/test_locust: Request failed: hybrid_search - HTTP 429
+[2025-10-04 21:23:57,043] 4ab6ca1e7391/ERROR/test_locust: Request failed: hybrid_search - HTTP 429
+[2025-10-04 21:23:57,246] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:57,338] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:57,340] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:57,446] 4ab6ca1e7391/ERROR/test_locust: Request failed: hybrid_search - HTTP 429
+[2025-10-04 21:23:57,491] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:57,562] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:57,641] 4ab6ca1e7391/ERROR/test_locust: Request failed: upload_document - HTTP 429
+[2025-10-04 21:23:57,659] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:57,770] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+Type     Name                                                                          # reqs      # fails |    Avg     Min     Max    Med |   req/s  failures/s
+--------|----------------------------------------------------------------------------|-------|-------------|-------|-------|-------|-------|--------|-----------
+GET      health_check                                                                      11     0(0.00%) |    644       1    7019      4 |    0.10        0.00
+POST     hybrid_search                                                                    123   86(69.92%) |    666       1   15419      3 |    3.10        2.90
+POST     semantic_search                                                                  242  169(69.83%) |    766       1   15951      3 |    6.50        5.70
+POST     upload_document                                                                   18   13(72.22%) |   1277       2   14274      3 |    0.50        0.50
+--------|----------------------------------------------------------------------------|-------|-------------|-------|-------|-------|-------|--------|-----------
+         Aggregated                                                                       394  268(68.02%) |    755       1   15951      3 |   10.20        9.10
+
+[2025-10-04 21:23:57,913] 4ab6ca1e7391/INFO/test_locust: Semantic search: 0 results, 4ms
+[2025-10-04 21:23:58,096] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:58,167] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:58,178] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:58,188] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:58,264] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:58,308] 4ab6ca1e7391/ERROR/test_locust: Request failed: hybrid_search - HTTP 429
+[2025-10-04 21:23:58,372] 4ab6ca1e7391/ERROR/test_locust: Request failed: hybrid_search - HTTP 429
+[2025-10-04 21:23:58,653] 4ab6ca1e7391/ERROR/test_locust: Request failed: hybrid_search - HTTP 429
+[2025-10-04 21:23:58,810] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:58,858] 4ab6ca1e7391/INFO/test_locust: Semantic search: 15 results, 6ms
+[2025-10-04 21:23:59,119] 4ab6ca1e7391/ERROR/test_locust: Request failed: hybrid_search - HTTP 429
+[2025-10-04 21:23:59,127] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:59,257] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:59,426] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:59,504] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:59,505] 4ab6ca1e7391/ERROR/test_locust: Request failed: hybrid_search - HTTP 429
+[2025-10-04 21:23:59,549] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:59,555] 4ab6ca1e7391/ERROR/test_locust: Request failed: hybrid_search - HTTP 429
+[2025-10-04 21:23:59,612] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:23:59,687] 4ab6ca1e7391/ERROR/test_locust: Request failed: hybrid_search - HTTP 429
+[2025-10-04 21:23:59,821] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+Type     Name                                                                          # reqs      # fails |    Avg     Min     Max    Med |   req/s  failures/s
+--------|----------------------------------------------------------------------------|-------|-------------|-------|-------|-------|-------|--------|-----------
+GET      health_check                                                                      12     0(0.00%) |    590       1    7019      3 |    0.20        0.00
+POST     hybrid_search                                                                    130   93(71.54%) |    630       1   15419      3 |    3.30        2.90
+POST     semantic_search                                                                  257  182(70.82%) |    722       1   15951      3 |    6.10        5.40
+POST     upload_document                                                                   18   13(72.22%) |   1277       2   14274      3 |    0.20        0.20
+--------|----------------------------------------------------------------------------|-------|-------------|-------|-------|-------|-------|--------|-----------
+         Aggregated                                                                       417  288(69.06%) |    714       1   15951      3 |    9.80        8.50
+
+[2025-10-04 21:24:00,183] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:24:00,183] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:24:00,186] 4ab6ca1e7391/ERROR/test_locust: Request failed: upload_document - HTTP 429
+[2025-10-04 21:24:00,718] 4ab6ca1e7391/ERROR/test_locust: Request failed: hybrid_search - HTTP 429
+[2025-10-04 21:24:00,807] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:24:00,829] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:24:01,046] 4ab6ca1e7391/INFO/test_locust: Semantic search: 10 results, 7ms
+[2025-10-04 21:24:01,101] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:24:01,123] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:24:01,137] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:24:01,173] 4ab6ca1e7391/ERROR/test_locust: Request failed: hybrid_search - HTTP 429
+[2025-10-04 21:24:01,267] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:24:01,338] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429
+[2025-10-04 21:24:01,408] 4ab6ca1e7391/ERROR/test_locust: Request failed: hybrid_search - HTTP 429
+[2025-10-04 21:24:01,510] 4ab6ca1e7391/ERROR/test_locust: Request failed: hybrid_search - HTTP 429
+[2025-10-04 21:24:01,724] 4ab6ca1e7391/ERROR/test_locust: Request failed: semantic_search - HTTP 429

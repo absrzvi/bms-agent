@@ -13,6 +13,7 @@ import os
 import sys
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional
+import re
 
 import httpx
 from qdrant_client import QdrantClient
@@ -177,6 +178,76 @@ class DocumentProcessorWrapper:
             "embedding_model": self.embedding_model,
         }
 
+    async def hybrid_search(
+        self,
+        query: str,
+        *,
+        limit: int = 5,
+        candidate_multiplier: int = 4,
+        vector_weight: Optional[float] = None,
+        keyword_weight: Optional[float] = None,
+    ) -> Dict[str, Any]:
+        """Perform hybrid (dense + keyword) retrieval with weighted fusion."""
+
+        if not query:
+            raise ValueError("query must be a non-empty string")
+        if limit <= 0:
+            raise ValueError("limit must be positive")
+        candidate_limit = max(limit * candidate_multiplier, limit)
+
+        dense_weight = vector_weight if vector_weight is not None else getattr(self.config, "vector_weight", 0.7)
+        keyword_weight = keyword_weight if keyword_weight is not None else getattr(self.config, "keyword_weight", 0.3)
+
+        embedding = await self.get_embedding(query)
+        raw_results = self.qdrant.search(
+            collection_name=self.collection_name,
+            query_vector=("chunk_embedding", embedding),
+            limit=candidate_limit,
+            with_payload=True,
+            with_vectors=False,
+        )
+
+        if not raw_results:
+            return {
+                "count": 0,
+                "results": [],
+                "collection_name": self.collection_name,
+                "embedding_model": self.embedding_model,
+                "vector_weight": dense_weight,
+                "keyword_weight": keyword_weight,
+            }
+
+        tokens = self._tokenize(query)
+        keyword_terms = set(tokens)
+
+        aggregated: Dict[str, Dict[str, Any]] = {}
+        for result in raw_results:
+            result_id = str(result.id)
+            payload = self._sanitize(dict(result.payload)) if result.payload else {}
+            term_freqs: Dict[str, float] = payload.get("term_frequencies") or {}
+            keyword_score = float(sum(term_freqs.get(token, 0.0) for token in keyword_terms))
+            dense_score = float(result.score)
+            combined_score = dense_weight * dense_score + keyword_weight * keyword_score
+
+            aggregated[result_id] = {
+                "id": result_id,
+                "dense_score": dense_score,
+                "keyword_score": keyword_score,
+                "combined_score": combined_score,
+                "payload": payload,
+            }
+
+        ranked = sorted(aggregated.values(), key=lambda item: item["combined_score"], reverse=True)[:limit]
+
+        return {
+            "count": len(ranked),
+            "results": ranked,
+            "collection_name": self.collection_name,
+            "embedding_model": self.embedding_model,
+            "vector_weight": dense_weight,
+            "keyword_weight": keyword_weight,
+        }
+
     async def get_embedding(self, text: str) -> List[float]:
         """Request an embedding vector from Ollama for the provided text."""
         if not text:
@@ -303,6 +374,17 @@ class DocumentProcessorWrapper:
         if hasattr(data, "tolist"):
             return data.tolist()
         return str(data)
+
+    def _tokenize(self, text: str) -> List[str]:
+        if not text:
+            return []
+        try:  # pragma: no cover - optional dependency
+            import nltk
+
+            tokens = nltk.word_tokenize(text)  # type: ignore[attr-defined]
+        except Exception:
+            tokens = re.findall(r"\w+", text)
+        return [token.lower() for token in tokens if token]
 
 
 async def process_document(file_path: str | Path, *, document_id: Optional[str] = None) -> Dict[str, Any]:

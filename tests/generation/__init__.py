@@ -1,0 +1,3 @@
+"""
+Generation tests module
+"""
