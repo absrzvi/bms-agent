@@ -18,6 +18,8 @@ from typing import List, Dict, Any
 from qdrant_client import QdrantClient
 from qdrant_client.models import PointStruct
 import logging
+import nltk
+from nltk.tokenize import sent_tokenize
 
 # Paths
 import fitz  # PyMuPDF
@@ -55,25 +57,68 @@ def extract_text_from_pdf(pdf_path: Path) -> str:
 
 
 def chunk_text(text: str, chunk_size: int = CHUNK_SIZE, overlap: int = CHUNK_OVERLAP) -> List[str]:
-    """Simple overlapping chunker"""
+    """
+    Sentence-aware overlapping chunker (preserves sentence boundaries).
+
+    This implements the same logic as Enhanced Document Processor's late chunking:
+    - Splits text into sentences using NLTK
+    - Builds chunks by adding complete sentences
+    - Creates new chunk only when adding next sentence would exceed chunk_size
+    - Maintains overlap by including last few sentences from previous chunk
+    """
     if len(text) <= chunk_size:
         return [text] if text else []
 
+    try:
+        # Split into sentences
+        sentences = sent_tokenize(text)
+    except Exception as e:
+        logger.warning(f"Sentence tokenization failed: {e}, falling back to character split")
+        # Fallback: simple character-based chunking
+        chunks = []
+        start = 0
+        while start < len(text):
+            end = start + chunk_size
+            chunks.append(text[start:end].strip())
+            start += (chunk_size - overlap)
+            if end >= len(text):
+                break
+        return chunks
+
     chunks = []
-    start = 0
-    while start < len(text):
-        end = start + chunk_size
-        chunk = text[start:end]
+    current_chunk = []
+    current_size = 0
 
-        # Only add non-empty chunks
-        if chunk.strip():
-            chunks.append(chunk.strip())
+    for sentence in sentences:
+        sent_size = len(sentence)
 
-        start += (chunk_size - overlap)
+        # If adding this sentence exceeds chunk_size, save current chunk
+        if current_size + sent_size > chunk_size and current_chunk:
+            # Save current chunk
+            chunk_content = ' '.join(current_chunk)
+            chunks.append(chunk_content)
 
-        # Break if we've gone past the end
-        if end >= len(text):
-            break
+            # Start new chunk with overlap (include last few sentences)
+            overlap_sentences = []
+            overlap_size = 0
+            for sent in reversed(current_chunk):
+                if overlap_size < overlap:
+                    overlap_sentences.insert(0, sent)
+                    overlap_size += len(sent)
+                else:
+                    break
+
+            # Reset for new chunk with overlap
+            current_chunk = overlap_sentences
+            current_size = overlap_size
+
+        # Add sentence to current chunk
+        current_chunk.append(sentence)
+        current_size += sent_size
+
+    # Add final chunk if any
+    if current_chunk:
+        chunks.append(' '.join(current_chunk))
 
     return chunks
 
