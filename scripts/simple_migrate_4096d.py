@@ -214,43 +214,84 @@ def process_and_upload(pdf_path: Path, qdrant_client: QdrantClient) -> Dict[str,
 
 
 def main():
-    # Find PDFs
-    data_dir = Path("/workspace/bms_data/sharepoint_downloads/pdf")
-    pdf_files = list(data_dir.glob("*.pdf"))[:10]  # Test with 10 files first
+    import argparse
 
-    logger.info(f"Found {len(pdf_files)} PDFs to process")
+    parser = argparse.ArgumentParser(description="Migrate documents to Qwen3 4096-d embeddings")
+    parser.add_argument("--limit", type=int, default=None, help="Limit number of documents (default: all)")
+    parser.add_argument("--data-dir", type=str, default="/workspace/bms_data/sharepoint_downloads/pdf", help="Data directory")
+    parser.add_argument("--report-path", type=str, default="/workspace/logs/full_migration_report.json", help="Output report path")
+    args = parser.parse_args()
+
+    # Find PDFs
+    data_dir = Path(args.data_dir)
+    all_pdf_files = list(data_dir.glob("*.pdf"))
+
+    # Apply limit if specified
+    pdf_files = all_pdf_files[:args.limit] if args.limit else all_pdf_files
+
+    logger.info(f"Found {len(all_pdf_files)} total PDFs, processing {len(pdf_files)}")
 
     # Initialize Qdrant
     qdrant_client = QdrantClient(host=QDRANT_HOST, port=QDRANT_PORT)
 
-    # Process all files
+    # Process all files with progress tracking
     results = []
-    for pdf_path in pdf_files:
+    successful = 0
+    failed = 0
+    total_chunks = 0
+
+    start_time = time.time()
+
+    for idx, pdf_path in enumerate(pdf_files, 1):
         result = process_and_upload(pdf_path, qdrant_client)
         results.append(result)
 
-    # Summary
-    successful = sum(1 for r in results if r["success"])
-    total_chunks = sum(r.get("chunks", 0) for r in results if r["success"])
+        if result["success"]:
+            successful += 1
+            total_chunks += result.get("chunks", 0)
+        else:
+            failed += 1
 
-    logger.info(f"\n=== MIGRATION SUMMARY ===")
-    logger.info(f"Processed: {successful}/{len(results)}")
+        # Progress update every 50 documents
+        if idx % 50 == 0:
+            elapsed = time.time() - start_time
+            rate = idx / elapsed
+            remaining = (len(pdf_files) - idx) / rate if rate > 0 else 0
+
+            logger.info(f"\n=== PROGRESS: {idx}/{len(pdf_files)} ({idx/len(pdf_files)*100:.1f}%) ===")
+            logger.info(f"Success: {successful} | Failed: {failed} | Chunks: {total_chunks}")
+            logger.info(f"Rate: {rate:.2f} docs/sec | ETA: {remaining/60:.1f} min")
+
+    # Final summary
+    elapsed_total = time.time() - start_time
+
+    logger.info(f"\n{'='*60}")
+    logger.info(f"MIGRATION COMPLETE")
+    logger.info(f"{'='*60}")
+    logger.info(f"Processed: {successful}/{len(pdf_files)} documents")
+    logger.info(f"Failed: {failed}")
     logger.info(f"Total chunks: {total_chunks}")
+    logger.info(f"Total time: {elapsed_total/60:.1f} minutes")
+    logger.info(f"Average rate: {len(pdf_files)/elapsed_total:.2f} docs/sec")
+    logger.info(f"{'='*60}")
 
-    # Save report
-    report_path = "/workspace/logs/simple_migration_report.json"
-    with open(report_path, "w") as f:
+    # Save detailed report
+    with open(args.report_path, "w") as f:
         json.dump({
             "timestamp": datetime.now().isoformat(),
             "processed": successful,
-            "total": len(results),
+            "failed": failed,
+            "total": len(pdf_files),
+            "total_available": len(all_pdf_files),
             "chunks": total_chunks,
+            "elapsed_seconds": elapsed_total,
+            "rate_docs_per_sec": len(pdf_files) / elapsed_total if elapsed_total > 0 else 0,
             "results": results
         }, f, indent=2)
 
-    logger.info(f"Report saved: {report_path}")
+    logger.info(f"Report saved: {args.report_path}")
 
-    return 0 if successful == len(results) else 1
+    return 0 if failed == 0 else 1
 
 
 if __name__ == "__main__":
