@@ -49,10 +49,12 @@ except ImportError:
 
 # Embedding models
 try:
+    import torch
     from sentence_transformers import SentenceTransformer
     SENTENCE_TRANSFORMERS_AVAILABLE = True
 except ImportError:
     SENTENCE_TRANSFORMERS_AVAILABLE = False
+    torch = None
 
 # Document processing
 try:
@@ -153,14 +155,14 @@ class ChunkingStrategy(Enum):
 @dataclass
 class ProcessingConfig:
     """Enhanced configuration for document processing"""
-    # Basic settings (optimized for maximum quality)
-    chunk_size: int = 2000  # Increased for better context coverage
-    chunk_overlap: int = 400  # Increased overlap for better context preservation
-    min_chunk_size: int = 300  # Increased for more substantial chunks
-    max_chunk_size: int = 4000  # Increased maximum
+    # Basic settings (token-based targeting: ~4 chars per token)
+    chunk_size: int = 2000  # Target: 500 tokens (≈500 * 4 chars)
+    chunk_overlap: int = 600  # Target: 150 tokens (≈150 * 4 chars)
+    min_chunk_size: int = 300  # Minimum viable chunk size
+    max_chunk_size: int = 4000  # Maximum chunk size
     
     # Advanced chunking
-    chunking_strategy: ChunkingStrategy = ChunkingStrategy.HIERARCHICAL
+    chunking_strategy: ChunkingStrategy = ChunkingStrategy.LATE_CHUNKING
     parent_chunk_size: int = 2000
     child_chunk_size: int = 400
     
@@ -178,8 +180,10 @@ class ProcessingConfig:
     enable_quality_validation: bool = True
     
     # Embedding settings
-    embedding_model: str = "sentence-transformers/all-mpnet-base-v2"
+    embedding_model: str = "sentence-transformers/all-mpnet-base-v2"  # HuggingFace model for late chunking
+    embedding_dimensions: int = 768  # all-mpnet-base-v2 output dimensions
     embedding_batch_size: int = 32
+    use_ollama_embeddings: bool = False  # Use sentence-transformers for consistency with existing data
     
     # Hybrid search settings
     enable_hybrid_search: bool = True
@@ -2131,22 +2135,33 @@ class EnhancedDocumentProcessor:
             except Exception as e:
                 logger.warning(f"⚠️  Qdrant not available: {e}")
         
-        # Initialize sentence-transformers for fast embeddings
+        # Initialize Qwen3-Embedding-8B for 4096-d embeddings
         self.embedding_model = None
-        if SENTENCE_TRANSFORMERS_AVAILABLE:
+        self.embedding_dimensions = 4096
+
+        try:
+            from sentence_transformers import SentenceTransformer
+            # Use Qwen3-Embedding-8B from Hugging Face (supports 4096-d embeddings)
+            model_name = "Qwen/Qwen3-Embedding-8B"
+            logger.info(f"Loading embedding model: {model_name}...")
+            self.embedding_model = SentenceTransformer(
+                model_name,
+                device='cuda' if torch.cuda.is_available() else 'cpu'
+            )
+            logger.info(f"✅ Qwen3-Embedding-8B loaded (4096-d embeddings, device: {self.embedding_model.device})")
+        except Exception as e:
+            logger.error(f"❌ Failed to load Qwen3-Embedding-8B: {e}")
+            logger.info("Falling back to sentence-transformers/all-mpnet-base-v2 (768-d)")
             try:
-                import torch
-                from sentence_transformers import SentenceTransformer
-                
-                # Force CPU mode if use_gpu is False or if CUDA is not available
-                device = 'cpu'
-                if self.config.use_gpu and torch.cuda.is_available():
-                    device = 'cuda'
-                
-                self.embedding_model = SentenceTransformer('sentence-transformers/all-mpnet-base-v2', device=device)
-                logger.info(f"✅ sentence-transformers model loaded (768-d embeddings) on {device}")
-            except Exception as e:
-                logger.warning(f"⚠️  sentence-transformers not available: {e}")
+                self.embedding_model = SentenceTransformer(
+                    "sentence-transformers/all-mpnet-base-v2",
+                    device='cuda' if torch.cuda.is_available() else 'cpu'
+                )
+                self.embedding_dimensions = 768
+                logger.info("✅ Fallback model loaded (768-d embeddings)")
+            except Exception as fallback_error:
+                logger.error(f"❌ Failed to load fallback model: {fallback_error}")
+                self.embedding_model = None
         
         logger.info("🚀 Enhanced Document Processor v4.0 initialized")
         logger.info(f"   Profile: {self.config.processing_profile.value}")
@@ -2157,18 +2172,23 @@ class EnhancedDocumentProcessor:
         logger.info(f"   Qdrant Storage: {self.qdrant_client is not None}")
     
     def _generate_embeddings(self, text: str) -> Optional[List[float]]:
-        """Generate embeddings using sentence-transformers (35x faster than Ollama)"""
+        """Generate embeddings using Qwen3-Embedding-8B (4096-d) or fallback model"""
         try:
             if not self.embedding_model:
                 logger.error("Embedding model not initialized")
                 return None
-            
+
             # Generate embedding using sentence-transformers
-            # Note: convert_to_numpy=True will move to CPU, but that's needed for Qdrant
-            # The actual computation happens on the model's device (GPU if available)
             embedding = self.embedding_model.encode(text, convert_to_numpy=True, show_progress_bar=False)
-            return embedding.tolist()
-                
+
+            # Convert to list and verify dimensions
+            embedding_list = embedding.tolist()
+            if len(embedding_list) != self.embedding_dimensions:
+                logger.error(f"Invalid embedding dimensions: expected {self.embedding_dimensions}, got {len(embedding_list)}")
+                return None
+
+            return embedding_list
+
         except Exception as e:
             logger.error(f"Error generating embeddings: {e}")
             return None
@@ -2266,9 +2286,9 @@ class EnhancedDocumentProcessor:
                     "parent_chunk_id": chunk.get("parent_chunk_id"),
                     "is_parent": chunk.get("is_parent", False),
                     "is_child": chunk.get("is_child", False),
-                    
-                    # Quality validation metadata
-                    "quality_score": float(chunk.get("quality_score", 0.0)),
+
+                    # Quality validation metadata (FIX: extract from nested quality dict)
+                    "quality_score": float(chunk.get("quality", {}).get("overall_score", 0.0)),
                     
                     # Contextual retrieval metadata
                     "has_context": bool(chunk.get("contextual_description")),
@@ -2416,17 +2436,17 @@ class EnhancedDocumentProcessor:
             standard_compliance = self._extract_standards(content)
             
             # Apply chunking strategy
-            if self.config.chunking_strategy == ChunkingStrategy.HIERARCHICAL:
+            if self.config.chunking_strategy == ChunkingStrategy.LATE_CHUNKING:
+                chunks = self.late_chunking_engine.apply_late_chunking(content)
+                # Mark as late chunked
+                for chunk in chunks:
+                    chunk['late_chunking_applied'] = True
+            elif self.config.chunking_strategy == ChunkingStrategy.HIERARCHICAL:
                 hierarchy = self.hierarchical_engine.create_hierarchical_chunks(content)
                 chunks = self._flatten_hierarchy(hierarchy)
                 # Mark as not late chunked
                 for chunk in chunks:
                     chunk['late_chunking_applied'] = False
-            elif self.config.enable_late_chunking:
-                chunks = self.late_chunking_engine.apply_late_chunking(content)
-                # Mark as late chunked
-                for chunk in chunks:
-                    chunk['late_chunking_applied'] = True
             else:
                 # Fallback to simple chunking
                 chunks = self._simple_chunking(content)
@@ -2750,8 +2770,29 @@ class EnhancedDocumentProcessor:
                 
                 # Join all lines
                 clean_text = '\n'.join(text_lines)
-                
+
                 if clean_text.strip():
+                    # FIX: Prevent giant Excel files from becoming single chunks
+                    # If content is very large (>10k chars), add section markers every 2000 chars
+                    # This helps the chunking algorithm create reasonable chunk sizes
+                    if len(clean_text) > 10000:
+                        logger.info(f"⚠️  Large Excel file detected ({len(clean_text)} chars), adding section markers for better chunking")
+                        # Add section breaks at reasonable intervals to help chunking
+                        lines = text_lines
+                        enhanced_lines = []
+                        char_count = 0
+                        section_num = 1
+
+                        for line in lines:
+                            if char_count > 2000:  # Add section marker every ~2000 chars
+                                enhanced_lines.append(f"\n--- Excel Section {section_num} ---\n")
+                                section_num += 1
+                                char_count = 0
+                            enhanced_lines.append(line)
+                            char_count += len(line)
+
+                        clean_text = '\n'.join(enhanced_lines)
+
                     logger.info(f"✅ Extracted and cleaned text from XLSX: {len(clean_text)} chars (removed empty columns)")
                     return clean_text
                 else:
@@ -3081,14 +3122,21 @@ class EnhancedDocumentProcessor:
         """Merge short chunks with adjacent chunks to improve quality"""
         if not chunks:
             return chunks
-        
+
+        # FIX: Don't merge hierarchical chunks (parent/child relationships)
+        # Check if any chunks have hierarchical metadata
+        has_hierarchy = any(chunk.get('is_parent') or chunk.get('is_child') for chunk in chunks)
+        if has_hierarchy:
+            logger.info("⚠️  Skipping merge for hierarchical chunks to preserve parent-child relationships")
+            return chunks
+
         merged_chunks = []
         i = 0
-        
+
         while i < len(chunks):
             current_chunk = chunks[i]
             current_content = current_chunk.get('content', '')
-            
+
             # If current chunk is too short, try to merge with next
             if len(current_content) < self.config.min_chunk_size and i + 1 < len(chunks):
                 next_chunk = chunks[i + 1]

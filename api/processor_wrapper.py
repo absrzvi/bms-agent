@@ -87,17 +87,10 @@ class BMSDocumentProcessor:
         self.ollama_url = ollama_url
         self.low_quality_collection = low_quality_collection
         
-        # Initialize sentence-transformers for fast embeddings (768-d)
-        self.embedding_model = None
-        if SENTENCE_TRANSFORMERS_AVAILABLE:
-            try:
-                from sentence_transformers import SentenceTransformer
-                import torch
-                device = 'cuda' if torch.cuda.is_available() else 'cpu'
-                self.embedding_model = SentenceTransformer('sentence-transformers/all-mpnet-base-v2', device=device)
-                logger.info(f"✅ sentence-transformers model loaded (768-d embeddings) on {device.upper()}")
-            except Exception as e:
-                logger.warning(f"⚠️  sentence-transformers not available: {e}")
+        # Initialize Ollama for embeddings (4096-d Qwen3-Embedding-8B:F16)
+        self.embedding_model = "dengcao/Qwen3-Embedding-8B:F16"
+        self.embedding_dimensions = 4096
+        logger.info(f"✅ Using Ollama embedding model: {self.embedding_model} (4096-d embeddings)")
         
         # Initialize Qdrant client
         if QDRANT_AVAILABLE:
@@ -117,53 +110,55 @@ class BMSDocumentProcessor:
         # Initialize Enhanced Document Processor with all v4.0 features
         if ENHANCED_PROCESSOR_AVAILABLE:
             self.processor_config = ProcessingConfig(
-                # Core processing settings (more permissive for testing)
-                chunk_size=800,
-                chunk_overlap=100,
-                min_chunk_size=50,   # Much lower minimum for testing
-                max_chunk_size=2000,
-                quality_threshold=60.0,  # Lower threshold for testing
-                
-                # Advanced chunking (use sliding window for reliable chunking)
-                chunking_strategy=ChunkingStrategy.SLIDING_WINDOW,
+                # Core processing settings (token-based: 500 tokens, 150 token overlap)
+                chunk_size=2000,  # Target: 500 tokens (≈500 * 4 chars)
+                chunk_overlap=600,  # Target: 150 tokens (≈150 * 4 chars)
+                min_chunk_size=300,
+                max_chunk_size=4000,
+                quality_threshold=60.0,
+
+                # Advanced chunking (use LATE_CHUNKING for better context preservation)
+                chunking_strategy=ChunkingStrategy.LATE_CHUNKING,
                 parent_chunk_size=2000,
                 child_chunk_size=400,
-                
+
                 # Processing options
                 processing_profile=ProcessingProfile.RAILWAY,
                 enable_ocr=True,
                 extract_tables=True,
                 extract_images=True,
-                enable_contextual_retrieval=False,  # Disabled - too slow for large docs
-                enable_late_chunking=False,  # Disabled - too slow for large docs
-                
-                # Quality settings (RELAXED for initial ingestion)
-                min_quality_score=50.0,  # Lowered from 70.0
-                enable_quality_validation=False,  # Disabled to allow all chunks through
-                
-                # Embedding settings
-                embedding_model="sentence-transformers/all-mpnet-base-v2",
+                enable_contextual_retrieval=True,  # Enabled for better context
+                enable_late_chunking=True,  # Enabled - uses LATE_CHUNKING strategy
+
+                # Quality settings
+                min_quality_score=50.0,
+                enable_quality_validation=True,  # Enabled for quality filtering
+
+                # Embedding settings (Ollama Qwen3-Embedding-8B:F16)
+                embedding_model="dengcao/Qwen3-Embedding-8B:F16",
+                embedding_dimensions=4096,
                 embedding_batch_size=32,
-                
-                # Hybrid search settings (DISABLED - causing sparse vector errors)
-                enable_hybrid_search=False,
+                use_ollama_embeddings=True,
+
+                # Hybrid search settings
+                enable_hybrid_search=True,
                 vector_weight=0.5,
                 keyword_weight=0.5,
-                
+
                 # Distributed processing
-                enable_distributed=False,  # Single-node for POC
+                enable_distributed=False,
                 num_workers=4,
                 use_gpu=True,
-                
+
                 # Versioning
                 enable_versioning=True,
                 track_changes=True,
-                
+
                 # Railway-specific settings
                 preserve_technical_terms=True,
-                railway_terminology_path=None,  # Use built-in terminology
-                
-                # Advanced text preprocessing (activated from memory)
+                railway_terminology_path=None,
+
+                # Advanced text preprocessing
                 enable_advanced_preprocessing=True
             )
             
@@ -212,26 +207,34 @@ class BMSDocumentProcessor:
         return features
     
     def _generate_embeddings(self, text: str) -> Optional[List[float]]:
-        """Generate embeddings using sentence-transformers (768-d, GPU-accelerated)"""
+        """Generate embeddings using Ollama (4096-d Qwen3-Embedding-8B:F16)"""
         try:
             if not self.embedding_model:
                 logger.error("Embedding model not initialized")
                 return None
-            
-            # Generate embedding using sentence-transformers with GPU
-            # convert_to_tensor=True keeps computation on GPU for speed
-            # Then convert to numpy/list for storage
-            embedding = self.embedding_model.encode(
-                text, 
-                convert_to_tensor=True,  # Keep on GPU during computation
-                show_progress_bar=False,
-                batch_size=1,  # Single text, no batching needed
-                normalize_embeddings=False
+
+            # Call Ollama API for embeddings
+            response = requests.post(
+                f"{self.ollama_url}/api/embeddings",
+                json={
+                    "model": self.embedding_model,
+                    "prompt": text
+                },
+                timeout=30
             )
-            
-            # Convert tensor to list (moves from GPU to CPU)
-            return embedding.cpu().numpy().tolist()
-                
+
+            if response.status_code == 200:
+                result = response.json()
+                embedding = result.get("embedding")
+                if embedding and len(embedding) == self.embedding_dimensions:
+                    return embedding
+                else:
+                    logger.error(f"Invalid embedding dimensions: expected {self.embedding_dimensions}, got {len(embedding) if embedding else 0}")
+                    return None
+            else:
+                logger.error(f"Ollama API error: {response.status_code} - {response.text}")
+                return None
+
         except Exception as e:
             logger.error(f"Error generating embeddings: {e}")
             return None
@@ -508,22 +511,30 @@ class BMSDocumentProcessor:
             )
     
     def _generate_embeddings_batch(self, texts: List[str]) -> List[List[float]]:
-        """Generate embeddings for multiple texts in one batch (GPU-optimized)"""
+        """Generate embeddings for multiple texts using Ollama (4096-d batch processing)"""
         try:
             if not self.embedding_model or not texts:
                 return []
-            
-            # Batch encode all texts at once on GPU
-            embeddings = self.embedding_model.encode(
-                texts,
-                convert_to_tensor=True,
-                show_progress_bar=False,
-                batch_size=32,  # Process 32 texts at a time on GPU
-                normalize_embeddings=False
-            )
-            
-            # Convert to list of lists
-            return [emb.cpu().numpy().tolist() for emb in embeddings]
+
+            # Ollama doesn't support true batch processing, so we process sequentially
+            # but with progress logging for large batches
+            embeddings = []
+            total = len(texts)
+
+            for i, text in enumerate(texts):
+                if i % 10 == 0 and i > 0:
+                    logger.info(f"  Generating embeddings: {i}/{total} ({i*100//total}%)")
+
+                embedding = self._generate_embeddings(text)
+                if embedding:
+                    embeddings.append(embedding)
+                else:
+                    # Return empty list if any embedding fails
+                    logger.error(f"Failed to generate embedding for text {i}")
+                    return []
+
+            return embeddings
+
         except Exception as e:
             logger.error(f"Error generating batch embeddings: {e}")
             return []
