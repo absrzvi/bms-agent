@@ -1940,7 +1940,7 @@ class QualityValidationEngine:
             return 0.0
         
         # Simple readability: prefer medium-length sentences
-        avg_sent_length = len(words) / len(sentences) if len(sentences) > 0 else 0
+        avg_sent_length = len(words) / len(sentences)
         
         # Optimal sentence length is 15-20 words
         if 15 <= avg_sent_length <= 20:

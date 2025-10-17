@@ -74,8 +74,11 @@ Progressive performance requirements aligned with deployment phases:
     - **POC**: Establish baseline metrics, p95 <500ms acceptable, >1000ms triggers optimization
     - **MVP**: Target p95 <200ms for 20-50 users
     - **Production**: Target p95 ≤100ms for 20-100 users
-  - R2.2: Achieve ≥95 % top-5 retrieval accuracy on curated validation set (`data/evaluation/ground_truth.jsonl`) containing minimum 50 queries across 10 categories.
-    - *Acceptance*: `scripts/evaluate_retrieval.py` reports accuracy ≥95 % on dataset with ≥50 test queries.
+  - R2.2: Achieve phased top-5 retrieval accuracy on curated validation set (`data/evaluation/ground_truth.jsonl`) containing minimum 50 queries across 10 categories.
+    - **POC**: ≥80 % accuracy (per Clarify Session 7 decision)
+    - **MVP**: ≥90 % accuracy
+    - **Production**: ≥95 % accuracy
+    - *Acceptance*: `scripts/evaluate_retrieval.py` reports phase-appropriate accuracy on dataset with ≥50 test queries.
   - R2.3: Support hybrid retrieval (semantic + keyword/BM25) with query-time fusion.
     - *Acceptance*: Hybrid search endpoint returns both dense and sparse scores; integration tests verify BM25 keywords stored in Qdrant payload and exposed via API.
   - R2.4: **CLARIFIED**: Configurable relevance filtering - Search endpoints accept optional `min_score` query parameter to filter results below specified similarity threshold (default: no filtering, return all top-k).
@@ -145,7 +148,7 @@ Progressive performance requirements aligned with deployment phases:
 **POC Phase**:
   - Ingestion workload runs successfully; invalid files rejected with specific errors
   - Semantic/hybrid search operational; baseline p95 <500ms established
-  - Retrieval evaluation script reports ≥95% accuracy
+  - Retrieval evaluation script meets phase accuracy target (POC 80%, MVP 90%, Production 95%)
   - All integrations (Slack, OpenWebUI) operational with end-to-end testing
   - Basic health and metrics endpoints return status objects
   - All persistent data stored in `/workspace` folder

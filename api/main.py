@@ -127,6 +127,10 @@ class SearchRequest(BaseModel):
     filters: Optional[Dict[str, Any]] = Field(None, description="Search filters")
     min_score: Optional[float] = Field(None, ge=0.0, le=1.0, description="Minimum similarity score threshold (0.0-1.0)")
     min_quality: Optional[float] = Field(None, ge=0.0, le=1.0, description="Minimum quality score threshold (0.0-1.0)")
+    include_low_quality: bool = Field(
+        False,
+        description="When true, route search to low-quality collection for admin review"
+    )
 
 class HybridSearchRequest(SearchRequest):
     vector_weight: float = Field(0.5, ge=0.0, le=1.0, description="Weight for semantic search")
@@ -197,6 +201,21 @@ def save_upload_file(upload_file: UploadFile) -> Path:
         buffer.write(content)
     
     return file_path
+
+
+def resolve_collection(
+    processor: Any,
+    include_low_quality: bool,
+    filters: Optional[Dict[str, Any]] = None,
+) -> str:
+    """Return appropriate Qdrant collection considering include_low_quality flag."""
+    flag = include_low_quality
+    if not flag and filters:
+        flag = bool(filters.get("include_low_quality"))
+
+    if flag and getattr(processor, "low_quality_collection", None):
+        return processor.low_quality_collection
+    return processor.collection_name
 
 async def process_document_background(file_path: Path, profile: str, document_id: str):
     """Background task for document processing"""
@@ -575,12 +594,15 @@ async def semantic_search(request: SearchRequest):
                 FieldCondition(key="quality_score", range=Range(gte=request.min_quality))
             )
         
-        # Add other filters
-        if request.filters:
+        # Add other filters (sanitize include_low_quality if provided)
+        normalized_filters = dict(request.filters) if request.filters else {}
+        legacy_include_low_quality = bool(normalized_filters.pop("include_low_quality", False))
+
+        if normalized_filters:
             from qdrant_client.models import Filter, FieldCondition, MatchValue
             
-            for key, value in request.filters.items():
-                if key in ["document_type", "processing_profile", "hierarchy_level"]:
+            for key, value in normalized_filters.items():
+                if key in ["document_type", "processing_profile", "hierarchy_level", "chunk_type"]:
                     conditions.append(
                         FieldCondition(key=key, match=MatchValue(value=value))
                     )
@@ -594,11 +616,14 @@ async def semantic_search(request: SearchRequest):
             from qdrant_client.models import Filter
             search_filter = Filter(must=conditions)
         
+        include_low_quality = request.include_low_quality or legacy_include_low_quality
+        collection_name = resolve_collection(processor, include_low_quality, request.filters)
+
         # Perform semantic search
         start_time = datetime.now()
         
         search_results = processor.qdrant_client.search(
-            collection_name=processor.collection_name,
+            collection_name=collection_name,
             query_vector=("chunk_embedding", query_embedding),
             query_filter=search_filter,
             limit=request.limit,
@@ -652,7 +677,8 @@ async def semantic_search(request: SearchRequest):
             "search_metadata": {
                 "total_results": len(results),
                 "search_time_ms": int(search_time),
-                "embedding_model": "sentence-transformers/all-mpnet-base-v2"
+                "embedding_model": "sentence-transformers/all-mpnet-base-v2",
+                "collection": collection_name
             }
         }
         
@@ -681,6 +707,7 @@ async def hybrid_search(request: HybridSearchRequest):
     - **filters**: Optional filters
     - **min_score**: Optional minimum hybrid score threshold (0.0-1.0). Results below this score are filtered out.
     - **min_quality**: Optional minimum quality score threshold (0.0-1.0). Filters chunks by RAGAS quality score.
+    - **include_low_quality**: Optional flag to include low-quality collection in search
     """
     
     try:
@@ -732,11 +759,13 @@ async def hybrid_search(request: HybridSearchRequest):
                 FieldCondition(key="quality_score", range=Range(gte=request.min_quality))
             )
         
-        # Add other filters
-        if request.filters:
+        normalized_filters = dict(request.filters) if request.filters else {}
+        legacy_include_low_quality = bool(normalized_filters.pop("include_low_quality", False))
+
+        if normalized_filters:
             from qdrant_client.models import Filter, FieldCondition, MatchValue
             
-            for key, value in request.filters.items():
+            for key, value in normalized_filters.items():
                 if key in ["document_type", "processing_profile", "has_context", "is_parent"]:
                     conditions.append(
                         FieldCondition(key=key, match=MatchValue(value=value))
@@ -751,13 +780,16 @@ async def hybrid_search(request: HybridSearchRequest):
             from qdrant_client.models import Filter
             search_filter = Filter(must=conditions)
         
+        include_low_quality = request.include_low_quality or legacy_include_low_quality
+        collection_name = resolve_collection(processor, include_low_quality, request.filters)
+
         # Perform hybrid search
         start_time = datetime.now()
-        
+
         # For POC, we'll do semantic search only and simulate hybrid scoring
         # In production, this would use proper hybrid search with sparse vectors
         search_results = processor.qdrant_client.search(
-            collection_name=processor.collection_name,
+            collection_name=collection_name,
             query_vector=("chunk_embedding", query_embedding),
             query_filter=search_filter,
             limit=request.limit,
@@ -860,13 +892,15 @@ async def hybrid_search(request: HybridSearchRequest):
         response_data = {
             "status": "success",
             "query": request.query,
+            "search_type": "hybrid",
             "results": results,
             "search_metadata": {
                 "total_results": len(results),
                 "search_time_ms": int(search_time),
-                "vector_weight_used": request.vector_weight,
-                "keyword_weight_used": request.keyword_weight,
-                "fusion_method": "weighted_sum"
+                "vector_weight": request.vector_weight,
+                "keyword_weight": request.keyword_weight,
+                "keyword_score_max": 1.0,
+                "collection": collection_name
             }
         }
         
@@ -1735,17 +1769,23 @@ async def ask_question(request: AskRequest):
     
     try:
         from generation.answer_generator import RailwayAnswerGenerator
-        
+        from retrieval.query_expansion import QueryExpander
+
         processor = get_processor()
-        
+
         if not processor.qdrant_client:
             raise HTTPException(status_code=503, detail="Search service unavailable")
-        
-        # Step 1: Retrieve relevant chunks
-        query_embedding = processor._generate_embeddings(request.query)
-        if not query_embedding:
-            raise HTTPException(status_code=500, detail="Failed to generate query embedding")
-        
+
+        # Step 1: Expand query for better recall (handles conversational queries)
+        expander = QueryExpander(
+            ollama_url=os.getenv("OLLAMA_URL", "http://localhost:11434"),
+            max_variations=3  # Original + 2 variations
+        )
+
+        # Use rule-based expansion (fast, no LLM call needed)
+        expanded_queries = await expander.expand_query(request.query, use_llm=False)
+        logger.info(f"🔍 Query expansion: {request.query} → {len(expanded_queries)} variations")
+
         # Build search filter
         search_filter = None
         if request.filters:
@@ -1756,17 +1796,47 @@ async def ask_question(request: AskRequest):
                     FieldCondition(key=key, match=MatchValue(value=value))
                 )
             search_filter = Filter(must=conditions)
-        
-        # Search for chunks
-        search_results = processor.qdrant_client.search(
-            collection_name=processor.collection_name,
-            query_vector=("chunk_embedding", query_embedding),
-            query_filter=search_filter,
-            limit=request.max_chunks * 2,  # Get more for better context
-            with_payload=True,
-            with_vectors=False
-        )
-        
+
+        # Step 2: Search with all query variations and merge results
+        all_results = []
+        seen_chunk_ids = set()
+
+        for i, query_variation in enumerate(expanded_queries):
+            # Generate embedding for this variation
+            query_embedding = processor._generate_embeddings(query_variation)
+            if not query_embedding:
+                logger.warning(f"⚠️  Failed to generate embedding for variation {i}")
+                continue
+
+            # Search for chunks with this variation
+            variation_results = processor.qdrant_client.search(
+                collection_name=processor.collection_name,
+                query_vector=("chunk_embedding", query_embedding),
+                query_filter=search_filter,
+                limit=request.max_chunks * 2,  # Get more candidates
+                with_payload=True,
+                with_vectors=False
+            )
+
+            # Deduplicate by chunk_id, keeping highest score
+            for result in variation_results:
+                chunk_id = result.payload.get("chunk_id", str(result.id))
+                if chunk_id not in seen_chunk_ids:
+                    all_results.append(result)
+                    seen_chunk_ids.add(chunk_id)
+                else:
+                    # Update if this variation found a higher score
+                    for j, existing in enumerate(all_results):
+                        existing_id = existing.payload.get("chunk_id", str(existing.id))
+                        if existing_id == chunk_id and result.score > existing.score:
+                            all_results[j] = result
+                            break
+
+        # Sort by score and take top results
+        search_results = sorted(all_results, key=lambda x: x.score, reverse=True)
+
+        logger.info(f"✅ Query expansion: found {len(search_results)} unique chunks from {len(expanded_queries)} variations")
+
         # Filter by min_score if provided
         if request.min_score is not None:
             search_results = [r for r in search_results if r.score >= request.min_score]

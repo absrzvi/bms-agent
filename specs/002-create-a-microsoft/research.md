@@ -1,63 +1,75 @@
-# Research: MS Teams Chat Bot for BMS Agent
+# Research: Slack Chat Bot for BMS Agent
 
-**Date**: 2025-10-06
-**Feature**: MS Teams chat bot integration with BMS Agent API via n8n
+**Date**: 2025-10-06 (Updated 2025-10-11 for Slack)
+**Feature**: Slack chat bot integration with BMS Agent API via n8n
+**Note**: Changed from MS Teams to Slack during implementation for better API support
 
 ## Research Summary
 
-This document consolidates research findings for 8 key technical decisions required to implement the MS Teams bot integration.
+This document consolidates research findings for 8 key technical decisions required to implement the Slack bot integration. Implementation complete with Slack Events API + Slack Web API. Currently optimizing AI agent performance (8 tools → 4 tools).
 
 ---
 
-## 1. MS Teams Bot Integration Options
+## 1. Slack Bot Integration Options
 
-### Decision: Bot Framework REST API v3 with Incoming Webhook
+### Decision: Slack Events API + Slack Web API (IMPLEMENTED)
 **Rationale**:
-- No custom app package required (POC constraint)
-- Supports typing indicators via Bot Framework REST API v3
-- Enables proactive messages for document processing notifications
-- n8n can receive messages via webhook and respond via Bot Framework REST API v3
-
-###Alternatives Considered
-
-:
-- **Incoming Webhook Only**: Simple but no typing indicators or proactive messages
-- **Custom Teams App Package**: Full features but requires app deployment and tenant approval (blocked for POC)
-- **Power Automate**: No control over logic, limited LLM integration
-
-**Implementation Notes**:
-- Register Bot Framework REST API v3 bot at dev.botframework.com
-- Get bot ID and app password
-- Configure MS Teams Bot Framework webhook endpoint in n8n (e.g., https://n8n.runpod.io/webhook/teams)
-- Use MS Teams connector in Teams to add bot to channels
-
----
-
-## 2. n8n MS Teams Integration
-
-### Decision: Webhook Trigger + HTTP Request Nodes
-**Rationale**:
-- No official n8n MS Teams node exists (as of v1.x)
-- Webhook trigger receives MS Teams messages
-- HTTP Request nodes send responses via Bot Framework API
-- Flexible for typing indicators, proactive messages, adaptive cards
+- **Simpler setup than MS Teams**: No Bot Framework registration, just Slack app creation
+- **Better webhook support**: Slack Events API provides clean JSON payloads for app_mention events
+- **Rich formatting**: Slack Block Kit provides superior message formatting vs MS Teams plain text
+- **Built-in retry handling**: Slack automatically retries failed webhook deliveries (requires deduplication)
+- **n8n compatibility**: Direct HTTP nodes work perfectly with Slack Web API (no special node needed)
 
 **Alternatives Considered**:
-- **Community MS Teams Node**: Outdated, no typing indicator support
-- **Microsoft Graph API**: Overkill for messaging, requires more auth setup
+- **MS Teams Bot Framework REST API v3**: Rejected due to complex credential setup, limited formatting options, and webhook configuration difficulties
+- **Slack RTM API**: Rejected as deprecated, webhook-based Events API is recommended approach
+- **Slack Socket Mode**: Rejected as requires persistent connection, not suitable for n8n workflows
 
-**Implementation Pattern**:
+**Implementation Details** (as deployed):
+1. Create Slack app at api.slack.com/apps
+2. Enable Event Subscriptions with n8n webhook URL (e.g., `https://runpod-proxy.net/webhook/slack-events`)
+3. Subscribe to `app_mention` bot event
+4. Install app to Slack workspace, grant `chat:write`, `app_mentions:read` scopes
+5. Configure Bot User OAuth Token in n8n credentials
+6. Implement event deduplication using `event_id` to handle Slack retries
+
+---
+
+## 2. n8n Slack Integration
+
+### Decision: Webhook Trigger + HTTP Request Nodes (IMPLEMENTED)
+**Rationale**:
+- n8n Slack node exists but limited to simple message posting
+- Custom webhook + HTTP approach provides full control over Block Kit formatting
+- Handles Slack retry logic properly with event deduplication
+- Supports threading (thread_ts parameter) for conversation context
+
+**Implementation Pattern** (as deployed in bms-ai-agent.json):
 ```
-[MS Teams Bot Framework Webhook Trigger]
-  → [Extract message data]
-  → [Process logic]
-  → [HTTP Request to Bot Framework REST API v3]
+[Slack Events API Webhook Trigger: "slack-events"]
+  → [Process Event - Extract query, dedup check via event_id]
+  → [AI Agent Logic - Tool selection & execution]
+  → [Format Slack Reply - Block Kit formatting]
+  → [HTTP Request to slack.com/api/chat.postMessage]
 ```
 
-**Required Credentials**:
-- Bot Framework REST API v3 App ID
-- Bot Framework REST API v3 App Password
-- MS Teams Service URL (from incoming message)
+**Key Implementation Details**:
+1. **Event Deduplication**:
+   - Uses workflow static data to cache processed event_ids
+   - 5-minute TTL for dedup cache
+   - Prevents duplicate processing from Slack retries
+
+2. **Block Kit Formatting**:
+   - Header with emoji (🤖 Nomi BMS Assistant)
+   - User question quoted section
+   - Main answer with collapsible sections
+   - Document references with hyperlinks
+   - Footer with timestamp
+
+3. **Required Slack API Scopes**:
+   - `app_mentions:read` - Receive @mention events
+   - `chat:write` - Post messages to channels
+   - `channels:read` - List channels (for admin whitelist)
 
 ---
 
@@ -76,16 +88,29 @@ This document consolidates research findings for 8 key technical decisions requi
 - **PostgreSQL**: Overkill for key-value storage
 - **File-based JSON**: Simple but no TTL, poor concurrent access
 
-**Storage Schema**:
+**Storage Schema** (Session 2025-10-09: Updated with `bms:` prefix convention):
 ```
-Key: conversation:{conversation_id}
+Key: bms:context:{conversation_id}
 Value: JSON {participants, messages[], created_at, expires_at}
 TTL: 604800 seconds (7 days)
 
-Key: user:{user_id}:history
-Value: JSON [{query, timestamp}] (for /history command)
+Key: bms:user:{user_id}:history
+Value: JSON [{query, timestamp, embedding}] (for /history and similar query detection)
 TTL: 604800 seconds
+
+Key: bms:upload:job:{job_id}
+Value: JSON {document_id, file_name, uploaded_by, processing_status, created_at}
+TTL: 604800 seconds
+
+Key: bms:whitelist:cache
+Value: JSON {admins[], channels[]}
+TTL: 3600 seconds (1 hour cache refresh)
 ```
+
+**Namespace Convention** (Session 2025-10-09):
+- All Redis keys MUST use `bms:` prefix to prevent collisions and enable clear debugging
+- Standard format: `bms:{entity_type}:{identifier}` or `bms:{entity_type}:{id}:{attribute}`
+- Examples: `bms:context:{id}`, `bms:user:{id}:history`, `bms:upload:jobs:pending`
 
 **Deployment**:
 ```bash
@@ -99,15 +124,38 @@ docker run -d \
 
 ## 4. LLM Query Analysis with Ollama
 
-### Decision: Mistral Nemo via Ollama with Structured Prompts
+### Decision: Mistral Nemo via Ollama with Structured Prompts + Confidence Thresholds
 **Rationale**:
 - Already running on RunPod for BMS API
 - Good at intent classification and query understanding
 - Structured prompts ensure consistent routing decisions
+- **Session 2025-10-09**: Added confidence thresholds for intent detection (≥0.80) and query validation (<0.60)
 
 **Prompt Templates**:
 
-**Intent Classification**:
+**Query Validation** (Session 2025-10-09: New - FR-022):
+```
+You are a query quality validator for a railway documentation bot.
+Assess the clarity and completeness of the user's query.
+
+User query: "{query}"
+
+Evaluate:
+1. Is the query specific enough to understand intent?
+2. Does it contain meaningful content (not just stopwords)?
+3. Is the context clear or are there ambiguous references?
+
+Respond with a JSON object:
+{
+  "clarity_score": 0.0-1.0,
+  "is_clear": true/false,
+  "reason": "brief explanation"
+}
+
+Threshold: clarity_score ≥ 0.60 is considered clear.
+```
+
+**Intent Classification** (Session 2025-10-09: Updated with confidence threshold):
 ```
 You are a query classifier for a railway documentation bot.
 Classify the user's query into one of these intents:
@@ -119,12 +167,21 @@ Classify the user's query into one of these intents:
 
 User query: "{query}"
 
-Respond with ONLY the intent name (ASK, SEARCH, UPLOAD, or COMMAND).
+Respond with a JSON object:
+{
+  "intent": "ASK|SEARCH|UPLOAD|COMMAND",
+  "confidence": 0.0-1.0,
+  "reasoning": "brief explanation"
+}
+
+Routing Decision:
+- If intent == ASK AND confidence ≥ 0.80 → Route to /api/v1/ask (FR-006)
+- If confidence < 0.80 → Route to /api/v1/search/semantic (safe fallback)
 ```
 
-**Query Improvement**:
+**Query Improvement** (FR-022):
 ```
-The user's query returned no results: "{query}"
+The user's query was unclear or returned no results: "{query}"
 
 Suggest 2-3 alternative phrasings that might work better.
 Be specific to railway documentation (brakes, VLAN, signals, etc.).
@@ -138,27 +195,59 @@ Format:
 - HTTP Request node to http://localhost:11434/api/generate
 - Model: mistral-nemo:12b-instruct
 - Temperature: 0.3 (deterministic classification)
-- Max tokens: 50
+- Max tokens: 150 (increased for JSON responses with confidence)
+
+**Processing Flow** (Session 2025-10-09):
+```
+1. Query Validation (clarity_score check)
+   → If clarity_score < 0.60: Return suggestions (FR-022)
+   → If clarity_score ≥ 0.60: Proceed to step 2
+
+2. Intent Classification (confidence check)
+   → If intent == ASK AND confidence ≥ 0.80: Route to /api/v1/ask (FR-006)
+   → If confidence < 0.80: Route to /api/v1/search/semantic (safe fallback)
+   → If intent == COMMAND: Handle locally
+   → If intent == UPLOAD: Route to upload-handler workflow
+```
 
 ---
 
 ## 5. BMS API Integration Patterns
 
-### Decision: Intent-Based Routing with Error Handling
+### Decision: Intent-Based Routing with Error Handling + Footnote Citations
 **Rationale**:
 - FR-006 requires intelligent routing between /ask and /search
 - LLM intent classification determines endpoint
 - Fallback chain ensures reliability
+- **Session 2025-10-09**: Citation format specified as footnote style (FR-004)
 
 **Routing Logic**:
 ```
 IF query starts with "/" → Handle as command
-ELSE IF intent == "ASK" → POST /api/v1/ask
-ELSE IF intent == "SEARCH" → POST /api/v1/search/semantic
+ELSE IF intent == "ASK" AND confidence ≥ 0.80 → POST /api/v1/ask
+ELSE IF intent == "SEARCH" OR confidence < 0.80 → POST /api/v1/search/semantic
 ELSE IF attachments present → POST /api/v1/documents/upload
 ```
 
-**Error Handling** (FR-018, NFR-001):
+**Citation Formatting** (Session 2025-10-09: FR-004):
+```
+Format: Footnote style with numbered superscript references
+
+Example Response:
+"The emergency brake procedure requires activation within 3 seconds.¹
+This applies to all Class 395 trains.²
+
+¹ Railway Safety Manual, Section 4.2
+² Fleet Operations Guide, Page 47"
+
+Implementation:
+1. Parse BMS API response citations[] array
+2. Insert superscript numbers (¹, ², ³) at end of relevant sentences
+3. Append full citations list at bottom with matching numbers
+4. Ensure numbered order matches citation relevance
+```
+
+**Error Handling** (FR-020, NFR-001):
 ```
 TRY:
   response = call BMS API
@@ -291,6 +380,113 @@ function isChannelAllowed(channelId) {
 const channelId = message.channelData.channel.id; // For channel messages
 const conversationId = message.conversation.id;   // For personal chats
 ```
+
+---
+
+## 9. BMS API Embeddings Endpoint
+
+### Decision: Implement POST /api/v1/embeddings for Similar Query Detection
+**Rationale** (Session 2025-10-09: FR-017):
+- Similar query detection requires query embeddings (FR-017 similarity threshold ≥0.85)
+- Reuse existing sentence-transformers/all-mpnet-base-v2 model from BMS API
+- Consistent with existing BMS API architecture
+- Required by query-analyzer workflow for comparing user queries with history
+
+**Endpoint Specification** (Session 2025-10-09):
+```
+POST http://localhost:8000/api/v1/embeddings
+
+Request:
+{
+  "query": "string (max 1000 characters, consistent with FR-031)"
+}
+
+Response (200 OK):
+{
+  "embedding": [768 floats],  // sentence-transformers/all-mpnet-base-v2 dimensions
+  "model": "sentence-transformers/all-mpnet-base-v2",
+  "query_length": 42
+}
+
+Error Responses:
+- 400 Bad Request: Query exceeds 1000 characters or is empty
+  {
+    "detail": "Query exceeds maximum length of 1000 characters"
+  }
+- 500 Internal Server Error: Model unavailable or embedding generation failed
+  {
+    "detail": "Embedding model unavailable"
+  }
+
+Rate Limiting:
+- 60 requests/minute (shared with other BMS API endpoints)
+- HTTP 429 Too Many Requests if exceeded
+- Headers: X-RateLimit-Limit, X-RateLimit-Remaining, X-RateLimit-Reset
+
+Timeout:
+- 2000ms maximum (2 seconds)
+- Includes model loading + inference + response formatting
+```
+
+**Implementation Notes**:
+```python
+# api/endpoints/embeddings.py (NEW)
+from sentence_transformers import SentenceTransformer
+from fastapi import APIRouter, HTTPException
+from pydantic import BaseModel, Field
+
+router = APIRouter()
+model = SentenceTransformer('sentence-transformers/all-mpnet-base-v2')
+
+class EmbeddingRequest(BaseModel):
+    query: str = Field(..., max_length=1000)
+
+@router.post("/api/v1/embeddings")
+async def generate_embedding(request: EmbeddingRequest):
+    if not request.query.strip():
+        raise HTTPException(status_code=400, detail="Query cannot be empty")
+
+    try:
+        embedding = model.encode(request.query).tolist()  # 768-d vector
+        return {
+            "embedding": embedding,
+            "model": "sentence-transformers/all-mpnet-base-v2",
+            "query_length": len(request.query)
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="Embedding model unavailable")
+```
+
+**Usage in n8n** (query-analyzer workflow):
+```javascript
+// Call embeddings endpoint for current query
+const response = await axios.post('http://localhost:8000/api/v1/embeddings', {
+  query: userQuery
+});
+const currentEmbedding = response.data.embedding;
+
+// Retrieve user's query history from Redis
+const historyKey = `bms:user:${userId}:history`;
+const queryHistory = await redis.get(historyKey);
+
+// Calculate cosine similarity with each historical query
+queryHistory.forEach(item => {
+  const similarity = cosineSimilarity(currentEmbedding, item.embedding);
+  if (similarity >= 0.85) {
+    // Suggest previous query (FR-017)
+    suggestions.push({
+      query: item.query,
+      timestamp: item.timestamp,
+      similarity: similarity
+    });
+  }
+});
+```
+
+**Dependencies**:
+- sentence-transformers >= 2.2.0
+- torch >= 2.0.0 (GPU acceleration if available)
+- FastAPI rate limiting middleware (existing)
 
 ---
 

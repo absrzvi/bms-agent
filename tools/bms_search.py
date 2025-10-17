@@ -108,6 +108,10 @@ class Tools:
             default=0.0,
             description="Minimum quality score filter (0.0-1.0)"
         )
+        INCLUDE_LOW_QUALITY: bool = Field(
+            default=False,
+            description="Route searches to low-quality collection for admin review"
+        )
         ENABLE_QUERY_EXPANSION: bool = Field(
             default=True,
             description="Enable automatic query expansion"
@@ -136,7 +140,8 @@ class Tools:
         query: str,
         limit: Optional[int] = None,
         search_type: Optional[str] = None,
-        filters: Optional[Dict[str, Any]] = None
+        filters: Optional[Dict[str, Any]] = None,
+        include_low_quality: Optional[bool] = None
     ) -> str:
         """
         Search BMS railway documentation using semantic or hybrid search.
@@ -158,9 +163,12 @@ class Tools:
         
         endpoint = f"{self.valves.BMS_API_URL}/api/v1/search/{search_type}"
         
+        include_flag = self.valves.INCLUDE_LOW_QUALITY if include_low_quality is None else include_low_quality
+
         payload = {
             "query": query,
-            "limit": limit
+            "limit": limit,
+            "include_low_quality": include_flag
         }
         
         if filters:
@@ -193,23 +201,33 @@ class Tools:
         except Exception as e:
             return f"❌ Search error: {str(e)}"
     
-    def search_semantic(self, query: str, limit: int = 5) -> str:
+    def search_semantic(self, query: str, limit: int = 5, include_low_quality: Optional[bool] = None) -> str:
         """
         Perform SEMANTIC search using dense vector embeddings.
         
         Best for: Conceptual queries, natural language questions, synonym variations
         Example: "What is business continuity?" or "How do we handle new employees?"
         """
-        return self.search_documents(query, limit=limit, search_type="semantic")
-    
-    def search_hybrid(self, query: str, limit: int = 5) -> str:
+        return self.search_documents(
+            query,
+            limit=limit,
+            search_type="semantic",
+            include_low_quality=include_low_quality
+        )
+
+    def search_hybrid(self, query: str, limit: int = 5, include_low_quality: Optional[bool] = None) -> str:
         """
         Perform HYBRID search combining semantic vectors + keyword/BM25 matching.
         
         Best for: Specific document names, codes, exact terminology
         Example: "BMS-ENGI-FOR-003" or "material management process"
         """
-        return self.search_documents(query, limit=limit, search_type="hybrid")
+        return self.search_documents(
+            query,
+            limit=limit,
+            search_type="hybrid",
+            include_low_quality=include_low_quality
+        )
     
     def compare_search_types(self, query: str, limit: int = 3) -> str:
         """

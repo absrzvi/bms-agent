@@ -184,20 +184,20 @@
     },
     "/api/v1/embeddings": {
       "post": {
-        "summary": "Generate query embeddings",
-        "description": "Get 768-dimensional embedding vector for similarity detection",
+        "summary": "Generate query embeddings (Session 2025-10-09: Updated spec)",
+        "description": "Get 768-dimensional embedding vector for similarity detection (FR-017). Max 1000 characters, 60 req/min rate limit, 2000ms timeout.",
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": ["text"],
+                "required": ["query"],
                 "properties": {
-                  "text": {
+                  "query": {
                     "type": "string",
                     "maxLength": 1000,
-                    "description": "Query text to embed"
+                    "description": "Query text to embed (consistent with FR-031 max query length)"
                   }
                 }
               }
@@ -206,7 +206,28 @@
         },
         "responses": {
           "200": {
-            "description": "Embedding generated",
+            "description": "Embedding generated successfully",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "description": "Rate limit (60 requests/minute)",
+                "schema": {
+                  "type": "integer",
+                  "example": 60
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "description": "Remaining requests in current window",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "X-RateLimit-Reset": {
+                "description": "Unix timestamp when rate limit resets",
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -217,11 +238,85 @@
                       "items": {"type": "number"},
                       "minItems": 768,
                       "maxItems": 768,
-                      "description": "768-dimensional embedding vector"
+                      "description": "768-dimensional embedding vector (sentence-transformers/all-mpnet-base-v2)"
                     },
                     "model": {
                       "type": "string",
-                      "example": "sentence-transformers/all-mpnet-base-v2"
+                      "example": "sentence-transformers/all-mpnet-base-v2",
+                      "description": "Embedding model used"
+                    },
+                    "query_length": {
+                      "type": "integer",
+                      "description": "Character count of input query"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Query exceeds 1000 characters or is empty",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "detail": {
+                      "type": "string",
+                      "example": "Query exceeds maximum length of 1000 characters"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded (60 requests/minute)",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "description": "Rate limit (60 requests/minute)",
+                "schema": {
+                  "type": "integer",
+                  "example": 60
+                }
+              },
+              "X-RateLimit-Reset": {
+                "description": "Unix timestamp when rate limit resets",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "Retry-After": {
+                "description": "Seconds until rate limit resets",
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "detail": {
+                      "type": "string",
+                      "example": "Rate limit exceeded. Try again in 30 seconds."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Embedding model unavailable or generation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "detail": {
+                      "type": "string",
+                      "example": "Embedding model unavailable"
                     }
                   }
                 }
@@ -443,9 +538,16 @@
       },
       "Citation": {
         "type": "object",
+        "description": "Session 2025-10-09: Added footnote_number for footnote-style citations (FR-004)",
         "properties": {
+          "footnote_number": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Sequential footnote number for citation formatting (1-based)"
+          },
           "index": {
-            "type": "integer"
+            "type": "integer",
+            "description": "Original citation index from BMS API response"
           },
           "chunk_id": {
             "type": "string"

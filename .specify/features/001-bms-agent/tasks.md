@@ -154,6 +154,13 @@
   - Parallel: No
   - **Status**: Pending (POC-blocking for R1.6 coverage)
 
+- **T040  Upload Queue & Concurrency Handling**
+  - Summary: Fulfill requirement R1.5 by implementing queued document ingestion that accepts unlimited concurrent uploads. Ensure `POST /api/v1/documents/upload` returns HTTP 202 with job identifiers, persists processing status, and documents operational evidence (queue depth metrics, retry handling) for `/docs/`.
+  - Dependencies: T006 (core application endpoints in place)
+  - Files/Paths: `api/main.py`, `api/processor_wrapper.py`, `scripts/upload_queue_worker.py`, `tests/integration/test_upload_queue.py`, `docs/upload-queue-status.md`
+  - Parallel: No
+  - **Status**: Pending (POC-blocking for R1.5 compliance)
+
 - **T039  OpenAPI Schema Publication**
   - Summary: Generate and publish the OpenAPI 3.0 schema at `/openapi.json`, ensure CI checks fail if the schema drifts from the FastAPI routes, and document discovery steps for integrations and compliance evidence, satisfying requirement R3.3.
   - Dependencies: T032 (tool endpoints stabilised)

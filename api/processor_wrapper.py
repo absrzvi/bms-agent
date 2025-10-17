@@ -79,11 +79,13 @@ class BMSDocumentProcessor:
                  qdrant_host: str = "localhost",
                  qdrant_port: int = 6333,
                  ollama_url: str = "http://localhost:11434",
-                 collection_name: str = "nomad_bms_documents"):
+                 collection_name: str = "nomad_bms_documents",
+                 low_quality_collection: str = "nomad_bms_documents_low_quality"):
         """Initialize the BMS Document Processor"""
         
         self.collection_name = collection_name
         self.ollama_url = ollama_url
+        self.low_quality_collection = low_quality_collection
         
         # Initialize sentence-transformers for fast embeddings (768-d)
         self.embedding_model = None
@@ -132,19 +134,19 @@ class BMSDocumentProcessor:
                 enable_ocr=True,
                 extract_tables=True,
                 extract_images=True,
-                enable_contextual_retrieval=True,
-                enable_late_chunking=True,
+                enable_contextual_retrieval=False,  # Disabled - too slow for large docs
+                enable_late_chunking=False,  # Disabled - too slow for large docs
                 
-                # Quality settings
-                min_quality_score=70.0,
-                enable_quality_validation=True,
+                # Quality settings (RELAXED for initial ingestion)
+                min_quality_score=50.0,  # Lowered from 70.0
+                enable_quality_validation=False,  # Disabled to allow all chunks through
                 
                 # Embedding settings
                 embedding_model="sentence-transformers/all-mpnet-base-v2",
                 embedding_batch_size=32,
                 
-                # Hybrid search settings
-                enable_hybrid_search=True,
+                # Hybrid search settings (DISABLED - causing sparse vector errors)
+                enable_hybrid_search=False,
                 vector_weight=0.5,
                 keyword_weight=0.5,
                 

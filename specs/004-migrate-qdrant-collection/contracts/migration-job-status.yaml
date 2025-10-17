@@ -1,0 +1,339 @@
+# Migration Job Status Contract
+# Feature: 004-migrate-qdrant-collection
+# Generated: 2025-10-17 (Phase 1 of /plan command)
+#
+# This contract defines the API response format for migration job status tracking.
+# Used for monitoring migration progress and validation in integration tests.
+
+# API Endpoint
+endpoint: GET /api/v1/migration/status/{job_id}
+method: GET
+content_type: application/json
+
+# Request Parameters
+request_parameters:
+  path:
+    job_id:
+      type: string
+      format: uuid
+      required: true
+      example: "a1b2c3d4-e5f6-7890-1234-567890abcdef"
+
+# Response Schema
+response:
+  status_code: 200
+  content_type: application/json
+
+  schema:
+    job_id:
+      type: string
+      format: uuid
+      required: true
+      description: "Unique migration job identifier"
+
+    status:
+      type: enum
+      required: true
+      values:
+        - backup
+        - recreate
+        - reprocess
+        - validate
+        - monitoring
+        - complete
+        - rollback
+        - failed
+      description: "Current migration phase"
+
+    progress:
+      type: object
+      required: true
+      properties:
+        current_step:
+          type: string
+          required: true
+          example: "Reprocessing documents with late chunking"
+          description: "Human-readable description of current step"
+
+        documents_processed:
+          type: integer
+          required: true
+          minimum: 0
+          example: 350
+          description: "Number of documents successfully processed"
+
+        documents_total:
+          type: integer
+          required: true
+          minimum: 1
+          example: 420
+          description: "Total number of documents to process"
+
+        percent_complete:
+          type: float
+          required: true
+          minimum: 0.0
+          maximum: 100.0
+          example: 83.3
+          description: "Migration progress percentage"
+
+        estimated_time_remaining_seconds:
+          type: integer
+          required: true
+          minimum: 0
+          example: 180
+          description: "Estimated seconds until completion (0 if complete)"
+
+    timestamps:
+      type: object
+      required: true
+      properties:
+        started_at:
+          type: string
+          format: iso8601
+          required: true
+          example: "2025-10-17T10:30:00.000Z"
+          description: "Migration start timestamp"
+
+        completed_at:
+          type: string
+          format: iso8601
+          nullable: true
+          example: "2025-10-17T11:00:00.000Z"
+          description: "Migration completion timestamp (null if in progress)"
+
+        last_updated:
+          type: string
+          format: iso8601
+          required: true
+          example: "2025-10-17T10:55:30.000Z"
+          description: "Last status update timestamp"
+
+    validation_results:
+      type: object
+      required: true
+      properties:
+        retrieval_accuracy:
+          type: float
+          nullable: true
+          minimum: 0.0
+          maximum: 1.0
+          example: 0.96
+          description: "Retrieval accuracy (null if not yet validated)"
+
+        p95_latency_ms:
+          type: float
+          nullable: true
+          minimum: 0.0
+          example: 85.5
+          description: "95th percentile search latency in milliseconds (null if not validated)"
+
+        quality_score_mean:
+          type: float
+          nullable: true
+          minimum: 0.0
+          maximum: 100.0
+          example: 78.3
+          description: "Mean RAGAS quality score (null if not validated)"
+
+        status:
+          type: enum
+          required: true
+          values:
+            - not_started
+            - in_progress
+            - pass
+            - fail
+          example: "pass"
+          description: "Validation status"
+
+    errors:
+      type: array
+      required: true
+      items:
+        type: string
+      example:
+        - "Document 'BMS-NET-042.pdf' failed processing: timeout"
+        - "Low quality score: 3 chunks filtered to low_quality collection"
+      description: "List of errors encountered during migration (empty if no errors)"
+
+# Example Responses
+
+examples:
+  # Backup phase
+  - name: "Backup Phase"
+    response:
+      job_id: "a1b2c3d4-e5f6-7890-1234-567890abcdef"
+      status: "backup"
+      progress:
+        current_step: "Creating Qdrant snapshot backup"
+        documents_processed: 0
+        documents_total: 420
+        percent_complete: 5.0
+        estimated_time_remaining_seconds: 300
+      timestamps:
+        started_at: "2025-10-17T10:30:00.000Z"
+        completed_at: null
+        last_updated: "2025-10-17T10:31:30.000Z"
+      validation_results:
+        retrieval_accuracy: null
+        p95_latency_ms: null
+        quality_score_mean: null
+        status: "not_started"
+      errors: []
+
+  # Reprocessing phase
+  - name: "Reprocessing Phase"
+    response:
+      job_id: "a1b2c3d4-e5f6-7890-1234-567890abcdef"
+      status: "reprocess"
+      progress:
+        current_step: "Reprocessing documents with late chunking (batch 12/14)"
+        documents_processed: 350
+        documents_total: 420
+        percent_complete: 83.3
+        estimated_time_remaining_seconds: 120
+      timestamps:
+        started_at: "2025-10-17T10:30:00.000Z"
+        completed_at: null
+        last_updated: "2025-10-17T10:45:20.000Z"
+      validation_results:
+        retrieval_accuracy: null
+        p95_latency_ms: null
+        quality_score_mean: null
+        status: "not_started"
+      errors:
+        - "Document 'corrupted-file.pdf' failed processing: invalid PDF structure"
+
+  # Complete phase (success)
+  - name: "Complete Phase (Success)"
+    response:
+      job_id: "a1b2c3d4-e5f6-7890-1234-567890abcdef"
+      status: "complete"
+      progress:
+        current_step: "Migration completed successfully"
+        documents_processed: 420
+        documents_total: 420
+        percent_complete: 100.0
+        estimated_time_remaining_seconds: 0
+      timestamps:
+        started_at: "2025-10-17T10:30:00.000Z"
+        completed_at: "2025-10-17T11:00:00.000Z"
+        last_updated: "2025-10-17T11:00:00.000Z"
+      validation_results:
+        retrieval_accuracy: 0.96
+        p95_latency_ms: 85.5
+        quality_score_mean: 78.3
+        status: "pass"
+      errors: []
+
+  # Failed phase
+  - name: "Failed Phase"
+    response:
+      job_id: "a1b2c3d4-e5f6-7890-1234-567890abcdef"
+      status: "failed"
+      progress:
+        current_step: "Migration failed: validation did not meet thresholds"
+        documents_processed: 420
+        documents_total: 420
+        percent_complete: 95.0
+        estimated_time_remaining_seconds: 0
+      timestamps:
+        started_at: "2025-10-17T10:30:00.000Z"
+        completed_at: "2025-10-17T11:00:00.000Z"
+        last_updated: "2025-10-17T11:00:00.000Z"
+      validation_results:
+        retrieval_accuracy: 0.88
+        p95_latency_ms: 220.0
+        quality_score_mean: 75.0
+        status: "fail"
+      errors:
+        - "Validation failed: retrieval accuracy 88% < 95% threshold"
+        - "Validation failed: p95 latency 220ms > 200ms rollback threshold"
+
+# Error Responses
+
+errors:
+  - status_code: 404
+    description: "Migration job not found"
+    schema:
+      error:
+        type: string
+        example: "Migration job 'invalid-uuid' not found"
+
+  - status_code: 500
+    description: "Internal server error"
+    schema:
+      error:
+        type: string
+        example: "Failed to retrieve migration job status: database connection error"
+
+# Validation Rules (for contract tests)
+
+validation_rules:
+  - field: "status"
+    rule: "Must be one of valid status enum values"
+    test: |
+      assert response["status"] in ["backup", "recreate", "reprocess", "validate", "monitoring", "complete", "rollback", "failed"]
+
+  - field: "progress.percent_complete"
+    rule: "Must be between 0 and 100"
+    test: |
+      assert 0.0 <= response["progress"]["percent_complete"] <= 100.0
+
+  - field: "timestamps.started_at"
+    rule: "Must be valid ISO 8601 timestamp"
+    test: |
+      from datetime import datetime
+      datetime.fromisoformat(response["timestamps"]["started_at"].replace('Z', '+00:00'))
+
+  - field: "validation_results.status"
+    rule: "Must be 'not_started' until validate phase"
+    test: |
+      if response["status"] in ["backup", "recreate", "reprocess"]:
+          assert response["validation_results"]["status"] == "not_started"
+
+  - field: "errors"
+    rule: "Must be empty array for successful migrations"
+    test: |
+      if response["status"] == "complete":
+          assert len(response["errors"]) == 0
+
+# Polling Guidance (for clients)
+
+polling:
+  recommended_interval_seconds: 5
+  max_poll_duration_seconds: 1800  # 30 minutes (generous timeout)
+  exponential_backoff: false  # Use fixed interval (migration is time-bound)
+
+  status_transitions:
+    backup:
+      next_status: "recreate"
+      typical_duration_seconds: 300
+    recreate:
+      next_status: "reprocess"
+      typical_duration_seconds: 120
+    reprocess:
+      next_status: "validate"
+      typical_duration_seconds: 900
+    validate:
+      next_status: "monitoring"
+      typical_duration_seconds: 300
+    monitoring:
+      next_status: "complete"
+      typical_duration_seconds: 86400  # 24 hours
+    complete:
+      next_status: null
+      typical_duration_seconds: 0
+    rollback:
+      next_status: null
+      typical_duration_seconds: 0
+    failed:
+      next_status: null
+      typical_duration_seconds: 0
+
+# References
+references:
+  - Migration Job Entity: data-model.md (MigrationJob section)
+  - Validation Report Entity: data-model.md (ValidationReport section)
+  - Quickstart Guide: quickstart.md (monitoring section)

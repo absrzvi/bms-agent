@@ -34,7 +34,7 @@
 
 ## Summary
 
-**Feature**: Intelligent Slack bot for railway documentation search powered by BMS Agent API
+**Feature**: Intelligent Slack bot for railway documentation search powered by BMS API
 
 **Primary Requirement**: Railway staff need instant access to technical documentation via natural language queries in Slack. The bot responds with contextual answers and citations within 3 seconds, maintaining conversation threads for follow-up questions.
 
@@ -42,7 +42,7 @@
 - **Architecture**: n8n workflow orchestration with Node.js support modules
 - **Platform**: Slack Events API (webhook) + Slack Web API (messaging with Block Kit)
 - **State Management**: Redis with 7-day TTL for conversations/history
-- **AI Integration**: BMS Agent API (/api/v1/ask, /api/v1/search/*) with Ollama LLMs
+- **AI Integration**: BMS API (/api/v1/ask, /api/v1/search/*) with Ollama LLMs
 - **Deployment**: RunPod persistent storage (`/workspace` only)
 - **Testing**: Jest with redis-mock, axios-mock-adapter (TDD enforced by constitution)
 
@@ -169,7 +169,7 @@ specs/002-create-a-microsoft/
 ├── workflows/                  # n8n workflow JSON files (version controlled)
 │   ├── main-bot-handler.json  # Slack webhook → command router
 │   ├── query-analyzer.json    # Intent classification (ASK vs SEARCH)
-│   ├── bms-api-caller.json    # HTTP calls to BMS Agent API
+│   ├── bms-api-caller.json    # HTTP calls to BMS API
 │   ├── context-manager.json   # Redis conversation context
 │   ├── admin-commands.json    # /admin allow/revoke/list/reset
 │   ├── bms-ai-agent.json      # LangChain AI agent (8 tools, legacy)
@@ -224,7 +224,7 @@ specs/002-create-a-microsoft/
 ### Integration Points
 
 **External Dependencies**:
-1. **BMS Agent API** (`http://localhost:8000` or RunPod HTTPS proxy)
+1. **BMS API** (`http://localhost:8000` or RunPod HTTPS proxy)
    - `/api/v1/ask` - Natural language Q&A
    - `/api/v1/search/semantic` - Vector search
    - `/api/v1/search/hybrid` - Combined search
@@ -232,7 +232,7 @@ specs/002-create-a-microsoft/
    - `/api/v1/documents/status/{job_id}` - Upload status
    - `/api/v1/embeddings` - Query embedding (FR-017, T027a)
 
-2. **Slack APIs**
+2. **Slack APIs** (Note: Platform changed from MS Teams to Slack during implementation for better API support and simpler webhook configuration)
    - Events API: `https://{n8n-webhook-url}/webhook/slack-events`
    - Web API: `https://slack.com/api/*` (via @slack/web-api)
    - OAuth: Bot User OAuth Token (scope: chat:write, app_mentions:read, files:read)
@@ -365,7 +365,7 @@ specs/002-create-a-microsoft/
 **Status**: ✅ **COMPLETE**
 
 **Setup Steps** (8 total):
-1. Prerequisites: Node.js 18+, Redis 7+, n8n 1.x, BMS Agent API running
+1. Prerequisites: Node.js 18+, Redis 7+, n8n 1.x, BMS API running
 2. Slack App Configuration: Create app, enable Events API, install to workspace
 3. Environment Setup: Copy `.env.example`, configure tokens/secrets
 4. Initialize Storage: Run `scripts/init-storage.sh` to create whitelist.json
@@ -545,7 +545,7 @@ specs/002-create-a-microsoft/
 ### External Services Required
 1. **Redis 7+**: State management (conversations, whitelist, upload jobs)
 2. **n8n 1.x**: Workflow automation platform
-3. **BMS Agent API**: Document search backend (running on localhost:8000 or RunPod proxy)
+3. **BMS API**: Document search backend (running on localhost:8000 or RunPod proxy)
 4. **Slack Workspace**: With bot app installed and Events API configured
 
 ### Development Tools

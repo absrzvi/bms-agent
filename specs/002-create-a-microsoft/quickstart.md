@@ -1,8 +1,8 @@
-# MS Teams Bot Quickstart Guide
+# Slack Bot Quickstart Guide
 
-**Feature**: MS Teams Chat Bot for BMS Agent
-**Version**: 1.0.0 (POC)
-**Last Updated**: 2025-10-06
+**Feature**: Slack Chat Bot for BMS Agent
+**Version**: 1.0.0 (POC - Implementation Complete)
+**Last Updated**: 2025-10-11
 
 ## Prerequisites
 
@@ -10,10 +10,10 @@ Before starting, ensure you have:
 
 - [x] RunPod GPU instance with /workspace persistence
 - [x] BMS Agent API running at `http://localhost:8000`
-- [x] Ollama with Mistral Nemo model (`mistral-nemo:12b-instruct`)
-- [x] MS Teams admin access (to create bot connector)
-- [x] n8n installed on RunPod
-- [x] Redis Docker image available
+- [x] Ollama with GPT-OSS model (`gpt-oss:latest`)
+- [x] Slack workspace admin access (to create Slack app)
+- [x] n8n installed on RunPod at `http://localhost:5678`
+- [x] Redis running on port 6379
 
 **Verify BMS API**:
 ```bash
@@ -24,80 +24,94 @@ curl http://localhost:8000/health
 **Verify Ollama**:
 ```bash
 curl http://localhost:11434/api/tags
-# Expected: List including "mistral-nemo:12b-instruct"
+# Expected: List including "gpt-oss:latest"
 ```
 
 ---
 
-## Step 1: Deploy Redis for Conversation Storage
+## Step 1: Verify Redis is Running
 
-Redis stores conversation context with 7-day TTL.
+Redis is already set up and running for event deduplication and caching.
 
 ```bash
-# Create persistent data directory
-mkdir -p /workspace/redis_data
-
-# Run Redis container
-docker run -d \
-  --name bms-bot-redis \
-  -v /workspace/redis_data:/data \
-  -p 6379:6379 \
-  redis:7-alpine redis-server --appendonly yes
-
 # Verify Redis is running
-docker ps | grep bms-bot-redis
 redis-cli ping
 # Expected: PONG
+
+# Check Redis can store data
+redis-cli SET test "hello"
+redis-cli GET test
+# Expected: "hello"
 ```
 
 ---
 
-## Step 2: Setup MS Teams Bot Connector
+## Step 2: Create Slack App and Configure Webhooks
 
-### 2.1 Register Bot in Azure Bot Framework
+### 2.1 Create Slack App
 
-1. Go to https://dev.botframework.com
-2. Click **"Create a Bot"** → **"Register"**
-3. Fill in bot details:
-   - **Display Name**: BMS Agent Bot
-   - **Bot Handle**: bms-agent-bot (unique)
-   - **Messaging Endpoint**: `https://<your-n8n-url>/webhook/teams` (will configure later)
-4. Click **"Create Microsoft App ID and password"**
-5. **Save** App ID and App Password (you'll need these for n8n)
+1. Go to https://api.slack.com/apps
+2. Click **"Create New App"** → **"From scratch"**
+3. Fill in app details:
+   - **App Name**: Nomi BMS Assistant
+   - **Workspace**: Select your Slack workspace
+4. Click **"Create App"**
 
-### 2.2 Enable MS Teams Channel
+### 2.2 Configure Bot User
 
-1. In Bot Framework portal, go to **Channels**
-2. Click **Microsoft Teams** icon
-3. Accept terms → **Save**
-4. Copy **Bot Framework App ID** for n8n configuration
+1. In left sidebar, click **"OAuth & Permissions"**
+2. Scroll to **"Scopes"** → **"Bot Token Scopes"**
+3. Add the following scopes:
+   - `app_mentions:read` - Read messages that @mention the bot
+   - `chat:write` - Send messages to channels
+   - `channels:read` - View basic channel info
+4. Scroll to top, click **"Install to Workspace"**
+5. Click **"Allow"**
+6. **IMPORTANT**: Copy the **Bot User OAuth Token** (starts with `xoxb-`)
+   - You'll need this for n8n configuration
 
-### 2.3 Add Bot to MS Teams
+### 2.3 Enable Event Subscriptions
 
-1. In MS Teams, go to **Apps** → **Built for your org**
-2. Search for your bot name (BMS Agent Bot)
-3. Click **Add** to install
-4. Test in a personal chat: Type `hello`
-   - Bot won't respond yet (n8n not configured)
+1. In left sidebar, click **"Event Subscriptions"**
+2. Toggle **"Enable Events"** to ON
+3. Set **Request URL**: `https://<your-runpod-proxy-url>/webhook/slack-events`
+   - Example: `https://nqz5l77nsrdkyt-5678.proxy.runpod.net/webhook/slack-events`
+   - Slack will verify this URL (must return `200 OK` with challenge)
+4. Scroll to **"Subscribe to bot events"**
+5. Add **"app_mention"** event
+6. Click **"Save Changes"**
+
+### 2.4 Add Bot to Slack Channel
+
+1. In Slack, go to the channel where you want the bot (e.g., `#bms-testing`)
+2. Type `/invite @Nomi BMS Assistant`
+3. Bot will join the channel
+4. Test by typing: `@Nomi BMS Assistant hello`
+   - Bot won't respond yet (n8n workflow not imported)
 
 ---
 
-## Step 3: Configure n8n Workflows
+## Step 3: Import and Configure n8n Workflow
 
 ### 3.1 Set Up n8n Credentials
 
-1. Open n8n UI: `http://<runpod-ip>:5678`
+1. Open n8n UI: `https://<runpod-proxy-url>` (e.g., `https://nqz5l77nsrdkyt-5678.proxy.runpod.net`)
 2. Go to **Credentials** → **New**
-3. Add credentials:
+3. Add **Slack OAuth2 API** credential:
+   - Credential Name: `Slack account 3` (must match workflow reference)
+   - OAuth2 Grant Type: **Access Token**
+   - Access Token: `<Bot User OAuth Token from step 2.2.6>` (starts with `xoxb-`)
+4. Click **Save**
 
-**Microsoft Bot Framework**
-- Credential Name: `BMS Bot Credentials`
-- App ID: `<from step 2.1>`
-- App Password: `<from step 2.1>`
+### 3.2 Import Primary Workflow
 
-**Redis**
-- Credential Name: `BMS Redis`
-- Host: `localhost`
+1. In n8n, go to **Workflows** → **Add workflow** → **Import from File**
+2. Select `/workspace/002-n8n/workflows/bms-ai-agent.json`
+3. Verify workflow imported successfully:
+   - Webhook ID: `slack-events`
+   - Slack credential: `Slack account 3`
+   - Ollama node connected
+4. **Activate the workflow** (toggle in top right)
 - Port: `6379`
 - Database: `0`
 
@@ -239,20 +253,19 @@ In whitelisted MS Teams channel, send:
 What are the emergency brake procedures for Class 395 trains?
 ```
 
-**Expected Response** (within 3 seconds):
+**Expected Response** (within 3 seconds, Session 2025-10-09: Updated with footnote citations):
 ```
 [Bot is typing...]
 
 Based on the railway safety documentation:
 
 The emergency brake procedures for Class 395 trains are:
-1. Immediately apply emergency brake using red handle
-2. Notify control room via radio
-3. Evacuate passengers if necessary
+1. Immediately apply emergency brake using red handle¹
+2. Notify control room via radio²
+3. Evacuate passengers if necessary¹
 
-Sources:
-- Class 395 Safety Manual, Section 4.2 (Relevance: 0.94)
-- Emergency Procedures Guide, Page 12 (Relevance: 0.89)
+¹ Class 395 Safety Manual, Section 4.2 (Relevance: 0.94)
+² Emergency Procedures Guide, Page 12 (Relevance: 0.89)
 ```
 
 ### 5.2 Test Search Command

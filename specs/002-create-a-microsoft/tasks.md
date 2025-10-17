@@ -116,6 +116,7 @@ Project structure from plan.md:
   - Path: `/workspace/002-n8n/tests/contract/test-bms-ask-integration.js`
   - Test: POST http://localhost:8000/api/v1/ask with valid query
   - Assert: Response has status, answer, citations[], confidence
+  - **NFR-011 Retry Test**: Mock 503 error, assert 3 retry attempts with exponential backoff timing (100ms → 200ms → 400ms)
   - ✅ FAILING as expected (no integration exists)
 
 - [x] **T009** [P] Contract test for conversation storage API ✅
@@ -860,6 +861,13 @@ Project structure from plan.md:
   - **Status**: Load tests written and functional, awaiting n8n webhook configuration
   - **Next Step**: Complete T032 manual configuration, then run performance validation
   - **Note**: Performance targets achievable based on individual service response times (BMS API <2.5s, Ollama <0.5s)
+  - **POC Validation Procedure** (FR-003 manual timing verification):
+    1. Execute 10 diverse test queries via Slack @mention (mix of ASK and SEARCH intents)
+    2. Use stopwatch timing: Start when pressing Enter in Slack → Stop when bot response appears in thread
+    3. Record all 10 timing measurements in test log
+    4. Calculate p95 (10th measurement when sorted) and p50 (median of 10 measurements)
+    5. Assert: p95 ≤ 3000ms, p50 ≤ 1500ms
+    6. Document timing methodology and results in `/workspace/002-n8n/docs/performance-validation-report.md`
 
 - [x] **T033a** [P] Create script-based health monitoring (NFR-006) ✅
   - Path: `/workspace/002-n8n/scripts/health-check.sh` (primary health endpoint)
@@ -896,6 +904,7 @@ Project structure from plan.md:
   - Generate: `coverage/lcov-report/index.html` for detailed report
   - Document: Final coverage percentage in `/workspace/specs/002-create-a-microsoft/quickstart.md`
   - Constitution: Enforces §4 Code Quality & Testing (POC minimum 60%, production 80%)
+  - **NFR-009 Compliance Check**: Verify Redis TTL enforcement via T029 test results. Confirm no keys exist without TTL (7-day retention enforced).
 
   **Current Status (2025-10-12):**
   - **Overall Coverage**: 44.48% ❌ (BELOW 60% POC THRESHOLD)
@@ -1249,7 +1258,7 @@ Task: "Create admin commands workflow in /workspace/002-n8n/workflows/admin-comm
 
 - [ ] **T041** [P] Create performance validation test suite (NFR-016) ⚠️ POST-POC
   - Path: `/workspace/002-n8n/tests/performance/agent-performance-test.js`
-  - **Status**: Requires test data file with 50 queries (per /analyze finding U12)
+  - **Test Data**: `/workspace/002-n8n/tests/fixtures/baseline-queries.json` ✅ (50 queries across 5 categories)
   - **Objective**: Validate agent with 50 diverse test queries (baseline validation)
   - **Test Categories** (NFR-016):
     - 10 queries with document codes (BMS-XXX-YYY-###) → expect `search_hybrid`

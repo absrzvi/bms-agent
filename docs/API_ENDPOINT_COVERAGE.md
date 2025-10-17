@@ -78,6 +78,12 @@ These use `search_semantic` or `search_hybrid` with filter parameters:
 
 **Implementation**: Tool adds filters to request, API supports filtering.
 
+### Low-Quality Collection Toggle (`include_low_quality`) — **NEW (T038)**
+- **Purpose**: Admin review of low-quality chunks stored in `nomad_bms_documents_low_quality` (requirement `R1.6`).
+- **Availability**: `search_semantic`, `search_hybrid`, and related tool helpers accept `include_low_quality=true` flag; default remains `False` to protect standard users.
+- **Implementation**: API routes queries via `resolve_collection()` helper when flag set; OpenWebUI tool exposes valve `INCLUDE_LOW_QUALITY` and per-invocation override.
+- **Verification**: `tests/integration/test_low_quality_toggle.py` confirms payload propagation and coexistence with additional filters.
+
 ---
 
 ## 3. ✅ Client-Side Logic (No API Needed)

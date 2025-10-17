@@ -1,0 +1,163 @@
+# Qdrant Collection Schema Contract
+# Feature: 004-migrate-qdrant-collection
+# Generated: 2025-10-17 (Phase 1 of /plan command)
+#
+# This contract defines the expected Qdrant collection schema after migration
+# from 768-d to 4096-d embeddings. Used for validation in contract tests.
+
+collection_name: nomad_bms_documents
+
+# Vector configurations (all 4096 dimensions after migration)
+vectors:
+  chunk_embedding:
+    size: 4096
+    distance: Cosine
+    on_disk: false  # Keep in RAM for performance
+
+  parent_embedding:
+    size: 4096
+    distance: Cosine
+    on_disk: false
+
+  child_embedding:
+    size: 4096
+    distance: Cosine
+    on_disk: false
+
+  full_doc_embedding:
+    size: 4096
+    distance: Cosine
+    on_disk: false
+
+# Sparse vectors for keyword-based hybrid search
+sparse_vectors:
+  keyword_sparse:
+    modifier: idf  # Inverse document frequency weighting
+
+# Payload schema (metadata attached to each point)
+payload_schema:
+  # Document identifiers
+  document_id: keyword  # Unique document identifier (indexed)
+  chunk_key: integer    # Chunk index within document (indexed)
+  text: text            # Raw chunk content (full-text searchable)
+
+  # Metadata object
+  metadata:
+    file_name: keyword           # Source filename (indexed)
+    hierarchy: keyword           # parent/child/chunk (indexed)
+    has_context: bool            # Whether chunk has parent/child context
+    processing_profile: keyword  # RAILWAY/TECHNICAL/GENERAL
+    chunking_strategy: keyword   # LATE_CHUNKING (after migration)
+
+  # Quality metrics (RAGAS scores)
+  quality:
+    overall_score: float       # Overall RAGAS score (indexed)
+    faithfulness: float        # Faithfulness metric
+    answer_relevancy: float    # Answer relevancy metric
+    context_precision: float   # Context precision metric
+
+  # Hybrid search support
+  term_frequencies: object  # Term frequency map for keyword search
+  source_url: keyword       # Optional SharePoint URL
+
+# Payload field indexes (for optimized filtering)
+indexes:
+  - field_name: document_id
+    field_schema: keyword
+
+  - field_name: chunk_key
+    field_schema: integer
+
+  - field_name: metadata.file_name
+    field_schema: keyword
+
+  - field_name: metadata.hierarchy
+    field_schema: keyword
+
+  - field_name: quality.overall_score
+    field_schema: float
+
+# Collection-level settings
+settings:
+  wal_capacity_mb: 32
+  wal_segments_ahead: 0
+  on_disk_payload: false  # Keep payload in RAM for performance
+  hnsw_config:
+    m: 16                 # Number of connections per element
+    ef_construct: 200     # Size of dynamic candidate list during construction
+    ef: 128               # Size of dynamic candidate list during search
+    max_indexing_threads: 0  # Use all available CPU cores
+
+# Expected collection statistics (post-migration)
+expected_stats:
+  points_count: 2350-2750  # Target ~2,615 points (±10% variance due to quality filtering)
+  vectors_count: 9400-11000  # 4 vectors per point × points_count
+  indexed_vectors_count: 9400-11000  # Should match vectors_count after indexing completes
+  disk_usage_mb: 3500-4000  # Estimated disk usage for 4096-d vectors
+  ram_usage_mb: 3500-4000   # Estimated RAM usage (on_disk=false)
+
+# Validation criteria (for contract tests)
+validation:
+  vector_size: 4096  # All vectors must be 4096 dimensions
+  distance_metric: Cosine  # All vectors use cosine similarity
+  required_indexes:
+    - document_id
+    - chunk_key
+    - metadata.file_name
+    - metadata.hierarchy
+    - quality.overall_score
+  required_sparse_vectors:
+    - keyword_sparse
+  chunking_strategy_value: "LATE_CHUNKING"  # All chunks must have this metadata
+
+# Migration validation queries (used in contract tests)
+test_queries:
+  # Verify vector dimensions
+  - name: "Check chunk_embedding dimension"
+    query: |
+      curl http://localhost:6333/collections/nomad_bms_documents |
+      jq '.result.config.params.vectors.chunk_embedding.size'
+    expected: 4096
+
+  # Verify late chunking applied
+  - name: "Check chunking strategy metadata"
+    query: |
+      curl http://localhost:6333/collections/nomad_bms_documents/points/scroll \
+        -H 'Content-Type: application/json' \
+        -d '{"limit": 10, "with_payload": true}' |
+      jq '.result.points[].payload.metadata.chunking_strategy'
+    expected: "LATE_CHUNKING"  # All 10 samples should return this value
+
+  # Verify payload indexes created
+  - name: "Check payload indexes"
+    query: |
+      curl http://localhost:6333/collections/nomad_bms_documents |
+      jq '.result.config.params.payload_index | keys'
+    expected_contains:
+      - "document_id"
+      - "chunk_key"
+      - "metadata.file_name"
+      - "quality.overall_score"
+
+# Rollback schema (768-d for restoration)
+rollback_schema:
+  vectors:
+    chunk_embedding:
+      size: 768
+      distance: Cosine
+    parent_embedding:
+      size: 768
+      distance: Cosine
+    child_embedding:
+      size: 768
+      distance: Cosine
+    full_doc_embedding:
+      size: 768
+      distance: Cosine
+  # Other settings remain same as above
+
+# References
+references:
+  - Qdrant Collection API: https://qdrant.tech/documentation/concepts/collections/
+  - Vector Configuration: https://qdrant.tech/documentation/concepts/vectors/
+  - Payload Indexing: https://qdrant.tech/documentation/concepts/indexing/

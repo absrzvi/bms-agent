@@ -1,11 +1,11 @@
-# Data Model: MS Teams Chat Bot for BMS Agent
+# Data Model: Slack Chat Bot for BMS Agent
 
-**Date**: 2025-10-06
-**Feature**: MS Teams bot integration with BMS Agent API
+**Date**: 2025-10-06 (Updated 2025-10-11 for Slack)
+**Feature**: Slack bot integration with BMS Agent API
 
 ## Overview
 
-This data model defines the entities used for conversation management, message tracking, search history, and access control. Storage uses Redis for 7-day TTL conversation data and JSON files for configuration.
+This data model defines the entities used for conversation management (Slack threads), message tracking, search history, event deduplication, and access control. Storage uses Redis for TTL-based data management and n8n workflow static data for event caching.
 
 ---
 
@@ -15,19 +15,20 @@ This data model defines the entities used for conversation management, message t
 
 Represents an ongoing chat session between user(s) and the bot with 7-day retention.
 
-**Storage**: Redis key `conversation:{conversation_id}` with 604800s TTL
+**Storage**: Redis key `bms:context:{conversation_id}` with 604800s TTL (Session 2025-10-09: Updated with `bms:` prefix)
 
 **Schema**:
 ```json
 {
-  "conversation_id": "string (UUID v4)",
-  "channel_id": "string (MS Teams channel/conversation ID)",
-  "participants": ["string (MS Teams user IDs)"],
+  "conversation_id": "string (Slack thread_ts, e.g., '1728691234.123456')",
+  "channel_id": "string (Slack channel ID, format: C#########)",
+  "participants": ["string (Slack user IDs, format: U#########)"],
   "created_at": "string (ISO 8601 timestamp)",
   "last_message_at": "string (ISO 8601 timestamp)",
   "expires_at": "string (ISO 8601, created_at + 7 days)",
   "context_summary": "string (condensed history for LLM)",
-  "message_count": "integer"
+  "message_count": "integer",
+  "thread_ts": "string (Slack thread timestamp for replies)"
 }
 ```
 
@@ -57,14 +58,15 @@ Individual message in a conversation (question, answer, or command).
 **Schema**:
 ```json
 {
-  "message_id": "string (UUID v4)",
-  "conversation_id": "string (FK to Conversation)",
+  "message_id": "string (Slack message timestamp)",
+  "conversation_id": "string (FK to Conversation, Slack thread_ts)",
   "sender": "string (enum: 'user' | 'bot')",
-  "user_id": "string (MS Teams user ID, null if sender=bot)",
-  "content": "string (message text)",
+  "user_id": "string (Slack user ID format: U#########, null if sender=bot)",
+  "content": "string (message text, cleaned of @mention)",
   "timestamp": "string (ISO 8601 timestamp)",
   "message_type": "string (enum: 'question' | 'answer' | 'command')",
-  "bms_query_type": "string (enum: 'ask' | 'search' | 'upload' | null)"
+  "bms_query_type": "string (enum: 'ask' | 'search' | 'upload' | null)",
+  "event_id": "string (Slack event_id for deduplication)"
 }
 ```
 
@@ -95,7 +97,7 @@ Individual message in a conversation (question, answer, or command).
 
 Outcome of a BMS API query (ask or search), linked to bot response message.
 
-**Storage**: Redis key `result:{result_id}` with 7-day TTL
+**Storage**: Redis key `bms:result:{result_id}` with 7-day TTL (Session 2025-10-09: Updated with `bms:` prefix)
 
 **Schema**:
 ```json
@@ -108,6 +110,7 @@ Outcome of a BMS API query (ask or search), linked to bot response message.
   "answer_text": "string (generated answer or null)",
   "citations": [
     {
+      "footnote_number": "integer (1-based sequential number)",
       "document_name": "string",
       "document_section": "string (chunk_id or page)",
       "relevance_score": "float (0.0-1.0)",
@@ -136,16 +139,16 @@ Outcome of a BMS API query (ask or search), linked to bot response message.
 
 ### 4. User
 
-Person interacting with the bot, identified by MS Teams user ID.
+Person interacting with the bot, identified by Slack user ID.
 
-**Storage**: Redis key `user:{user_id}` (minimal, mostly derived from MS Teams)
+**Storage**: Redis key `bms:user:{user_id}` (minimal, mostly derived from Slack user profile) (Session 2025-10-09: Updated with `bms:` prefix)
 
 **Schema**:
 ```json
 {
-  "user_id": "string (MS Teams user ID, e.g., 29:1abc...def)",
-  "display_name": "string (from MS Teams)",
-  "team_membership": ["string (MS Teams team IDs)"],
+  "user_id": "string (Slack user ID, format: U#########)",
+  "display_name": "string (from Slack user profile)",
+  "channel_membership": ["string (Slack channel IDs, format: C#########)"],
   "last_active": "string (ISO 8601 timestamp)",
   "is_admin": "boolean",
   "search_history": [
@@ -160,13 +163,13 @@ Person interacting with the bot, identified by MS Teams user ID.
 ```
 
 **Validation Rules**:
-- `user_id`: Must match MS Teams ID format `29:*`
+- `user_id`: Must match Slack ID format `U#########` (9 alphanumeric characters after U)
 - `is_admin`: Checked against whitelist.json admins array
 - `search_history`: Max 50 entries, auto-pruned > 7 days
 - `embedding`: Required for FR-017 similar query detection; generated via BMS API `/api/v1/embeddings` endpoint using same model as document embeddings for consistency
 
 **Derivation**:
-- `user_id`, `display_name`: From MS Teams message payload
+- `user_id`, `display_name`: From Slack event payload (event.user field)
 - `is_admin`: Lookup in `/workspace/002-n8n/config/whitelist.json`
 
 **Relationships**:
@@ -185,12 +188,12 @@ Channel/team access control list for POC phase.
 ```json
 {
   "admins": [
-    "string (MS Teams user IDs)"
+    "string (Slack user IDs, format: U#########)"
   ],
   "channels": [
     {
       "whitelist_id": "string (UUID v4)",
-      "channel_id": "string (MS Teams channel ID, e.g., 19:abc@thread.tacv2)",
+      "channel_id": "string (Slack channel ID, format: C#########)",
       "channel_name": "string (#channel-name)",
       "added_by": "string (admin user_id)",
       "added_at": "string (ISO 8601 timestamp)",
@@ -201,8 +204,8 @@ Channel/team access control list for POC phase.
 ```
 
 **Validation Rules**:
-- `admins`: Array of valid MS Teams user IDs
-- `channel_id`: Must match MS Teams channel ID format
+- `admins`: Array of valid Slack user IDs (format: U#########)
+- `channel_id`: Must match Slack channel ID format (C#########)
 - `status`: One of ['active', 'revoked']
 - `added_by`: Must exist in `admins` array
 
@@ -232,7 +235,7 @@ function isAdmin(userId) {
 
 Tracks document upload to BMS API with processing status.
 
-**Storage**: Redis key `upload:{job_id}` with 30-day TTL (longer than conversations)
+**Storage**: Redis key `bms:upload:job:{job_id}` with 30-day TTL (longer than conversations) (Session 2025-10-09: Updated with `bms:` prefix)
 
 **Schema**:
 ```json
@@ -272,14 +275,26 @@ Tracks document upload to BMS API with processing status.
 
 ## Storage Implementation
 
-### Redis Key Patterns
+### Redis Key Patterns (Session 2025-10-09: Updated with `bms:` namespace)
+
+**Namespace Convention**: All Redis keys use the `bms:` prefix to prevent collisions and enable clear debugging.
 
 ```
-conversation:{uuid}        → Conversation entity (TTL: 7 days)
-result:{uuid}              → SearchResult entity (TTL: 7 days)
-user:{teams_id}            → User entity (TTL: 7 days)
-upload:{uuid}              → DocumentUploadJob (TTL: 30 days)
-user:{teams_id}:history    → Search history with embeddings (TTL: 7 days, array of {query, embedding[768], timestamp, result_id})
+bms:context:{uuid}              → Conversation entity (TTL: 7 days)
+bms:result:{uuid}               → SearchResult entity (TTL: 7 days)
+bms:user:{teams_id}             → User entity (TTL: 7 days)
+bms:user:{teams_id}:history     → Search history with embeddings (TTL: 7 days, array of {query, embedding[768], timestamp, result_id})
+bms:upload:job:{uuid}           → DocumentUploadJob (TTL: 30 days)
+bms:upload:jobs:pending         → Sorted set of pending upload job IDs (score = timestamp)
+bms:whitelist:cache             → Cached whitelist data (TTL: 1 hour)
+bms:audit:admin:resets          → Admin reset audit log
+```
+
+**Secondary Indexes**:
+```
+bms:index:channel:{channel_id}            → SET of conversation_ids
+bms:index:user:{user_id}:conversations    → ZSET (sorted by last_message_at)
+bms:index:user:{user_id}:uploads          → SET of job_ids (status != 'completed')
 ```
 
 ### File Storage
@@ -341,18 +356,7 @@ DocumentUploadJob (job_id)
 
 ## Index Requirements
 
-### Redis Secondary Indexes (for quick lookups)
-
-```
-# Lookup conversations by channel
-index:channel:{channel_id} → SET of conversation_ids
-
-# Lookup user's recent conversations
-index:user:{user_id}:conversations → ZSET (sorted by last_message_at)
-
-# Lookup pending uploads by user
-index:user:{user_id}:uploads → SET of job_ids (status != 'completed')
-```
+### Redis Secondary Indexes (for quick lookups) - See Storage Implementation section above for updated bms: prefix patterns
 
 ### File-Based Lookup
 
@@ -388,11 +392,11 @@ const whitelistCache = {
 | Whitelist | Persistent | Manual removal only |
 | DocumentUploadJob | 30 days | Redis TTL auto-expire |
 
-**Cleanup Script** (`/workspace/002-n8n/scripts/cleanup-expired.sh`):
+**Cleanup Script** (`/workspace/002-n8n/scripts/cleanup-expired.sh`) (Session 2025-10-09: Updated with `bms:` prefix):
 ```bash
 #!/bin/bash
 # Remove users inactive > 7 days
-redis-cli --scan --pattern "user:*" | while read key; do
+redis-cli --scan --pattern "bms:user:*" | while read key; do
   last_active=$(redis-cli hget "$key" last_active)
   if [ $(($(date +%s) - $(date -d "$last_active" +%s))) -gt 604800 ]; then
     redis-cli del "$key"

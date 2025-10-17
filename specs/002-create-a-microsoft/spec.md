@@ -4,7 +4,7 @@
 **Created**: 2025-10-06
 **Status**: Active (Implementation Complete, Optimization In Progress)
 **Platform**: Slack (changed from original MS Teams scope during implementation for better API support and simpler webhook configuration)
-**Input**: User description: "Create a Slack chat bot integration for the BMS Agent API using n8n workflows + Slack Events API."
+**Input**: User description: "Create a Slack chat bot integration for the BMS API using n8n workflows + Slack Events API."
 
 ## Glossary
 
@@ -227,7 +227,7 @@ Railway staff members need quick access to technical documentation and safety pr
 
 **AI Agent Performance Optimization** (Added 2025-10-11)
 - **FR-033**: AI agent MUST respond within 30 seconds for 95% of queries (p95 ≤30s)
-  - **Measurement**: Time from user message received to complete agent response sent
+  - **Measurement**: Time from user message received (T0 = n8n webhook receives Slack Events API POST, per FR-003 measurement definition) to complete agent response sent
   - **Timeout Handling**: If >45s hard limit, cache partial results in Redis (key: `bms:partial:{conversation_id}`, TTL: 3600s) and return error "Response took too long. Partial results saved. Type `/continue` to see what was retrieved, or rephrase your question."
   - **Partial Result Recovery**: User can invoke `/continue` command within 1 hour to retrieve cached partial results
   - **Logging**: Log response times with tool call breakdown for analysis, including timeout events with partial result cache key
@@ -250,10 +250,13 @@ Railway staff members need quick access to technical documentation and safety pr
   - **Example Queries**: Each tool description includes 2-3 example queries that trigger it
   - **Validation**: Tool descriptions reviewed to ensure no overlap in use cases
   - **Anti-Pattern Rules**: System message includes "NEVER call search_semantic AND search_hybrid for same query"
-- **FR-036**: System MUST reduce agent tool count to 4-6 core tools (down from current 8)
+- **FR-036**: System MUST reduce agent tool count to 4 core tools (down from current 8, reduced from initially planned 5 due to always-on context integration)
   - **Core Tools** (mandatory):
     1. `ask_bms` - Open-ended questions, explanations, "how to" queries
     2. `search_hybrid` - Specific document codes (BMS-XXX-YYY-###), technical terms, exact matches; **automatically retrieves parent/child document context** (merged from search_contextual)
+       - **Context Retrieval Scope**: Retrieve parent document + immediate siblings (max 3 sibling chunks)
+       - **Context Size Limit**: Total context limited to 2000 characters (per FR-005 conversation context limit)
+       - **Rationale**: Provides surrounding document structure without overwhelming token budget
     3. `search_metadata` - Author, date, version, department filtering queries; includes version comparison capability (merged from search_version)
     4. `search_semantic` - Conceptual searches, exploratory "what is X" queries
   - **Tool Consolidation**:
@@ -319,7 +322,7 @@ Railway staff members need quick access to technical documentation and safety pr
 
 **Performance**
 - **FR-029**: System MUST handle 50-100 queries per day during POC phase
-- **FR-030**: System MUST maintain sub-3-second end-to-end response time (as defined in FR-003) under expected load
+- **FR-030**: System MUST maintain response time per FR-003 (p95 ≤3000ms, p50 ≤1500ms) under expected load (50-100 queries/day, 20 concurrent users per FR-026)
 
 **Input Validation**
 - **FR-031**: System MUST enforce maximum query length of 1000 Unicode characters (UTF-8 character count, where emoji and multi-byte characters count as 1 character each) at the bot handler layer (before BMS API call) and return error message "Query too long. Please limit to 1000 characters." if exceeded
