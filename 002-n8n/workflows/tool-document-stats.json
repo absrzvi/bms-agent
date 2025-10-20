@@ -1,0 +1,76 @@
+{
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "execute-workflow-trigger-001",
+      "name": "Execute Workflow Trigger",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1,
+      "position": [
+        -16,
+        272
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://localhost:8000/api/v1/search/facets",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"query\": \"document\",\n  \"limit\": 100,\n  \"min_score\": 0.05\n}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "call-facets-api-001",
+      "name": "Get All Document Facets",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        208,
+        272
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// ===================================\n// Document Statistics Aggregator\n// Returns counts by category, department, type, etc.\n// ===================================\n\nconst response = $input.item.json;\n\nif (!response || !response.facet_counts) {\n  return {\n    json: {\n      success: false,\n      error: \"No facet data available from API\",\n      total_documents: 0,\n      statistics: {}\n    }\n  };\n}\n\nconst facetCounts = response.facet_counts;\nconst results = response.results || [];\n\n// Extract categories from document IDs/names (BMS-DEPT-CAT-NNN format)\nconst categories = {\n  \"PRO\": 0,    // Process\n  \"FOR\": 0,    // Form\n  \"GUI\": 0,    // Guide/Guidance\n  \"POL\": 0,    // Policy\n  \"TEM\": 0,    // Template\n  \"other\": 0\n};\n\n// Count by category from document IDs\nfor (const result of results) {\n  const docId = result.document_id || result.document_name || \"\";\n  \n  // Match BMS-DEPT-CAT-NNN pattern\n  const match = docId.match(/BMS-[A-Z]{2,4}-([A-Z]{3})-\\d+/);\n  \n  if (match) {\n    const cat = match[1]; // PRO, FOR, GUI, etc.\n    if (categories.hasOwnProperty(cat)) {\n      categories[cat]++;\n    } else {\n      categories.other++;\n    }\n  } else {\n    categories.other++;\n  }\n}\n\n// Map category codes to friendly names\nconst categoryNames = {\n  \"PRO\": \"Process\",\n  \"FOR\": \"Form\",\n  \"GUI\": \"Guide\",\n  \"POL\": \"Policy\",\n  \"TEM\": \"Template\",\n  \"other\": \"Other/Uncategorized\"\n};\n\nconst categoryStats = {};\nfor (const [code, count] of Object.entries(categories)) {\n  if (count > 0) {\n    categoryStats[categoryNames[code] || code] = count;\n  }\n}\n\n// Get department counts\nconst departments = facetCounts.department || {};\nconst departmentStats = Object.entries(departments)\n  .filter(([dept]) => dept !== \"unknown\" && dept !== \"\")\n  .sort((a, b) => b[1] - a[1])\n  .reduce((acc, [dept, count]) => {\n    acc[dept] = count;\n    return acc;\n  }, {});\n\n// Get file type counts\nconst fileTypes = facetCounts.document_type || {};\nconst fileTypeStats = Object.entries(fileTypes)\n  .sort((a, b) => b[1] - a[1])\n  .reduce((acc, [type, count]) => {\n    acc[type.toUpperCase()] = count;\n    return acc;\n  }, {});\n\n// Get standards compliance counts\nconst standards = facetCounts.standard_compliance || {};\nconst standardStats = Object.entries(standards)\n  .filter(([std]) => std !== \"unknown\" && std !== \"\")\n  .map(([std, count]) => {\n    // Parse comma-separated standards\n    const stdList = std.split(',').map(s => s.trim()).filter(s => s);\n    return { standards: stdList, count: count };\n  })\n  .filter(item => item.standards.length > 0);\n\n// Count individual standards\nconst individualStandards = {};\nfor (const item of standardStats) {\n  for (const std of item.standards) {\n    individualStandards[std] = (individualStandards[std] || 0) + item.count;\n  }\n}\n\n// Sort individual standards\nconst sortedStandards = Object.entries(individualStandards)\n  .sort((a, b) => b[1] - a[1])\n  .reduce((acc, [std, count]) => {\n    acc[std] = count;\n    return acc;\n  }, {});\n\n// Calculate totals\nconst totalDocuments = response.total_results || 0;\nconst totalByCategory = Object.values(categories).reduce((sum, val) => sum + val, 0);\nconst totalByDepartment = Object.values(departmentStats).reduce((sum, val) => sum + val, 0);\nconst totalByFileType = Object.values(fileTypeStats).reduce((sum, val) => sum + val, 0);\n\n// Build summary text\nlet summary = `📊 **BMS Document Statistics**\\n\\n`;\nsummary += `**Total Documents:** ${totalDocuments}\\n\\n`;\n\nif (Object.keys(categoryStats).length > 0) {\n  summary += `**By Document Category:**\\n`;\n  for (const [cat, count] of Object.entries(categoryStats)) {\n    const percentage = totalByCategory > 0 ? ((count / totalByCategory) * 100).toFixed(1) : \"0.0\";\n    summary += `• ${cat}: ${count} (${percentage}%)\\n`;\n  }\n  summary += \"\\n\";\n}\n\nif (Object.keys(fileTypeStats).length > 0) {\n  summary += `**By File Type:**\\n`;\n  for (const [type, count] of Object.entries(fileTypeStats)) {\n    const percentage = totalByFileType > 0 ? ((count / totalByFileType) * 100).toFixed(1) : \"0.0\";\n    summary += `• ${type}: ${count} (${percentage}%)\\n`;\n  }\n  summary += \"\\n\";\n}\n\nif (Object.keys(departmentStats).length > 0) {\n  summary += `**By Department (Top 10):**\\n`;\n  const topDepts = Object.entries(departmentStats).slice(0, 10);\n  for (const [dept, count] of topDepts) {\n    const percentage = totalByDepartment > 0 ? ((count / totalByDepartment) * 100).toFixed(1) : \"0.0\";\n    summary += `• ${dept}: ${count} (${percentage}%)\\n`;\n  }\n  \n  if (Object.keys(departmentStats).length > 10) {\n    summary += `• ...and ${Object.keys(departmentStats).length - 10} more departments\\n`;\n  }\n  summary += \"\\n\";\n}\n\nif (Object.keys(sortedStandards).length > 0) {\n  summary += `**By ISO/EN Standards (Top 8):**\\n`;\n  const topStds = Object.entries(sortedStandards).slice(0, 8);\n  for (const [std, count] of topStds) {\n    summary += `• ${std}: ${count} documents\\n`;\n  }\n  if (Object.keys(sortedStandards).length > 8) {\n    summary += `• ...and ${Object.keys(sortedStandards).length - 8} more standards\\n`;\n  }\n}\n\n// Build structured response\nconst result = {\n  success: true,\n  total_documents: totalDocuments,\n  \n  statistics: {\n    by_category: categoryStats,\n    by_file_type: fileTypeStats,\n    by_department: departmentStats,\n    by_standard: sortedStandards\n  },\n  \n  summary: summary,\n  \n  metadata: {\n    query_time: new Date().toISOString(),\n    source: \"Qdrant vector database\",\n    collection: \"nomad_bms_documents\",\n    results_analyzed: results.length\n  }\n};\n\nreturn { json: result };"
+      },
+      "id": "aggregate-stats-001",
+      "name": "Aggregate Document Stats",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        432,
+        272
+      ]
+    }
+  ],
+  "connections": {
+    "Execute Workflow Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get All Document Facets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get All Document Facets": {
+      "main": [
+        [
+          {
+            "node": "Aggregate Document Stats",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "meta": {
+    "instanceId": "b764da079d9461ceee1e13c42e2f4b8dab8acbf563fdde0089b47461f4dd41c8"
+  }
+}

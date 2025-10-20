@@ -1,0 +1,630 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "public": true,
+        "options": {}
+      },
+      "id": "54d470d2-7a95-4f9d-9101-2f764787c38e",
+      "name": "When chat message received",
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -16,
+        304
+      ],
+      "webhookId": "bms-ai-agent-chat"
+    },
+    {
+      "parameters": {
+        "model": "gpt-oss:latest",
+        "options": {}
+      },
+      "id": "d07f90e9-ea75-40c9-9ddc-bd296b089db5",
+      "name": "Ollama Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOllama",
+      "typeVersion": 1,
+      "position": [
+        208,
+        432
+      ],
+      "credentials": {
+        "ollamaApi": {
+          "id": "u856DDT4W97VYsGG",
+          "name": "Ollama account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "name": "search_metadata",
+        "description": "Filter by dept/type/version/date (~80ms)",
+        "workflowId": "pc4Hfz8wnh5gQALC",
+        "fields": {
+          "values": [
+            {
+              "name": "question"
+            }
+          ]
+        }
+      },
+      "id": "e218e53f-ba93-4a0b-82a1-b3f0261254eb",
+      "name": "search_metadata",
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 1.1,
+      "position": [
+        464,
+        432
+      ]
+    },
+    {
+      "parameters": {
+        "name": "search_version",
+        "description": "Latest version only (~120ms)",
+        "workflowId": "4qeWfhzWUKMJl4tE",
+        "fields": {
+          "values": [
+            {
+              "name": "search_query"
+            }
+          ]
+        }
+      },
+      "id": "bdee8e6c-3661-4716-a5be-6038e9490ef0",
+      "name": "search_version",
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 1.1,
+      "position": [
+        592,
+        432
+      ]
+    },
+    {
+      "parameters": {
+        "name": "search_faceted",
+        "description": "Category aggregations (~200ms)",
+        "workflowId": "X1ORneZbjlU8iOfP",
+        "fields": {
+          "values": [
+            {
+              "name": "search_query"
+            }
+          ]
+        }
+      },
+      "id": "a7823348-8966-4f6c-8427-cb122f6e2d7e",
+      "name": "search_faceted",
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 1.1,
+      "position": [
+        720,
+        432
+      ]
+    },
+    {
+      "parameters": {
+        "name": "search_explained",
+        "description": "Scoring transparency (~120ms)",
+        "workflowId": "3O0ph1mTxoHVM8n",
+        "fields": {
+          "values": [
+            {
+              "name": "search_query"
+            }
+          ]
+        }
+      },
+      "id": "1b86f3fe-90b6-448c-b228-54130e5573ab",
+      "name": "search_explained",
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 1.1,
+      "position": [
+        848,
+        432
+      ]
+    },
+    {
+      "parameters": {
+        "name": "ask_bms",
+        "description": "General Q&A with conversational context (~200ms)",
+        "workflowId": "T6dXPYYfceYgNrd4",
+        "fields": {
+          "values": [
+            {
+              "name": "question"
+            }
+          ]
+        }
+      },
+      "id": "59d08a5e-1f5e-47c5-bd0c-ef8022870db6",
+      "name": "ask_bms",
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 1.1,
+      "position": [
+        976,
+        432
+      ]
+    },
+    {
+      "parameters": {
+        "name": "search_semantic",
+        "description": "Vector similarity for conceptual queries (~100ms)",
+        "workflowId": "KCwEdL6Orr7RXUHE",
+        "fields": {
+          "values": [
+            {
+              "name": "search_query"
+            }
+          ]
+        }
+      },
+      "id": "d6d5b995-4164-496f-9509-226d9aca5b17",
+      "name": "search_semantic",
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 1.1,
+      "position": [
+        1104,
+        432
+      ]
+    },
+    {
+      "parameters": {
+        "name": "search_hybrid",
+        "description": "Vector + keyword for precision (~150ms)",
+        "workflowId": "zrgACERbzROAJHt6",
+        "fields": {
+          "values": [
+            {
+              "name": "search_query"
+            }
+          ]
+        }
+      },
+      "id": "a1828e82-de71-4cd7-a264-f4c0831368e3",
+      "name": "search_hybrid",
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 1.1,
+      "position": [
+        1232,
+        432
+      ]
+    },
+    {
+      "parameters": {
+        "name": "search_contextual",
+        "description": "Parent-child context retrieval (~180ms)",
+        "workflowId": "gAof50oz1GNmJ6Tk",
+        "fields": {
+          "values": [
+            {
+              "name": "search_query"
+            }
+          ]
+        }
+      },
+      "id": "3838b2e8-773e-4d7b-9eb0-c1b6ab2d29b9",
+      "name": "search_contextual",
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 1.1,
+      "position": [
+        1360,
+        432
+      ]
+    },
+    {
+      "parameters": {
+        "name": "search_rerank",
+        "description": "Rerank search results for higher accuracy (~150ms)",
+        "workflowId": "mpbAT5dFeSrvgUgz",
+        "fields": {
+          "values": [
+            {
+              "name": "query"
+            },
+            {
+              "name": "results"
+            },
+            {
+              "name": "top_k"
+            }
+          ]
+        }
+      },
+      "id": "f9a8b7c6-5d4e-3f2a-1b0c-9e8d7f6a5b4c",
+      "name": "search_rerank",
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 1.1,
+      "position": [
+        1488,
+        432
+      ]
+    },
+    {
+      "parameters": {
+        "trigger": [
+          "app_mention"
+        ],
+        "watchWorkspace": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.slackTrigger",
+      "typeVersion": 1,
+      "position": [
+        80,
+        112
+      ],
+      "id": "dccbf4ca-044c-4df9-b875-8796c9ebe71e",
+      "name": "Slack Trigger",
+      "webhookId": "3acd57cb-06be-4c9d-9f69-8fd6c1327562",
+      "credentials": {
+        "slackApi": {
+          "id": "OeiwmHKRbZ7N0LWS",
+          "name": "Slack account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "select": "user",
+        "user": {
+          "__rl": true,
+          "value": "UCRCE1PL1",
+          "mode": "list",
+          "cachedResultName": "ext.jan.haegeman"
+        },
+        "text": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Message_Text', ``, 'string') }}",
+        "otherOptions": {}
+      },
+      "type": "n8n-nodes-base.slackTool",
+      "typeVersion": 2.3,
+      "position": [
+        1488,
+        432
+      ],
+      "id": "3a90f7b1-00e5-4276-8b94-57807877ea35",
+      "name": "Send a message in Slack",
+      "webhookId": "68fcd4c9-1465-400f-b3d1-b87025bf8839",
+      "credentials": {
+        "slackApi": {
+          "id": "OeiwmHKRbZ7N0LWS",
+          "name": "Slack account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "C09LEHUHAG0",
+          "mode": "list",
+          "cachedResultName": "nomi-test"
+        },
+        "text": "={{ $json.output }}",
+        "otherOptions": {}
+      },
+      "id": "db7c349c-21b7-4760-a1b8-5f38abd618f4",
+      "name": "Reply to Thread (API Token)",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.2,
+      "position": [
+        1200,
+        112
+      ],
+      "webhookId": "4046827b-63e1-4224-8e3e-ab34d8be72d5",
+      "credentials": {
+        "slackOAuth2Api": {
+          "id": "nHz4P3t89aErJMd4",
+          "name": "Slack account"
+        }
+      },
+      "notes": "Posts reply using Slack API Token"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "user-text",
+              "name": "userMessage",
+              "value": "={{ $json.blocks[0].elements[0].elements[1].text }}",
+              "type": "string"
+            },
+            {
+              "id": "user-id",
+              "name": "userId",
+              "value": "={{ $json.user }}",
+              "type": "string"
+            },
+            {
+              "id": "channel-id",
+              "name": "channelId",
+              "value": "={{ $json.channel }}",
+              "type": "string"
+            },
+            {
+              "id": "event-ts",
+              "name": "eventTs",
+              "value": "={{ $json.event_ts }}",
+              "type": "string"
+            },
+            {
+              "id": "a1229d3b-59f1-4ef0-82fc-375ba095a1f4",
+              "name": "type",
+              "value": "={{ $json.type }}",
+              "type": "string"
+            },
+            {
+              "id": "a482ddc0-bc68-4e42-8992-8736bc6f04d2",
+              "name": "sessionId",
+              "value": "={{ $json.client_msg_id }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "750185c1-3b22-4241-996e-cfa27d8d97f4",
+      "name": "Parse Slack Mention",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        304,
+        112
+      ],
+      "notes": "Extract user message and metadata"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.userMessage }}",
+        "options": {
+          "systemMessage": "You are Nomi, a specialized AI assistant for railway network documentation.\nKnowledge cutoff: January 2025\nCurrent date: {current_date}\nReasoning: medium\n```\n\n## Developer Message\n\nYou are the Nomad BMS Documentation Agent. You help users find information across 552 railway documents (1,794 searchable chunks) spanning 24 departments.\n\n---\n\n## Document Coverage (Verified 2025-10-07)\n\n**Core Stats**:\n- 552 unique documents | 1,794 searchable chunks | 7,936 vector embeddings (768-dim)\n- 24 departments | 22 document types | Multi-vector architecture (parent/child/chunk/full_doc)\n- Naming: `BMS-[DEPT]-[TYPE]-[###] [Title]`\n\n**Top Departments** (67% coverage):\n- QHSE (421 docs, 23.5%) - Quality, Health, Safety, Environment\n- RENG (212, 11.8%) - Railway Engineering  \n- HUMR (206, 11.5%) - Human Resources\n- ISEC (156, 8.7%) - Information Security\n- PROJ (113, 6.3%) - Project Management\n- SERV (80, 4.5%) - Service/Operations\n\n**Other Departments**: FINA, PROC, HI, BDEV, ITBS, PROD, QATE, MARK, ENER, TDEV, SYSA, LEGA, SALE, ENGI, BCON, DEVL, DEVO, COMM\n\n**Top Document Types** (82% coverage):\n- FOR (339, 20.5%) - Forms/Templates\n- PRO (273, 16.5%) - Procedures/Processes\n- POL (222, 13.4%) - Policies\n- GUI (222, 13.4%) - Guidelines\n- TEC (155, 9.4%) - Technical Specifications\n- MAN (153, 9.3%) - Manuals\n\n**Standards**: ISO 27001, ISO 14001, ISO 9001, ISO 45001 | Railway: EN50155, EN45545\n\n---\n\n## 9 Search Tools\n\n| Tool | Use When | Speed |\n|------|----------|-------|\n| **ask_bms** | General Q&A, natural language | 200ms |\n| **search_semantic** | Concepts, meaning-based | 100ms |\n| **search_hybrid** | Specific terms + concepts (highest precision) | 150ms |\n| **search_contextual** | Need full section/parent document | 180ms |\n| **search_metadata** | Filter by dept/type/date | 80ms |\n| **search_version** | Latest version only (safety-critical) | 120ms |\n| **search_faceted** | Explore categories/distribution | 200ms |\n| **search_explained** | Understand scoring/relevance | 120ms |\n| **search_rerank** | Improve accuracy after any search (cross-encoder) | 150ms |\n\n**Quality Gates**: All tools enforce relevance ≥0.5, RAGAS quality ≥0.5 (relaxed for broader recall)\n\n---\n\n## Tool Selection (Quick Rules)\n\n- Natural question → **ask_bms**\n- Conceptual search → **search_semantic**  \n- Exact terms + concepts → **search_hybrid** ⭐\n- Full context needed → **search_contextual**\n- Filter properties → **search_metadata**\n- \"Latest\" or safety docs → **search_version** ⭐\n- Explore/discover → **search_faceted**\n- Why this result? → **search_explained**\n- Improve any search → **search_rerank** (use after other searches for +10-15% accuracy)\n\n**Common Patterns**: hybrid→contextual | faceted→metadata | semantic→version | any_search→rerank\n\n---\n\n## Critical Rules\n\n### 🚨 MANDATORY: Source Citation\n**EVERY response with document content MUST cite sources.**\n\nFormat: \"According to **BMS-DEPT-TYPE-###** (Title, vX.X)...\"\n\nRequired elements:\n- **Document code** (bold): **BMS-QHSE-PRO-007**\n- **Version** (for QHSE/RENG safety): v2.1\n- **Title** (recommended): Visitor Management Process\n\n**No citation = Unacceptable response.** If no source found, say: \"I couldn't find this in the BMS system.\"\n\n### Domain Boundaries\n- ONLY answer BMS railway documentation questions\n- Redirect unrelated: \"I'm specialized in BMS railway documentation covering [departments]. How can I help with BMS docs?\"\n\n### Quality Standards\n- Never fabricate content\n- Use search_version for QHSE/RENG safety docs\n- Verify versions for compliance info\n- Top 3-5 results unless requested otherwise\n\n### Response Format\n- Bold document codes: **BMS-QHSE-PRO-007**\n- Clear, professional, concise\n- Cite: \"According to **BMS-[CODE]** (vX.X)...\"\n- Offer follow-ups: \"Need full context? I can use search_contextual\"\n\n---\n\n## Department Focus\n\n**Safety-Critical** (use search_version + search_hybrid):\n- QHSE: Safety, environment, risk management\n- RENG: Engineering standards, technical specs\n\n**Operational**:\n- SERV: Service operations, maintenance\n- PROJ: Project management, planning\n- HUMR: Personnel, training, HR policies\n\n**Compliance/Security**:\n- ISEC: Cybersecurity, access control\n- LEGA: Legal, regulatory\n\n**Business Support**:\n- FINA: Financial planning, budgeting\n- PROC: Procurement, vendor management\n- MARK/SALE: Marketing, sales\n\n---\n\n## Workflow\n\n1. **Parse intent** → select optimal tool\n2. **Execute search** → apply quality filters (≥0.5 relevance, ≥0.5 quality)\n3. **Synthesize** → cite sources with **bold codes + versions**\n4. **Offer next** → suggest contextual search if needed\n\n**No results?** Try: broader terms | different tool | department filter | search_faceted to explore\n\n---\n\n## Key Do's & Don'ts\n\n**✅ DO**:\n- **ALWAYS cite with document codes** (non-negotiable)\n- Use search_version for safety/compliance docs\n- Bold format: **BMS-DEPT-TYPE-###**\n- Include versions for QHSE/RENG\n- Apply quality thresholds (≥0.5 relevance, ≥0.5 quality)\n\n**❌ DON'T**:\n- **NEVER provide uncited information** (#1 rule)\n- Fabricate content\n- Skip version verification for safety docs\n- Present low-quality results (<0.5 score)\n- Make up document codes\n\n---\n\n## Success = \n\nUsers find info in ≤3 turns | Citations present (≥0.85 score) | Responses clear + actionable | Right tool selected | Trust maintained through transparency\n\n**Trust built by**: Never fabricating | Acknowledging limits | Prioritizing accuracy | Always citing | Using right tools\n\n---\n\n## Response Template\n\n```\nAccording to **BMS-[DEPT]-[TYPE]-[###]** ([Title], v[X.X]), [answer content]...\n\n[If multiple sources:]\nAdditionally, **BMS-[DEPT]-[TYPE]-[###]** (v[X.X]) specifies...\n\n[Offer follow-up:]\nWould you like [full context / related docs / specific department focus]?\n```\n\n---\n\n**Mission**: Make 552 railway documents accessible with precision, citations, and trust. Use the right tool. Cite every source. Be helpful."
+        }
+      },
+      "id": "afde9d50-b6de-4cf5-a3fe-b20f47e808c7",
+      "name": "Nomi",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.6,
+      "position": [
+        784,
+        112
+      ]
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.memoryRedisChat",
+      "typeVersion": 1.5,
+      "position": [
+        336,
+        432
+      ],
+      "id": "e81f0373-1e6f-434f-8475-1e5a10124e07",
+      "name": "Redis Chat Memory",
+      "credentials": {
+        "redis": {
+          "id": "JYKe4Lf6VUmb0fuq",
+          "name": "Redis account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "Nomi",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ollama Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Nomi",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "search_metadata": {
+      "ai_tool": [
+        [
+          {
+            "node": "Nomi",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "search_version": {
+      "ai_tool": [
+        [
+          {
+            "node": "Nomi",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "search_faceted": {
+      "ai_tool": [
+        [
+          {
+            "node": "Nomi",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "search_explained": {
+      "ai_tool": [
+        [
+          {
+            "node": "Nomi",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ask_bms": {
+      "ai_tool": [
+        [
+          {
+            "node": "Nomi",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "search_semantic": {
+      "ai_tool": [
+        [
+          {
+            "node": "Nomi",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "search_hybrid": {
+      "ai_tool": [
+        [
+          {
+            "node": "Nomi",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "search_contextual": {
+      "ai_tool": [
+        [
+          {
+            "node": "Nomi",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "search_rerank": {
+      "ai_tool": [
+        [
+          {
+            "node": "Nomi",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Slack Trigger": {
+      "main": [
+        [
+          {
+            "node": "Parse Slack Mention",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message in Slack": {
+      "ai_tool": [
+        [
+          {
+            "node": "Nomi",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Slack Mention": {
+      "main": [
+        [
+          {
+            "node": "Nomi",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Nomi": {
+      "main": [
+        [
+          {
+            "node": "Reply to Thread (API Token)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Redis Chat Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "Nomi",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {
+    "Slack Trigger": [
+      {
+        "user": "UCRCE1PL1",
+        "type": "app_mention",
+        "ts": "1760006223.249329",
+        "client_msg_id": "bb3d9438-1cb9-41de-9c69-5d15c2539449",
+        "text": "<@U09KGNMCZGD> can you help?",
+        "team": "T4F9SSM0R",
+        "blocks": [
+          {
+            "type": "rich_text",
+            "block_id": "sHHYQ",
+            "elements": [
+              {
+                "type": "rich_text_section",
+                "elements": [
+                  {
+                    "type": "user",
+                    "user_id": "U09KGNMCZGD"
+                  },
+                  {
+                    "type": "text",
+                    "text": " can you help?"
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "channel": "C09LEHUHAG0",
+        "event_ts": "1760006223.249329"
+      }
+    ]
+  },
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "b764da079d9461ceee1e13c42e2f4b8dab8acbf563fdde0089b47461f4dd41c8"
+  }
+}

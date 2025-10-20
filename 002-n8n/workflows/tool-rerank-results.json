@@ -1,0 +1,100 @@
+{
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "8a3f9c21-4567-4891-92b4-7f8d639e583a",
+      "name": "Execute Workflow Trigger",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1,
+      "position": [
+        -144,
+        240
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parse and validate rerank parameters\nconst inputData = $input.all();\n\nlet query = '';\nlet results = [];\nlet top_k = 5;\n\nif (inputData.length > 0) {\n  const data = inputData[0].json;\n  \n  // Extract query\n  query = data.query || data.q || data.search || data.text || '';\n  \n  // Extract results array (from previous search workflow)\n  results = data.results || data.chunks || data.items || [];\n  \n  // Extract top_k\n  top_k = parseInt(data.top_k || data.limit || data.k || 5);\n}\n\nif (!query || query.trim() === '') {\n  throw new Error('Missing required parameter: query');\n}\n\nif (!results || results.length === 0) {\n  throw new Error('Missing required parameter: results (must be array from previous search)');\n}\n\n// Format results for rerank API\n// The API expects results with at minimum: content, score\nconst formattedResults = results.map(r => ({\n  content: r.content || r.text || '',\n  score: r.score || 0,\n  metadata: r.metadata || {},\n  chunk_id: r.chunk_id || r.id || null,\n  document_id: r.document_id || null,\n  document_name: r.document_name || null\n}));\n\nreturn [{\n  json: {\n    query: query.trim(),\n    results: formattedResults,\n    top_k: top_k\n  }\n}];"
+      },
+      "id": "b5c8d3e2-7891-4c23-a4b6-9e2f735d148c",
+      "name": "Parse Rerank Parameters",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        48,
+        240
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://localhost:8000/api/v1/search/rerank",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json) }}",
+        "options": {
+          "timeout": 20000
+        }
+      },
+      "id": "c9d4e5f3-8912-4d34-b5c7-0f3e846e259d",
+      "name": "Call Rerank API",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        256,
+        240
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Format reranked results with enhanced metadata\nconst inputData = $input.all();\n\nif (inputData.length === 0) {\n  return [{\n    json: {\n      success: false,\n      error: 'No response from rerank API',\n      results: []\n    }\n  }];\n}\n\nconst response = inputData[0].json;\n\nif (response.detail || response.error) {\n  return [{\n    json: {\n      success: false,\n      error: response.detail || response.error,\n      results: []\n    }\n  }];\n}\n\n// API returns 'reranked_results'\nif (!response.reranked_results || response.reranked_results.length === 0) {\n  return [{\n    json: {\n      success: true,\n      message: 'No reranked results found',\n      results: [],\n      total_results: 0\n    }\n  }];\n}\n\nconst formattedResults = response.reranked_results.map((result, index) => {\n  const metadata = result.metadata || {};\n  return {\n    rank: index + 1,\n    rerank_score: result.rerank_score ? result.rerank_score.toFixed(4) : 'N/A',\n    original_score: result.original_score ? result.original_score.toFixed(4) : 'N/A',\n    score_improvement: result.rerank_score && result.original_score ? \n      (result.rerank_score - result.original_score).toFixed(4) : 'N/A',\n    content: result.content || result.text || '',\n    document_id: result.document_id || metadata.document_id || 'Unknown',\n    document_name: result.document_name || metadata.document_name || 'Unknown',\n    document_type: result.document_type || metadata.document_type || 'Unknown',\n    chunk_id: result.chunk_id || 'N/A',\n    chunk_index: metadata.chunk_index || null,\n    hierarchy_level: metadata.hierarchy_level || 'unknown',\n    quality_score: metadata.quality_score || null,\n    has_context: metadata.has_context || false,\n    contextual_description: metadata.contextual_description || '',\n    keywords: metadata.keywords || '[]',\n    entities: metadata.entities || '[]',\n    technical_terms: metadata.technical_terms || '[]',\n    department: metadata.department || null,\n    standard_compliance: metadata.standard_compliance || '',\n    document_url: metadata.document_url || ''\n  };\n});\n\nreturn [{\n  json: {\n    success: true,\n    total_results: formattedResults.length,\n    query: response.query || 'N/A',\n    model: response.model || 'cross-encoder',\n    results: formattedResults,\n    rerank_metadata: {\n      original_count: response.original_count || formattedResults.length,\n      reranked_count: formattedResults.length,\n      model_used: response.model || 'cross-encoder/ms-marco-MiniLM-L-6-v2',\n      avg_score_improvement: formattedResults.length > 0 ?\n        (formattedResults.reduce((sum, r) => {\n          const improvement = parseFloat(r.score_improvement);\n          return sum + (isNaN(improvement) ? 0 : improvement);\n        }, 0) / formattedResults.length).toFixed(4) : '0'\n    }\n  }\n}];"
+      },
+      "id": "d0e5f6a4-9012-4e45-c6d8-1f4f957f360e",
+      "name": "Format Reranked Results",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        464,
+        240
+      ]
+    }
+  ],
+  "connections": {
+    "Execute Workflow Trigger": {
+      "main": [
+        [
+          {
+            "node": "Parse Rerank Parameters",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Rerank Parameters": {
+      "main": [
+        [
+          {
+            "node": "Call Rerank API",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call Rerank API": {
+      "main": [
+        [
+          {
+            "node": "Format Reranked Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "meta": {
+    "instanceId": "b764da079d9461ceee1e13c42e2f4b8dab8acbf563fdde0089b47461f4dd41c8"
+  }
+}

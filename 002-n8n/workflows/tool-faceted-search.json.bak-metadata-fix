@@ -1,0 +1,100 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "jsCode": "// Parse Faceted Search Parameters\n// Extracts query and facet fields from input\n\nconst inputData = $input.all();\nconst outputs = [];\n\nfor (const item of inputData) {\n  const input = item.json;\n  \n  // Build facet fields array (what to group by)\n  const facetFields = [];\n  \n  if (input.facet_by_department !== false) {\n    facetFields.push(\"department\");\n  }\n  \n  if (input.facet_by_type !== false) {\n    facetFields.push(\"document_type_category\");\n  }\n  \n  if (input.facet_by_standard) {\n    facetFields.push(\"standard_compliance\");\n  }\n  \n  // If no facets specified, default to department and type\n  if (facetFields.length === 0) {\n    facetFields.push(\"department\", \"document_type_category\");\n  }\n  \n  // Build search payload\n  const searchPayload = {\n    query: input.query || \"\",\n    facet_fields: facetFields,\n    limit: input.limit !== undefined ? parseInt(input.limit) : 50,\n    min_score: input.min_score !== undefined ? parseFloat(input.min_score) : 0.6,\n    min_quality: input.min_quality !== undefined ? parseFloat(input.min_quality) : 0.65\n  };\n  \n  // Validate limit\n  if (searchPayload.limit < 1 || searchPayload.limit > 100) {\n    throw new Error(\"Limit must be between 1 and 100\");\n  }\n  \n  outputs.push({ json: searchPayload });\n}\n\nreturn outputs;"
+      },
+      "id": "df9db8e1-dae9-4d8d-bb50-b2b4a5e54488",
+      "name": "Parse Facet Parameters",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        208,
+        272
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://localhost:8000/api/v1/search/facets",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json) }}",
+        "options": {
+          "timeout": 15000
+        }
+      },
+      "id": "a45dc80b-9c90-4a9b-82a7-07b6d3c3387f",
+      "name": "Call Faceted Search API",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        432,
+        272
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Format Faceted Search Results\n// Formats API response with facet counts and sample documents\n\nconst inputData = $input.all();\nconst outputs = [];\n\nfor (const item of inputData) {\n  const response = item.json;\n  \n  // Check if we have results\n  if (!response.results || response.results.length === 0) {\n    outputs.push({\n      json: {\n        success: true,\n        message: \"No results found. Try: (1) broader search terms, (2) lower min_score threshold, or (3) different facet fields.\",\n        query: response.query || \"\",\n        facets: {},\n        results_count: 0,\n        results: []\n      }\n    });\n    continue;\n  }\n\n  // Format facet counts\n  const formattedFacets = {};\n  \n  if (response.facets) {\n    for (const [field, counts] of Object.entries(response.facets)) {\n      formattedFacets[field] = Object.entries(counts)\n        .map(([value, count]) => ({\n          value: value,\n          count: count,\n          percentage: ((count / response.results.length) * 100).toFixed(1) + \"%\"\n        }))\n        .sort((a, b) => b.count - a.count);\n    }\n  }\n\n  // Format document results\n  const formattedResults = response.results.map((result, index) => {\n    return {\n      rank: index + 1,\n      document_code: result.document_id || \"Unknown\",\n      title: result.document_name || \"Untitled Document\",\n      department: result.department || \"Unknown\",\n      document_type: result.document_type_category || \"Unknown\",\n      version: result.version || \"N/A\",\n      standard_compliance: result.standard_compliance || [],\n      content_snippet: result.content ? result.content.substring(0, 200) + \"...\" : \"\",\n      relevance_score: result.score ? result.score.toFixed(3) : \"N/A\",\n      quality_score: result.quality_score ? result.quality_score.toFixed(3) : \"N/A\",\n      sharepoint_url: result.document_url || null,\n      citation: `**${result.document_id || \"Unknown\"}** (${result.document_name || \"Untitled\"}${result.version ? \", \" + result.version : \"\"})`\n    };\n  });\n\n  // Create formatted response\n  const formattedResponse = {\n    success: true,\n    search_type: \"faceted\",\n    query: response.query || \"(exploration mode)\",\n    results_count: formattedResults.length,\n    \n    // Facet breakdown\n    facets: formattedFacets,\n    \n    // Top 10 results as examples\n    sample_results: formattedResults.slice(0, 10),\n    \n    // All results for further processing\n    all_results: formattedResults,\n    \n    // Generate summary\n    summary: generateFacetSummary(formattedFacets, formattedResults, response.query),\n    \n    // Metadata\n    metadata: {\n      facet_fields: response.facet_fields || [],\n      search_time_ms: response.search_time_ms || null,\n      total_documents_searched: response.total_points || null,\n      min_score_threshold: response.min_score || 0.6,\n      min_quality_threshold: response.min_quality || 0.95\n    }\n  };\n\n  outputs.push({ json: formattedResponse });\n}\n\n// Helper function to generate summary\nfunction generateFacetSummary(facets, results, query) {\n  if (results.length === 0) {\n    return `No results found${query ? ` for \"${query}\"` : \"\"}.`;\n  }\n\n  let summary = `Found ${results.length} documents${query ? ` for \"${query}\"` : \"\"}\\n\\n`;\n  \n  // Add facet breakdown\n  for (const [field, counts] of Object.entries(facets)) {\n    const fieldName = field === \"department\" ? \"Departments\" : \n                      field === \"document_type_category\" ? \"Document Types\" :\n                      field === \"standard_compliance\" ? \"Standards\" : field;\n    \n    summary += `${fieldName}:\\n`;\n    const top5 = counts.slice(0, 5);\n    top5.forEach(item => {\n      summary += `  - ${item.value}: ${item.count} docs (${item.percentage})\\n`;\n    });\n    \n    if (counts.length > 5) {\n      summary += `  - ... and ${counts.length - 5} more\\n`;\n    }\n    summary += \"\\n\";\n  }\n  \n  // Add sample documents\n  summary += \"Sample documents:\\n\";\n  const samples = results.slice(0, 3);\n  samples.forEach((r, i) => {\n    summary += `${i + 1}. ${r.citation}\\n`;\n  });\n  \n  return summary;\n}\n\nreturn outputs;"
+      },
+      "id": "11431c03-f4fd-42b8-a4f5-8e71241df7d3",
+      "name": "Format Faceted Results",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        656,
+        272
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "774ea052-5659-479e-8c16-686d572049db",
+      "name": "Execute Workflow Trigger",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1,
+      "position": [
+        -16,
+        272
+      ]
+    }
+  ],
+  "connections": {
+    "Parse Facet Parameters": {
+      "main": [
+        [
+          {
+            "node": "Call Faceted Search API",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call Faceted Search API": {
+      "main": [
+        [
+          {
+            "node": "Format Faceted Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute Workflow Trigger": {
+      "main": [
+        [
+          {
+            "node": "Parse Facet Parameters",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "meta": {
+    "instanceId": "b764da079d9461ceee1e13c42e2f4b8dab8acbf563fdde0089b47461f4dd41c8"
+  }
+}

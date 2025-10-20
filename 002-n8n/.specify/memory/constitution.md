@@ -22,7 +22,7 @@
 - All bot interactions flow through n8n workflows (no direct service-to-service calls)
 - Workflows exported as JSON files for version control
 - Reusable logic extracted to shared modules (`/workspace/002-n8n/lib/`)
-- **Architectural Decision**: MS Teams integration uses webhook + Bot Framework REST API (bypassing n8n MS Teams node due to credential configuration issues)
+- **Architectural Decision**: Slack integration uses Events API webhook + Web API for messaging (simpler webhook configuration and better API support than MS Teams)
 
 **Rationale**: n8n provides visual workflow debugging, non-developer maintenance access, and rapid iteration.
 
@@ -87,10 +87,10 @@
 
 **MANDATE**: User-facing features MUST have setup guides before deployment.
 
-- Setup guide: `/workspace/002-n8n/docs/setup-ms-teams.md` (Bot Framework registration)
+- Setup guide: `/workspace/002-n8n/docs/setup-slack.md` (Slack app creation and OAuth)
 - Troubleshooting guide: `/workspace/002-n8n/docs/troubleshooting.md` (common errors)
 - Workflow implementation guide: `/workspace/002-n8n/docs/workflow-implementation-guide.md` (n8n UI instructions)
-- Architecture decision records: Documented in `research.md` (e.g., webhook vs n8n MS Teams node)
+- Architecture decision records: Documented in `research.md` (e.g., Slack Events API vs polling)
 
 ## Development Workflow
 
@@ -146,9 +146,29 @@ npm test tests/integration/
 
 | Architectural Decision | Justification | Simpler Alternative Rejected Because |
 |------------------------|---------------|-------------------------------------|
-| Webhook + Bot Framework API instead of n8n MS Teams node | n8n MS Teams node credential configuration repeatedly failed; webhook approach provides full control over authentication | n8n MS Teams node: Credential UI issues blocked progress; webhook approach allows OAuth 2.0 client credentials flow via HTTP Request nodes |
+| Slack Events API instead of MS Teams Bot Framework | Slack offers simpler webhook configuration, better API documentation, and more flexible Block Kit formatting; chosen during implementation for better developer experience | MS Teams Bot Framework: More complex OAuth setup, less intuitive adaptive card formatting, webhook verification more error-prone |
 | Polling for document upload completion (30s intervals) | BMS API does not provide webhook callback for async upload status | Webhook callback: BMS API /documents/upload/async endpoint does not support callback URLs; polling balances notification latency with API load |
 | 60% test coverage for POC (vs 80% production) | POC prioritizes velocity to validate user value proposition | 80% coverage for POC: Would delay user feedback by ~8-10 hours; POC is time-boxed; production deployment enforces 80% |
+| Phase 3.6 AI optimization features deferred to post-POC | Core bot functionality (T001-T034) provides baseline value; AI optimization (T035-T042) is enhancement that can be validated after POC user feedback | Implementing T035-T042 in POC: Would add 17-21 hours development + testing time; these features improve existing capabilities but aren't required for initial user validation |
+
+## POC Exception Policy
+
+**POC Coverage Status (2025-10-11)**: 44.48% overall
+- **Core Modules (T001-T034)**: Well-tested (file-upload: 98.55%, redis: 83.05%, instrumentation: 91.93%, typing: 100%, workflow-helpers: 100%)
+- **Phase 3.6 Modules (T035-T042)**: 0% coverage (deferred to post-POC)
+
+**Technical Debt**:
+The following modules were implemented without TDD (violates §1) and MUST be tested before production:
+- `lib/canary-router.js` (224 lines) - A/B testing framework
+- `lib/timeout-handler.js` (250 lines) - Timeout handling
+- `lib/admin-bootstrap.js` (216 lines) - First-user admin
+- `lib/admin-reset.js` (280 lines) - Admin reset
+- `lib/similar-query-dismiss.js` (307 lines) - Dismiss suggestions
+
+**Production Gate**: Cannot deploy to production until:
+1. Phase 3.6 modules have ≥80% test coverage
+2. Overall coverage reaches ≥60% (minimum) or ≥80% (target)
+3. All tests following TDD principles (write tests first, see them fail, implement to pass)
 
 ## Governance
 
@@ -169,4 +189,4 @@ npm test tests/integration/
 - Critical violations block deployment
 - High/medium violations require remediation plan
 
-**Version**: 1.0.0 | **Ratified**: 2025-10-07 | **Last Amended**: 2025-10-07
+**Version**: 1.1.0 | **Ratified**: 2025-10-07 | **Last Amended**: 2025-10-11 (Added POC Exception Policy for Phase 3.6 modules)

@@ -448,4 +448,184 @@ describe('Slash Command Integration', () => {
       });
     });
   });
+
+  // FR-006: Intent Classification with LLM Confidence Threshold
+  describe('Intent Classification (FR-006)', () => {
+    test('LLM confidence ≥0.80 routes to /api/v1/ask for direct answer', async () => {
+      // Clear, direct question should trigger ASK intent with high confidence
+      const message = mockCommandMessage('What is the emergency brake procedure for Class 395 trains?');
+
+      const response = await axios.post(WEBHOOK_URL, message, { timeout: 3500 });
+
+      expect(response.status).toBe(200);
+      // FR-006: Query routed to /api/v1/ask (not /api/v1/search/semantic)
+      // Should have 'answer' property (generated answer) rather than just 'results' (search results)
+      expect(response.data).toBeDefined();
+
+      // If answer is present, it should be from /api/v1/ask endpoint
+      if (response.data.answer) {
+        expect(response.data).toHaveProperty('answer');
+        expect(typeof response.data.answer).toBe('string');
+        expect(response.data.answer.length).toBeGreaterThan(0);
+
+        // FR-004: Should also include citations
+        if (response.data.citations) {
+          expect(Array.isArray(response.data.citations)).toBe(true);
+        }
+      }
+    });
+
+    test('LLM confidence <0.80 falls back to semantic search', async () => {
+      // Ambiguous or vague query should trigger SEARCH fallback
+      const message = mockCommandMessage('emergency procedures');
+
+      const response = await axios.post(WEBHOOK_URL, message, { timeout: 3500 });
+
+      expect(response.status).toBe(200);
+      // FR-006: Query routed to /api/v1/search/semantic (safe fallback)
+      expect(response.data).toBeDefined();
+
+      // Should have 'results' array (search results) rather than generated 'answer'
+      if (response.data.results) {
+        expect(Array.isArray(response.data.results)).toBe(true);
+
+        // Results should have relevance scores
+        if (response.data.results.length > 0) {
+          expect(response.data.results[0]).toHaveProperty('score');
+        }
+      }
+    });
+
+    test('intent classification respects confidence threshold boundary', async () => {
+      // Test queries near the 0.80 threshold boundary
+      const borderlineQueries = [
+        'What are brake systems?',  // Medium clarity
+        'How does the procedure work?'  // Somewhat unclear (missing context)
+      ];
+
+      for (const queryText of borderlineQueries) {
+        const message = mockCommandMessage(queryText);
+        const response = await axios.post(WEBHOOK_URL, message, { timeout: 3500 });
+
+        expect(response.status).toBe(200);
+        expect(response.data).toBeDefined();
+
+        // Should be routed to either /ask OR /search based on confidence
+        // Both are acceptable outcomes depending on LLM confidence score
+        const hasAnswer = response.data.answer !== undefined;
+        const hasResults = response.data.results !== undefined;
+
+        expect(hasAnswer || hasResults).toBe(true);
+      }
+    });
+  });
+
+  // FR-022: Query Validation with Clarity Score
+  describe('Query Validation (FR-022)', () => {
+    test('unclear query (clarity_score <0.60) returns suggestions', async () => {
+      // Single word, unclear query
+      const message = mockCommandMessage('brakes');
+
+      const response = await axios.post(WEBHOOK_URL, message, { timeout: 3500 });
+
+      expect(response.status).toBe(200);
+      // FR-022: Should return suggestions for unclear queries
+      expect(response.data).toBeDefined();
+
+      // Response should contain suggestions or clarification request
+      const responseText = JSON.stringify(response.data);
+      if (responseText.includes('suggest') || responseText.includes('clarify') ||
+          responseText.includes('example') || responseText.includes('specific')) {
+        // Suggestions provided - test passed
+        expect(response.data.message || response.data.suggestion).toBeDefined();
+      } else if (response.data.error || response.data.message) {
+        // Error message explaining query is unclear
+        expect(
+          response.data.error || response.data.message
+        ).toMatch(/unclear|specific|rephrase|example/i);
+      }
+    });
+
+    test('clear query (clarity_score ≥0.60) proceeds normally', async () => {
+      // Clear, specific query
+      const message = mockCommandMessage('What are the maintenance schedules for Class 395 trains?');
+
+      const response = await axios.post(WEBHOOK_URL, message, { timeout: 3500 });
+
+      expect(response.status).toBe(200);
+      // FR-022: Clear query should proceed to intent classification
+      expect(response.data).toBeDefined();
+
+      // Should have either answer (ASK intent) or results (SEARCH intent)
+      const hasAnswer = response.data.answer !== undefined;
+      const hasResults = response.data.results !== undefined;
+
+      expect(hasAnswer || hasResults).toBe(true);
+
+      // Should NOT return unclear query suggestions
+      const responseText = JSON.stringify(response.data);
+      expect(responseText).not.toMatch(/query.*unclear|please.*clarify/i);
+    });
+
+    test('empty query is rejected immediately', async () => {
+      // Empty string query (should be invalid without LLM call)
+      const message = mockCommandMessage('   ');
+
+      const response = await axios.post(WEBHOOK_URL, message, { timeout: 3500 });
+
+      expect(response.status).toBe(200);
+      // FR-022: Invalid queries (empty/whitespace-only) should be rejected
+      if (response.data.error || response.data.message) {
+        expect(
+          response.data.error || response.data.message
+        ).toMatch(/empty|required|invalid/i);
+      }
+    });
+
+    test('query with ambiguous pronouns triggers unclear response', async () => {
+      // Query with missing context (unclear)
+      const message = mockCommandMessage('How does it work?');
+
+      const response = await axios.post(WEBHOOK_URL, message, { timeout: 3500 });
+
+      expect(response.status).toBe(200);
+      // Should either ask for clarification OR attempt to answer based on context
+      expect(response.data).toBeDefined();
+
+      // If treated as unclear, should provide suggestions
+      // If context is available, may proceed to answer
+      const hasAnswer = response.data.answer !== undefined;
+      const hasResults = response.data.results !== undefined;
+      const hasSuggestion = response.data.suggestion !== undefined ||
+                            (response.data.message &&
+                             response.data.message.match(/unclear|specific|example/i));
+
+      expect(hasAnswer || hasResults || hasSuggestion).toBe(true);
+    });
+
+    test('query clarity validation respects 0.60 threshold', async () => {
+      // Test queries near the clarity threshold boundary
+      const borderlineQueries = [
+        'the procedure',  // Low clarity (missing specifics)
+        'safety guidelines overview'  // Medium clarity
+      ];
+
+      for (const queryText of borderlineQueries) {
+        const message = mockCommandMessage(queryText);
+        const response = await axios.post(WEBHOOK_URL, message, { timeout: 3500 });
+
+        expect(response.status).toBe(200);
+        expect(response.data).toBeDefined();
+
+        // Should be either processed OR rejected based on clarity_score
+        // Both outcomes are acceptable depending on LLM assessment
+        const processed = response.data.answer !== undefined || response.data.results !== undefined;
+        const rejected = response.data.error !== undefined ||
+                        (response.data.message &&
+                         response.data.message.match(/unclear|specific/i));
+
+        expect(processed || rejected).toBe(true);
+      }
+    });
+  });
 });

@@ -18,14 +18,7 @@
     {
       "parameters": {
         "model": "gpt-oss:latest",
-        "options": {
-          "temperature": 0.7,
-          "numPredict": 800,
-          "numCtx": 4096,
-          "topK": 40,
-          "topP": 0.9,
-          "repeatPenalty": 1.1
-        }
+        "options": {}
       },
       "id": "15da67e4-380e-459a-aed5-023bea08ba42",
       "name": "Ollama Chat Model",
@@ -45,7 +38,7 @@
     {
       "parameters": {
         "name": "search_metadata",
-        "description": "Use when: User asks 'who wrote...', 'when was X updated', 'show me documents by [author/department]', or needs version/date filtering.",
+        "description": "Filter by dept/type/version/date (~80ms)",
         "workflowId": "pc4Hfz8wnh5gQALC",
         "fields": {
           "values": [
@@ -67,7 +60,7 @@
     {
       "parameters": {
         "name": "search_version",
-        "description": "Use when: User asks 'what changed', 'compare versions', 'what's new in...', or needs to see differences between document revisions.",
+        "description": "Latest version only (~120ms)",
         "workflowId": "4qeWfhzWUKMJl4tE",
         "fields": {
           "values": [
@@ -89,7 +82,7 @@
     {
       "parameters": {
         "name": "search_faceted",
-        "description": "Use when: User asks exploratory questions like 'what documents exist about X', 'show me all policies for...', 'what categories cover...'. Returns aggregated categories.",
+        "description": "Category aggregations (~200ms)",
         "workflowId": "X1ORneZbjlU8iOfP",
         "fields": {
           "values": [
@@ -111,7 +104,7 @@
     {
       "parameters": {
         "name": "search_explained",
-        "description": "Use when: Previous search results seem wrong or user questions relevance. Shows scoring details for debugging. Rarely needed - only use if search quality is questioned.",
+        "description": "Scoring transparency (~120ms)",
         "workflowId": "3O0ph1mTxoHVM8n",
         "fields": {
           "values": [
@@ -133,7 +126,7 @@
     {
       "parameters": {
         "name": "ask_bms",
-        "description": "Use when: User asks open-ended questions like 'how do I...', 'what is...', 'explain...'. Best for conversational queries needing context.",
+        "description": "General Q&A with conversational context (~200ms)",
         "workflowId": "T6dXPYYfceYgNrd4",
         "fields": {
           "values": [
@@ -155,7 +148,7 @@
     {
       "parameters": {
         "name": "search_semantic",
-        "description": "Use when: User asks about concepts, principles, or 'what does X mean'. Finds similar meaning, not exact words. Fast for exploratory questions.",
+        "description": "Vector similarity for conceptual queries (~100ms)",
         "workflowId": "KCwEdL6Orr7RXUHE",
         "fields": {
           "values": [
@@ -177,7 +170,7 @@
     {
       "parameters": {
         "name": "search_hybrid",
-        "description": "Use when: User mentions specific document codes (BMS-XXX-XXX-###), technical terms, or needs exact matches. Combines meaning + keywords for precision.",
+        "description": "Vector + keyword for precision (~150ms)",
         "workflowId": "zrgACERbzROAJHt6",
         "fields": {
           "values": [
@@ -199,7 +192,7 @@
     {
       "parameters": {
         "name": "search_contextual",
-        "description": "Use when: Answer needs related documents or understanding document relationships. Retrieves parent documents with full context. Use for complex procedural questions.",
+        "description": "Parent-child context retrieval (~180ms)",
         "workflowId": "gAof50oz1GNmJ6Tk",
         "fields": {
           "values": [
@@ -221,9 +214,9 @@
     {
       "parameters": {
         "promptType": "define",
-        "text": "={{ $('Process Event1').item.json.query }}",
+        "text": "={{ $('Webhook').item.json.body.event.blocks[0].elements[0].elements[1].text }}",
         "options": {
-          "systemMessage": "You are Nomi, the BMS documentation assistant for railway systems.\n\n## CRITICAL RULES (Non-Negotiable)\n1. **ONLY answer from search results** - If search returns no good matches (score <0.45), say \"I don't have information about that in the BMS documentation\"\n2. **NEVER make up information** - If you're unsure, say \"I need to search for more specific information\"\n3. **Cite EVERY source** - Format as [BMS-DEPT-TYPE-NNN] inline\n4. **Ignore irrelevant results** - If search results don't match the question, say \"I couldn't find relevant documentation about that\"\n5. **Be concise** - 200-300 words max unless user asks for detail\n\n## Out-of-Scope Detection\n**If user asks about:**\n- Software/systems not in BMS docs (NetSuite, SAP, etc.) \u2192 \"I don't have information about [X] in the BMS documentation. I can only help with BMS railway documentation\"\n- General knowledge topics \u2192 \"I'm specialized in BMS railway documentation. Please ask about BMS processes, forms, or procedures\"\n- Personal advice \u2192 \"I can only provide information from BMS documentation\"\n\n## Search Result Quality Check\n**Before answering, verify:**\n- Search results have relevance score \u22650.6\n- Document titles/content match the question\n- At least 1 high-quality result exists\n\n**If quality is poor:** \"I couldn't find reliable documentation about that. Could you rephrase or ask about a specific BMS document?\"\n\n## Available Tools (Use in order of preference)\n1. **search_hybrid** - BEST for specific questions, document codes, technical terms\n2. **search_semantic** - For conceptual questions, \"what does X mean\"\n3. **ask_bms** - For open-ended \"how do I\" questions\n4. **search_contextual** - When you need full document context\n5. **search_metadata** - For \"who wrote\", \"when updated\" questions\n6. **search_version** - For \"what changed\" questions\n7. **search_faceted** - For \"what documents exist\" questions\n8. **search_explained** - RARELY - only for debugging search quality\n\n## Response Format\n**Structure:**\n1. Direct answer (1-2 sentences)\n2. Key points (2-4 bullet points with citations)\n3. Summary/next steps\n\n**Citation format:** \n- Inline: \"According to [BMS-DEPT-TYPE-NNN]...\"\n- End: List all referenced documents\n\n## Examples\n\n**GOOD:**\nUser: \"what is the sick leave policy?\"\nYou: \"Nomad's sick leave policy requires you to notify your line manager within 30 minutes of your shift start [BMS-HUMR-POL-028]. Company Sick Pay entitlement depends on length of service: probation (SSP only), 1st year (5 days CSP), 2-3 years (10 days), 3+ years (15 days) [BMS-HUMR-POL-010].\"\n\n**BAD (Out of scope):**\nUser: \"what is netsuite?\"\nYou (WRONG): \"NetSuite is expense management...\" \u274c\nYou (RIGHT): \"I don't have information about NetSuite in the BMS documentation. I can help with BMS railway processes, forms, and procedures.\" \u2705\n\n**BAD (Low quality results):**\nUser: \"what is the capital of France?\"\nYou (WRONG): Tries to answer from irrelevant BMS docs \u274c\nYou (RIGHT): \"That's not covered in BMS documentation. I specialize in railway documentation - ask me about BMS processes, policies, or procedures.\" \u2705\n\nKnowledge cutoff: January 2025 | Reasoning: medium"
+          "systemMessage": "You are Nomi, the BMS documentation assistant for railway systems.\n\n## Rules\n1. **Always use your search tools** - Never answer from general knowledge\n2. **Cite every source** - Format as [BMS-DEPT-TYPE-NNN] inline\n3. **If no results found** - Say \"I don't have information about that in the BMS documentation\"\n4. **Be direct and actionable** - Give step-by-step instructions when asked \"how to\"\n\n## Available Tools\n- ask_bms: General Q&A (~200ms)\n- search_semantic: Conceptual queries (~100ms)  \n- search_hybrid: Technical precision (~150ms)\n- search_contextual: Related documents (~180ms)\n- search_metadata: Find by author/date (~100ms)\n- search_version: Compare versions (~120ms)\n- search_faceted: Category exploration (~200ms)\n- search_explained: Debug search results (~120ms)\n\n## Response Format\nLead with answer → Include inline citations → List sources at end\n\nKnowledge cutoff: January 2025 | Current date: {current_date} | Reasoning: medium"
         }
       },
       "id": "90789440-4f61-4328-bfc9-e9a44e289d61",
@@ -271,7 +264,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Process Slack Event WITH DEDUPLICATION\nconst body = $input.item.json.body;\n\n// URL verification\nif (body.type === 'url_verification') {\n  return [{\n    json: { challenge: body.challenge },\n    pairedItem: { item: 0 }\n  }];\n}\n\n// Event deduplication using event_id\nconst EVENT_CACHE_KEY = 'processed_slack_events';\nconst EVENT_CACHE_TTL = 300000; // 5 minutes in milliseconds\n\n// Get or initialize event cache from workflow static data\nlet processedEvents = $getWorkflowStaticData('global')[EVENT_CACHE_KEY] || {};\nconst currentTime = Date.now();\n\n// Clean expired entries (older than 5 minutes)\nfor (const [eventId, timestamp] of Object.entries(processedEvents)) {\n  if (currentTime - timestamp > EVENT_CACHE_TTL) {\n    delete processedEvents[eventId];\n  }\n}\n\n// Handle app_mention events\nif (body.type === 'event_callback' && body.event.type === 'app_mention') {\n  const event = body.event;\n  const eventId = body.event_id;\n\n  // Check if this event was already processed (Slack retry detection)\n  if (processedEvents[eventId]) {\n    console.log(`\u26a0\ufe0f Duplicate event detected: ${eventId} (Slack retry #${processedEvents[eventId].retries || 1})`);\n    // Update retry count for logging\n    processedEvents[eventId].retries = (processedEvents[eventId].retries || 1) + 1;\n    $getWorkflowStaticData('global')[EVENT_CACHE_KEY] = processedEvents;\n    // Return empty to skip processing, but webhook still responds with 200 OK\n    return [];\n  }\n\n  // Mark event as processed with timestamp\n  processedEvents[eventId] = {\n    timestamp: currentTime,\n    retries: 0\n  };\n  $getWorkflowStaticData('global')[EVENT_CACHE_KEY] = processedEvents;\n\n  const query = event.text.replace(/<@U09LPC5D2U8>/g, '').trim();\n\n  return [{\n    json: {\n      query: query,\n      channel: event.channel,\n      user: event.user,\n      thread_ts: event.ts,\n      team_id: body.team_id,\n      event_id: eventId\n    },\n    pairedItem: { item: 0 }\n  }];\n}\n\n// Ignore other event types\nreturn [];"
+        "jsCode": "// Process Slack Event\nconst body = $input.item.json.body;\n\n// URL verification\nif (body.type === 'url_verification') {\n  return [{\n    json: { challenge: body.challenge },\n    pairedItem: { item: 0 }\n  }];\n}\n\n// Handle app_mention\nif (body.type === 'event_callback' && body.event.type === 'app_mention') {\n  const event = body.event;\n  const query = event.text.replace(/<@U09LPC5D2U8>/g, '').trim();\n  \n  return [{\n    json: {\n      query: query,\n      channel: event.channel,\n      user: event.user,\n      thread_ts: event.ts,\n      team_id: body.team_id,\n      event_id: body.event_id\n    },\n    pairedItem: { item: 0 }\n  }];\n}\n\n// Ignore other events\nreturn [];"
       },
       "id": "8032cd4f-f32a-4be5-8276-b50ce838df61",
       "name": "Process Event1",
@@ -284,7 +277,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// ===================================\n// Slack Block Kit Formatter - Production Ready\n// ===================================\n\n// Get data from previous nodes\nconst aiOutput = $input.item.json.output || '';\nconst query = $('Process Event1').item.json.query || $input.item.json.query || 'Your question';\nconst channel = $('Process Event1').item.json.channel || $input.item.json.channel || 'C09KQT8EPGV';\nconst thread_ts = $('Process Event1').item.json.thread_ts || $input.item.json.thread_ts;\n\n// Citation validation check (improved regex to catch more patterns)\nconst hasCitations = /\\[?BMS[\\-\\u2011][A-Z]+[\\-\\u2011][A-Z]+[\\-\\u2011]\\d+\\]?|https?:\\/\\/[^\\s)]+|\\[[\\d,\\s]+\\]/.test(aiOutput);\nconst hasNoInfoStatement = /don't have information|not available in.*documentation|cannot find.*in.*database/i.test(aiOutput);\n\n// Only warn if no citations AND not a \"no info\" response\nlet processedOutput = aiOutput;\nif (!hasCitations && !hasNoInfoStatement && aiOutput.length > 50) {\n  console.warn(\"\u26a0\ufe0f AI response lacks citations - possible hallucination\");\n  processedOutput = \"\u26a0\ufe0f _Note: This response may not be fully grounded in documentation._\\n\\n\" + aiOutput;\n}\n\n// Clean AI output - remove thinking artifacts\nlet cleanOutput = processedOutput\n  .replace(/\\[thinking\\][\\s\\S]*?\\[\\/thinking\\]/gi, '')\n  .replace(/<thinking>[\\s\\S]*?<\\/thinking>/gi, '')\n  .replace(/^>.*$/gm, '')\n  .replace(/={2,}/g, '')\n  .trim();\n\n// Extract document references\nconst docMatches = cleanOutput.match(/\\[?BMS[\\-\\u2011][A-Z]+[\\-\\u2011][A-Z]+[\\-\\u2011]\\d+[^\\s)\\]]*/g) || [];\nconst urlMatches = cleanOutput.match(/https?:\\/\\/[^\\s)]+/g) || [];\n\n// Split content into manageable sections (Slack has 3000 char limit per block)\nconst sections = cleanOutput.split('\\n\\n').filter(s => s.trim());\nconst mainContent = sections[0] || cleanOutput;\n\n// Build Slack blocks\nconst blocks = [];\n\n// Header with emoji\nblocks.push({\n  \"type\": \"header\",\n  \"text\": {\n    \"type\": \"plain_text\",\n    \"text\": \"\ud83e\udd16 Nomi BMS Assistant\",\n    \"emoji\": true\n  }\n});\n\n// User's question\nblocks.push({\n  \"type\": \"section\",\n  \"text\": {\n    \"type\": \"mrkdwn\",\n    \"text\": `*Your question:*\\n> ${query}`\n  }\n});\n\nblocks.push({\"type\": \"divider\"});\n\n// Main answer (truncate if too long for Slack)\nconst truncatedContent = mainContent.length > 2900 \n  ? mainContent.substring(0, 2900) + \"...\\n\\n_[Response truncated - see full context in thread]_\"\n  : mainContent;\n\nblocks.push({\n  \"type\": \"section\",\n  \"text\": {\n    \"type\": \"mrkdwn\",\n    \"text\": truncatedContent\n  }\n});\n\n// Additional sections (max 3 more to avoid Slack limits)\nfor (let i = 1; i < Math.min(sections.length, 4); i++) {\n  const section = sections[i];\n  if (section.length > 0 && section.length < 2900) {\n    blocks.push({\n      \"type\": \"section\",\n      \"text\": {\n        \"type\": \"mrkdwn\",\n        \"text\": section\n      }\n    });\n  }\n}\n\n// Document references section (if any found)\nif (docMatches.length > 0) {\n  blocks.push({\"type\": \"divider\"});\n  \n  // Create unique document-URL pairs\n  const docLinks = new Map();\n  docMatches.forEach(doc => {\n    const cleanDoc = doc.replace(/[.,;:!?)]$/, '');\n    const matchingUrl = urlMatches.find(url => url.includes(cleanDoc));\n    if (!docLinks.has(cleanDoc)) {\n      docLinks.set(cleanDoc, matchingUrl);\n    }\n  });\n  \n  if (docLinks.size > 0) {\n    let refsText = \"*\ud83d\udcda Referenced Documents:*\\n\";\n    let count = 0;\n    docLinks.forEach((url, doc) => {\n      if (count < 10) { // Limit to 10 refs to avoid spam\n        if (url) {\n          refsText += `\u2022 <${url}|${doc}>\\n`;\n        } else {\n          refsText += `\u2022 \\`${doc}\\`\\n`;\n        }\n        count++;\n      }\n    });\n    \n    if (docLinks.size > 10) {\n      refsText += `\\n_...and ${docLinks.size - 10} more documents_`;\n    }\n    \n    blocks.push({\n      \"type\": \"section\",\n      \"text\": {\n        \"type\": \"mrkdwn\",\n        \"text\": refsText.trim()\n      }\n    });\n  }\n}\n\n// Footer with timestamp\nblocks.push({\n  \"type\": \"context\",\n  \"elements\": [{\n    \"type\": \"mrkdwn\",\n    \"text\": `\u26a1 Response generated at ${new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}`\n  }]\n});\n\n// Return formatted response\nreturn {\n  json: {\n    channel: channel,\n    blocks: blocks,\n    text: `${query.substring(0, 50)}...\\n${mainContent.substring(0, 100)}...`,  // Fallback for notifications\n    thread_ts: thread_ts  // Reply in thread if exists\n  }\n};"
+        "jsCode": "// ===================================\n// Slack Block Kit Formatter - Production Ready\n// ===================================\n\n// Get data from previous nodes\nconst aiOutput = $input.item.json.output || '';\nconst query = $('Process Event1').item.json.query || $input.item.json.query || 'Your question';\nconst channel = $('Process Event1').item.json.channel || $input.item.json.channel || 'C09KQT8EPGV';\nconst thread_ts = $('Process Event1').item.json.thread_ts || $input.item.json.thread_ts;\n\n// Citation validation check (improved regex to catch more patterns)\nconst hasCitations = /BMS-[A-Z]+-[A-Z]+-\\d+|https?:\\/\\/[^\\s)]+|\\[[\\d,\\s]+\\]/.test(aiOutput);\nconst hasNoInfoStatement = /don't have information|not available in.*documentation|cannot find.*in.*database/i.test(aiOutput);\n\n// Only warn if no citations AND not a \"no info\" response\nlet processedOutput = aiOutput;\nif (!hasCitations && !hasNoInfoStatement && aiOutput.length > 50) {\n  console.warn(\"⚠️ AI response lacks citations - possible hallucination\");\n  processedOutput = \"⚠️ _Note: This response may not be fully grounded in documentation._\\n\\n\" + aiOutput;\n}\n\n// Clean AI output - remove thinking artifacts\nlet cleanOutput = processedOutput\n  .replace(/\\[thinking\\][\\s\\S]*?\\[\\/thinking\\]/gi, '')\n  .replace(/<thinking>[\\s\\S]*?<\\/thinking>/gi, '')\n  .replace(/^>.*$/gm, '')\n  .replace(/={2,}/g, '')\n  .trim();\n\n// Extract document references\nconst docMatches = cleanOutput.match(/BMS-[A-Z]+-[A-Z]+-\\d+[^\\s)]*/g) || [];\nconst urlMatches = cleanOutput.match(/https?:\\/\\/[^\\s)]+/g) || [];\n\n// Split content into manageable sections (Slack has 3000 char limit per block)\nconst sections = cleanOutput.split('\\n\\n').filter(s => s.trim());\nconst mainContent = sections[0] || cleanOutput;\n\n// Build Slack blocks\nconst blocks = [];\n\n// Header with emoji\nblocks.push({\n  \"type\": \"header\",\n  \"text\": {\n    \"type\": \"plain_text\",\n    \"text\": \"🤖 Nomi BMS Assistant\",\n    \"emoji\": true\n  }\n});\n\n// User's question\nblocks.push({\n  \"type\": \"section\",\n  \"text\": {\n    \"type\": \"mrkdwn\",\n    \"text\": `*Your question:*\\n> ${query}`\n  }\n});\n\nblocks.push({\"type\": \"divider\"});\n\n// Main answer (truncate if too long for Slack)\nconst truncatedContent = mainContent.length > 2900 \n  ? mainContent.substring(0, 2900) + \"...\\n\\n_[Response truncated - see full context in thread]_\"\n  : mainContent;\n\nblocks.push({\n  \"type\": \"section\",\n  \"text\": {\n    \"type\": \"mrkdwn\",\n    \"text\": truncatedContent\n  }\n});\n\n// Additional sections (max 3 more to avoid Slack limits)\nfor (let i = 1; i < Math.min(sections.length, 4); i++) {\n  const section = sections[i];\n  if (section.length > 0 && section.length < 2900) {\n    blocks.push({\n      \"type\": \"section\",\n      \"text\": {\n        \"type\": \"mrkdwn\",\n        \"text\": section\n      }\n    });\n  }\n}\n\n// Document references section (if any found)\nif (docMatches.length > 0) {\n  blocks.push({\"type\": \"divider\"});\n  \n  // Create unique document-URL pairs\n  const docLinks = new Map();\n  docMatches.forEach(doc => {\n    const cleanDoc = doc.replace(/[.,;:!?)]$/, '');\n    const matchingUrl = urlMatches.find(url => url.includes(cleanDoc));\n    if (!docLinks.has(cleanDoc)) {\n      docLinks.set(cleanDoc, matchingUrl);\n    }\n  });\n  \n  if (docLinks.size > 0) {\n    let refsText = \"*📚 Referenced Documents:*\\n\";\n    let count = 0;\n    docLinks.forEach((url, doc) => {\n      if (count < 10) { // Limit to 10 refs to avoid spam\n        if (url) {\n          refsText += `• <${url}|${doc}>\\n`;\n        } else {\n          refsText += `• \\`${doc}\\`\\n`;\n        }\n        count++;\n      }\n    });\n    \n    if (docLinks.size > 10) {\n      refsText += `\\n_...and ${docLinks.size - 10} more documents_`;\n    }\n    \n    blocks.push({\n      \"type\": \"section\",\n      \"text\": {\n        \"type\": \"mrkdwn\",\n        \"text\": refsText.trim()\n      }\n    });\n  }\n}\n\n// Footer with timestamp\nblocks.push({\n  \"type\": \"context\",\n  \"elements\": [{\n    \"type\": \"mrkdwn\",\n    \"text\": `⚡ Response generated at ${new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}`\n  }]\n});\n\n// Return formatted response\nreturn {\n  json: {\n    channel: channel,\n    blocks: blocks,\n    text: `${query.substring(0, 50)}...\\n${mainContent.substring(0, 100)}...`,  // Fallback for notifications\n    thread_ts: thread_ts  // Reply in thread if exists\n  }\n};"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,

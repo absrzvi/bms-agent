@@ -1,17 +1,15 @@
 {
+  "name": "Tool: Search Hybrid",
   "nodes": [
     {
       "parameters": {
-        "jsCode": "const inputData = $input.all();\nconst outputs = [];\n\nfor (const item of inputData) {\n  const params = {\n    query: item.json.search_query || item.json.query || \"\",\n    alpha: item.json.alpha !== undefined ? parseFloat(item.json.alpha) : 0.5,\n    limit: item.json.limit !== undefined ? parseInt(item.json.limit) : 10,\n    min_score: item.json.min_score !== undefined ? parseFloat(item.json.min_score) : 0.3\n  };\n  \n  // Only add min_quality if explicitly provided (don't default it)\n  if (item.json.min_quality !== undefined) {\n    params.min_quality = parseFloat(item.json.min_quality);\n  }\n\n  if (!params.query || params.query.trim() === \"\") {\n    throw new Error(\"Query parameter is required and cannot be empty\");\n  }\n\n  if (params.alpha < 0 || params.alpha > 1) {\n    throw new Error(\"Alpha must be between 0.0 and 1.0\");\n  }\n\n  if (params.limit < 1 || params.limit > 50) {\n    throw new Error(\"Limit must be between 1 and 50\");\n  }\n\n  if (params.min_score < 0 || params.min_score > 1) {\n    throw new Error(\"min_score must be between 0.0 and 1.0\");\n  }\n\n  if (params.min_quality !== undefined && (params.min_quality < 0 || params.min_quality > 1)) {\n    throw new Error(\"min_quality must be between 0.0 and 1.0\");\n  }\n\n  outputs.push({ json: params });\n}\n\nreturn outputs;"
+        "jsCode": "const inputData = $input.all();\nconst outputs = [];\n\nfor (const item of inputData) {\n  const params = {\n    query: item.json.search_query || item.json.query || \"\",\n    alpha: item.json.alpha !== undefined ? parseFloat(item.json.alpha) : 0.5,\n    limit: item.json.limit !== undefined ? parseInt(item.json.limit) : 10,\n    min_score: item.json.min_score !== undefined ? parseFloat(item.json.min_score) : 0.2,\n    min_quality: item.json.min_quality !== undefined ? parseFloat(item.json.min_quality) : 0.2\n  };\n\n  if (!params.query || params.query.trim() === \"\") {\n    throw new Error(\"Query parameter is required and cannot be empty\");\n  }\n\n  if (params.alpha < 0 || params.alpha > 1) {\n    throw new Error(\"Alpha must be between 0.0 and 1.0\");\n  }\n\n  if (params.limit < 1 || params.limit > 50) {\n    throw new Error(\"Limit must be between 1 and 50\");\n  }\n\n  if (params.min_score < 0 || params.min_score > 1) {\n    throw new Error(\"min_score must be between 0.0 and 1.0\");\n  }\n\n  if (params.min_quality < 0 || params.min_quality > 1) {\n    throw new Error(\"min_quality must be between 0.0 and 1.0\");\n  }\n\n  outputs.push({ json: params });\n}\n\nreturn outputs;"
       },
-      "id": "5d6e6f16-c30f-45d2-83d4-0e081eac1adf",
+      "id": "87529a81-c0e3-4360-b105-c45b66ad1ad9",
       "name": "Parse Hybrid Parameters",
       "type": "n8n-nodes-base.code",
       "typeVersion": 1,
-      "position": [
-        -32,
-        -16
-      ]
+      "position": [0, 144]
     },
     {
       "parameters": {
@@ -24,38 +22,29 @@
           "timeout": 20000
         }
       },
-      "id": "b2b1a248-10c0-46b9-b3ce-5437de39bb59",
+      "id": "07d332c2-6df2-4274-943f-562db5680975",
       "name": "Call Hybrid Search",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 3,
-      "position": [
-        192,
-        -16
-      ]
+      "position": [224, 144]
     },
     {
       "parameters": {
         "jsCode": "const inputData = $input.all();\nconst outputs = [];\n\nfor (const item of inputData) {\n  const response = item.json;\n  \n  if (!response.results || response.results.length === 0) {\n    outputs.push({\n      json: {\n        success: true,\n        message: \"No results found. Try broader search terms.\",\n        query: response.query || \"\",\n        results_count: 0,\n        results: []\n      }\n    });\n    continue;\n  }\n\n  const formattedResults = response.results.map((result, index) => {\n    return {\n      rank: index + 1,\n      document_code: result.document_id || \"Unknown\",\n      title: result.document_name || \"Untitled Document\",\n      department: result.department || \"Unknown\",\n      content_snippet: result.content ? result.content.substring(0, 300) + \"...\" : \"\",\n      relevance_score: result.score ? result.score.toFixed(3) : \"N/A\",\n      version: result.version || \"N/A\",\n      citation: `**${result.document_id || \"Unknown\"}** (${result.document_name || \"Untitled\"}${result.version ? \", \" + result.version : \"\"})`\n    };\n  });\n\n  const formattedResponse = {\n    success: true,\n    search_type: \"hybrid\",\n    query: response.query || \"\",\n    results_count: formattedResults.length,\n    results: formattedResults,\n    summary: `Found ${formattedResults.length} documents for \"${response.query || \"\"}\"\\n\\nTop result: ${formattedResults[0].citation}`\n  };\n\n  outputs.push({ json: formattedResponse });\n}\n\nreturn outputs;"
       },
-      "id": "9f028e0a-1196-43d3-9212-b0926c00f859",
+      "id": "f91f35ee-4f99-4024-897c-ebb0ec260f95",
       "name": "Format Hybrid Results",
       "type": "n8n-nodes-base.code",
       "typeVersion": 1,
-      "position": [
-        416,
-        -16
-      ]
+      "position": [448, 144]
     },
     {
       "parameters": {},
-      "id": "6aa89c66-515e-4eb2-b41a-ebff8a13c88f",
+      "id": "1778537c-37da-4c3f-8c02-09b33e7d6b36",
       "name": "Execute Workflow Trigger",
       "type": "n8n-nodes-base.executeWorkflowTrigger",
       "typeVersion": 1,
-      "position": [
-        -256,
-        -16
-      ]
+      "position": [-224, 144]
     }
   ],
   "connections": {
@@ -81,11 +70,6 @@
         ]
       ]
     },
-    "Format Hybrid Results": {
-      "main": [
-        []
-      ]
-    },
     "Execute Workflow Trigger": {
       "main": [
         [
@@ -98,8 +82,8 @@
       ]
     }
   },
-  "pinData": {},
-  "meta": {
-    "instanceId": "b764da079d9461ceee1e13c42e2f4b8dab8acbf563fdde0089b47461f4dd41c8"
-  }
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {}
 }

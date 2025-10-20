@@ -378,6 +378,327 @@ describe('Whitelist Validation Logic (T028)', () => {
       assert.strictEqual(result, false, 'Should reject when admins array missing');
     });
   });
+
+  describe('Edge Cases - Concurrent Access', () => {
+    it('should handle rapid successive calls without corruption', async () => {
+      // Simulate multiple rapid calls
+      const promises = [];
+      for (let i = 0; i < 10; i++) {
+        promises.push(Promise.resolve(whitelistManager.isChannelAllowed('test-channel-1')));
+      }
+
+      const results = await Promise.all(promises);
+
+      // All calls should return true
+      results.forEach((result, idx) => {
+        assert.strictEqual(result, true, `Call ${idx} should succeed`);
+      });
+    });
+
+    it('should handle concurrent admin checks without cache corruption', async () => {
+      const adminPromises = [];
+      const nonAdminPromises = [];
+
+      for (let i = 0; i < 5; i++) {
+        adminPromises.push(Promise.resolve(whitelistManager.isAdmin('admin-user-1')));
+        nonAdminPromises.push(Promise.resolve(whitelistManager.isAdmin('regular-user')));
+      }
+
+      const adminResults = await Promise.all(adminPromises);
+      const nonAdminResults = await Promise.all(nonAdminPromises);
+
+      adminResults.forEach((result) => {
+        assert.strictEqual(result, true, 'Admin check should succeed');
+      });
+
+      nonAdminResults.forEach((result) => {
+        assert.strictEqual(result, false, 'Non-admin check should fail');
+      });
+    });
+
+    it('should handle interleaved read and write operations', () => {
+      // Read
+      whitelistManager.isChannelAllowed('test-channel-1');
+
+      // Write (add channel)
+      whitelistManager.addChannel('test-rapid-add', '#rapid', 'admin-user-1');
+
+      // Read again
+      const result1 = whitelistManager.isChannelAllowed('test-rapid-add');
+
+      // Write (revoke)
+      whitelistManager.revokeChannel('test-rapid-add', 'admin-user-2');
+
+      // Read revoked
+      const result2 = whitelistManager.isChannelAllowed('test-rapid-add');
+
+      assert.strictEqual(result1, true, 'Added channel should be found');
+      assert.strictEqual(result2, false, 'Revoked channel should be rejected');
+    });
+  });
+
+  describe('Edge Cases - Cache Expiration Boundaries', () => {
+    it('should refresh cache exactly at 60s boundary', () => {
+      // First load
+      whitelistManager.isChannelAllowed('test-channel-1');
+
+      // Set lastRefresh to exactly 60 seconds ago
+      whitelistManager.lastRefresh = Date.now() - 60000; // Exactly 60s
+
+      // Add new channel to file
+      const updatedWhitelist = {
+        ...mockWhitelist,
+        channels: [
+          ...mockWhitelist.channels,
+          {
+            channel_id: 'boundary-channel',
+            channel_name: '#boundary',
+            added_by: 'admin-user-1',
+            added_at: new Date().toISOString(),
+            status: 'active'
+          }
+        ]
+      };
+      fs.writeFileSync(testWhitelistPath, JSON.stringify(updatedWhitelist, null, 2));
+
+      // Should refresh (60s >= TTL)
+      const result = whitelistManager.isChannelAllowed('boundary-channel');
+
+      assert.strictEqual(result, true, 'Should reload at 60s boundary');
+    });
+
+    it('should not refresh cache just before 60s boundary', () => {
+      // First load
+      whitelistManager.isChannelAllowed('test-channel-1');
+
+      // Set lastRefresh to 59 seconds ago (within TTL)
+      whitelistManager.lastRefresh = Date.now() - 59000;
+
+      // Add new channel to file
+      const updatedWhitelist = {
+        ...mockWhitelist,
+        channels: [
+          {
+            channel_id: 'not-yet-channel',
+            channel_name: '#not-yet',
+            added_by: 'admin-user-1',
+            added_at: new Date().toISOString(),
+            status: 'active'
+          }
+        ]
+      };
+      fs.writeFileSync(testWhitelistPath, JSON.stringify(updatedWhitelist, null, 2));
+
+      // Should still use cache (old data)
+      const result1 = whitelistManager.isChannelAllowed('test-channel-1');
+      const result2 = whitelistManager.isChannelAllowed('not-yet-channel');
+
+      assert.strictEqual(result1, true, 'Cached channel should still be found');
+      assert.strictEqual(result2, false, 'New channel should not be found (using cache)');
+    });
+  });
+
+  describe('Edge Cases - Large Whitelist Performance', () => {
+    it('should handle whitelist with many channels efficiently', () => {
+      // Create large whitelist (100 channels)
+      const largeWhitelist = {
+        channels: [],
+        admins: ['admin-user-1']
+      };
+
+      for (let i = 0; i < 100; i++) {
+        largeWhitelist.channels.push({
+          channel_id: `channel-${i}`,
+          channel_name: `#channel-${i}`,
+          added_by: 'admin-user-1',
+          added_at: new Date().toISOString(),
+          status: i % 10 === 0 ? 'revoked' : 'active' // Every 10th is revoked
+        });
+      }
+
+      fs.writeFileSync(testWhitelistPath, JSON.stringify(largeWhitelist, null, 2));
+      whitelistManager.cache = null;
+
+      const startTime = Date.now();
+
+      // Check first channel
+      const result1 = whitelistManager.isChannelAllowed('channel-0');
+
+      // Check middle channel
+      const result2 = whitelistManager.isChannelAllowed('channel-50');
+
+      // Check last channel
+      const result3 = whitelistManager.isChannelAllowed('channel-99');
+
+      const elapsed = Date.now() - startTime;
+
+      assert.strictEqual(result1, false, 'Revoked channel should be rejected');
+      assert.strictEqual(result2, false, 'Revoked channel should be rejected');
+      assert.strictEqual(result3, true, 'Active channel should be allowed');
+      assert.strictEqual(elapsed < 100, true, 'Should complete in <100ms');
+    });
+
+    it('should handle whitelist with many admins efficiently', () => {
+      const largeWhitelist = {
+        channels: [],
+        admins: Array.from({ length: 50 }, (_, i) => `admin-${i}`)
+      };
+
+      fs.writeFileSync(testWhitelistPath, JSON.stringify(largeWhitelist, null, 2));
+      whitelistManager.cache = null;
+
+      const startTime = Date.now();
+
+      const result1 = whitelistManager.isAdmin('admin-0');
+      const result2 = whitelistManager.isAdmin('admin-49');
+      const result3 = whitelistManager.isAdmin('not-admin');
+
+      const elapsed = Date.now() - startTime;
+
+      assert.strictEqual(result1, true, 'First admin should be validated');
+      assert.strictEqual(result2, true, 'Last admin should be validated');
+      assert.strictEqual(result3, false, 'Non-admin should be rejected');
+      assert.strictEqual(elapsed < 50, true, 'Should complete in <50ms');
+    });
+  });
+
+  describe('Edge Cases - Special Characters', () => {
+    it('should handle channel names with special characters', () => {
+      const specialWhitelist = {
+        channels: [
+          {
+            channel_id: 'special-channel-1',
+            channel_name: '#ops-team_2025',
+            added_by: 'admin-user-1',
+            added_at: new Date().toISOString(),
+            status: 'active'
+          },
+          {
+            channel_id: 'special-channel-2',
+            channel_name: '#engineering-&-ops',
+            added_by: 'admin-user-1',
+            added_at: new Date().toISOString(),
+            status: 'active'
+          }
+        ],
+        admins: ['admin-user-1']
+      };
+
+      fs.writeFileSync(testWhitelistPath, JSON.stringify(specialWhitelist, null, 2));
+      whitelistManager.cache = null;
+
+      const result1 = whitelistManager.isChannelAllowed('special-channel-1');
+      const result2 = whitelistManager.isChannelAllowed('special-channel-2');
+
+      assert.strictEqual(result1, true, 'Channel with underscore/numbers should work');
+      assert.strictEqual(result2, true, 'Channel with ampersand should work');
+    });
+
+    it('should handle admin IDs with special formats', () => {
+      const specialWhitelist = {
+        channels: [],
+        admins: ['29:admin-123', 'user@domain.com', 'admin_2025']
+      };
+
+      fs.writeFileSync(testWhitelistPath, JSON.stringify(specialWhitelist, null, 2));
+      whitelistManager.cache = null;
+
+      const result1 = whitelistManager.isAdmin('29:admin-123');
+      const result2 = whitelistManager.isAdmin('user@domain.com');
+      const result3 = whitelistManager.isAdmin('admin_2025');
+
+      assert.strictEqual(result1, true, 'MS Teams format ID should work');
+      assert.strictEqual(result2, true, 'Email format ID should work');
+      assert.strictEqual(result3, true, 'Underscore ID should work');
+    });
+  });
+
+  describe('Edge Cases - File System Errors', () => {
+    it('should handle whitelist file with only whitespace', () => {
+      fs.writeFileSync(testWhitelistPath, '   \n  \t  \n  ');
+      whitelistManager.cache = null;
+
+      try {
+        whitelistManager.isChannelAllowed('any-channel');
+        assert.fail('Should have thrown error for whitespace-only file');
+      } catch (error) {
+        assert.strictEqual(error instanceof SyntaxError, true, 'Should throw parse error');
+      }
+    });
+
+    it('should handle empty whitelist file', () => {
+      fs.writeFileSync(testWhitelistPath, '');
+      whitelistManager.cache = null;
+
+      try {
+        whitelistManager.isChannelAllowed('any-channel');
+      } catch (error) {
+        // Expected - empty file cannot be parsed
+        assert.strictEqual(error instanceof SyntaxError || error instanceof Error, true);
+      }
+    });
+
+    it('should handle whitelist with empty channel objects', () => {
+      const emptyChannelWhitelist = {
+        channels: [
+          {}, // Empty channel object
+          { channel_id: 'valid-channel', status: 'active' }
+        ],
+        admins: ['admin-user-1']
+      };
+
+      fs.writeFileSync(testWhitelistPath, JSON.stringify(emptyChannelWhitelist, null, 2));
+      whitelistManager.cache = null;
+
+      const result1 = whitelistManager.isChannelAllowed('');
+      const result2 = whitelistManager.isChannelAllowed('valid-channel');
+
+      assert.strictEqual(result1, false, 'Empty channel should be rejected');
+      assert.strictEqual(result2, true, 'Valid channel should be allowed');
+    });
+  });
+
+  describe('Edge Cases - Data Consistency', () => {
+    it('should maintain data consistency after multiple operations', () => {
+      // Perform multiple operations
+      whitelistManager.addChannel('consistency-1', '#cons1', 'admin-user-1');
+      whitelistManager.addChannel('consistency-2', '#cons2', 'admin-user-1');
+      whitelistManager.revokeChannel('consistency-1', 'admin-user-2');
+      whitelistManager.addChannel('consistency-3', '#cons3', 'admin-user-1');
+
+      // Read file directly to verify consistency
+      const fileContent = JSON.parse(fs.readFileSync(testWhitelistPath, 'utf8'));
+
+      const chan1 = fileContent.channels.find(ch => ch.channel_id === 'consistency-1');
+      const chan2 = fileContent.channels.find(ch => ch.channel_id === 'consistency-2');
+      const chan3 = fileContent.channels.find(ch => ch.channel_id === 'consistency-3');
+
+      assert.strictEqual(chan1.status, 'revoked', 'Channel 1 should be revoked');
+      assert.strictEqual(chan2.status, 'active', 'Channel 2 should be active');
+      assert.strictEqual(chan3.status, 'active', 'Channel 3 should be active');
+
+      // Total should be original 3 + 3 new = 6
+      assert.strictEqual(fileContent.channels.length, 6, 'Should have 6 total channels');
+    });
+
+    it('should preserve existing channels when adding new ones', () => {
+      const initialChannelCount = mockWhitelist.channels.length;
+
+      whitelistManager.addChannel('preserve-test', '#preserve', 'admin-user-1');
+
+      const fileContent = JSON.parse(fs.readFileSync(testWhitelistPath, 'utf8'));
+
+      assert.strictEqual(
+        fileContent.channels.length,
+        initialChannelCount + 1,
+        'Should preserve existing channels'
+      );
+
+      // Verify original channels still exist
+      const originalChannel = fileContent.channels.find(ch => ch.channel_id === 'test-channel-1');
+      assert.notStrictEqual(originalChannel, undefined, 'Original channel should still exist');
+    });
+  });
 });
 
 // Run tests if executed directly

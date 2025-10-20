@@ -1,0 +1,143 @@
+{
+  "metadata": {
+    "description": "Baseline validation queries for AI agent performance testing (NFR-016)",
+    "version": "1.0.0",
+    "created": "2025-10-15",
+    "total_queries": 50,
+    "categories": 5,
+    "queries_per_category": 10
+  },
+  "categories": {
+    "document_code_queries": {
+      "description": "Queries with specific document codes (BMS-XXX-YYY-###) - expect search_hybrid tool",
+      "expected_tool": "search_hybrid",
+      "queries": [
+        "Find document BMS-SAF-BRK-001",
+        "Show me BMS-NET-VLN-042",
+        "What is in BMS-FLT-OPS-123?",
+        "Search for BMS-TRN-EMG-005",
+        "Retrieve BMS-COM-SIG-078",
+        "I need BMS-PWR-SUP-019",
+        "Look up BMS-DOC-REF-201",
+        "Get BMS-MNT-SCH-067",
+        "Display BMS-SAF-PRO-099",
+        "Open BMS-SYS-CFG-034"
+      ]
+    },
+    "procedural_how_to_queries": {
+      "description": "How-to procedural questions - expect ask_bms tool",
+      "expected_tool": "ask_bms",
+      "queries": [
+        "How do I activate the emergency brake system?",
+        "How to configure VLAN settings for train communications?",
+        "How do I perform a brake test on Class 395 trains?",
+        "How to troubleshoot signal failures?",
+        "How do I reset the traction control system?",
+        "How to conduct pre-departure safety checks?",
+        "How do I report a track defect?",
+        "How to calibrate speed sensors?",
+        "How do I handle passenger emergencies?",
+        "How to perform routine maintenance on doors?"
+      ]
+    },
+    "conceptual_what_is_queries": {
+      "description": "Conceptual 'what is' exploratory questions - expect search_semantic tool",
+      "expected_tool": "search_semantic",
+      "queries": [
+        "What is the emergency brake procedure?",
+        "What are VLAN configurations used for?",
+        "What is traction control in railway systems?",
+        "What are the safety protocols for tunnels?",
+        "What is automatic train protection?",
+        "What are the requirements for driver certification?",
+        "What is regenerative braking?",
+        "What are the components of the signaling system?",
+        "What is the difference between ATO and ATP?",
+        "What are the fire safety requirements?"
+      ]
+    },
+    "metadata_queries": {
+      "description": "Author, date, version, department filtering queries - expect search_metadata tool",
+      "expected_tool": "search_metadata",
+      "queries": [
+        "Who wrote the safety manual?",
+        "When was the brake procedure document last updated?",
+        "What version is the current operations guide?",
+        "Show me all documents from the safety department",
+        "What documents were created in 2024?",
+        "Who authored document BMS-SAF-BRK-001?",
+        "What is the revision history for the maintenance guide?",
+        "Show me version 2.0 of the emergency procedures",
+        "What documents were updated by John Smith?",
+        "List all documents published after January 2024"
+      ]
+    },
+    "edge_cases": {
+      "description": "Compound questions, ambiguous queries, out-of-scope - various tool behaviors",
+      "expected_tool": "varies",
+      "queries": [
+        {
+          "query": "Who wrote document BMS-SAF-BRK-001 and what changed in version 2.0?",
+          "description": "Compound question requiring 2 tool calls (search_metadata)",
+          "expected_behavior": "Agent decomposes into 2 calls: author lookup + version comparison"
+        },
+        {
+          "query": "brake",
+          "description": "Single word, unclear query",
+          "expected_behavior": "Agent asks for clarification (clarity_score < 0.60)"
+        },
+        {
+          "query": "How does it work?",
+          "description": "Ambiguous pronoun without context",
+          "expected_behavior": "Agent asks for clarification"
+        },
+        {
+          "query": "What are the emergency procedures for both Class 395 and Class 465 trains?",
+          "description": "Multi-topic query",
+          "expected_behavior": "Single search_semantic call with broad query"
+        },
+        {
+          "query": "Find documents about brakes and VLAN and safety",
+          "description": "Multi-topic document search",
+          "expected_behavior": "Single search_hybrid call with combined keywords"
+        },
+        {
+          "query": "What is the weather forecast for tomorrow?",
+          "description": "Out-of-scope query (not railway documentation)",
+          "expected_behavior": "Agent responds 'I can only answer questions about BMS railway documentation'"
+        },
+        {
+          "query": "Explain BMS-SAF-BRK-001 section 3.2 in detail",
+          "description": "Specific document section with explanation request",
+          "expected_behavior": "search_hybrid (document code) then ask_bms (explanation)"
+        },
+        {
+          "query": "Compare the brake procedures for Class 395 versus Class 465",
+          "description": "Comparative analysis query",
+          "expected_behavior": "ask_bms (analytical question requiring interpretation)"
+        },
+        {
+          "query": "What changed between version 1.0 and version 3.0 of the safety manual?",
+          "description": "Version comparison without document code",
+          "expected_behavior": "search_metadata (version comparison functionality)"
+        },
+        {
+          "query": "Show me the latest version of all emergency procedures",
+          "description": "Latest version filter query",
+          "expected_behavior": "search_metadata (version filtering + emergency keyword)"
+        }
+      ]
+    }
+  },
+  "validation_criteria": {
+    "p95_response_time_ms": 30000,
+    "tool_selection_accuracy_percent": 90,
+    "duplicate_tool_call_rate_percent": 5,
+    "timeout_rate_percent": 2
+  },
+  "usage": {
+    "test_file": "/workspace/002-n8n/tests/performance/agent-performance-test.js",
+    "task_reference": "T041",
+    "requirement": "NFR-016"
+  }
+}
