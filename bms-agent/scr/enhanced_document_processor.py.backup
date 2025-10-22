@@ -205,11 +205,8 @@ class ContextualRetrievalEngine:
                               chunk: str,
                               chunk_index: int,
                               total_chunks: int,
-                              all_chunks: List[Dict] = None) -> Dict[str, Any]:
-        """
-        Generate context for a chunk using document understanding
-        Returns: Dict with 'content' and 'context_metadata' keys
-        """
+                              all_chunks: List[Dict] = None) -> str:
+        """Generate context for a chunk using document understanding"""
 
         # Extract document context
         doc_title = document.get('title', 'Unknown Document')
@@ -223,43 +220,35 @@ class ContextualRetrievalEngine:
         else:
             prev_chunk = ""
             next_chunk = ""
-
+        
+        # Generate contextual description
+        context_parts = []
+        
+        # Document context
+        context_parts.append(f"Document: {doc_title} ({doc_type})")
+        
+        if doc_summary:
+            context_parts.append(f"Summary: {doc_summary[:200]}")
+        
+        # Position context
+        context_parts.append(f"Section {chunk_index + 1} of {total_chunks}")
+        
         # Content summary
         chunk_summary = self._summarize_chunk(chunk)
-
-        # Store context as structured metadata instead of prepending to content
-        context_metadata = {
-            'document_title': doc_title,
-            'document_type': doc_type,
-            'document_summary': doc_summary[:200] if doc_summary else None,
-            'chunk_position': chunk_index + 1,
-            'total_chunks': total_chunks,
-            'chunk_summary': chunk_summary,
-            'preceding_topics': self._extract_key_topics(prev_chunk) if prev_chunk else None,
-            'following_topics': self._extract_key_topics(next_chunk) if next_chunk else None
-        }
-
-        # Generate context string for backwards compatibility (can be used in embeddings if needed)
-        context_parts = [
-            f"Document: {doc_title} ({doc_type})",
-            f"Section {chunk_index + 1} of {total_chunks}",
-            f"Content: {chunk_summary}"
-        ]
-        if doc_summary:
-            context_parts.insert(1, f"Summary: {doc_summary[:200]}")
+        context_parts.append(f"Content: {chunk_summary}")
+        
+        # Relationship to surrounding content
         if prev_chunk:
-            context_parts.append(f"Follows: {context_metadata['preceding_topics']}")
+            context_parts.append(f"Follows discussion of: {self._extract_key_topics(prev_chunk)}")
         if next_chunk:
-            context_parts.append(f"Precedes: {context_metadata['following_topics']}")
-
-        context_string = " | ".join(context_parts)
-
-        # Return content unchanged, with context as metadata
-        return {
-            'content': chunk,  # Original content, no bloat
-            'context_metadata': context_metadata,
-            'context_string': context_string  # For optional use in embeddings
-        }
+            context_parts.append(f"Precedes discussion of: {self._extract_key_topics(next_chunk)}")
+        
+        context = " | ".join(context_parts)
+        
+        # Add context to chunk
+        enhanced_chunk = f"<context>\n{context}\n</context>\n\n{chunk}"
+        
+        return enhanced_chunk
     
     def _summarize_chunk(self, chunk: str) -> str:
         """Generate a brief summary of chunk content"""
@@ -611,75 +600,24 @@ class HierarchicalChunkingEngine:
         return chunks
     
     def _create_child_chunks(self, parent_content: str) -> List[Dict]:
-        """Create child chunks from parent content, respecting sentence boundaries"""
+        """Create child chunks from parent content"""
         child_size = self.config.child_chunk_size
-        overlap = min(50, child_size // 4)  # 25% overlap or 50 chars
-
+        
+        # Create overlapping child chunks
         children = []
-
-        if NLTK_AVAILABLE:
-            # Use sentence-aware chunking (respects sentence boundaries)
-            sentences = sent_tokenize(parent_content)
-            current_chunk = []
-            current_size = 0
-            position = 0
-
-            for sent in sentences:
-                sent_len = len(sent)
-
-                # If adding this sentence exceeds size and we have content, finalize chunk
-                if current_size + sent_len > child_size and current_chunk:
-                    chunk_content = ' '.join(current_chunk)
-                    if len(chunk_content.strip()) > self.config.min_chunk_size:
-                        children.append({
-                            'content': chunk_content,
-                            'metadata': {
-                                'position_in_parent': position,
-                                'type': 'child_chunk'
-                            }
-                        })
-
-                    # Start new chunk with overlap (keep last few sentences)
-                    overlap_sentences = []
-                    overlap_size = 0
-                    for prev_sent in reversed(current_chunk):
-                        if overlap_size + len(prev_sent) <= overlap:
-                            overlap_sentences.insert(0, prev_sent)
-                            overlap_size += len(prev_sent)
-                        else:
-                            break
-
-                    position += current_size - overlap_size
-                    current_chunk = overlap_sentences + [sent]
-                    current_size = overlap_size + sent_len
-                else:
-                    current_chunk.append(sent)
-                    current_size += sent_len
-
-            # Add final chunk
-            if current_chunk:
-                chunk_content = ' '.join(current_chunk)
-                if len(chunk_content.strip()) > self.config.min_chunk_size:
-                    children.append({
-                        'content': chunk_content,
-                        'metadata': {
-                            'position_in_parent': position,
-                            'type': 'child_chunk'
-                        }
-                    })
-        else:
-            # Fallback to character-based chunking if NLTK not available
-            for i in range(0, len(parent_content), child_size - overlap):
-                chunk = parent_content[i:i + child_size]
-                if len(chunk.strip()) > self.config.min_chunk_size:
-                    children.append({
-                        'content': chunk,
-                        'metadata': {
-                            'position_in_parent': i,
-                            'type': 'child_chunk'
-                        }
-                    })
-
+        overlap = min(50, child_size // 4)  # 25% overlap or 50 chars
+        
+        for i in range(0, len(parent_content), child_size - overlap):
+            chunk = parent_content[i:i + child_size]
+            if len(chunk.strip()) > self.config.min_chunk_size:
+                children.append({
+                    'content': chunk,
+                    'metadata': {
+                        'position_in_parent': i,
+                        'type': 'child_chunk'
+                    }
+                })
+        
         return children
     
     def _split_text(self, text: str, size: int) -> List[str]:
@@ -1426,19 +1364,15 @@ class QualityValidationEngine:
     
     def __init__(self, config: ProcessingConfig):
         self.config = config
-
-        # Quality thresholds - LOWERED from strict research-grade (95%+) to practical production levels
-        # These thresholds are now advisory; primary validation uses overall_score
+        
+        # Quality thresholds
         self.thresholds = {
-            'faithfulness': float(os.getenv('BMS_QUALITY_FAITHFULNESS', '0.60')),     # Was 0.95
-            'answer_relevancy': float(os.getenv('BMS_QUALITY_RELEVANCY', '0.55')),   # Was 0.90
-            'context_precision': float(os.getenv('BMS_QUALITY_PRECISION', '0.55')),  # Was 0.85
-            'context_recall': float(os.getenv('BMS_QUALITY_RECALL', '0.50')),        # Was 0.80
-            'semantic_similarity': float(os.getenv('BMS_QUALITY_SIMILARITY', '0.50')) # Was 0.75
+            'faithfulness': 0.95,
+            'answer_relevancy': 0.90,
+            'context_precision': 0.85,
+            'context_recall': 0.80,
+            'semantic_similarity': 0.75
         }
-
-        # Validation mode: 'strict' (all thresholds) or 'balanced' (overall_score only)
-        self.validation_mode = os.getenv('BMS_QUALITY_VALIDATION_MODE', 'balanced')
     
     def validate_chunk_quality(self, 
                               chunk: Dict[str, Any], 
@@ -1471,28 +1405,21 @@ class QualityValidationEngine:
         }
         
         overall_score = sum(
-            metrics[metric] * weight
+            metrics[metric] * weight 
             for metric, weight in weighted_scores.items()
         )
-
+        
         # Check if passes quality thresholds
-        # Mode 'balanced' (default): Use overall_score only, individual thresholds are advisory
-        # Mode 'strict': All individual thresholds must pass (original behavior)
-        if self.validation_mode == 'strict':
-            passes_quality = all(
-                metrics[metric] >= threshold
-                for metric, threshold in self.thresholds.items()
-                if metric in metrics
-            )
-        else:  # 'balanced' mode (default)
-            # Use overall_score with config threshold (default 70%)
-            passes_quality = overall_score >= (self.config.min_quality_score / 100.0)
-
+        passes_quality = all(
+            metrics[metric] >= threshold 
+            for metric, threshold in self.thresholds.items()
+            if metric in metrics
+        )
+        
         return {
             'metrics': metrics,
-            'overall_score': overall_score * 100,  # Convert to percentage for display
+            'overall_score': overall_score,
             'passes_quality': passes_quality,
-            'validation_mode': self.validation_mode,
             'failed_metrics': [
                 metric for metric, threshold in self.thresholds.items()
                 if metric in metrics and metrics[metric] < threshold
@@ -1971,20 +1898,14 @@ class EnhancedDocumentProcessor:
                     quality = self.quality_validator.validate_chunk_quality(
                         chunk, content
                     )
-
-                    # Quality validation now uses 'balanced' mode by default (overall_score only)
-                    # Pass if quality validation passes (which checks overall_score in balanced mode)
-                    if quality['passes_quality']:
+                    
+                    if quality['passes_quality'] or quality['overall_score'] >= self.config.min_quality_score:
                         chunk['quality'] = quality
                         validated_chunks.append(chunk)
                         quality_report['passed_chunks'] += 1
                     else:
                         quality_report['failed_chunks'] += 1
-                        # Log why chunk failed for debugging
-                        logger.debug(f"Chunk failed quality: score={quality['overall_score']:.1f}%, "
-                                   f"mode={quality['validation_mode']}, "
-                                   f"failed_metrics={quality['failed_metrics']}")
-
+                    
                     total_score += quality['overall_score']
                 
                 quality_report['average_quality'] = total_score / len(chunks) if chunks else 0
@@ -2206,37 +2127,27 @@ class EnhancedDocumentProcessor:
         else:
             return 'numbered'
 
-    def _apply_contextual_retrieval(self,
-                                   chunks: List[Dict],
+    def _apply_contextual_retrieval(self, 
+                                   chunks: List[Dict], 
                                    document: Dict) -> List[Dict]:
-        """
-        Apply contextual retrieval to chunks
-        Stores context as metadata instead of modifying content
-        """
-
+        """Apply contextual retrieval to chunks"""
+        
         enhanced_chunks = []
         total_chunks = len(chunks)
-
+        
         for i, chunk in enumerate(chunks):
-            context_result = self.contextual_engine.generate_chunk_context(
+            enhanced_content = self.contextual_engine.generate_chunk_context(
                 document,
                 chunk.get('content', ''),
                 i,
                 total_chunks,
                 chunks  # Pass all chunks for context
             )
-
-            # Store context as metadata, don't modify content
-            if 'metadata' not in chunk:
-                chunk['metadata'] = {}
-
-            chunk['metadata']['context'] = context_result['context_metadata']
-            chunk['metadata']['context_string'] = context_result['context_string']
+            
+            chunk['content'] = enhanced_content
             chunk['has_context'] = True
-
-            # Content remains unchanged (no bloat)
             enhanced_chunks.append(chunk)
-
+        
         return enhanced_chunks
 
 # =============================
