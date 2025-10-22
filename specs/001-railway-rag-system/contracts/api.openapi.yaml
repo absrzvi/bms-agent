@@ -1,0 +1,743 @@
+openapi: 3.0.3
+info:
+  title: BMS Agent - Railway Documentation RAG System API
+  description: |
+    API for semantic search and document management in railway technical documentation.
+
+    **Features**:
+    - Multi-format document upload (PDF, DOCX, PPTX, XLSX, CSV, TXT, MD)
+    - Hierarchical chunking with quality validation
+    - Semantic, hybrid, and hierarchical search modes
+    - Department and railway-specific metadata filtering
+    - Basic operational metrics and health checks
+
+    **Authentication**: Optional API key via X-API-Key header (configurable)
+  version: 1.0.0
+  contact:
+    name: BMS Agent Support
+    email: support@example.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: http://localhost:8000
+    description: Local development server
+  - url: https://api.bms-agent.example.com
+    description: Production server (if applicable)
+
+security:
+  - ApiKeyAuth: []
+  - {}  # Allow anonymous access when API key is disabled
+
+tags:
+  - name: Document Upload
+    description: Document ingestion endpoints
+  - name: Search
+    description: Semantic and hybrid search endpoints
+  - name: Health & Metrics
+    description: Service health checks and operational metrics
+
+paths:
+  /api/v1/upload:
+    post:
+      tags:
+        - Document Upload
+      summary: Upload single document
+      description: |
+        Upload a single document for processing and indexing.
+        Processing happens asynchronously in the background.
+
+        **Supported formats**: PDF, DOCX, PPTX, XLSX, CSV, TXT, MD
+        **Max size**: 100MB
+      operationId: uploadDocument
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - file
+                - department
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: Document file to upload
+                department:
+                  type: string
+                  description: Department owning this document
+                  example: Safety
+                category:
+                  type: string
+                  description: Optional document category
+                  example: Manuals
+                fleet_type:
+                  type: string
+                  description: Optional railway fleet type (DMU, EMU, Locomotive, etc.)
+                  example: EMU
+                train_id:
+                  type: string
+                  description: Optional train identifier
+                standard_compliance:
+                  type: array
+                  items:
+                    type: string
+                  description: Optional compliance standards
+                  example: ["EN 50126", "ISO 9001"]
+                network_component:
+                  type: string
+                  description: Optional network component
+                  example: signaling
+      responses:
+        '202':
+          description: Document accepted for processing
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UploadResponse'
+        '413':
+          description: File size exceeds 100MB limit
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '400':
+          description: Invalid request (unsupported format, missing required fields)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized (API key required but not provided)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/v1/batch-upload:
+    post:
+      tags:
+        - Document Upload
+      summary: Batch upload documents by department
+      description: |
+        Upload multiple documents for a department.
+        Returns job ID for tracking progress.
+      operationId: batchUpload
+      parameters:
+        - name: department
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Department for batch upload
+          example: Safety
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - files
+              properties:
+                files:
+                  type: array
+                  items:
+                    type: string
+                    format: binary
+                  description: Multiple files to upload
+      responses:
+        '202':
+          description: Batch upload accepted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BatchUploadResponse'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/v1/search/semantic:
+    post:
+      tags:
+        - Search
+      summary: Semantic search
+      description: |
+        Perform pure semantic search using vector similarity.
+        Returns top-k results ranked by cosine similarity.
+      operationId: semanticSearch
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SearchRequest'
+            examples:
+              basic:
+                summary: Basic query
+                value:
+                  query: "emergency braking procedures"
+                  limit: 10
+              filtered:
+                summary: Department-filtered query
+                value:
+                  query: "maintenance schedules"
+                  limit: 10
+                  filter_department: "Maintenance"
+                  filter_fleet_type: "EMU"
+      responses:
+        '200':
+          description: Search results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SearchResponse'
+        '400':
+          description: Invalid query
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/v1/search/hybrid:
+    post:
+      tags:
+        - Search
+      summary: Hybrid search (semantic + keyword)
+      description: |
+        Combine semantic and keyword search using Reciprocal Rank Fusion (RRF).
+        Alpha parameter controls weight: 0=keyword only, 1=semantic only, 0.5=balanced.
+      operationId: hybridSearch
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/SearchRequest'
+                - type: object
+                  properties:
+                    alpha:
+                      type: number
+                      format: float
+                      minimum: 0.0
+                      maximum: 1.0
+                      default: 0.5
+                      description: Weight for semantic vs keyword (0=keyword, 1=semantic)
+                      example: 0.7
+            examples:
+              semantic_heavy:
+                summary: Semantic-heavy hybrid search
+                value:
+                  query: "train safety protocols"
+                  alpha: 0.8
+                  limit: 10
+              keyword_heavy:
+                summary: Keyword-heavy for technical terms
+                value:
+                  query: "EMU-750 specifications"
+                  alpha: 0.3
+                  limit: 10
+      responses:
+        '200':
+          description: Hybrid search results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SearchResponse'
+
+  /api/v1/search/hierarchical:
+    post:
+      tags:
+        - Search
+      summary: Hierarchical search (child → parent)
+      description: |
+        Search child chunks but return parent chunks for broader context.
+        Useful for detailed queries needing surrounding information.
+      operationId: hierarchicalSearch
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SearchRequest'
+      responses:
+        '200':
+          description: Hierarchical search results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SearchResponse'
+
+  /api/v1/search/railway:
+    post:
+      tags:
+        - Search
+      summary: Railway-specific filtered search
+      description: |
+        Search with railway-specific metadata filters:
+        fleet_type, train_id, standard_compliance, network_component.
+      operationId: railwaySearch
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RailwaySearchRequest'
+            examples:
+              fleet_filtered:
+                summary: Search EMU documentation
+                value:
+                  query: "maintenance intervals"
+                  filter_fleet_type: "EMU"
+                  limit: 10
+              standard_compliance:
+                summary: Search EN 50126 compliant docs
+                value:
+                  query: "reliability requirements"
+                  filter_standard_compliance: "EN 50126"
+                  limit: 10
+      responses:
+        '200':
+          description: Railway search results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SearchResponse'
+
+  /health:
+    get:
+      tags:
+        - Health & Metrics
+      summary: Service health check
+      description: |
+        Overall health status including API, Qdrant, and embedding service connectivity.
+        Includes basic operational metrics.
+      operationId: healthCheck
+      security: []  # No auth required for health checks
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+        '503':
+          description: Service is unhealthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+
+  /health/qdrant:
+    get:
+      tags:
+        - Health & Metrics
+      summary: Qdrant connectivity check
+      description: Check if Qdrant is accessible and collection exists
+      operationId: qdrantHealth
+      security: []
+      responses:
+        '200':
+          description: Qdrant is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: healthy
+                  qdrant_version:
+                    type: string
+                    example: 1.15.5
+                  collection_exists:
+                    type: boolean
+                    example: true
+                  collection_size:
+                    type: integer
+                    example: 15000
+        '503':
+          description: Qdrant is unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /health/embedding:
+    get:
+      tags:
+        - Health & Metrics
+      summary: Embedding service check
+      description: Check if embedding service (sentence-transformers or Ollama) is loaded and responsive
+      operationId: embeddingHealth
+      security: []
+      responses:
+        '200':
+          description: Embedding service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: healthy
+                  model_name:
+                    type: string
+                    example: all-mpnet-base-v2
+                  service_type:
+                    type: string
+                    example: sentence-transformers
+                  embedding_dimension:
+                    type: integer
+                    example: 768
+        '503':
+          description: Embedding service is unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /metrics:
+    get:
+      tags:
+        - Health & Metrics
+      summary: Operational metrics
+      description: |
+        Basic operational metrics including request counts, latency percentiles,
+        error rates, and processing queue depths.
+      operationId: getMetrics
+      security: []
+      responses:
+        '200':
+          description: Metrics retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MetricsResponse'
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+      description: Optional API key for authenticated access
+
+  schemas:
+    UploadResponse:
+      type: object
+      required:
+        - status
+        - document_id
+        - file_path
+      properties:
+        status:
+          type: string
+          enum: [accepted]
+          description: Upload acceptance status
+        document_id:
+          type: string
+          format: uuid
+          description: Unique document identifier
+        file_path:
+          type: string
+          description: Storage path
+          example: /workspace/bms-agent/upload-files/Safety/manual.pdf
+        job_id:
+          type: string
+          format: uuid
+          description: Background processing job ID
+        message:
+          type: string
+          example: Document uploaded, processing in background
+
+    BatchUploadResponse:
+      type: object
+      required:
+        - status
+        - batch_id
+        - file_count
+      properties:
+        status:
+          type: string
+          enum: [accepted]
+        batch_id:
+          type: string
+          format: uuid
+        file_count:
+          type: integer
+          example: 25
+        message:
+          type: string
+          example: Batch upload accepted, processing 25 documents
+
+    SearchRequest:
+      type: object
+      required:
+        - query
+      properties:
+        query:
+          type: string
+          minLength: 3
+          maxLength: 1000
+          description: Natural language search query
+          example: emergency braking procedures
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 10
+          description: Number of results to return
+        filter_department:
+          type: string
+          description: Filter by department
+          example: Safety
+        filter_category:
+          type: string
+          description: Filter by category
+        filter_document_name:
+          type: string
+          description: Filter by document name
+        filter_chapter_number:
+          type: string
+          description: Filter by chapter number
+          example: "5.2.1"
+
+    RailwaySearchRequest:
+      allOf:
+        - $ref: '#/components/schemas/SearchRequest'
+        - type: object
+          properties:
+            filter_fleet_type:
+              type: string
+              description: Filter by fleet type
+              example: EMU
+            filter_train_id:
+              type: string
+              description: Filter by train ID
+            filter_standard_compliance:
+              type: string
+              description: Filter by compliance standard
+              example: EN 50126
+            filter_network_component:
+              type: string
+              description: Filter by network component
+              example: signaling
+
+    SearchResponse:
+      type: object
+      required:
+        - query
+        - results
+        - total_results
+        - search_time_ms
+      properties:
+        query:
+          type: string
+          description: Original search query
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/SearchResult'
+        total_results:
+          type: integer
+          description: Number of results returned
+          example: 10
+        search_time_ms:
+          type: number
+          format: float
+          description: Search latency in milliseconds
+          example: 145.2
+        search_mode:
+          type: string
+          enum: [semantic, hybrid, hierarchical, railway_specific]
+          description: Search mode used
+        filters_applied:
+          type: object
+          description: Filters that were applied
+          example:
+            department: Safety
+            fleet_type: EMU
+
+    SearchResult:
+      type: object
+      required:
+        - chunk_id
+        - chunk_text
+        - relevance_score
+        - ranking_position
+        - source_document
+      properties:
+        chunk_id:
+          type: string
+          format: uuid
+        chunk_text:
+          type: string
+          description: Matched chunk content
+        relevance_score:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          description: Cosine similarity or RRF score
+          example: 0.89
+        ranking_position:
+          type: integer
+          minimum: 1
+          description: Result rank (1 = top result)
+          example: 1
+        source_document:
+          type: string
+          description: Document name
+          example: Safety_Manual_2024.pdf
+        chapter_context:
+          type: object
+          properties:
+            chapter_number:
+              type: string
+              example: "5.2.1"
+            chapter_title:
+              type: string
+              example: Emergency Procedures
+            chapter_path:
+              type: string
+              example: "5 > 5.2 > 5.2.1"
+        quality_score:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+          description: Chunk quality score
+          example: 92.5
+        metadata:
+          type: object
+          description: Additional chunk metadata
+          properties:
+            department:
+              type: string
+            category:
+              type: string
+            fleet_type:
+              type: string
+            chunk_index:
+              type: integer
+
+    HealthResponse:
+      type: object
+      required:
+        - status
+        - timestamp
+      properties:
+        status:
+          type: string
+          enum: [healthy, degraded, unhealthy]
+          description: Overall health status
+        timestamp:
+          type: string
+          format: date-time
+        services:
+          type: object
+          properties:
+            api:
+              type: string
+              enum: [up, down]
+            qdrant:
+              type: string
+              enum: [up, down]
+            embedding:
+              type: string
+              enum: [up, down]
+        metrics:
+          type: object
+          properties:
+            request_count:
+              type: integer
+            latency_p95_ms:
+              type: number
+              format: float
+            error_rate:
+              type: number
+              format: float
+
+    MetricsResponse:
+      type: object
+      required:
+        - timestamp
+        - service
+        - metrics
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        service:
+          type: string
+          example: bms-agent-api
+        metrics:
+          type: object
+          properties:
+            request_count:
+              type: integer
+              description: Total requests since startup
+              example: 12450
+            latency_p50:
+              type: number
+              format: float
+              description: 50th percentile latency (ms)
+              example: 120.5
+            latency_p95:
+              type: number
+              format: float
+              description: 95th percentile latency (ms)
+              example: 1850.2
+            latency_p99:
+              type: number
+              format: float
+              description: 99th percentile latency (ms)
+              example: 3200.8
+            error_rate:
+              type: number
+              format: float
+              description: Error rate (0.0-1.0)
+              example: 0.005
+            queue_depth:
+              type: integer
+              description: Current processing queue size
+              example: 3
+        thresholds:
+          type: object
+          properties:
+            latency_p95_threshold_ms:
+              type: number
+              example: 2000
+            error_rate_threshold:
+              type: number
+              example: 0.01
+        health:
+          type: string
+          enum: [healthy, degraded]
+          description: Health status based on thresholds
+
+    Error:
+      type: object
+      required:
+        - error
+        - message
+      properties:
+        error:
+          type: string
+          description: Error type
+          example: ValidationError
+        message:
+          type: string
+          description: Human-readable error message
+          example: Query text must be at least 3 characters
+        details:
+          type: object
+          description: Additional error details

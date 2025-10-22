@@ -59,3 +59,40 @@ Thumbs.db
 .qdrant-initialized
 tmp/
 temp/
+
+# Claude Code agent folder (may contain credentials)
+.claude/
+
+# pytest cache
+.pytest_cache/
+.tox/
+.coverage
+htmlcov/
+*.cover
+.hypothesis/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# pyenv
+.python-version
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pyre type checker
+.pyre/
+
+# Uploaded files (large document repository)
+upload-files/*/
+!upload-files/.gitkeep
+
+# Spec-kit generated files (optional - include if you want specs in git)
+# specs/
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
