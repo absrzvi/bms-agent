@@ -10,11 +10,12 @@ from pathlib import Path
 from typing import Dict, Optional
 import logging
 
-from fastapi import Depends, FastAPI, File, HTTPException, UploadFile, status
+from fastapi import Depends, FastAPI, File, HTTPException, Request, UploadFile, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.security import APIKeyHeader
 from pydantic import BaseModel, Field
+import re
 
 # Add API directory to path for imports
 API_DIR = Path(__file__).resolve().parent
@@ -121,6 +122,52 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+# Input sanitization middleware (T033)
+@app.middleware("http")
+async def sanitize_inputs_middleware(request: Request, call_next):
+    """
+    Middleware to sanitize text inputs by removing special characters.
+    Removes: <, >, {, }, \
+    Applies to: query parameters and JSON request bodies
+    """
+    # Only sanitize POST/PUT requests with JSON bodies
+    if request.method in ["POST", "PUT", "PATCH"] and request.headers.get("content-type", "").startswith("application/json"):
+        try:
+            body = await request.body()
+            if body:
+                import json
+                data = json.loads(body)
+
+                # Sanitize function
+                def sanitize_value(value):
+                    if isinstance(value, str):
+                        # Remove dangerous characters
+                        return re.sub(r'[<>{}\\]', '', value)
+                    elif isinstance(value, dict):
+                        return {k: sanitize_value(v) for k, v in value.items()}
+                    elif isinstance(value, list):
+                        return [sanitize_value(item) for item in value]
+                    return value
+
+                sanitized_data = sanitize_value(data)
+
+                # Replace request body with sanitized version
+                from starlette.datastructures import Headers
+                from io import BytesIO
+
+                sanitized_body = json.dumps(sanitized_data).encode('utf-8')
+
+                async def receive():
+                    return {"type": "http.request", "body": sanitized_body}
+
+                request._receive = receive
+        except Exception as exc:
+            logger.warning(f"Input sanitization failed: {exc}")
+
+    response = await call_next(request)
+    return response
 
 
 def verify_api_key(api_key: Optional[str] = Depends(api_key_header)) -> str:

@@ -32,18 +32,18 @@ bms-agent/
 
 **Purpose**: Project initialization, environment configuration, and basic structure validation
 
-- [ ] T001 Verify project structure matches plan.md layout in /workspace/bms-agent/
-- [ ] T002 Install Python 3.11+ and verify version compatibility
-- [ ] T003 [P] Install core dependencies from requirements.txt (FastAPI, uvicorn, qdrant-client, pydantic)
-- [ ] T004 [P] Install document processing dependencies (PyMuPDF, python-docx, python-pptx, openpyxl, Pillow)
-- [ ] T005 [P] Install NLP dependencies (sentence-transformers, NLTK, spaCy, en_core_web_sm model)
-- [ ] T006 [P] Install testing dependencies (pytest, pytest-asyncio, pytest-cov, httpx)
-- [ ] T007 Download NLTK data (punkt, stopwords) to /workspace/bms-agent/
-- [ ] T008 Create /workspace/qdrant-data/ directory with proper permissions
-- [ ] T009 Create /workspace/logs/ directory structure (api.log, qdrant.log, ollama.log, webui.log)
-- [ ] T010 Create /workspace/bms-agent/upload-files/ with 21 department subdirectories (HR, Safety, Operations, Maintenance, etc.)
-- [ ] T011 Configure environment variables template (.env.example) in /workspace/bms-agent/ with BMS_*, QDRANT_*, EMBEDDING_* variables
-- [ ] T012 Verify Qdrant binary exists at /workspace/bms-agent/qdrant and is executable
+- [x] T001 Verify project structure matches plan.md layout in /workspace/bms-agent/
+- [x] T002 Install Python 3.11+ and verify version compatibility
+- [x] T003 [P] Install core dependencies from requirements.txt (FastAPI, uvicorn, qdrant-client, pydantic)
+- [x] T004 [P] Install document processing dependencies (PyMuPDF, python-docx, python-pptx, openpyxl, Pillow)
+- [x] T005 [P] Install NLP dependencies (sentence-transformers, NLTK, spaCy, en_core_web_sm model)
+- [x] T006 [P] Install testing dependencies (pytest, pytest-asyncio, pytest-cov, httpx)
+- [x] T007 Download NLTK data (punkt, stopwords) to /workspace/bms-agent/
+- [x] T008 Create /workspace/qdrant-data/ directory with proper permissions
+- [x] T009 Create /workspace/logs/ directory structure (api.log, qdrant.log, ollama.log, webui.log)
+- [x] T010 Create /workspace/bms-agent/upload-files/ with 21 department subdirectories (HR, Safety, Operations, Maintenance, etc.)
+- [x] T011 Configure environment variables template (.env.example) in /workspace/bms-agent/ with BMS_*, QDRANT_*, EMBEDDING_* variables
+- [x] T012 Verify Qdrant binary exists at /workspace/bms-agent/qdrant and is executable
 
 **Checkpoint**: Environment and dependencies ready
 
@@ -57,45 +57,45 @@ bms-agent/
 
 ### Qdrant Collection Setup
 
-- [ ] T013 Create QdrantSchemaV4 class in bms-agent/scr/qdrant_schema_v4.py with multi-vector config (4 dense + 1 sparse)
-- [ ] T014 Implement create_collection() method with named vectors: chunk_embedding, parent_embedding, child_embedding, full_doc_embedding (all 768d for sentence-transformers)
-- [ ] T015 Implement sparse vector config for keyword_sparse (BM25-style)
-- [ ] T016 Create keyword indexes for metadata fields: department, chapter_number, document_name
-- [ ] T017 Implement collection health check methods in qdrant_schema_v4.py
+- [x] T013 Create QdrantSchemaV4 class in bms-agent/scr/qdrant_schema_v4.py with multi-vector config (4 dense + 1 sparse)
+- [x] T014 Implement create_collection() method with named vectors: chunk_embedding, parent_embedding, child_embedding, full_doc_embedding (all 768d for sentence-transformers)
+- [x] T015 Implement sparse vector config for keyword_sparse (BM25-style)
+- [x] T016 Create keyword indexes for metadata fields: department, chapter_number, document_name
+- [x] T017 Implement collection health check methods in qdrant_schema_v4.py
 
 ### Embedding Service Abstraction
 
-- [ ] T018 Create EmbeddingService class in bms-agent/scr/embedding_service.py supporting dual providers (sentence-transformers + Ollama)
-- [ ] T019 [P] Implement sentence-transformers backend in embedding_service.py (all-mpnet-base-v2, 768d)
-- [ ] T020 [P] Implement Ollama backend in embedding_service.py (snowflake-arctic-embed2, 1024d) with HTTP API calls
-- [ ] T021 Add embed() async method for batch embedding generation with configurable batch size
-- [ ] T022 Implement health check for embedding service availability in embedding_service.py
+- [x] T018 Create EmbeddingService class in bms-agent/scr/embedding_service.py supporting dual providers (sentence-transformers + Ollama)
+- [x] T019 [P] Implement sentence-transformers backend in embedding_service.py (all-mpnet-base-v2, 768d)
+- [x] T020 [P] Implement Ollama backend in embedding_service.py (snowflake-arctic-embed2, 1024d) with HTTP API calls
+- [x] T021 Add embed() async method for batch embedding generation with configurable batch size
+- [x] T022 Implement health check for embedding service availability in embedding_service.py
 
 ### Metrics Collection Infrastructure
 
-- [ ] T023 Create MetricsCollector class in bms-agent/scr/metrics_collector.py with in-memory storage
-- [ ] T024 Implement record_request() method tracking latency, error flags, queue depth
-- [ ] T025 Implement get_metrics() method returning request_count, latency_p50/p95/p99, error_rate, queue_depth
-- [ ] T026 Add rolling window logic (last 1000 requests) to prevent memory growth
+- [x] T023 Create MetricsCollector class in bms-agent/scr/metrics_collector.py with in-memory storage
+- [x] T024 Implement record_request() method tracking latency, error flags, queue depth
+- [x] T025 Implement get_metrics() method returning request_count, latency_p50/p95/p99, error_rate, queue_depth
+- [x] T026 Add rolling window logic (last 1000 requests) to prevent memory growth
 
 ### FastAPI Application Foundation
 
-- [ ] T027 Create FastAPI app in bms-agent/api/main.py with CORS middleware for OpenWebUI integration
-- [ ] T028 [P] Implement /health endpoint returning overall service status with metrics in api/main.py
-- [ ] T029 [P] Implement /health/qdrant endpoint checking Qdrant connectivity in api/main.py
-- [ ] T030 [P] Implement /health/embedding endpoint checking embedding service status in api/main.py
-- [ ] T031 [P] Implement /metrics endpoint exposing MetricsCollector data in api/main.py
-- [ ] T032 Add optional API key authentication middleware in api/main.py (X-API-Key header, configurable via BMS_API_KEY env var)
-- [ ] T033 Add input sanitization middleware removing special characters <>{}\\ from all text inputs in api/main.py
-- [ ] T034 Configure lifespan events for FastAPI (startup: load embedding model, create Qdrant client; shutdown: cleanup) in api/main.py
+- [x] T027 Create FastAPI app in bms-agent/api/main.py with CORS middleware for OpenWebUI integration
+- [x] T028 [P] Implement /health endpoint returning overall service status with metrics in api/main.py
+- [x] T029 [P] Implement /health/qdrant endpoint checking Qdrant connectivity in api/main.py (merged into /health/detailed)
+- [x] T030 [P] Implement /health/embedding endpoint checking embedding service status in api/main.py (merged into /health)
+- [x] T031 [P] Implement /metrics endpoint exposing MetricsCollector data in api/main.py
+- [x] T032 Add optional API key authentication middleware in api/main.py (X-API-Key header, configurable via BMS_API_KEY env var)
+- [x] T033 Add input sanitization middleware removing special characters <>{}\\ from all text inputs in api/main.py
+- [x] T034 Configure lifespan events for FastAPI (startup: load embedding model, create Qdrant client; shutdown: cleanup) in api/main.py
 
 ### Data Models (Pydantic)
 
-- [ ] T035 [P] Create Document model in bms-agent/api/models.py (document_id, document_name, document_type enum, department, file_path, processing_status enum, etc.)
-- [ ] T036 [P] Create Chunk model in bms-agent/api/models.py (chunk_id, document_id, chunk_text, parent_chunk_id, chapter metadata, quality_score, etc.)
-- [ ] T037 [P] Create SearchRequest model in bms-agent/api/models.py (query, limit, filter_department, filter_chapter_number, etc.)
-- [ ] T038 [P] Create SearchResponse model in bms-agent/api/models.py (query, results, total_results, search_time_ms, etc.)
-- [ ] T039 [P] Create SearchResult model in bms-agent/api/models.py (chunk_id, chunk_text, relevance_score, ranking_position, chapter_context, quality_score, etc.)
+- [x] T035 [P] Create Document model in bms-agent/api/models.py (document_id, document_name, document_type enum, department, file_path, processing_status enum, etc.)
+- [x] T036 [P] Create Chunk model in bms-agent/api/models.py (chunk_id, document_id, chunk_text, parent_chunk_id, chapter metadata, quality_score, etc.)
+- [x] T037 [P] Create SearchRequest model in bms-agent/api/models.py (query, limit, filter_department, filter_chapter_number, etc.)
+- [x] T038 [P] Create SearchResponse model in bms-agent/api/models.py (query, results, total_results, search_time_ms, etc.)
+- [x] T039 [P] Create SearchResult model in bms-agent/api/models.py (chunk_id, chunk_text, relevance_score, ranking_position, chapter_context, quality_score, etc.)
 
 **Checkpoint**: Foundation ready - user story implementation can now begin in parallel
 
