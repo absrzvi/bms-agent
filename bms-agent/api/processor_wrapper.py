@@ -16,7 +16,8 @@ from typing import Any, Dict, Iterable, List, Optional
 
 import httpx
 from qdrant_client import QdrantClient
-from qdrant_client.models import PointStruct
+from qdrant_client.models import PointStruct, Filter, FieldCondition, MatchValue
+from sentence_transformers import SentenceTransformer
 
 # Optional numeric backends for serialization
 try:  # pragma: no cover - optional dependency
@@ -78,9 +79,14 @@ class DocumentProcessorWrapper:
         collection_name: Optional[str] = None,
         processing_config: Optional[ProcessingConfig] = None,
     ) -> None:
-        self.embedding_model = embedding_model or os.getenv("EMBEDDING_MODEL", _DEFAULT_EMBEDDING_MODEL)
-        self.embedding_url = embedding_url or os.getenv("EMBEDDING_URL", _DEFAULT_EMBEDDING_URL)
+        # Use sentence-transformers model name instead of Ollama
+        self.embedding_model_name = embedding_model or os.getenv("EMBEDDING_MODEL", "sentence-transformers/all-mpnet-base-v2")
         self.collection_name = collection_name or os.getenv("QDRANT_COLLECTION", _DEFAULT_COLLECTION)
+
+        # Initialize sentence-transformers model
+        LOGGER.info(f"Loading sentence-transformers model: {self.embedding_model_name}")
+        self.embedder = SentenceTransformer(self.embedding_model_name)
+        LOGGER.info("✅ Embedding model loaded")
 
         qdrant_host = os.getenv("QDRANT_HOST", "localhost")
         qdrant_port = int(os.getenv("QDRANT_PORT", "6333"))
@@ -141,59 +147,148 @@ class DocumentProcessorWrapper:
         sanitized_result["indexed_chunks"] = indexed_chunks
         sanitized_result["chunks_indexed"] = len(indexed_chunks)
         sanitized_result["collection_name"] = self.collection_name
-        sanitized_result["embedding_model"] = self.embedding_model
+        sanitized_result["embedding_model"] = self.embedding_model_name
         if qdrant_error:
             sanitized_result["qdrant_upsert_error"] = qdrant_error
 
         return sanitized_result
 
-    async def search_documents(self, query: str, *, limit: int = 5) -> Dict[str, Any]:
-        """Execute a semantic search against Qdrant using stored embeddings."""
+    async def search_documents(
+        self,
+        query: str,
+        *,
+        limit: int = 5,
+        filters: Optional[Dict[str, Any]] = None
+    ) -> Dict[str, Any]:
+        """Execute a semantic search against Qdrant using stored embeddings.
+
+        Args:
+            query: Search query text
+            limit: Maximum number of results
+            filters: Optional metadata filters (department, category, document_name, etc.)
+        """
         if not query:
             raise ValueError("query must be a non-empty string")
+
+        # Build Qdrant filter from metadata filters
+        query_filter = self._build_filter(filters) if filters else None
 
         embedding = await self.get_embedding(query)
         results = self.qdrant.search(
             collection_name=self.collection_name,
             query_vector=("chunk_embedding", embedding),
             limit=limit,
+            query_filter=query_filter,
             with_payload=True,
             with_vectors=False,
         )
 
-        formatted = [
-            {
+        # Format results to match bms_search.py expectations
+        formatted = []
+        for result in results:
+            payload = dict(result.payload) if result.payload else {}
+            formatted.append({
                 "id": result.id,
                 "score": result.score,
-                "payload": self._sanitize(dict(result.payload)) if result.payload else {},
-            }
-            for result in results
-        ]
+                "text": payload.get("content", ""),  # Add 'text' field from content
+                "metadata": self._sanitize(payload),  # Rename 'payload' to 'metadata'
+            })
 
         return {
             "count": len(formatted),
             "results": formatted,
             "collection_name": self.collection_name,
-            "embedding_model": self.embedding_model,
+            "embedding_model": self.embedding_model_name,
         }
 
+    async def search_documents_hybrid(
+        self,
+        query: str,
+        *,
+        limit: int = 5,
+        alpha: float = 0.5,
+        filters: Optional[Dict[str, Any]] = None
+    ) -> Dict[str, Any]:
+        """Execute hybrid search combining semantic and keyword matching.
+
+        Args:
+            query: Search query text
+            limit: Maximum number of results
+            alpha: Weight for semantic search (0.0=keyword only, 1.0=semantic only)
+            filters: Optional metadata filters
+
+        Note: This is a simplified hybrid implementation. For production,
+        use QdrantSchemaV4.search_hybrid() which has full RRF implementation.
+        """
+        if not query:
+            raise ValueError("query must be a non-empty string")
+
+        # For now, fall back to semantic search with a note
+        # TODO: Integrate proper sparse vector hybrid search when keyword vectors are available
+        LOGGER.info(f"Hybrid search requested (alpha={alpha}), falling back to semantic search")
+
+        return await self.search_documents(query, limit=limit, filters=filters)
+
     async def get_embedding(self, text: str) -> List[float]:
-        """Request an embedding vector from Ollama for the provided text."""
+        """Generate embedding using sentence-transformers."""
         if not text:
             raise ValueError("Cannot embed empty text")
 
-        async with httpx.AsyncClient(timeout=float(os.getenv("EMBEDDING_TIMEOUT_SECONDS", "60"))) as client:
-            response = await client.post(
-                self.embedding_url,
-                json={"model": self.embedding_model, "prompt": text},
-            )
-            response.raise_for_status()
-            data = response.json()
+        # Run encoding in thread pool to avoid blocking
+        loop = asyncio.get_running_loop()
+        embedding = await loop.run_in_executor(
+            None,
+            lambda: self.embedder.encode(text, convert_to_tensor=False, show_progress_bar=False)
+        )
 
-        embedding = data.get("embedding")
-        if not isinstance(embedding, list):
-            raise RuntimeError("Embedding response did not include a valid vector")
-        return embedding
+        return embedding.tolist()
+
+    def _build_filter(self, filters: Dict[str, Any]) -> Optional[Filter]:
+        """Build Qdrant Filter from metadata filters dict.
+
+        Args:
+            filters: Dict of field:value pairs to filter on
+                Supported fields: department, category, document_name, document_type, chunk_type
+                Multiple values for same field use OR logic, different fields use AND logic
+
+        Returns:
+            Qdrant Filter object or None if no valid filters
+        """
+        if not filters:
+            return None
+
+        must_conditions = []
+
+        # Handle each filter field
+        for field, value in filters.items():
+            if value is None:
+                continue
+
+            # Support both single values and lists
+            if isinstance(value, list) and len(value) > 1:
+                # Multiple values for same field - use OR logic (should)
+                should_conditions = [
+                    FieldCondition(key=field, match=MatchValue(value=v))
+                    for v in value
+                ]
+                # Wrap in a sub-filter with OR logic
+                must_conditions.append(Filter(should=should_conditions))
+            elif isinstance(value, list) and len(value) == 1:
+                # Single value in a list
+                must_conditions.append(
+                    FieldCondition(key=field, match=MatchValue(value=value[0]))
+                )
+            else:
+                # Single value
+                must_conditions.append(
+                    FieldCondition(key=field, match=MatchValue(value=value))
+                )
+
+        if not must_conditions:
+            return None
+
+        # Return filter with AND logic across different fields
+        return Filter(must=must_conditions)
 
     # ------------------------------------------------------------------
     # Internal helpers

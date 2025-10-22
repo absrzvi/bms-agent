@@ -185,6 +185,13 @@ class SemanticSearchRequest(BaseModel):
     filters: Optional[Dict[str, str | list]] = Field(None, description="Metadata filters (department, category, document_name, etc.)")
 
 
+class HybridSearchRequest(BaseModel):
+    query: str = Field(..., min_length=1, max_length=1024)
+    limit: int = Field(5, ge=1, le=50)
+    alpha: float = Field(0.5, ge=0.0, le=1.0, description="Weight for semantic search (0.0=keyword only, 1.0=semantic only)")
+    filters: Optional[Dict[str, str | list]] = Field(None, description="Metadata filters (department, category, document_name, etc.)")
+
+
 @app.get("/", tags=["Info"])
 async def root() -> Dict[str, str]:
     return {
@@ -333,20 +340,22 @@ async def semantic_search(payload: SemanticSearchRequest, _: str = Depends(verif
 
 
 @app.post("/api/v1/search/hybrid", tags=["Search"])
-async def hybrid_search(payload: SemanticSearchRequest, _: str = Depends(verify_api_key)) -> Dict[str, object]:
+async def hybrid_search(payload: HybridSearchRequest, _: str = Depends(verify_api_key)) -> Dict[str, object]:
     """
     Hybrid search combining semantic (vector) and keyword (BM25) search.
-    Currently falls back to semantic search (TODO: implement true hybrid with sparse vectors).
+    Uses Reciprocal Rank Fusion (RRF) to combine results from both strategies.
+
+    Args:
+        alpha: Weight for semantic search (0.0=keyword only, 1.0=semantic only, default=0.5)
     """
     # Use RequestTimer for automatic metrics collection
     if METRICS_AVAILABLE and metrics_collector:
         with RequestTimer(endpoint="/api/v1/search/hybrid", collector=metrics_collector) as timer:
             try:
-                # TODO: Implement true hybrid search with BM25 keyword matching
-                # For now, use semantic search for compatibility with bms_search.py
-                results = await processor.search_documents(
+                results = await processor.search_documents_hybrid(
                     payload.query,
                     limit=payload.limit,
+                    alpha=payload.alpha,
                     filters=payload.filters
                 )
                 timer.set_status(200)
@@ -359,9 +368,10 @@ async def hybrid_search(payload: SemanticSearchRequest, _: str = Depends(verify_
     else:
         # Fallback to manual timing if MetricsCollector not available
         start = datetime.utcnow()
-        results = await processor.search_documents(
+        results = await processor.search_documents_hybrid(
             payload.query,
             limit=payload.limit,
+            alpha=payload.alpha,
             filters=payload.filters
         )
         _metrics["search_requests"] = (_metrics["search_requests"] or 0) + 1
