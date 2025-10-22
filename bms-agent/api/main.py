@@ -192,6 +192,23 @@ class HybridSearchRequest(BaseModel):
     filters: Optional[Dict[str, str | list]] = Field(None, description="Metadata filters (department, category, document_name, etc.)")
 
 
+class HierarchicalSearchRequest(BaseModel):
+    query: str = Field(..., min_length=1, max_length=1024)
+    limit: int = Field(5, ge=1, le=50)
+    search_children_return_parents: bool = Field(True, description="If True, search child chunks and return parent chunks for broader context")
+    filters: Optional[Dict[str, str | list]] = Field(None, description="Metadata filters (department, category, document_name, etc.)")
+
+
+class RailwaySearchRequest(BaseModel):
+    query: str = Field(..., min_length=1, max_length=1024)
+    limit: int = Field(5, ge=1, le=50)
+    fleet_type: Optional[str] = Field(None, max_length=50, description="Filter by fleet type (e.g., 'EMU', 'DMU', 'locomotive')")
+    train_id: Optional[str] = Field(None, max_length=50, description="Filter by specific train identifier")
+    standard_compliance: Optional[str] = Field(None, max_length=100, description="Filter by railway standard (e.g., 'EN 50128', 'IEC 62279')")
+    network_component: Optional[str] = Field(None, max_length=100, description="Filter by network component (e.g., 'track', 'signaling', 'overhead_line')")
+    filters: Optional[Dict[str, str | list]] = Field(None, description="Additional metadata filters")
+
+
 @app.get("/", tags=["Info"])
 async def root() -> Dict[str, str]:
     return {
@@ -372,6 +389,99 @@ async def hybrid_search(payload: HybridSearchRequest, _: str = Depends(verify_ap
             payload.query,
             limit=payload.limit,
             alpha=payload.alpha,
+            filters=payload.filters
+        )
+        _metrics["search_requests"] = (_metrics["search_requests"] or 0) + 1
+        _metrics["last_search_latency"] = (datetime.utcnow() - start).total_seconds()
+        return results
+
+
+@app.post("/api/v1/search/hierarchical", tags=["Search"])
+async def hierarchical_search(payload: HierarchicalSearchRequest, _: str = Depends(verify_api_key)) -> Dict[str, object]:
+    """
+    Hierarchical search: search child chunks for precise matches, return parent chunks for broader context.
+
+    This search strategy is useful when you need detailed matches but want to present results with
+    surrounding context. For example, finding specific technical details but showing the full paragraph.
+
+    Args:
+        search_children_return_parents: If True (default), searches child chunks and returns parents
+    """
+    # Use RequestTimer for automatic metrics collection
+    if METRICS_AVAILABLE and metrics_collector:
+        with RequestTimer(endpoint="/api/v1/search/hierarchical", collector=metrics_collector) as timer:
+            try:
+                results = await processor.search_documents_hierarchical(
+                    payload.query,
+                    limit=payload.limit,
+                    search_children_return_parents=payload.search_children_return_parents,
+                    filters=payload.filters
+                )
+                timer.set_status(200)
+                # Update legacy metrics for backward compatibility
+                _metrics["search_requests"] = (_metrics["search_requests"] or 0) + 1
+                return results
+            except Exception as exc:
+                timer.set_status(500)
+                raise
+    else:
+        # Fallback to manual timing if MetricsCollector not available
+        start = datetime.utcnow()
+        results = await processor.search_documents_hierarchical(
+            payload.query,
+            limit=payload.limit,
+            search_children_return_parents=payload.search_children_return_parents,
+            filters=payload.filters
+        )
+        _metrics["search_requests"] = (_metrics["search_requests"] or 0) + 1
+        _metrics["last_search_latency"] = (datetime.utcnow() - start).total_seconds()
+        return results
+
+
+@app.post("/api/v1/search/railway", tags=["Search"])
+async def railway_specific_search(payload: RailwaySearchRequest, _: str = Depends(verify_api_key)) -> Dict[str, object]:
+    """
+    Railway-specific search with domain metadata filtering.
+
+    Search with railway-specific filters for fleet types, train IDs, standards compliance,
+    and network components. Useful for finding documentation specific to particular
+    railway systems, equipment, or compliance requirements.
+
+    Examples:
+        - fleet_type: 'EMU', 'DMU', 'locomotive', 'freight'
+        - standard_compliance: 'EN 50128', 'IEC 62279', 'CENELEC'
+        - network_component: 'track', 'signaling', 'overhead_line', 'rolling_stock'
+    """
+    # Use RequestTimer for automatic metrics collection
+    if METRICS_AVAILABLE and metrics_collector:
+        with RequestTimer(endpoint="/api/v1/search/railway", collector=metrics_collector) as timer:
+            try:
+                results = await processor.search_documents_railway(
+                    payload.query,
+                    limit=payload.limit,
+                    fleet_type=payload.fleet_type,
+                    train_id=payload.train_id,
+                    standard_compliance=payload.standard_compliance,
+                    network_component=payload.network_component,
+                    filters=payload.filters
+                )
+                timer.set_status(200)
+                # Update legacy metrics for backward compatibility
+                _metrics["search_requests"] = (_metrics["search_requests"] or 0) + 1
+                return results
+            except Exception as exc:
+                timer.set_status(500)
+                raise
+    else:
+        # Fallback to manual timing if MetricsCollector not available
+        start = datetime.utcnow()
+        results = await processor.search_documents_railway(
+            payload.query,
+            limit=payload.limit,
+            fleet_type=payload.fleet_type,
+            train_id=payload.train_id,
+            standard_compliance=payload.standard_compliance,
+            network_component=payload.network_component,
             filters=payload.filters
         )
         _metrics["search_requests"] = (_metrics["search_requests"] or 0) + 1

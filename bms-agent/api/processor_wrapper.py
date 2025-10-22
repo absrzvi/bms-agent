@@ -229,6 +229,213 @@ class DocumentProcessorWrapper:
 
         return await self.search_documents(query, limit=limit, filters=filters)
 
+    async def search_documents_hierarchical(
+        self,
+        query: str,
+        *,
+        limit: int = 5,
+        search_children_return_parents: bool = True,
+        filters: Optional[Dict[str, Any]] = None
+    ) -> Dict[str, Any]:
+        """Execute hierarchical search (search children, return parents for context).
+
+        Args:
+            query: Search query text
+            limit: Maximum number of results
+            search_children_return_parents: If True, search child chunks and return parent chunks
+            filters: Optional metadata filters
+        """
+        if not query:
+            raise ValueError("query must be a non-empty string")
+
+        # Generate query embedding
+        embedding = await self.get_embedding(query)
+
+        # Build filter for metadata if provided
+        query_filter = self._build_filter(filters) if filters else None
+
+        if search_children_return_parents:
+            # Search child chunks for precise matches
+            from qdrant_client.models import NamedVector
+
+            child_results = self.qdrant.search(
+                collection_name=self.collection_name,
+                query_vector=NamedVector(
+                    name="child_embedding",
+                    vector=embedding
+                ),
+                query_filter=query_filter,
+                limit=limit * 2,  # Get more children to find unique parents
+                with_payload=True,
+                with_vectors=False
+            )
+
+            # Extract unique parent chunk IDs
+            parent_ids = set()
+            child_scores = {}
+            for result in child_results:
+                parent_id = result.payload.get("parent_chunk_id")
+                if parent_id:
+                    parent_ids.add(parent_id)
+                    # Keep best child score for each parent
+                    if parent_id not in child_scores or result.score > child_scores[parent_id]:
+                        child_scores[parent_id] = result.score
+
+            # Retrieve parent chunks
+            if parent_ids:
+                parent_points = self.qdrant.retrieve(
+                    collection_name=self.collection_name,
+                    ids=list(parent_ids)[:limit],
+                    with_payload=True
+                )
+
+                # Format results with child scores
+                formatted = []
+                for idx, point in enumerate(parent_points):
+                    payload = dict(point.payload) if point.payload else {}
+                    formatted.append({
+                        "id": point.id,
+                        "score": child_scores.get(point.id, 0.0),
+                        "text": payload.get("content", ""),
+                        "metadata": self._sanitize(payload),
+                    })
+
+                return {
+                    "count": len(formatted),
+                    "results": formatted,
+                    "collection_name": self.collection_name,
+                    "embedding_model": self.embedding_model_name,
+                    "search_type": "hierarchical",
+                    "mode": "child_to_parent"
+                }
+            else:
+                return {
+                    "count": 0,
+                    "results": [],
+                    "collection_name": self.collection_name,
+                    "embedding_model": self.embedding_model_name,
+                    "search_type": "hierarchical",
+                    "mode": "child_to_parent"
+                }
+        else:
+            # Direct parent chunk search
+            from qdrant_client.models import NamedVector
+
+            results = self.qdrant.search(
+                collection_name=self.collection_name,
+                query_vector=NamedVector(
+                    name="parent_embedding",
+                    vector=embedding
+                ),
+                query_filter=query_filter,
+                limit=limit,
+                with_payload=True,
+                with_vectors=False
+            )
+
+            formatted = []
+            for result in results:
+                payload = dict(result.payload) if result.payload else {}
+                formatted.append({
+                    "id": result.id,
+                    "score": result.score,
+                    "text": payload.get("content", ""),
+                    "metadata": self._sanitize(payload),
+                })
+
+            return {
+                "count": len(formatted),
+                "results": formatted,
+                "collection_name": self.collection_name,
+                "embedding_model": self.embedding_model_name,
+                "search_type": "hierarchical",
+                "mode": "parent_direct"
+            }
+
+    async def search_documents_railway(
+        self,
+        query: str,
+        *,
+        limit: int = 5,
+        fleet_type: Optional[str] = None,
+        train_id: Optional[str] = None,
+        standard_compliance: Optional[str] = None,
+        network_component: Optional[str] = None,
+        filters: Optional[Dict[str, Any]] = None
+    ) -> Dict[str, Any]:
+        """Execute railway-specific search with domain metadata filtering.
+
+        Args:
+            query: Search query text
+            limit: Maximum number of results
+            fleet_type: Filter by fleet type (e.g., 'EMU', 'DMU', 'locomotive')
+            train_id: Filter by specific train identifier
+            standard_compliance: Filter by railway standard (e.g., 'EN 50128', 'IEC 62279')
+            network_component: Filter by network component (e.g., 'track', 'signaling', 'overhead_line')
+            filters: Additional metadata filters
+        """
+        if not query:
+            raise ValueError("query must be a non-empty string")
+
+        # Generate query embedding
+        embedding = await self.get_embedding(query)
+
+        # Build combined filters (railway-specific + general)
+        combined_filters = filters.copy() if filters else {}
+
+        # Add railway-specific filters
+        if fleet_type:
+            combined_filters["fleet_type"] = fleet_type
+        if train_id:
+            combined_filters["train_id"] = train_id
+        if standard_compliance:
+            combined_filters["standard_compliance"] = standard_compliance
+        if network_component:
+            combined_filters["network_component"] = network_component
+
+        # Build Qdrant filter
+        query_filter = self._build_filter(combined_filters) if combined_filters else None
+
+        # Execute search with railway filters
+        from qdrant_client.models import NamedVector
+
+        results = self.qdrant.search(
+            collection_name=self.collection_name,
+            query_vector=NamedVector(
+                name="chunk_embedding",
+                vector=embedding
+            ),
+            query_filter=query_filter,
+            limit=limit,
+            with_payload=True,
+            with_vectors=False
+        )
+
+        # Format results
+        formatted = []
+        for result in results:
+            payload = dict(result.payload) if result.payload else {}
+            formatted.append({
+                "id": result.id,
+                "score": result.score,
+                "text": payload.get("content", ""),
+                "metadata": self._sanitize(payload),
+            })
+
+        return {
+            "count": len(formatted),
+            "results": formatted,
+            "collection_name": self.collection_name,
+            "embedding_model": self.embedding_model_name,
+            "search_type": "railway_specific",
+            "filters_applied": {
+                "fleet_type": fleet_type,
+                "train_id": train_id,
+                "standard_compliance": standard_compliance,
+                "network_component": network_component
+            }
+        }
+
     async def get_embedding(self, text: str) -> List[float]:
         """Generate embedding using sentence-transformers."""
         if not text:
