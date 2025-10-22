@@ -1826,6 +1826,9 @@ class EnhancedDocumentProcessor:
         else:
             self.railway_processor = None
 
+        # Initialize DOCX structure storage
+        self._docx_structure = []
+
         logger.info("🚀 Enhanced Document Processor v4.0 initialized")
         logger.info(f"   Profile: {self.config.processing_profile.value}")
         logger.info(f"   Chunking: {self.config.chunking_strategy.value}")
@@ -1872,15 +1875,42 @@ class EnhancedDocumentProcessor:
                 content = self.text_cleaner.clean_text(content)
                 result['metadata']['text_cleaned'] = True
 
-            # Step 3: Extract chapter structure (use original content for better detection)
+            # Step 3: Extract chapter structure
             chapters = []
             if self.config.enable_chapter_awareness and self.chapter_extractor:
                 logger.info("Extracting chapter structure...")
-                doc_type = self._detect_document_type(file_path)
-                chapters = self.chapter_extractor.extract_chapter_structure(
-                    original_content,
-                    document_type=doc_type
-                )
+
+                # For DOCX files, use extracted style-based structure if available
+                if self._docx_structure and len(self._docx_structure) > 0:
+                    logger.info(f"✅ Using DOCX style-based structure ({len(self._docx_structure)} headings)")
+                    # Convert DOCX structure to chapter format (matching ChapterExtractor output)
+                    chapters = []
+                    for idx, heading in enumerate(self._docx_structure):
+                        # Calculate end position (start of next chapter or end of document)
+                        if idx < len(self._docx_structure) - 1:
+                            end_pos = self._docx_structure[idx + 1]['position']
+                        else:
+                            end_pos = len(original_content)
+
+                        chapters.append({
+                            'chapter_title': heading['title'],
+                            'chapter_number': '',  # DOCX headings don't have explicit numbers
+                            'chapter_level': heading['level'],
+                            'start_position': heading['position'],
+                            'end_position': end_pos,
+                            'chapter_path': heading['title'],  # Simplified path
+                            'content': original_content[heading['position']:end_pos].strip()
+                        })
+                    result['metadata']['chapter_extraction_method'] = 'docx_styles'
+                else:
+                    # Fallback to text-based extraction (markdown, numbered patterns)
+                    doc_type = self._detect_document_type(file_path)
+                    chapters = self.chapter_extractor.extract_chapter_structure(
+                        original_content,
+                        document_type=doc_type
+                    )
+                    result['metadata']['chapter_extraction_method'] = 'text_patterns'
+
                 if chapters:
                     logger.info(f"✅ Found {len(chapters)} chapter headings")
                     result['metadata']['chapter_count'] = len(chapters)
@@ -2040,10 +2070,34 @@ class EnhancedDocumentProcessor:
                 from docx import Document
                 doc = Document(file_path)
                 text = []
-                # Extract from paragraphs
+
+                # Store DOCX structure for later chapter extraction
+                self._docx_structure = []
+                position = 0
+
+                # Extract from paragraphs with style information
                 for paragraph in doc.paragraphs:
                     if paragraph.text.strip():
                         text.append(paragraph.text)
+
+                        # Check if this is a heading paragraph
+                        style_name = paragraph.style.name if paragraph.style else ''
+                        if style_name.startswith('Heading'):
+                            # Extract heading level (e.g., "Heading 1" -> 1)
+                            try:
+                                level = int(style_name.split()[-1]) if len(style_name.split()) > 1 else 1
+                            except (ValueError, IndexError):
+                                level = 1
+
+                            self._docx_structure.append({
+                                'title': paragraph.text.strip(),
+                                'level': level,
+                                'position': position,
+                                'style': style_name
+                            })
+
+                        position += len(paragraph.text) + 1  # +1 for newline
+
                 # Extract from tables with error handling
                 for table in doc.tables:
                     try:
@@ -2052,6 +2106,7 @@ class EnhancedDocumentProcessor:
                                 for cell in row.cells:
                                     if cell.text.strip():
                                         text.append(cell.text)
+                                        position += len(cell.text) + 1
                             except Exception as row_error:
                                 # Skip problematic rows
                                 logger.debug(f"Skipping table row due to error: {row_error}")
@@ -2060,6 +2115,8 @@ class EnhancedDocumentProcessor:
                         # Skip problematic tables
                         logger.debug(f"Skipping table due to error: {table_error}")
                         continue
+
+                logger.info(f"Extracted {len(self._docx_structure)} headings from DOCX styles")
                 return '\n'.join(text)
             except ImportError:
                 raise ImportError("python-docx required for DOCX/DOC processing")
@@ -2138,20 +2195,41 @@ class EnhancedDocumentProcessor:
         return chunks
     
     def _flatten_hierarchy(self, hierarchy: Dict) -> List[Dict[str, Any]]:
-        """Flatten hierarchical structure for processing"""
+        """
+        Flatten hierarchical structure for processing
+        Phase 2.2: Standardized to ensure hierarchy_level is in metadata dict
+        """
         chunks = []
-        
+
         for item in hierarchy.get('structure', []):
             # Add parent as a chunk
-            parent = item['parent']
-            parent['hierarchy'] = 'parent'
+            parent = item['parent'].copy()
+
+            # Ensure metadata dict exists
+            if 'metadata' not in parent:
+                parent['metadata'] = {}
+
+            # Set hierarchy_level in metadata (standardized location)
+            parent['metadata']['hierarchy_level'] = 'parent'
+            parent['metadata']['parent_id'] = None
+            parent['metadata']['chunk_type'] = 'parent_chunk'
+
             chunks.append(parent)
-            
+
             # Add children as chunks
             for child in item.get('children', []):
-                child['hierarchy'] = 'child'
-                child['parent_index'] = parent['index']
-                chunks.append(child)
+                child_copy = child.copy()
+
+                # Ensure metadata dict exists
+                if 'metadata' not in child_copy:
+                    child_copy['metadata'] = {}
+
+                # Set hierarchy_level in metadata (standardized location)
+                child_copy['metadata']['hierarchy_level'] = 'child'
+                child_copy['metadata']['parent_id'] = parent.get('index', None)
+                child_copy['metadata']['chunk_type'] = 'child_chunk'
+
+                chunks.append(child_copy)
 
         return chunks
 
@@ -2159,24 +2237,51 @@ class EnhancedDocumentProcessor:
         """
         Flatten chapter-based hierarchical structure into a list of chunks
         Preserves parent-child-grandchild relationships and chapter metadata
+        Phase 2.2: Standardized to ensure hierarchy_level is in metadata dict
         """
         chunks = []
 
         for item in hierarchy.get('structure', []):
             # Add parent (chapter) as a chunk
             parent = item['parent'].copy()
-            parent['hierarchy_level'] = 'parent'
+
+            # Ensure metadata dict exists
+            if 'metadata' not in parent:
+                parent['metadata'] = {}
+
+            # Set hierarchy_level in metadata (standardized location)
+            parent['metadata']['hierarchy_level'] = 'parent'
+            parent['metadata']['parent_id'] = None  # Parents have no parent
+            parent['metadata']['chunk_type'] = 'chapter'
+
             chunks.append(parent)
 
             # Add children (sub-chapters) as chunks
             for child in item.get('children', []):
                 child_copy = {k: v for k, v in child.items() if k != 'grandchildren'}
-                child_copy['hierarchy_level'] = 'child'
+
+                # Ensure metadata dict exists
+                if 'metadata' not in child_copy:
+                    child_copy['metadata'] = {}
+
+                # Set hierarchy_level in metadata (standardized location)
+                child_copy['metadata']['hierarchy_level'] = 'child'
+                child_copy['metadata']['parent_id'] = parent.get('index', None)
+                child_copy['metadata']['chunk_type'] = 'sub_chapter'
+
                 chunks.append(child_copy)
 
                 # Add grandchildren (fixed-size chunks) if they exist
                 for grandchild in child.get('grandchildren', []):
-                    grandchild['hierarchy_level'] = 'grandchild'
+                    # Ensure metadata dict exists
+                    if 'metadata' not in grandchild:
+                        grandchild['metadata'] = {}
+
+                    # Set hierarchy_level in metadata (standardized location)
+                    grandchild['metadata']['hierarchy_level'] = 'grandchild'
+                    grandchild['metadata']['parent_id'] = child_copy.get('index', None)
+                    grandchild['metadata']['chunk_type'] = 'content_chunk'
+
                     chunks.append(grandchild)
 
         return chunks
