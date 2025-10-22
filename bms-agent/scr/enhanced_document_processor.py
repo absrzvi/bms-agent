@@ -84,6 +84,18 @@ except ImportError:
     CHAPTER_EXTRACTOR_AVAILABLE = False
     logger.warning("ChapterExtractor not available - chapter awareness will be disabled")
 
+# Visual artifacts extraction (Feature 002)
+try:
+    from image_extractor import ImageExtractor
+    from artifact_storage import ArtifactStorageManager
+    from image_processor import ImageProcessor
+    from ocr_processor import OCRProcessor
+    from proximity_associator import ProximityAssociator, ImageArtifact, TextChunk
+    VISUAL_ARTIFACTS_AVAILABLE = True
+except ImportError as e:
+    VISUAL_ARTIFACTS_AVAILABLE = False
+    logger.warning(f"Visual artifacts modules not available: {e}")
+
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
@@ -1829,6 +1841,36 @@ class EnhancedDocumentProcessor:
         # Initialize DOCX structure storage
         self._docx_structure = []
 
+        # Initialize visual artifacts extraction (Feature 002)
+        if VISUAL_ARTIFACTS_AVAILABLE:
+            visual_artifacts_dir = os.getenv('VISUAL_ARTIFACTS_DIR', '/workspace/visual-artifacts')
+            max_image_width = int(os.getenv('MAX_IMAGE_WIDTH', '1920'))
+            max_image_height = int(os.getenv('MAX_IMAGE_HEIGHT', '1080'))
+            max_images_per_chunk = int(os.getenv('MAX_IMAGES_PER_CHUNK', '5'))
+            enable_ocr = os.getenv('ENABLE_OCR', 'true').lower() == 'true'
+            ocr_language = os.getenv('OCR_LANGUAGE', 'eng')
+            pptx_render_dpi = int(os.getenv('PPTX_RENDER_DPI', '150'))
+
+            self.artifact_storage = ArtifactStorageManager(visual_artifacts_dir)
+            self.image_processor = ImageProcessor(max_image_width, max_image_height)
+            self.ocr_processor = OCRProcessor(ocr_language) if enable_ocr else None
+            self.image_extractor = ImageExtractor(pptx_render_dpi)
+            self.proximity_associator = ProximityAssociator(max_images_per_chunk)
+            self.enable_visual_artifacts = True
+
+            logger.info("✅ Visual artifacts extraction enabled")
+            logger.info(f"   Storage: {visual_artifacts_dir}")
+            logger.info(f"   Max image size: {max_image_width}x{max_image_height}")
+            logger.info(f"   OCR: {'enabled' if enable_ocr else 'disabled'}")
+        else:
+            self.artifact_storage = None
+            self.image_processor = None
+            self.ocr_processor = None
+            self.image_extractor = None
+            self.proximity_associator = None
+            self.enable_visual_artifacts = False
+            logger.info("⚠️  Visual artifacts extraction disabled (modules not available)")
+
         logger.info("🚀 Enhanced Document Processor v4.0 initialized")
         logger.info(f"   Profile: {self.config.processing_profile.value}")
         logger.info(f"   Chunking: {self.config.chunking_strategy.value}")
@@ -1837,6 +1879,7 @@ class EnhancedDocumentProcessor:
         logger.info(f"   Contextual Retrieval: {self.config.enable_contextual_retrieval}")
         logger.info(f"   Late Chunking: {self.config.enable_late_chunking}")
         logger.info(f"   Hybrid Search: {self.config.enable_hybrid_search}")
+        logger.info(f"   Visual Artifacts: {self.enable_visual_artifacts}")
     
     def process_document(self, 
                         file_path: Union[str, Path],
@@ -2028,21 +2071,66 @@ class EnhancedDocumentProcessor:
                 )
                 result['version_info'] = version_info
             
+            # Step 7: Extract visual artifacts (Feature 002)
+            visual_artifacts = []
+            chunk_artifact_associations = {}
+            if self.enable_visual_artifacts and chunks:
+                logger.info("Extracting visual artifacts...")
+                visual_artifacts, chunk_artifact_associations = self._extract_visual_artifacts(
+                    file_path,
+                    document_id,
+                    chunks
+                )
+
+                # Update chunks with artifact associations
+                for chunk in chunks:
+                    chunk_id = chunk['chunk_id']
+                    if chunk_id in chunk_artifact_associations:
+                        artifact_ids = chunk_artifact_associations[chunk_id]
+                        chunk['has_visual_artifacts'] = True
+                        chunk['visual_artifact_ids'] = artifact_ids
+                        chunk['visual_artifact_count'] = len(artifact_ids)
+
+                        # Add OCR text and captions from artifacts
+                        ocr_texts = []
+                        captions = []
+                        for artifact_id in artifact_ids:
+                            # Find artifact metadata
+                            artifact = next((a for a in visual_artifacts if a['artifact_id'] == artifact_id), None)
+                            if artifact:
+                                if artifact.get('ocr_text'):
+                                    ocr_texts.append(artifact['ocr_text'])
+                                if artifact.get('caption'):
+                                    captions.append(artifact['caption'])
+
+                        chunk['image_ocr_text'] = ' '.join(ocr_texts) if ocr_texts else ''
+                        chunk['image_captions'] = captions
+                    else:
+                        chunk['has_visual_artifacts'] = False
+                        chunk['visual_artifact_ids'] = []
+                        chunk['visual_artifact_count'] = 0
+                        chunk['image_ocr_text'] = ''
+                        chunk['image_captions'] = []
+
             result['chunks'] = chunks
+            result['visual_artifacts'] = visual_artifacts
+            result['visual_artifacts_extracted'] = len(visual_artifacts)
             result['processing_success'] = True
             result['statistics'] = {
                 'total_chunks': len(chunks),
                 'avg_chunk_size': sum(len(c.get('content', '')) for c in chunks) / len(chunks) if chunks else 0,
-                'document_length': len(content)
+                'document_length': len(content),
+                'visual_artifacts': len(visual_artifacts),
+                'chunks_with_artifacts': len([c for c in chunks if c.get('has_visual_artifacts')])
             }
-            
-            logger.info(f"✅ Successfully processed: {len(chunks)} chunks generated")
-            
+
+            logger.info(f"✅ Successfully processed: {len(chunks)} chunks, {len(visual_artifacts)} artifacts")
+
         except Exception as e:
             result['errors'].append(str(e))
             result['processing_success'] = False
             logger.error(f"❌ Processing failed: {e}", exc_info=True)
-        
+
         return result
     
     def _read_document(self, file_path: Path) -> str:
@@ -2405,6 +2493,159 @@ if RAY_AVAILABLE:
         results = ray.get(futures)
 
         return results
+
+    def _extract_visual_artifacts(
+        self,
+        file_path: Path,
+        document_id: str,
+        chunks: List[Dict[str, Any]]
+    ) -> Tuple[List[Dict[str, Any]], Dict[str, List[str]]]:
+        """
+        Extract visual artifacts (images/slides) from document and associate with chunks.
+
+        Args:
+            file_path: Path to document
+            document_id: Unique document identifier
+            chunks: List of chunk dicts with chunk_id, content, page_number
+
+        Returns:
+            Tuple of (artifacts_list, chunk_associations)
+            - artifacts_list: List of artifact metadata dicts
+            - chunk_associations: Dict mapping chunk_id -> list of artifact_ids
+        """
+        if not self.enable_visual_artifacts:
+            return [], {}
+
+        artifacts = []
+        extracted_images = []
+        extension = file_path.suffix.lower()
+
+        try:
+            # Extract images based on document type
+            if extension == '.pdf':
+                logger.info(f"Extracting images from PDF: {file_path.name}")
+                extracted_images = self.image_extractor.extract_images_from_pdf(str(file_path))
+
+            elif extension in ['.docx', '.doc']:
+                logger.info(f"Extracting images from DOCX: {file_path.name}")
+                extracted_images = self.image_extractor.extract_images_from_docx(str(file_path))
+
+            elif extension in ['.pptx', '.ppt']:
+                logger.info(f"Rendering slides from PPTX: {file_path.name}")
+                extracted_images = self.image_extractor.render_pptx_slides(str(file_path))
+
+            if not extracted_images:
+                logger.info(f"No visual artifacts found in {file_path.name}")
+                return [], {}
+
+            logger.info(f"Found {len(extracted_images)} visual artifacts")
+
+            # Process each extracted image
+            for idx, img_data in enumerate(extracted_images):
+                try:
+                    # Generate artifact ID
+                    artifact_type = 'slide' if img_data.get('slide_number') else 'image'
+                    artifact_id = self.artifact_storage.generate_artifact_id(
+                        'slide' if artifact_type == 'slide' else 'img'
+                    )
+
+                    # Resize and optimize image
+                    image_bytes = img_data['image_bytes']
+                    resized_bytes, dimensions = self.image_processor.resize_image(image_bytes)
+                    optimized_bytes = self.image_processor.optimize_image(resized_bytes, 'PNG')
+
+                    # Create thumbnail
+                    thumbnail_bytes = self.image_processor.create_thumbnail(optimized_bytes)
+
+                    # Run OCR if enabled
+                    ocr_text = ""
+                    ocr_confidence = 0.0
+                    if self.ocr_processor and artifact_type == 'image':
+                        # Only run OCR on non-slide images
+                        ocr_text, ocr_confidence = self.ocr_processor.extract_text_from_image(
+                            optimized_bytes
+                        )
+
+                    # Save artifact to storage
+                    storage_result = self.artifact_storage.save_artifact(
+                        image_data=optimized_bytes,
+                        artifact_id=artifact_id,
+                        artifact_type=artifact_type,
+                        document_id=document_id,
+                        file_format='png',
+                        save_thumbnail=True,
+                        thumbnail_data=thumbnail_bytes
+                    )
+
+                    # Build artifact metadata
+                    artifact_metadata = {
+                        'artifact_id': artifact_id,
+                        'artifact_type': artifact_type,
+                        'source_document': file_path.name,
+                        'source_page_or_slide_number': img_data.get('page_number') or img_data.get('slide_number', 0),
+                        'file_format': 'png',
+                        'file_path': storage_result['file_path'],
+                        'thumbnail_path': storage_result.get('thumbnail_path'),
+                        'file_size_bytes': storage_result['file_size_bytes'],
+                        'dimensions': dimensions,
+                        'extraction_timestamp': storage_result['extraction_timestamp'],
+                        'ocr_text': ocr_text,
+                        'ocr_confidence': ocr_confidence,
+                        'caption': img_data.get('caption'),
+                        'bbox': img_data.get('bbox')
+                    }
+
+                    artifacts.append(artifact_metadata)
+
+                    logger.debug(
+                        f"Processed artifact {artifact_id}: {artifact_type}, "
+                        f"page {artifact_metadata['source_page_or_slide_number']}"
+                    )
+
+                except Exception as e:
+                    logger.warning(f"Failed to process image {idx}: {e}")
+                    continue
+
+            # Associate artifacts with chunks using ProximityAssociator
+            logger.info("Associating artifacts with chunks...")
+
+            # Convert artifacts to ImageArtifact objects
+            image_artifacts = []
+            for artifact in artifacts:
+                image_artifacts.append(ImageArtifact(
+                    artifact_id=artifact['artifact_id'],
+                    page_number=artifact['source_page_or_slide_number'],
+                    bbox=artifact.get('bbox'),
+                    caption=artifact.get('caption'),
+                    position=0  # Will be set by proximity calculation
+                ))
+
+            # Convert chunks to TextChunk objects
+            text_chunks = []
+            for chunk in chunks:
+                text_chunks.append(TextChunk(
+                    chunk_id=chunk['chunk_id'],
+                    page_number=chunk.get('page_number'),
+                    text=chunk['content'],
+                    position=chunk.get('position', 0)
+                ))
+
+            # Run association
+            chunk_associations = self.proximity_associator.associate_images_with_chunks(
+                image_artifacts,
+                text_chunks
+            )
+
+            logger.info(
+                f"Created {len(artifacts)} artifacts, "
+                f"associated with {len(chunk_associations)} chunks"
+            )
+
+            return artifacts, chunk_associations
+
+        except Exception as e:
+            logger.error(f"Visual artifacts extraction failed: {e}")
+            return [], {}
 
 # =============================
 # CLI Interface

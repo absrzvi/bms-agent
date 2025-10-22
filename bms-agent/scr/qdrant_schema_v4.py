@@ -179,6 +179,9 @@ class QdrantSchemaV4:
             ("document_version", PayloadSchemaType.FLOAT),
             ("processing_profile", PayloadSchemaType.KEYWORD),
             ("processing_timestamp", PayloadSchemaType.DATETIME),
+            ("department", PayloadSchemaType.KEYWORD),
+            ("category", PayloadSchemaType.KEYWORD),
+            ("source_file", PayloadSchemaType.KEYWORD),
         ]
         
         # Chunk-level indexes
@@ -219,20 +222,28 @@ class QdrantSchemaV4:
             ("is_child", PayloadSchemaType.BOOL),
         ]
 
+        # Visual artifacts indexes (Feature 002)
+        visual_artifacts_indexes = [
+            ("has_visual_artifacts", PayloadSchemaType.BOOL),  # Flag for chunks with images/slides
+            ("visual_artifact_count", PayloadSchemaType.INTEGER),  # Number of associated artifacts
+        ]
+
         # Text search indexes for hybrid search
         text_indexes = [
             ("content", PayloadSchemaType.TEXT),  # Full-text search
             ("keywords", PayloadSchemaType.TEXT),  # Extracted keywords
             ("entities", PayloadSchemaType.TEXT),  # Named entities
+            ("image_ocr_text", PayloadSchemaType.TEXT),  # OCR text from images
         ]
-        
+
         # Create all indexes
         all_indexes = (
             document_indexes +
             chunk_indexes +
             railway_indexes +
             chapter_indexes +
-            search_indexes
+            search_indexes +
+            visual_artifacts_indexes
         )
         
         for field_name, field_type in all_indexes:
@@ -356,6 +367,13 @@ class QdrantSchemaV4:
             "entities": json.dumps(chunk.get('entities', [])),
             "topics": json.dumps(chunk.get('topics', [])),
             "relationships": json.dumps(chunk.get('relationships', [])),
+
+            # Visual artifacts (Feature 002)
+            "has_visual_artifacts": chunk.get('has_visual_artifacts', False),
+            "visual_artifact_ids": chunk.get('visual_artifact_ids', []),
+            "visual_artifact_count": chunk.get('visual_artifact_count', 0),
+            "image_ocr_text": chunk.get('image_ocr_text', ''),
+            "image_captions": chunk.get('image_captions', []),
         }
 
         # Add chapter information if present
@@ -370,6 +388,16 @@ class QdrantSchemaV4:
                 "sub_chapter_number": chapter_info.get('sub_chapter_number', ''),
                 "parent_chapter": chapter_info.get('parent_chapter', ''),
                 "position_in_chapter": chapter_info.get('position_in_chapter', 0),
+            })
+
+        # Add department/category metadata if present
+        chunk_metadata = chunk.get('metadata', {})
+        if 'department' in chunk_metadata or 'category' in chunk_metadata:
+            payload.update({
+                "department": chunk_metadata.get('department', ''),
+                "category": chunk_metadata.get('category', ''),
+                "source_file": chunk_metadata.get('source_file', ''),
+                "source_path": chunk_metadata.get('source_path', ''),
             })
 
         # Add railway-specific metadata if present

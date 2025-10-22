@@ -7,11 +7,19 @@
 
 ## Clarifications
 
-### Session 2025-10-22
+### Session 2025-10-22 (Initial Clarifications)
 
 - Q: What level of data security and protection is required for the indexed railway documentation and search queries? → A: Minimal Security - No encryption at rest, HTTP acceptable, basic input validation only
 - Q: What observability capabilities are required beyond basic logging? → A: Logging + Basic Metrics - Logs plus key metrics (request count, latency percentiles, error rates, queue depths) exposed via health endpoints
 - Q: Should the system enforce rate limiting per user/IP to prevent abuse, and if so, what are the limits? → A: No Rate Limiting - Trust all users, rely only on 1,000 concurrent user capacity, no per-user or per-IP throttling
+
+### Session 2025-10-22 (Data Lifecycle Clarifications)
+
+- Q: When a document that has already been indexed is re-uploaded or updated, how should the system handle the existing indexed chunks? → A: **Replace Strategy** - When a document is re-uploaded, the system will delete all existing chunks for that document from the vector database and replace them with newly processed chunks. This ensures search results always reflect the latest document version, prevents duplicate results, and maintains data consistency. Document identity is determined by document_name + department combination.
+
+- Q: Should the system support explicit document deletion, and if so, what deletion strategy should be used? → A: **Hard Delete** - The system will provide an API endpoint to permanently delete documents and all associated chunks from the vector database immediately. No soft delete or retention of deleted documents. Document deletion is identified by document_name + department combination.
+
+- Q: When documents are replaced during re-upload, should the system maintain version history or track changes over time? → A: **No Version History** - The system will not maintain version history. When documents are replaced, old versions are completely removed and not preserved. Users must manage document versioning externally if needed (e.g., filename conventions like "Manual_v2.0.pdf").
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -137,6 +145,14 @@ Railway operations teams need to filter search results by railway-specific attri
   - System should handle concurrent uploads with proper async processing and avoid race conditions in vector DB
 - What happens when user searches across all departments but many documents match?
   - System should return top-k results (configurable limit, e.g., 10-50) ranked by relevance score
+- What happens when a user re-uploads a document that's already indexed?
+  - System deletes all existing chunks for that document (matched by document_name + department) and replaces them with newly processed chunks
+- What happens when a user tries to delete a document that doesn't exist?
+  - System returns error indicating document not found (404 status)
+- What happens when document processing fails during replacement (e.g., new version is corrupted)?
+  - Original document chunks are already deleted, system logs error and returns failure status; user must re-upload a valid version
+- What happens when multiple users upload different documents with the same filename to different departments?
+  - Documents are treated as distinct because identity is document_name + department combination; no conflicts occur
 
 ## Requirements *(mandatory)*
 
@@ -170,6 +186,9 @@ Railway operations teams need to filter search results by railway-specific attri
 - **FR-022c**: System does NOT require encryption at rest for vector database or indexed documents (minimal security posture)
 - **FR-023**: System MUST provide hierarchical search mode that can return parent chunks when child chunks match query
 - **FR-024**: System MUST support n8n workflow integration for conversational search via messaging platforms
+- **FR-025**: System MUST support document replacement via re-upload: when a document with matching document_name + department is uploaded, all existing chunks for that document are deleted from vector DB before new chunks are indexed
+- **FR-026**: System MUST provide API endpoint to permanently delete documents and all associated chunks from vector database by document_name + department identifier (hard delete, no soft delete or version history)
+- **FR-027**: System does NOT maintain version history for replaced or deleted documents (users must manage versioning externally via filename conventions)
 
 ### Key Entities
 
@@ -230,6 +249,8 @@ Railway operations teams need to filter search results by railway-specific attri
 
 **In Scope:**
 - Document upload, processing, and indexing for supported file formats
+- Document replacement via re-upload (delete old chunks, index new chunks)
+- Document deletion API endpoint (hard delete from vector database)
 - Semantic and hybrid search with metadata filtering
 - Chapter-aware chunking and hierarchical retrieval
 - Quality validation and scoring
@@ -242,7 +263,10 @@ Railway operations teams need to filter search results by railway-specific attri
 - Real-time document synchronization from external sources
 - User management, roles, and permissions (beyond optional API key)
 - Document editing or modification capabilities
-- Version control for documents
+- Version control for documents (no version history tracking)
+- Soft delete or document archival (only hard delete supported)
+- Document change tracking or audit logs for updates
+- Rollback to previous document versions
 - Collaborative annotation or commenting on documents
 - Automatic document classification or tagging (beyond manual department assignment)
 - Multi-language support (English only in initial version)

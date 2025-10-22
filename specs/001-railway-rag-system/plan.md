@@ -213,16 +213,17 @@ Entities to model (from spec):
 **Objective**: Define REST API endpoints, request/response models, and OpenWebUI tool schema.
 
 **Endpoints to specify**:
-1. **POST /api/v1/upload** - Single document upload
+1. **POST /api/v1/upload** - Single document upload (with replacement support)
 2. **POST /api/v1/batch-upload** - Batch upload by department
-3. **POST /api/v1/search/semantic** - Semantic search
-4. **POST /api/v1/search/hybrid** - Hybrid search (semantic + keyword)
-5. **POST /api/v1/search/hierarchical** - Hierarchical search (child → parent)
-6. **POST /api/v1/search/railway** - Railway-specific filtered search
-7. **GET /health** - Service health check with metrics
-8. **GET /health/qdrant** - Qdrant connectivity check
-9. **GET /health/embedding** - Embedding service check
-10. **GET /metrics** - Basic operational metrics (NEW)
+3. **DELETE /api/v1/documents/{document_name}** - Delete document by name + department (NEW - FR-026)
+4. **POST /api/v1/search/semantic** - Semantic search
+5. **POST /api/v1/search/hybrid** - Hybrid search (semantic + keyword)
+6. **POST /api/v1/search/hierarchical** - Hierarchical search (child → parent)
+7. **POST /api/v1/search/railway** - Railway-specific filtered search
+8. **GET /health** - Service health check with metrics
+9. **GET /health/qdrant** - Qdrant connectivity check
+10. **GET /health/embedding** - Embedding service check
+11. **GET /metrics** - Basic operational metrics
 
 **OpenWebUI Tool Schema**:
 - 25+ search function definitions
@@ -264,11 +265,13 @@ Entities to model (from spec):
 - Metadata filtering (department, category, chapter)
 - Result ranking and citation formatting
 
-### Phase 2.3: Document Ingestion (P1 - MVP Core)
-- Single document upload endpoint
+### Phase 2.3: Document Ingestion & Lifecycle (P1 - MVP Core)
+- Single document upload endpoint with replacement support (FR-025)
+- Document deletion endpoint (FR-026)
 - Batch upload by department
 - Progress tracking for long-running ingestion
 - Error handling and logging
+- Document identity management (document_name + department)
 
 ### Phase 2.4: OpenWebUI Integration (P2 - Enhanced UX)
 - BMS search tool v4.2 implementation
@@ -339,6 +342,29 @@ Entities to model (from spec):
 
 **Rationale**: Internal trusted users, no external public access, simplifies implementation, aligns with minimal security model.
 
+### Document Lifecycle Management (Clarified - Session 2025-10-22)
+
+**Document Replacement Strategy** (FR-025):
+- When document is re-uploaded with same `document_name` + `department`
+- Delete all existing chunks for that document from vector database
+- Process new document through full pipeline (extraction, chunking, quality validation, embedding)
+- Index new chunks with fresh embeddings
+- **No version history**: Old versions completely removed (FR-027)
+- **Identity**: `document_name` + `department` combination (two departments can have identical filenames)
+
+**Document Deletion Strategy** (FR-026):
+- Hard delete only (no soft delete, no retention)
+- `DELETE /api/v1/documents/{document_name}?department={dept}` endpoint
+- Permanently removes all chunks from vector database
+- Returns 404 if document not found
+- No rollback or recovery after deletion
+
+**Rationale**:
+- **Simplicity**: No version management complexity
+- **Data consistency**: Search results always reflect latest document version
+- **No duplicates**: Old chunks never linger to confuse search
+- **External versioning**: Users can manage versions via filename conventions (e.g., "Manual_v2.0.pdf")
+
 ## Risk Assessment
 
 ### High-Risk Areas
@@ -365,15 +391,23 @@ Entities to model (from spec):
 
 ### Medium-Risk Areas
 
-1. **Chapter Extraction Accuracy**
+1. **Document Replacement Data Loss** (NEW - FR-025)
+   - Risk: User uploads corrupted new version, old chunks already deleted, processing fails
+   - Mitigation: Log warning about permanent deletion, document edge case in spec (user must re-upload valid version)
+
+2. **Concurrent Document Replacement**
+   - Risk: Two users replace same document simultaneously, race condition in delete + reindex
+   - Mitigation: Qdrant handles upsert atomicity, async processing with proper locking
+
+3. **Chapter Extraction Accuracy**
    - Risk: Unstructured documents have <95% chapter detection accuracy
    - Mitigation: Fallback to hierarchical chunking without chapter metadata (covered in edge cases)
 
-2. **Hybrid Search Tuning**
+4. **Hybrid Search Tuning**
    - Risk: Default alpha=0.5 not optimal for railway domain
    - Mitigation: Configurable per request, document tuning process in quickstart
 
-3. **OpenWebUI Tool Compatibility**
+5. **OpenWebUI Tool Compatibility**
    - Risk: OpenWebUI API changes break custom tool integration
    - Mitigation: Contract tests, version pinning, fallback to direct API access
 

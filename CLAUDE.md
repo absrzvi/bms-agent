@@ -201,6 +201,25 @@ Plus **1 sparse vector**:
    - Builds Qdrant point with all 4 dense vectors + sparse vector
    - Upserts to `nomad_bms_documents` collection with metadata
 
+### Document Lifecycle Management
+
+**Document Replacement** (via re-upload):
+- When uploading a document with matching `document_name` + `department` combination
+- System automatically deletes all existing chunks for that document from Qdrant
+- Processes new document through full pipeline (extraction → chunking → validation → embedding)
+- Indexes new chunks with fresh embeddings
+- **No version history**: Old version is completely removed
+- **Identity**: Documents are uniquely identified by `document_name` + `department`
+  - Two departments can have identically named files without conflict
+
+**Document Deletion** (`DELETE /api/v1/documents/{document_name}?department={dept}`):
+- Hard delete only (no soft delete, no retention)
+- Permanently removes all chunks for the document from vector database
+- Returns 404 Not Found if document doesn't exist
+- No rollback or recovery after deletion
+
+**Rationale**: Ensures search results always reflect latest document versions, prevents duplicate results, maintains data consistency without version management complexity.
+
 ### Search Architecture
 
 The system provides multiple search strategies:
@@ -300,6 +319,26 @@ Response with Chunks + Metadata (quality scores, chapter info, citations)
 - `X-API-Key` header required when key is configured
 - Anonymous access allowed when key is unset (MVP mode)
 
+### Visual Artifacts (Feature 002)
+- **Status**: ✅ MVP Deployed (2025-10-22)
+- **Purpose**: Extract images from PDFs/DOCX, render PPTX slides, display inline with search results
+- **Storage**: `/workspace/visual-artifacts/` (persistent on RunPod)
+- **Supported Formats**:
+  - PDF: Image extraction via PyMuPDF
+  - DOCX: Embedded image extraction via python-docx
+  - PPTX: Slide rendering via LibreOffice headless
+- **Features**:
+  - OCR text extraction from images (Tesseract)
+  - Proximity-based image-to-chunk association
+  - Caption matching ("Figure 1", "Fig. 2", etc.)
+  - Thumbnail generation for fast preview
+  - Base64 encoding for OpenWebUI inline display
+- **Performance**:
+  - PDF extraction: ~10ms per page (target: <100ms) ⚡
+  - PPTX rendering: ~12s for 50 slides (target: <300s) ⚡
+- **Configuration**: See environment variables in `.env` file
+- **Tests**: See `TEST_RESULTS_VISUAL_ARTIFACTS.md` for validation results
+
 ## Important Implementation Details
 
 ### Collection Naming
@@ -387,13 +426,23 @@ Response with Chunks + Metadata (quality scores, chapter info, citations)
 ### Core Application Files
 - **`bms-agent/api/main.py`**: FastAPI routes, request models, authentication logic
 - **`bms-agent/api/processor_wrapper.py`**: High-level ingestion orchestrator, embedding generation, Qdrant interaction
-- **`bms-agent/scr/enhanced_document_processor.py`**: Core document processing, chunking, quality validation
+- **`bms-agent/scr/enhanced_document_processor.py`**: Core document processing, chunking, quality validation, **visual artifacts extraction**
 - **`bms-agent/scr/qdrant_schema_v4.py`**: Qdrant schema definition, multi-vector setup, search utilities
 - **`bms-agent/scr/chapter_extractor.py`**: Chapter/sub-chapter structure detection and extraction
 - **`ingest_documents_to_qdrant.py`**: CLI tool for single document ingestion with progress tracking
 - **`batch_ingest_by_department.py`**: Department-aware batch ingestion for `upload-files/` folders
-- **`bms_search.py`**: OpenWebUI v4.2 tool with 25 search functions and artifact support
+- **`bms_search.py`**: OpenWebUI v4.2 tool with 25 search functions and **artifact display support**
 - **`tasks.md`**: Complete deployment task list with dependency order and verification commands
+
+### Visual Artifacts Files (Feature 002)
+- **`bms-agent/scr/image_extractor.py`**: PDF/DOCX image extraction, PPTX slide rendering (PyMuPDF, LibreOffice)
+- **`bms-agent/scr/artifact_storage.py`**: File system storage manager for artifacts with metadata tracking
+- **`bms-agent/scr/image_processor.py`**: Image resizing, optimization, thumbnail generation (Pillow)
+- **`bms-agent/scr/ocr_processor.py`**: Tesseract OCR integration with preprocessing
+- **`bms-agent/scr/proximity_associator.py`**: Image-to-chunk association via proximity and caption matching
+- **`bms-agent/tests/test_visual_artifacts_integration.py`**: Integration test suite (14 tests, all passing)
+- **`TEST_RESULTS_VISUAL_ARTIFACTS.md`**: Comprehensive test results and performance benchmarks
+- **`.env`**: Visual artifacts configuration (storage dir, OCR settings, render DPI, etc.)
 
 ### POD-Specific Files
 - **`/pre_start.sh`**: RunPod startup script (starts Ollama, OpenWebUI, Qdrant automatically)
@@ -403,6 +452,7 @@ Response with Chunks + Metadata (quality scores, chapter info, citations)
 
 ### Configuration & Logs
 - **`/workspace/qdrant-data/`**: Qdrant persistent storage (CRITICAL for data persistence)
+- **`/workspace/visual-artifacts/`**: Visual artifacts storage (images/, slides/, thumbnails/) (Feature 002)
 - **`/workspace/logs/qdrant.log`**: Qdrant service logs
 - **`/workspace/logs/ollama.log`**: Ollama service logs
 - **`/workspace/logs/webui.log`**: OpenWebUI service logs

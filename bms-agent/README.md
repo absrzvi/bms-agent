@@ -41,6 +41,20 @@ automation on RunPod.
   `~/persistent`
 - Slack credentials and n8n instance (optional integrations)
 
+### Visual Artifacts Dependencies (Feature 002)
+- **Tesseract OCR**: For text extraction from images
+  ```bash
+  apt update && apt install -y tesseract-ocr
+  ```
+- **Poppler Utils**: For PDF-to-image conversion
+  ```bash
+  apt install -y poppler-utils
+  ```
+- **LibreOffice**: For PPTX slide rendering
+  ```bash
+  apt install -y libreoffice --no-install-recommends
+  ```
+
 ## Local Setup
 
 ```bash
@@ -82,6 +96,18 @@ Set environment variables (consider adding them to `config/env.sh`). Core values
 | `BMS_UPLOAD_MAX_BYTES` | Max upload size for `/documents/upload` | `1073741824` (1 GB) |
 
 All other processor toggles documented in `bms-agent/api/processor_wrapper.py` follow the same `BMS_*` prefix (e.g., `BMS_ENABLE_OCR`, `BMS_VECTOR_WEIGHT`).
+
+### Visual Artifacts Configuration (Feature 002)
+
+| Variable | Purpose | Default |
+| --- | --- | --- |
+| `VISUAL_ARTIFACTS_DIR` | Storage directory for extracted images and rendered slides | `/workspace/visual-artifacts` |
+| `MAX_IMAGE_WIDTH` / `MAX_IMAGE_HEIGHT` | Maximum dimensions for resized images | `1920` / `1080` |
+| `MAX_IMAGES_PER_CHUNK` | Maximum number of images to associate per text chunk | `5` |
+| `ENABLE_OCR` | Enable Tesseract OCR for text extraction from images | `true` |
+| `OCR_LANGUAGE` | Tesseract OCR language (eng, fra, deu, etc.) | `eng` |
+| `PPTX_RENDER_DPI` | DPI for rendered PPTX slides | `150` |
+| `PPTX_RENDER_ENGINE` | Rendering engine for PPTX (`libreoffice` or `pdf2image`) | `libreoffice` |
 
 Create the spec baseline if missing (`tasks.md` → `T000`).
 

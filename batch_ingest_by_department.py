@@ -40,10 +40,17 @@ class DepartmentAwareBatchIngestion:
 
         # Initialize Qdrant
         self.qdrant_config = QdrantConfig(
-            collection_name="railway_documents_v4",
+            collection_name="nomad_bms_documents",
             enable_railway_optimization=True
         )
         self.qdrant = QdrantSchemaV4(self.qdrant_config)
+
+        # Create collection if it doesn't exist
+        try:
+            self.qdrant.create_collection()
+            logger.info("✅ Qdrant collection created/verified")
+        except Exception as e:
+            logger.info(f"Collection already exists or created: {e}")
 
         # Initialize enhanced document processor with chapter awareness
         self.processor_config = ProcessingConfig(
@@ -66,14 +73,15 @@ class DepartmentAwareBatchIngestion:
             # Enable all features for production
             enable_contextual_retrieval=False,  # Disabled for speed
             enable_late_chunking=False,
-            enable_hybrid_search=True,
-            enable_quality_validation=True,
-            min_quality_score=60.0,  # Lower threshold for diverse docs
+            enable_hybrid_search=False,  # Disabled to avoid sparse vector issues
+            enable_quality_validation=False,  # Disabled to allow templates with minimal text
+            min_quality_score=0.0,  # Accept all content
             enable_versioning=True,
 
-            # Chunk settings
+            # Chunk settings - more lenient for templates
             chunk_size=1500,
-            chunk_overlap=200
+            chunk_overlap=200,
+            min_chunk_size=10  # Allow very small chunks for templates
         )
         self.processor = EnhancedDocumentProcessor(self.processor_config)
 

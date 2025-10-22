@@ -1,0 +1,288 @@
+# OpenAPI Extension for Visual Artifacts Feature
+# This extends the existing BMS Agent API with visual artifact capabilities
+
+openapi: 3.0.3
+info:
+  title: BMS Agent Visual Artifacts API
+  description: API extensions for image extraction and slide rendering in RAG system
+  version: 1.0.0
+  contact:
+    name: BMS Agent Development
+servers:
+  - url: http://localhost:8000
+    description: Local development server
+
+tags:
+  - name: Visual Artifacts
+    description: Image and slide visual artifact operations
+
+paths:
+  /api/v1/documents/upload:
+    post:
+      summary: Upload document with visual artifact extraction
+      description: Extended endpoint that now extracts images and renders slides
+      tags:
+        - Visual Artifacts
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: Document file (PDF, DOCX, PPTX, etc.)
+                department:
+                  type: string
+                  description: Department name
+                category:
+                  type: string
+                  description: Document category
+                extract_images:
+                  type: boolean
+                  description: Enable image extraction (default true)
+                  default: true
+                render_slides:
+                  type: boolean
+                  description: Render PPTX slides as images (default true)
+                  default: true
+                enable_ocr:
+                  type: boolean
+                  description: Enable OCR on images (default true)
+                  default: true
+      responses:
+        '200':
+          description: Document uploaded and processed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentProcessingResult'
+        '400':
+          description: Invalid request or unsupported file format
+        '413':
+          description: File too large (exceeds MAX_UPLOAD_SIZE)
+        '500':
+          description: Processing error
+
+  /api/v1/artifacts/{artifact_id}:
+    get:
+      summary: Retrieve visual artifact by ID
+      description: Get image file and metadata for a specific artifact
+      tags:
+        - Visual Artifacts
+      parameters:
+        - name: artifact_id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Unique artifact identifier
+        - name: format
+          in: query
+          schema:
+            type: string
+            enum: [base64, url, metadata]
+            default: base64
+          description: Response format
+      responses:
+        '200':
+          description: Artifact retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VisualArtifact'
+        '404':
+          description: Artifact not found
+
+  /api/v1/artifacts/search:
+    post:
+      summary: Search artifacts by metadata
+      description: Find artifacts using caption, OCR text, or detected labels
+      tags:
+        - Visual Artifacts
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                query:
+                  type: string
+                  description: Search query for captions/OCR text
+                artifact_type:
+                  type: string
+                  enum: [image, slide]
+                  description: Filter by artifact type
+                document_name:
+                  type: string
+                  description: Filter by source document
+                detected_labels:
+                  type: array
+                  items:
+                    type: string
+                    enum: [diagram, photo, chart, graph, schematic, table, flowchart]
+                  description: Filter by image classification labels
+                limit:
+                  type: integer
+                  minimum: 1
+                  maximum: 100
+                  default: 10
+      responses:
+        '200':
+          description: Search results returned
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/VisualArtifact'
+                  total_count:
+                    type: integer
+
+  /api/v1/search/semantic:
+    post:
+      summary: Semantic search with visual artifacts (extended)
+      description: Existing endpoint now returns visual artifacts with results
+      tags:
+        - Search
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                query:
+                  type: string
+                  description: Search query
+                include_artifacts:
+                  type: boolean
+                  description: Include visual artifacts in results (default true)
+                  default: true
+                artifact_format:
+                  type: string
+                  enum: [base64, url]
+                  default: base64
+                  description: Format for artifact data
+                limit:
+                  type: integer
+                  minimum: 1
+                  maximum: 50
+                  default: 10
+      responses:
+        '200':
+          description: Search results with visual artifacts
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/SearchResultWithArtifacts'
+
+components:
+  schemas:
+    DocumentProcessingResult:
+      type: object
+      properties:
+        document_name:
+          type: string
+        chunks_created:
+          type: integer
+        visual_artifacts_extracted:
+          type: integer
+        slides_rendered:
+          type: integer
+        ocr_text_extracted:
+          type: boolean
+        processing_time_ms:
+          type: integer
+        artifacts:
+          type: array
+          items:
+            $ref: '#/components/schemas/VisualArtifact'
+
+    VisualArtifact:
+      type: object
+      properties:
+        artifact_id:
+          type: string
+          description: Unique identifier
+        artifact_type:
+          type: string
+          enum: [image, slide]
+        source_document:
+          type: string
+        source_page_or_slide_number:
+          type: integer
+        file_format:
+          type: string
+          enum: [png, jpeg, gif, bmp, tiff, svg]
+        file_path:
+          type: string
+          description: Absolute file path (for internal use)
+        thumbnail_path:
+          type: string
+        file_size_bytes:
+          type: integer
+        dimensions:
+          type: object
+          properties:
+            width:
+              type: integer
+            height:
+              type: integer
+        extraction_timestamp:
+          type: string
+          format: date-time
+        associated_chunk_ids:
+          type: array
+          items:
+            type: string
+        ocr_text:
+          type: string
+        ocr_confidence:
+          type: number
+          minimum: 0
+          maximum: 1
+        caption:
+          type: string
+        alt_text:
+          type: string
+        detected_labels:
+          type: array
+          items:
+            type: string
+        data:
+          type: string
+          description: Base64-encoded image data (if format=base64)
+
+    SearchResultWithArtifacts:
+      type: object
+      properties:
+        chunk_id:
+          type: string
+        content:
+          type: string
+        score:
+          type: number
+        source_document:
+          type: string
+        chapter_info:
+          type: object
+        quality_score:
+          type: number
+        has_visual_artifacts:
+          type: boolean
+        visual_artifacts:
+          type: array
+          items:
+            $ref: '#/components/schemas/VisualArtifact'

@@ -995,13 +995,82 @@ graph TB
 
     # ==================== HTML DASHBOARD GENERATION ====================
 
+    def _load_visual_artifacts(self, result: Dict[str, Any], max_artifacts: int = 3) -> List[Dict[str, str]]:
+        """
+        Load visual artifacts for a search result.
+
+        Args:
+            result: Search result with metadata
+            max_artifacts: Maximum number of artifacts to load per result
+
+        Returns:
+            List of artifact dicts with base64 data and metadata
+        """
+        import base64
+        import os
+
+        artifacts = []
+        metadata = result.get("metadata", {})
+
+        if not metadata.get("has_visual_artifacts"):
+            return artifacts
+
+        artifact_ids = metadata.get("visual_artifact_ids", [])
+        captions = metadata.get("image_captions", [])
+
+        # Load up to max_artifacts
+        for idx, artifact_id in enumerate(artifact_ids[:max_artifacts]):
+            try:
+                # Determine artifact path
+                # Artifacts are stored in /workspace/visual-artifacts/
+                # Path pattern: /workspace/visual-artifacts/{images|slides}/doc_{doc_id}/{artifact_id}.png
+
+                # Try to find the artifact file
+                visual_artifacts_dir = os.getenv('VISUAL_ARTIFACTS_DIR', '/workspace/visual-artifacts')
+
+                # Search in both images and slides directories
+                for subdir in ['images', 'slides']:
+                    search_dir = os.path.join(visual_artifacts_dir, subdir)
+                    if os.path.exists(search_dir):
+                        # Walk through doc directories
+                        for doc_dir in os.listdir(search_dir):
+                            doc_path = os.path.join(search_dir, doc_dir)
+                            if os.path.isdir(doc_path):
+                                # Look for artifact file
+                                artifact_file = os.path.join(doc_path, f"{artifact_id}.png")
+                                if os.path.exists(artifact_file):
+                                    # Load and encode artifact
+                                    with open(artifact_file, 'rb') as f:
+                                        image_bytes = f.read()
+
+                                    base64_data = base64.b64encode(image_bytes).decode('utf-8')
+
+                                    # Get caption if available
+                                    caption = captions[idx] if idx < len(captions) else f"Visual Artifact {idx + 1}"
+
+                                    artifacts.append({
+                                        "type": "image",
+                                        "data": f"data:image/png;base64,{base64_data}",
+                                        "caption": caption,
+                                        "artifact_id": artifact_id
+                                    })
+                                    break
+                        if len(artifacts) > idx:
+                            break
+
+            except Exception as e:
+                # Silently skip failed artifacts
+                continue
+
+        return artifacts
+
     def _generate_search_dashboard(
-        self, 
-        results: List[Dict], 
-        search_type: str, 
+        self,
+        results: List[Dict],
+        search_type: str,
         query: str
     ) -> str:
-        """Generate interactive HTML dashboard (for backward compatibility or when not using SVG)"""
+        """Generate interactive HTML dashboard with visual artifacts support"""
         
         theme = self._get_theme_colors()
         
@@ -1040,12 +1109,38 @@ graph TB
                 """
             else:
                 text_html = f'<div class="card-text">{display_text}</div>'
-            
+
+            # Load visual artifacts if present (Feature 002)
+            artifacts_html = ""
+            if metadata.get('has_visual_artifacts'):
+                artifacts = self._load_visual_artifacts(result, max_artifacts=3)
+                if artifacts:
+                    artifact_items = []
+                    for artifact in artifacts:
+                        artifact_items.append(f"""
+                            <div class="artifact-item">
+                                <img src="{artifact['data']}" alt="{artifact['caption']}"
+                                     style="max-width: 100%; height: auto; border-radius: 4px; cursor: pointer;"
+                                     onclick="window.open(this.src, '_blank')">
+                                <div class="artifact-caption">{artifact['caption']}</div>
+                            </div>
+                        """)
+
+                    artifacts_html = f"""
+                        <div class="card-artifacts">
+                            <div class="artifacts-header">🖼️ Visual Artifacts ({len(artifacts)})</div>
+                            <div class="artifacts-gallery">
+                                {''.join(artifact_items)}
+                            </div>
+                        </div>
+                    """
+
             cards_html.append(f"""
                 <div class="result-card" data-department="{metadata.get('department', 'Unknown')}">
                     <div class="card-header">
                         <span class="card-number">{idx}</span>
                         <span class="card-title">{metadata.get('document_name', 'Unknown')}</span>
+                        {' <span class="artifact-badge">🖼️ ' + str(metadata.get('visual_artifact_count', 0)) + '</span>' if metadata.get('has_visual_artifacts') else ''}
                     </div>
                     <div class="card-body">
                         <div class="card-meta">
@@ -1067,6 +1162,7 @@ graph TB
                             </div>
                         </div>
                         {text_html}
+                        {artifacts_html}
                     </div>
                 </div>
             """)
@@ -1261,6 +1357,67 @@ graph TB
         
         .expand-btn:hover {{
             background: #2980b9;
+        }}
+
+        /* Visual Artifacts Styling (Feature 002) */
+        .artifact-badge {{
+            display: inline-block;
+            padding: 2px 8px;
+            background: #9b59b6;
+            color: white;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+            margin-left: 8px;
+        }}
+
+        .card-artifacts {{
+            margin-top: 15px;
+            padding: 15px;
+            background: {theme['background']};
+            border-radius: 6px;
+            border: 1px solid {theme['border']};
+        }}
+
+        .artifacts-header {{
+            font-weight: 600;
+            color: {theme['primary']};
+            margin-bottom: 12px;
+            font-size: 14px;
+        }}
+
+        .artifacts-gallery {{
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 12px;
+        }}
+
+        .artifact-item {{
+            position: relative;
+            border-radius: 4px;
+            overflow: hidden;
+        }}
+
+        .artifact-item img {{
+            transition: transform 0.2s;
+        }}
+
+        .artifact-item img:hover {{
+            transform: scale(1.05);
+        }}
+
+        .artifact-caption {{
+            margin-top: 6px;
+            font-size: 12px;
+            color: #7f8c8d;
+            text-align: center;
+            font-style: italic;
+        }}
+
+        @media (max-width: 768px) {{
+            .artifacts-gallery {{
+                grid-template-columns: 1fr;
+            }}
         }}
     </style>
 </head>
