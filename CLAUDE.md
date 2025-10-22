@@ -486,3 +486,10 @@ See `SPEC_KIT_GUIDE.md` for detailed usage and workflow examples.
 - `METADATA_FILTERING_FEATURE.md`: Advanced filtering capabilities
 - `TOOL_USAGE_INSTRUCTIONS.md`: OpenWebUI tool integration guide
 - `SYSTEM_PROMPT_UPDATE_SUMMARY.md`: LLM prompt engineering for search quality
+
+## Active Technologies
+- Python 3.11+ + aiohttp>=3.9.0, pydantic>=2.0.0, base64 (stdlib), Pillow (for image handling) (003-search-tool-refactor)
+- `/workspace/visual-artifacts/` (filesystem), Qdrant `nomad_bms_documents` collection (vector DB) (003-search-tool-refactor)
+
+## Recent Changes
+- 003-search-tool-refactor: Added Python 3.11+ + aiohttp>=3.9.0, pydantic>=2.0.0, base64 (stdlib), Pillow (for image handling)

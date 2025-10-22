@@ -1,0 +1,65 @@
+================================================================================
+  BMS AGENT - QUICK START AFTER POD REBOOT
+================================================================================
+
+After your RunPod pod reboots, follow these simple steps:
+
+STEP 1: Navigate to BMS Agent directory
+----------------------------------------
+cd /workspace/bms-agent
+
+STEP 2: Run the complete startup script
+----------------------------------------
+bash start_all.sh
+
+That's it! The script will:
+  ✅ Install all dependencies (Python packages, NLTK data, spaCy models)
+  ✅ Create required directories
+  ✅ Start all services (Ollama, Qdrant, OpenWebUI, FastAPI)
+  ✅ Verify system health
+  ✅ Display service status and URLs
+
+EXPECTED OUTPUT:
+----------------
+You should see:
+  ✅ Ollama running on http://localhost:11434
+  ✅ Qdrant running on http://localhost:6333
+  ✅ OpenWebUI running on http://localhost:8080
+  ✅ FastAPI running on http://localhost:8000
+
+VERIFY EVERYTHING IS WORKING:
+------------------------------
+bash status.sh
+
+ACCESS THE SYSTEM:
+------------------
+Open your browser and go to:
+  http://localhost:8080 (OpenWebUI - Chat interface)
+  http://localhost:8000/docs (FastAPI - API documentation)
+
+TROUBLESHOOTING:
+----------------
+If something fails:
+  1. Check logs: tail -100 /workspace/logs/api.log
+  2. Restart all: bash restart_all.sh
+  3. See full documentation: cat STARTUP_SCRIPTS_README.md
+
+COMMON COMMANDS:
+----------------
+  bash start_all.sh     - Start all services (run after reboot)
+  bash stop_all.sh      - Stop all services
+  bash restart_all.sh   - Restart all services
+  bash status.sh        - Check service status
+
+PERSISTENT STORAGE (won't be lost):
+------------------------------------
+  /workspace/qdrant-data/        - Vector database
+  /workspace/ollama/             - LLM models
+  /workspace/openwebui/          - Chat history
+  /workspace/visual-artifacts/   - Extracted images
+  /workspace/logs/               - Service logs
+  /workspace/bms-agent/          - Application code
+
+================================================================================
+  For detailed documentation, see: STARTUP_SCRIPTS_README.md
+================================================================================

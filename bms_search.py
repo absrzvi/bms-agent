@@ -253,6 +253,7 @@ class Tools:
         self.citation = False  # Disable auto-citations for custom implementation
         self.session_id = None
         self._session = None
+        self._result_cache = {}  # Cache for parent/child lookup
 
     # ==================== SESSION MANAGEMENT ====================
 
@@ -1064,6 +1065,94 @@ graph TB
 
         return artifacts
 
+    def _update_result_cache(self, results: List[Dict[str, Any]]) -> None:
+        """
+        Update result cache with new search results for parent/child lookup.
+
+        Args:
+            results: List of search results to cache
+        """
+        for result in results:
+            metadata = result.get("metadata", {})
+            chunk_id = metadata.get("chunk_id")
+            if chunk_id:
+                self._result_cache[chunk_id] = result
+
+        # Limit cache size to 100 entries (LRU eviction)
+        if len(self._result_cache) > 100:
+            # Remove oldest 20 entries
+            items = list(self._result_cache.items())
+            self._result_cache = dict(items[20:])
+
+    def _check_hierarchy_cache(self, metadata: Dict[str, Any]) -> tuple:
+        """
+        Check if parent and children are available in result cache.
+
+        Args:
+            metadata: Search result metadata with hierarchy fields
+
+        Returns:
+            Tuple of (parent_in_cache: bool, children_in_cache_count: int)
+        """
+        parent_chunk_id = metadata.get("parent_chunk_id")
+        parent_in_cache = parent_chunk_id is not None and parent_chunk_id in self._result_cache
+
+        # Note: Cannot check children without child_ids list in metadata
+        children_in_cache_count = 0
+
+        return (parent_in_cache, children_in_cache_count)
+
+    def _enrich_search_results(
+        self,
+        results: List[Dict[str, Any]],
+        load_artifacts: bool = True,
+        max_artifacts_per_result: int = 3
+    ) -> List[Dict[str, Any]]:
+        """
+        Enrich search results with visual artifacts, chapter context, and quality scores.
+
+        Args:
+            results: List of search results from Qdrant API
+            load_artifacts: Whether to load visual artifacts from disk (default: True)
+            max_artifacts_per_result: Maximum artifacts to load per result (default: 3)
+
+        Returns:
+            List of enriched search results with additional fields:
+            - visual_artifacts: List[VisualArtifact]
+            - chapter_context: ChapterContext | None
+            - quality_breakdown: QualityBreakdown | None
+            - has_parent: bool
+            - has_children: bool
+            - parent_in_cache: bool
+            - children_in_cache: int
+        """
+        enriched_results = []
+
+        for result in results:
+            metadata = result.get("metadata", {})
+
+            # Load visual artifacts if enabled
+            visual_artifacts = []
+            if load_artifacts and metadata.get("has_visual_artifacts"):
+                visual_artifacts = self._load_visual_artifacts(result, max_artifacts_per_result)
+
+            # Check hierarchy cache
+            parent_in_cache, children_in_cache = self._check_hierarchy_cache(metadata)
+
+            # Build enriched result
+            enriched_result = result.copy()
+            enriched_result["visual_artifacts"] = visual_artifacts
+            enriched_result["chapter_context"] = None  # TODO: Implement _format_chapter_context()
+            enriched_result["quality_breakdown"] = None  # TODO: Implement _format_quality_breakdown()
+            enriched_result["has_parent"] = metadata.get("parent_chunk_id") is not None
+            enriched_result["has_children"] = metadata.get("child_count", 0) > 0
+            enriched_result["parent_in_cache"] = parent_in_cache
+            enriched_result["children_in_cache"] = children_in_cache
+
+            enriched_results.append(enriched_result)
+
+        return enriched_results
+
     def _generate_search_dashboard(
         self,
         results: List[Dict],
@@ -1110,11 +1199,11 @@ graph TB
             else:
                 text_html = f'<div class="card-text">{display_text}</div>'
 
-            # Load visual artifacts if present (Feature 002)
+            # Render visual artifacts if present (Feature 002)
+            # Artifacts are pre-loaded by _enrich_search_results()
             artifacts_html = ""
-            if metadata.get('has_visual_artifacts'):
-                artifacts = self._load_visual_artifacts(result, max_artifacts=3)
-                if artifacts:
+            artifacts = result.get('visual_artifacts', [])
+            if artifacts:
                     artifact_items = []
                     for artifact in artifacts:
                         artifact_items.append(f"""
@@ -1547,8 +1636,7 @@ graph TB
         # Step 1: Initial search
         payload = {
             "query": query,
-            "limit": (limit or user_prefs.get("max_results", self.valves.DEFAULT_LIMIT)) * 4,
-            "min_score": self.valves.MIN_RELEVANCE_SCORE * 0.5
+            "limit": (limit or user_prefs.get("max_results", self.valves.DEFAULT_LIMIT)) * 4
         }
 
         # Add explicit filters if provided
@@ -1561,26 +1649,34 @@ graph TB
         if "error" in response:
             await self._emit_status(__event_emitter__, f"❌ Search failed", done=True)
             return f"Search failed: {response['error']}"
-        
+
         candidates = response.get("results", [])
-        
+
+        # Filter by minimum score (client-side filtering)
+        min_score_threshold = self.valves.MIN_RELEVANCE_SCORE * 0.5
+        candidates = [r for r in candidates if r.get("score", 0) >= min_score_threshold]
+
         # Progress message
         if self.valves.ENABLE_PROGRESS_MESSAGES and show_rich_ui:
             await self._emit_message(__event_emitter__, f"⚡ **Step 2/5**: Reranking {len(candidates)} candidates...")
-        
+
         # Step 2: Apply boosting
         boosted_results = self._apply_smart_boosting(candidates, user_prefs)
         
         # Step 3: Take top results
         final_limit = limit or user_prefs.get("max_results", self.valves.DEFAULT_LIMIT)
         final_results = boosted_results[:final_limit]
-        
+
+        # Step 3.5: Enrich results with visual artifacts, chapter context, etc.
+        enriched_results = self._enrich_search_results(final_results, load_artifacts=show_rich_ui)
+        self._update_result_cache(enriched_results)
+
         # Progress message
         if self.valves.ENABLE_PROGRESS_MESSAGES and show_rich_ui:
             await self._emit_message(__event_emitter__, "✨ **Step 3/5**: Generating visualizations...")
-        
+
         # Step 4: Emit citations
-        await self._emit_search_citations(__event_emitter__, final_results)
+        await self._emit_search_citations(__event_emitter__, enriched_results)
         
         # Step 5: Generate rich UI outputs
         if show_rich_ui:
@@ -1595,29 +1691,29 @@ graph TB
                 
                 # Main dashboard artifact
                 if self.valves.ARTIFACT_DASHBOARD_TYPE in ["html", "both"]:
-                    dashboard_html = self._generate_search_dashboard(final_results, "smart", query)
+                    dashboard_html = self._generate_search_dashboard(enriched_results, "smart", query)
                     await self._emit_rich_ui(
                         __event_emitter__, 
                         dashboard_html,
                         title=f"Search Results: {query}",
-                        description=f"Interactive dashboard with {len(final_results)} results"
+                        description=f"Interactive dashboard with {len(enriched_results)} results"
                     )
-                
+
                 # Optional: Individual SVG chart artifacts
                 if self.valves.USE_SVG_CHARTS and self.valves.ENABLE_SEPARATE_CHART_ARTIFACTS:
                     # Quality distribution chart
-                    quality_scores = [r.get("metadata", {}).get("quality_score", 0) for r in final_results]
+                    quality_scores = [r.get("metadata", {}).get("quality_score", 0) for r in enriched_results]
                     quality_svg = self._generate_quality_chart_svg(quality_scores)
                     await self._emit_artifact(
                         __event_emitter__,
                         quality_svg,
                         "svg",
                         "Quality Score Distribution",
-                        f"Distribution of quality scores across {len(final_results)} results"
+                        f"Distribution of quality scores across {len(enriched_results)} results"
                     )
-                    
+
                     # Department distribution chart
-                    departments = self._extract_department_counts(final_results)
+                    departments = self._extract_department_counts(enriched_results)
                     dept_svg = self._generate_department_pie_svg(departments)
                     await self._emit_artifact(
                         __event_emitter__,
@@ -1635,37 +1731,37 @@ graph TB
                     await self._emit_message(__event_emitter__, "📊 **Step 5/5**: Creating relationship diagrams...")
                 
                 if self.valves.MERMAID_DIAGRAM_TYPE in ["document_graph", "all"]:
-                    diagram = self._generate_document_graph_mermaid(final_results)
-                    await self._emit_message(__event_emitter__, 
+                    diagram = self._generate_document_graph_mermaid(enriched_results)
+                    await self._emit_message(__event_emitter__,
                         "\n\n📊 **Document Relationships** (pan/zoom enabled):\n" + diagram
                     )
-                
+
                 if self.valves.MERMAID_DIAGRAM_TYPE in ["search_flow", "all"]:
                     flow = self._generate_search_flow_mermaid()
                     await self._emit_message(__event_emitter__,
                         "\n\n🔄 **Search Process Flow**:\n" + flow
                     )
-            
+
             # ==================== NEW: Python Analysis Code (v4.2) ====================
-            
+
             if self.valves.ENABLE_PYTHON_ANALYSIS:
-                code = await self._generate_python_analysis_code(final_results)
+                code = await self._generate_python_analysis_code(enriched_results)
                 await self._emit_message(__event_emitter__,
                     "\n\n🐍 **Custom Analysis** (click Run button to execute):\n" + code
                 )
-            
+
             # Final status
-            await self._emit_status(__event_emitter__, 
-                f"✅ Search complete - {len(final_results)} results with interactive dashboard", 
+            await self._emit_status(__event_emitter__,
+                f"✅ Search complete - {len(enriched_results)} results with interactive dashboard",
                 done=True
             )
-            
-            return f"✅ **Search Complete**: {len(final_results)} results displayed in interactive dashboard above"
-        
+
+            return f"✅ **Search Complete**: {len(enriched_results)} results displayed in interactive dashboard above"
+
         else:
             # Fallback to text format
-            await self._emit_status(__event_emitter__, f"✅ Found {len(final_results)} results", done=True)
-            return self._format_results_text(final_results, "smart", query, user_prefs)
+            await self._emit_status(__event_emitter__, f"✅ Found {len(enriched_results)} results", done=True)
+            return self._format_results_text(enriched_results, "smart", query, user_prefs)
 
     # ==================== ADDITIONAL SEARCH METHODS (Context-Aware) ====================
 
@@ -1719,22 +1815,27 @@ graph TB
             return f"Search failed: {response['error']}"
         
         results = response.get("results", [])
-        await self._emit_search_citations(__event_emitter__, results)
-        
+
+        # Enrich results with visual artifacts
+        enriched_results = self._enrich_search_results(results, load_artifacts=show_rich_ui)
+        self._update_result_cache(enriched_results)
+
+        await self._emit_search_citations(__event_emitter__, enriched_results)
+
         if show_rich_ui:
             # Generate artifact dashboard (but skip boosting since this is pure semantic)
             if self.valves.ENABLE_ARTIFACT_MODE:
-                dashboard_html = self._generate_search_dashboard(results, "semantic", query)
+                dashboard_html = self._generate_search_dashboard(enriched_results, "semantic", query)
                 await self._emit_rich_ui(
-                    __event_emitter__, 
+                    __event_emitter__,
                     dashboard_html,
                     title=f"Semantic Search: {query}",
-                    description=f"Vector-based semantic search with {len(results)} results"
+                    description=f"Vector-based semantic search with {len(enriched_results)} results"
                 )
-            
+
             # Optionally show SVG charts
-            if self.valves.USE_SVG_CHARTS and len(results) > 0:
-                quality_scores = [r.get("metadata", {}).get("quality_score", 0) for r in results]
+            if self.valves.USE_SVG_CHARTS and len(enriched_results) > 0:
+                quality_scores = [r.get("metadata", {}).get("quality_score", 0) for r in enriched_results]
                 quality_svg = self._generate_quality_chart_svg(quality_scores)
                 await self._emit_artifact(
                     __event_emitter__,
@@ -1743,20 +1844,20 @@ graph TB
                     "Quality Distribution",
                     "Quality scores for semantic search results"
                 )
-            
+
             # Optionally show Mermaid diagram
             if self.valves.ENABLE_MERMAID_DIAGRAMS and self.valves.MERMAID_DIAGRAM_TYPE in ["document_graph", "all"]:
-                diagram = self._generate_document_graph_mermaid(results)
+                diagram = self._generate_document_graph_mermaid(enriched_results)
                 await self._emit_message(__event_emitter__, 
                     "\n\n📊 **Document Relationships**:\n" + diagram
                 )
             
-            await self._emit_status(__event_emitter__, f"✅ Found {len(results)} results", done=True)
-            return f"✅ **Semantic Search Complete**: {len(results)} results"
+            await self._emit_status(__event_emitter__, f"✅ Found {len(enriched_results)} results", done=True)
+            return f"✅ **Semantic Search Complete**: {len(enriched_results)} results"
         else:
             # Text-only format
-            await self._emit_status(__event_emitter__, f"✅ Found {len(results)} results", done=True)
-            return self._format_results_text(results, "semantic", query, user_prefs)
+            await self._emit_status(__event_emitter__, f"✅ Found {len(enriched_results)} results", done=True)
+            return self._format_results_text(enriched_results, "semantic", query, user_prefs)
 
     async def search_hybrid(
         self,
@@ -1808,22 +1909,27 @@ graph TB
             return f"Search failed: {response['error']}"
         
         results = response.get("results", [])
-        await self._emit_search_citations(__event_emitter__, results)
-        
+
+        # Enrich results with visual artifacts
+        enriched_results = self._enrich_search_results(results, load_artifacts=show_rich_ui)
+        self._update_result_cache(enriched_results)
+
+        await self._emit_search_citations(__event_emitter__, enriched_results)
+
         if show_rich_ui:
             # Generate artifact dashboard (but skip boosting since this is pure hybrid)
             if self.valves.ENABLE_ARTIFACT_MODE:
-                dashboard_html = self._generate_search_dashboard(results, "hybrid", query)
+                dashboard_html = self._generate_search_dashboard(enriched_results, "hybrid", query)
                 await self._emit_rich_ui(
-                    __event_emitter__, 
+                    __event_emitter__,
                     dashboard_html,
                     title=f"Hybrid Search: {query}",
-                    description=f"Semantic + BM25 hybrid search with {len(results)} results"
+                    description=f"Semantic + BM25 hybrid search with {len(enriched_results)} results"
                 )
-            
+
             # Optionally show SVG charts
-            if self.valves.USE_SVG_CHARTS and len(results) > 0:
-                quality_scores = [r.get("metadata", {}).get("quality_score", 0) for r in results]
+            if self.valves.USE_SVG_CHARTS and len(enriched_results) > 0:
+                quality_scores = [r.get("metadata", {}).get("quality_score", 0) for r in enriched_results]
                 quality_svg = self._generate_quality_chart_svg(quality_scores)
                 await self._emit_artifact(
                     __event_emitter__,
@@ -1832,17 +1938,17 @@ graph TB
                     "Quality Distribution",
                     "Quality scores for hybrid search results"
                 )
-            
+
             # Optionally show Mermaid diagram
             if self.valves.ENABLE_MERMAID_DIAGRAMS and self.valves.MERMAID_DIAGRAM_TYPE in ["document_graph", "all"]:
-                diagram = self._generate_document_graph_mermaid(results)
+                diagram = self._generate_document_graph_mermaid(enriched_results)
                 await self._emit_message(__event_emitter__, 
                     "\n\n📊 **Document Relationships**:\n" + diagram
                 )
             
-            await self._emit_status(__event_emitter__, f"✅ Found {len(results)} results", done=True)
-            return f"✅ **Hybrid Search Complete**: {len(results)} results"
+            await self._emit_status(__event_emitter__, f"✅ Found {len(enriched_results)} results", done=True)
+            return f"✅ **Hybrid Search Complete**: {len(enriched_results)} results"
         else:
             # Text-only format
-            await self._emit_status(__event_emitter__, f"✅ Found {len(results)} results", done=True)
-            return self._format_results_text(results, "hybrid", query, user_prefs)
+            await self._emit_status(__event_emitter__, f"✅ Found {len(enriched_results)} results", done=True)
+            return self._format_results_text(enriched_results, "hybrid", query, user_prefs)
